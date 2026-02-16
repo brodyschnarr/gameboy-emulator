@@ -170,16 +170,16 @@
     // Preset cheats for popular games
     const presetCheats = {
         'POKEMON_GLD': [
-            { label: '99 Rare Candies (Slot 1)', codes: ['010146D5', '016347D5'], desc: 'Puts 99 Rare Candies in Item Pocket slot 1' },
-            { label: '99 Master Balls (Slot 2)', codes: ['010148D5', '016349D5'], desc: 'Puts 99 Master Balls in Item Pocket slot 2' },
-            { label: 'Infinite Money', codes: ['019F41D5', '019F42D5', '019F43D5'], desc: 'Max money' },
-            { label: 'Infinite HP (Battle)', codes: ['01FF45DA', '01FF46DA'], desc: 'Your lead Pokémon has 999 HP in battle' },
-            { label: 'Walk Through Walls', codes: ['010138D5'], desc: 'Walk anywhere' },
+            { label: '99 Rare Candies (Slot 1)', codes: ['01325ED8', '01635FD8'], desc: 'Rare Candy x99 in bag slot 1' },
+            { label: '99 Master Balls (Slot 2)', codes: ['010160D8', '016361D8'], desc: 'Master Ball x99 in bag slot 2' },
+            { label: 'Infinite Money', codes: ['019973D5', '019974D5', '019975D5'], desc: 'Max money' },
+            { label: 'Max HP in Battle', codes: ['01FF0DD2', '01FF0ED2'], desc: 'Lead Pokémon max HP in battle' },
         ],
         'POKEMON_SLV': [
-            { label: '99 Rare Candies (Slot 1)', codes: ['010146D5', '016347D5'], desc: 'Puts 99 Rare Candies in Item Pocket slot 1' },
-            { label: '99 Master Balls (Slot 2)', codes: ['010148D5', '016349D5'], desc: 'Puts 99 Master Balls in Item Pocket slot 2' },
-            { label: 'Infinite Money', codes: ['019F41D5', '019F42D5', '019F43D5'], desc: 'Max money' },
+            { label: '99 Rare Candies (Slot 1)', codes: ['01325ED8', '01635FD8'], desc: 'Rare Candy x99 in bag slot 1' },
+            { label: '99 Master Balls (Slot 2)', codes: ['010160D8', '016361D8'], desc: 'Master Ball x99 in bag slot 2' },
+            { label: 'Infinite Money', codes: ['019973D5', '019974D5', '019975D5'], desc: 'Max money' },
+            { label: 'Max HP in Battle', codes: ['01FF0DD2', '01FF0ED2'], desc: 'Lead Pokémon max HP in battle' },
         ],
     };
 

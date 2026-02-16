@@ -266,16 +266,16 @@ console.log('\n🧪 Cheat Engine Tests');
         return { addr, value };
     }
 
-    // Rare candy code: 010146D5
-    const rc = parseGameShark('010146D5');
+    // Rare candy code: 01325ED8 → write 0x32 to D85E
+    const rc = parseGameShark('01325ED8');
     assert(rc !== null, 'Parse GameShark: valid code');
-    assertEq(rc.value, 0x01, 'GameShark: value = 0x01');
-    assertEq(rc.addr, 0xD546, 'GameShark: addr = 0xD546');
+    assertEq(rc.value, 0x32, 'GameShark: value = 0x32 (Rare Candy)');
+    assertEq(rc.addr, 0xD85E, 'GameShark: addr = 0xD85E');
 
-    // 99 quantity code: 016347D5
-    const qty = parseGameShark('016347D5');
+    // 99 quantity code: 01635FD8 → write 0x63 to D85F
+    const qty = parseGameShark('01635FD8');
     assertEq(qty.value, 0x63, 'GameShark: value = 0x63 (99)');
-    assertEq(qty.addr, 0xD547, 'GameShark: addr = 0xD547');
+    assertEq(qty.addr, 0xD85F, 'GameShark: addr = 0xD85F');
 
     // Invalid codes
     assert(parseGameShark('ABCD') === null, 'GameShark: reject short code');
