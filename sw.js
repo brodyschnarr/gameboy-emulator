@@ -1,4 +1,4 @@
-const CACHE = 'gbc-v6';
+const CACHE = 'gbc-v7';
 const FILES = ['./', 'index.html', 'style.css', 'cpu.js', 'mmu.js', 'ppu.js', 'apu.js', 'timer.js', 'joypad.js', 'mbc.js', 'gameboy.js', 'app.js', 'manifest.json', 'bg.jpg'];
 
 self.addEventListener('install', e => {
