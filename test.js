@@ -251,6 +251,64 @@ console.log('\n🧪 Save/Load Tests');
     localStorage.removeItem('gbc_sav_TEST');
 })();
 
+console.log('\n🧪 Cheat Engine Tests');
+(() => {
+    // Test GameShark parser
+    function parseGameShark(code) {
+        code = code.replace(/\s/g, '').toUpperCase();
+        if (code.length !== 8) return null;
+        const type = parseInt(code.substr(0, 2), 16);
+        const value = parseInt(code.substr(2, 2), 16);
+        const addrLo = parseInt(code.substr(4, 2), 16);
+        const addrHi = parseInt(code.substr(6, 2), 16);
+        const addr = (addrHi << 8) | addrLo;
+        if (type !== 0x01) return null;
+        return { addr, value };
+    }
+
+    // Rare candy code: 010146D5
+    const rc = parseGameShark('010146D5');
+    assert(rc !== null, 'Parse GameShark: valid code');
+    assertEq(rc.value, 0x01, 'GameShark: value = 0x01');
+    assertEq(rc.addr, 0xD546, 'GameShark: addr = 0xD546');
+
+    // 99 quantity code: 016347D5
+    const qty = parseGameShark('016347D5');
+    assertEq(qty.value, 0x63, 'GameShark: value = 0x63 (99)');
+    assertEq(qty.addr, 0xD547, 'GameShark: addr = 0xD547');
+
+    // Invalid codes
+    assert(parseGameShark('ABCD') === null, 'GameShark: reject short code');
+    assert(parseGameShark('020146D5') === null, 'GameShark: reject type 02');
+    assert(parseGameShark('') === null, 'GameShark: reject empty');
+
+    // Test cheat application to memory
+    const mmu = new MMU();
+    mmu.wb(0xD546, 0x00);
+    assertEq(mmu.rb(0xD546), 0x00, 'Cheat: memory starts at 0');
+
+    // Simulate cheat write
+    const cheat = parseGameShark('010146D5');
+    mmu.wb(cheat.addr, cheat.value);
+    assertEq(mmu.rb(0xD546), 0x01, 'Cheat: memory written via GameShark');
+
+    // Test game key detection
+    function getGameKey(title) {
+        const t = title.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (t.includes('GLD') || t.includes('GOLD')) return 'POKEMON_GLD';
+        if (t.includes('SLV') || t.includes('SILVER') || t.includes('SILV')) return 'POKEMON_SLV';
+        if (t.includes('CRYS') || t.includes('CRYSTAL')) return 'POKEMON_GLD';
+        return null;
+    }
+
+    assertEq(getGameKey('POKEMON_GLD'), 'POKEMON_GLD', 'Detect: POKEMON_GLD');
+    assertEq(getGameKey('POKEMON_SLV'), 'POKEMON_SLV', 'Detect: POKEMON_SLV');
+    assertEq(getGameKey('PM_SILVER'), 'POKEMON_SLV', 'Detect: PM_SILVER');
+    assertEq(getGameKey('PM_GOLD'), 'POKEMON_GLD', 'Detect: PM_GOLD');
+    assertEq(getGameKey('POKEMON_CRYS'), 'POKEMON_GLD', 'Detect: Crystal');
+    assertEq(getGameKey('TETRIS'), null, 'Detect: non-Pokemon');
+})();
+
 // ==================== SUMMARY ====================
 console.log('\n' + '='.repeat(40));
 if (failed === 0) {

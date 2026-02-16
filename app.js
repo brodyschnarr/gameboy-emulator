@@ -153,18 +153,18 @@
     }
 
     // ===== CHEAT ENGINE =====
-    const activeCheats = []; // { addr, value, label }
+    const activeCheats = []; // { addr, value, label, active }
 
-    // Apply active cheats every frame
-    const origLoop = gb.loop.bind(gb);
-    gb.loop = function(timestamp) {
-        // Apply cheats before each frame
+    // Apply cheats via the PPU frame callback (runs once per frame, reliable)
+    const origOnFrame = gb.ppu.onFrame;
+    gb.ppu.onFrame = function(fb) {
+        // Apply active cheats every frame
         for (const cheat of activeCheats) {
             if (cheat.active) {
                 gb.mmu.wb(cheat.addr, cheat.value);
             }
         }
-        origLoop(timestamp);
+        if (origOnFrame) origOnFrame(fb);
     };
 
     // Preset cheats for popular games
@@ -198,15 +198,25 @@
 
     function getGameKey() {
         if (!gb.romTitle) return null;
-        const t = gb.romTitle.toUpperCase().replace(/[^A-Z]/g, '');
-        if (t.includes('POKEMONGLD') || t.includes('POKEMONGOL')) return 'POKEMON_GLD';
-        if (t.includes('POKEMONSLV') || t.includes('POKEMONSIL')) return 'POKEMON_SLV';
+        const t = gb.romTitle.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        console.log('ROM title for cheat detection:', gb.romTitle, '→', t);
+        // Pokemon Gold - ROM header might say "POKEMON_GLD", "POKEMON GOLD", "PM_GOLD" etc
+        if (t.includes('GLD') || t.includes('GOLD')) return 'POKEMON_GLD';
+        // Pokemon Silver
+        if (t.includes('SLV') || t.includes('SILVER') || t.includes('SILV')) return 'POKEMON_SLV';
+        // Pokemon Crystal
+        if (t.includes('CRYS') || t.includes('CRYSTAL')) return 'POKEMON_GLD'; // Similar memory layout
         return null;
     }
 
     document.getElementById('btn-cheats').addEventListener('click', () => {
         if (!gb.romLoaded) { showToast('Load a ROM first'); return; }
-        showCheatMenu();
+        try {
+            showCheatMenu();
+        } catch(e) {
+            showToast('Cheat menu error: ' + e.message);
+            console.error('Cheat menu error:', e);
+        }
     });
 
     function showCheatMenu() {
