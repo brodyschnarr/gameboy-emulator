@@ -20,6 +20,7 @@
                 gb.stop();
                 gb.loadROM(ev.target.result);
                 gb.start();
+                document.getElementById('power-led').classList.add('on');
                 showToast('Running: ' + gb.romTitle);
             } catch(err) {
                 showToast('Error: ' + err.message);

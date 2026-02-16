@@ -1,5 +1,5 @@
-const CACHE = 'gbc-v3';
-const FILES = ['./', 'index.html', 'style.css', 'cpu.js', 'mmu.js', 'ppu.js', 'apu.js', 'timer.js', 'joypad.js', 'mbc.js', 'gameboy.js', 'app.js', 'manifest.json'];
+const CACHE = 'gbc-v4';
+const FILES = ['./', 'index.html', 'style.css', 'cpu.js', 'mmu.js', 'ppu.js', 'apu.js', 'timer.js', 'joypad.js', 'mbc.js', 'gameboy.js', 'app.js', 'manifest.json', 'bg.jpg'];
 
 self.addEventListener('install', e => {
     e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));

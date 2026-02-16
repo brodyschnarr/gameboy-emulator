@@ -17,45 +17,132 @@ html, body {
     color: #e0e0e0;
 }
 
+/* Background image layer */
+#bg-image {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url('bg.jpg') center center / cover no-repeat;
+    opacity: 0.15;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Game Boy shell */
 #app {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     height: 100%;
     height: 100dvh;
-    max-width: 500px;
+    max-width: 420px;
     margin: 0 auto;
-    padding: env(safe-area-inset-top) 8px env(safe-area-inset-bottom) 8px;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+}
+
+/* Top bezel - like GBC top curve */
+#gameboy-shell {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    background: linear-gradient(180deg, #6c3f9c 0%, #5a2d82 4%, #4e2574 100%);
+    border-radius: 20px 20px 8px 8px;
+    margin: 4px 4px 0 4px;
+    padding: 8px 12px;
+    box-shadow: 
+        inset 0 2px 4px rgba(255,255,255,0.15),
+        0 4px 12px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Brand text */
+#brand {
+    text-align: center;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+#brand span {
+    color: #ffd700;
+    font-size: 12px;
+}
+
+/* Screen bezel */
+#screen-bezel {
+    background: #2a1a3e;
+    border-radius: 12px;
+    padding: 12px 16px 8px 16px;
+    margin: 0 8px;
+    box-shadow: 
+        inset 0 3px 8px rgba(0,0,0,0.6),
+        0 1px 0 rgba(255,255,255,0.1);
+    position: relative;
+}
+
+/* Power LED */
+#power-led {
+    position: absolute;
+    top: 6px;
+    left: 20px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #333;
+    box-shadow: none;
+    transition: all 0.3s;
+}
+
+#power-led.on {
+    background: #00ff44;
+    box-shadow: 0 0 6px #00ff44;
+}
+
+#screen-label {
+    font-size: 8px;
+    color: rgba(255,255,255,0.3);
+    text-align: right;
+    margin-bottom: 2px;
+    letter-spacing: 1px;
 }
 
 #screen-container {
-    flex: 0 0 auto;
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 8px 0;
-    background: #0f0f23;
-    border-radius: 12px;
-    margin: 4px 0;
 }
 
 #screen {
     width: 100%;
-    max-width: 320px;
+    max-width: 280px;
     aspect-ratio: 160 / 144;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     background: #0f380f;
-    border-radius: 8px;
-    border: 3px solid #333;
+    border-radius: 4px;
+    border: 2px solid #1a0a2e;
 }
 
+/* Speaker dots */
+#speaker-label {
+    text-align: right;
+    margin-top: 4px;
+    font-size: 7px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 1px;
+}
+
+/* Controls area */
 #controls {
-    flex: 1 1 auto;
+    flex: 1;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 0;
-    min-height: 160px;
+    padding: 12px 8px 0 8px;
+    min-height: 150px;
 }
 
 #controls-left, #controls-right {
@@ -65,123 +152,211 @@ html, body {
     align-items: center;
 }
 
+/* D-Pad - cross shaped like real GBC */
 #dpad {
     display: grid;
-    grid-template-columns: 56px 56px 56px;
-    grid-template-rows: 56px 56px 56px;
-    gap: 2px;
+    grid-template-columns: 48px 48px 48px;
+    grid-template-rows: 48px 48px 48px;
+    gap: 0px;
+    position: relative;
 }
 
 .dpad-btn {
-    background: #2d2d5e;
-    border: 2px solid #3d3d7e;
-    border-radius: 8px;
-    color: #aaa;
-    font-size: 20px;
+    background: #2a2a2a;
+    border: none;
+    color: rgba(255,255,255,0.4);
+    font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    position: relative;
+    z-index: 2;
 }
 
 .dpad-btn:active, .dpad-btn.pressed {
-    background: #4d4d8e;
-    border-color: #6d6dae;
+    background: #444;
 }
 
-#dpad-center {
-    background: #252550;
-    border-color: #252550;
-    border-radius: 50%;
+/* Shape the d-pad like a cross */
+#dpad-up { 
+    grid-column: 2; grid-row: 1;
+    border-radius: 8px 8px 0 0;
+    box-shadow: inset 0 2px 3px rgba(255,255,255,0.1), 0 -2px 4px rgba(0,0,0,0.3);
+}
+#dpad-left { 
+    grid-column: 1; grid-row: 2;
+    border-radius: 8px 0 0 8px;
+    box-shadow: inset 2px 0 3px rgba(255,255,255,0.1), -2px 0 4px rgba(0,0,0,0.3);
+}
+#dpad-center { 
+    grid-column: 2; grid-row: 2;
+    background: #2a2a2a;
+    border-radius: 0;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+}
+#dpad-right { 
+    grid-column: 3; grid-row: 2;
+    border-radius: 0 8px 8px 0;
+    box-shadow: inset -2px 0 3px rgba(255,255,255,0.1), 2px 0 4px rgba(0,0,0,0.3);
+}
+#dpad-down { 
+    grid-column: 2; grid-row: 3;
+    border-radius: 0 0 8px 8px;
+    box-shadow: inset 0 -2px 3px rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.3);
 }
 
-#dpad-up { grid-column: 2; grid-row: 1; }
-#dpad-left { grid-column: 1; grid-row: 2; }
-#dpad-center { grid-column: 2; grid-row: 2; }
-#dpad-right { grid-column: 3; grid-row: 2; }
-#dpad-down { grid-column: 2; grid-row: 3; }
+/* Hide corner cells */
+#dpad::before {
+    content: '';
+    grid-column: 1; grid-row: 1;
+}
 
+/* A/B Buttons - round like GBC */
 #ab-buttons {
     display: flex;
-    gap: 16px;
-    transform: rotate(-15deg);
+    gap: 12px;
+    transform: rotate(-25deg);
 }
 
 .action-btn {
-    width: 64px;
-    height: 64px;
+    width: 58px;
+    height: 58px;
     border-radius: 50%;
-    background: #8b2252;
-    border: 3px solid #b03070;
+    border: none;
     color: white;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    box-shadow: 
+        0 4px 6px rgba(0,0,0,0.4),
+        inset 0 2px 3px rgba(255,255,255,0.2),
+        inset 0 -2px 3px rgba(0,0,0,0.2);
+    position: relative;
 }
 
-.action-btn:active, .action-btn.pressed {
-    background: #c04080;
-    border-color: #e060a0;
+#btn-a {
+    background: linear-gradient(180deg, #c0392b, #96281b);
+}
+#btn-a:active, #btn-a.pressed {
+    background: linear-gradient(180deg, #e74c3c, #c0392b);
+    box-shadow: 0 2px 3px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.2);
+    transform: translateY(2px);
 }
 
-#btn-b { margin-top: 24px; }
+#btn-b {
+    background: linear-gradient(180deg, #c0392b, #96281b);
+    margin-top: 20px;
+}
+#btn-b:active, #btn-b.pressed {
+    background: linear-gradient(180deg, #e74c3c, #c0392b);
+    box-shadow: 0 2px 3px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.2);
+    transform: translateY(2px);
+}
 
+/* Button labels under */
+.action-btn::after {
+    position: absolute;
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%) rotate(25deg);
+    font-size: 10px;
+    font-weight: bold;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 1px;
+}
+#btn-a::after { content: 'A'; }
+#btn-b::after { content: 'B'; }
+
+/* Start/Select - pill shaped like real GBC */
 #menu-buttons {
     flex: 0 0 auto;
     display: flex;
     justify-content: center;
-    gap: 24px;
-    padding: 4px 0;
+    gap: 20px;
+    padding: 0 0 4px 0;
 }
 
 .menu-btn {
-    padding: 8px 20px;
-    background: #444;
-    border: 2px solid #666;
-    border-radius: 20px;
-    color: #ccc;
-    font-size: 11px;
+    padding: 6px 18px;
+    background: linear-gradient(180deg, #555, #3a3a3a);
+    border: none;
+    border-radius: 12px;
+    color: rgba(255,255,255,0.5);
+    font-size: 9px;
     font-weight: bold;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    transform: rotate(-5deg);
+    transform: rotate(-8deg);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.15);
 }
 
 .menu-btn:active, .menu-btn.pressed {
-    background: #666;
-    border-color: #888;
+    background: linear-gradient(180deg, #666, #4a4a4a);
+    transform: rotate(-8deg) translateY(1px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
+/* Speaker grille */
+#speaker {
+    position: absolute;
+    bottom: 20px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transform: rotate(-25deg);
+    opacity: 0.25;
+}
+
+.speaker-line {
+    width: 28px;
+    height: 2px;
+    background: #1a0a2e;
+    border-radius: 1px;
+}
+
+/* Toolbar */
 #toolbar {
     flex: 0 0 auto;
     display: flex;
     justify-content: center;
-    gap: 6px;
-    padding: 8px 0;
-    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 8px;
+    background: linear-gradient(180deg, #3d1f5c, #2a1540);
+    border-radius: 0 0 16px 16px;
+    margin: 0 4px 4px 4px;
 }
 
 .toolbar-btn {
-    padding: 8px 12px;
-    background: #16213e;
-    border: 1px solid #0f3460;
-    border-radius: 8px;
-    color: #a0c4ff;
-    font-size: 12px;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    color: rgba(255,255,255,0.6);
+    font-size: 11px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 }
 
 .toolbar-btn:active {
-    background: #0f3460;
+    background: rgba(255,255,255,0.15);
 }
 
+/* Responsive */
 @media (max-height: 600px) {
-    #screen { max-width: 240px; }
-    .dpad-btn { width: 44px; height: 44px; }
-    #dpad { grid-template-columns: 44px 44px 44px; grid-template-rows: 44px 44px 44px; }
-    .action-btn { width: 52px; height: 52px; }
+    #screen { max-width: 220px; }
+    .dpad-btn { width: 40px; height: 40px; }
+    #dpad { grid-template-columns: 40px 40px 40px; grid-template-rows: 40px 40px 40px; }
+    .action-btn { width: 48px; height: 48px; }
+    #screen-bezel { padding: 8px 12px 4px 12px; margin: 0 4px; }
+}
+
+@media (max-height: 700px) {
+    #brand { margin-bottom: 2px; }
+    #controls { padding-top: 6px; min-height: 120px; }
+    #gameboy-shell { padding: 6px 10px; }
 }

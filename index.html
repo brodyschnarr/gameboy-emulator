@@ -13,33 +13,51 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="bg-image"></div>
     <div id="app">
-        <div id="screen-container">
-            <canvas id="screen" width="160" height="144"></canvas>
-        </div>
-        <div id="controls">
-            <div id="controls-left">
-                <div id="dpad">
-                    <button class="dpad-btn" id="dpad-up" data-btn="up">▲</button>
-                    <button class="dpad-btn" id="dpad-left" data-btn="left">◄</button>
-                    <button class="dpad-btn" id="dpad-center"></button>
-                    <button class="dpad-btn" id="dpad-right" data-btn="right">►</button>
-                    <button class="dpad-btn" id="dpad-down" data-btn="down">▼</button>
+        <div id="gameboy-shell">
+            <div id="brand">⬤ <span>GAME BOY</span> COLOR</div>
+            <div id="screen-bezel">
+                <div id="power-led"></div>
+                <div id="screen-label">DOT MATRIX WITH STEREO SOUND</div>
+                <div id="screen-container">
+                    <canvas id="screen" width="160" height="144"></canvas>
+                </div>
+                <div id="speaker-label">BATTERY ●</div>
+            </div>
+            <div id="controls">
+                <div id="controls-left">
+                    <div id="dpad">
+                        <button class="dpad-btn" id="dpad-up" data-btn="up">▲</button>
+                        <button class="dpad-btn" id="dpad-left" data-btn="left">◄</button>
+                        <button class="dpad-btn" id="dpad-center"></button>
+                        <button class="dpad-btn" id="dpad-right" data-btn="right">►</button>
+                        <button class="dpad-btn" id="dpad-down" data-btn="down">▼</button>
+                    </div>
+                </div>
+                <div id="controls-right">
+                    <div id="ab-buttons">
+                        <button class="action-btn" id="btn-b" data-btn="b">B</button>
+                        <button class="action-btn" id="btn-a" data-btn="a">A</button>
+                    </div>
                 </div>
             </div>
-            <div id="controls-right">
-                <div id="ab-buttons">
-                    <button class="action-btn" id="btn-b" data-btn="b">B</button>
-                    <button class="action-btn" id="btn-a" data-btn="a">A</button>
-                </div>
+            <div id="menu-buttons">
+                <button class="menu-btn" id="btn-select" data-btn="select">SELECT</button>
+                <button class="menu-btn" id="btn-start" data-btn="start">START</button>
             </div>
-        </div>
-        <div id="menu-buttons">
-            <button class="menu-btn" id="btn-select" data-btn="select">SELECT</button>
-            <button class="menu-btn" id="btn-start" data-btn="start">START</button>
+            <!-- Speaker grille -->
+            <div id="speaker">
+                <div class="speaker-line"></div>
+                <div class="speaker-line"></div>
+                <div class="speaker-line"></div>
+                <div class="speaker-line"></div>
+                <div class="speaker-line"></div>
+                <div class="speaker-line"></div>
+            </div>
         </div>
         <div id="toolbar">
-            <button id="btn-load" class="toolbar-btn">📂 Load ROM</button>
+            <button id="btn-load" class="toolbar-btn">📂 ROM</button>
             <button id="btn-save-state" class="toolbar-btn">💾 Save</button>
             <button id="btn-load-state" class="toolbar-btn">📥 Load</button>
             <button id="btn-mute" class="toolbar-btn">🔊 Sound</button>
