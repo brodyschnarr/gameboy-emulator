@@ -152,6 +152,225 @@
         document.body.appendChild(menu);
     }
 
+    // ===== CHEAT ENGINE =====
+    const activeCheats = []; // { addr, value, label }
+
+    // Apply active cheats every frame
+    const origLoop = gb.loop.bind(gb);
+    gb.loop = function(timestamp) {
+        // Apply cheats before each frame
+        for (const cheat of activeCheats) {
+            if (cheat.active) {
+                gb.mmu.wb(cheat.addr, cheat.value);
+            }
+        }
+        origLoop(timestamp);
+    };
+
+    // Preset cheats for popular games
+    const presetCheats = {
+        'POKEMON_GLD': [
+            { label: '99 Rare Candies (Slot 1)', codes: ['010146D5', '016347D5'], desc: 'Puts 99 Rare Candies in Item Pocket slot 1' },
+            { label: '99 Master Balls (Slot 2)', codes: ['010148D5', '016349D5'], desc: 'Puts 99 Master Balls in Item Pocket slot 2' },
+            { label: 'Infinite Money', codes: ['019F41D5', '019F42D5', '019F43D5'], desc: 'Max money' },
+            { label: 'Infinite HP (Battle)', codes: ['01FF45DA', '01FF46DA'], desc: 'Your lead Pokémon has 999 HP in battle' },
+            { label: 'Walk Through Walls', codes: ['010138D5'], desc: 'Walk anywhere' },
+        ],
+        'POKEMON_SLV': [
+            { label: '99 Rare Candies (Slot 1)', codes: ['010146D5', '016347D5'], desc: 'Puts 99 Rare Candies in Item Pocket slot 1' },
+            { label: '99 Master Balls (Slot 2)', codes: ['010148D5', '016349D5'], desc: 'Puts 99 Master Balls in Item Pocket slot 2' },
+            { label: 'Infinite Money', codes: ['019F41D5', '019F42D5', '019F43D5'], desc: 'Max money' },
+        ],
+    };
+
+    function parseGameShark(code) {
+        // Format: ABCDEFGH -> write value CD to address GHEF
+        code = code.replace(/\s/g, '').toUpperCase();
+        if (code.length !== 8) return null;
+        const type = parseInt(code.substr(0, 2), 16);
+        const value = parseInt(code.substr(2, 2), 16);
+        const addrLo = parseInt(code.substr(4, 2), 16);
+        const addrHi = parseInt(code.substr(6, 2), 16);
+        const addr = (addrHi << 8) | addrLo;
+        if (type !== 0x01) return null; // Only support type 01 (RAM write)
+        return { addr, value };
+    }
+
+    function getGameKey() {
+        if (!gb.romTitle) return null;
+        const t = gb.romTitle.toUpperCase().replace(/[^A-Z]/g, '');
+        if (t.includes('POKEMONGLD') || t.includes('POKEMONGOL')) return 'POKEMON_GLD';
+        if (t.includes('POKEMONSLV') || t.includes('POKEMONSIL')) return 'POKEMON_SLV';
+        return null;
+    }
+
+    document.getElementById('btn-cheats').addEventListener('click', () => {
+        if (!gb.romLoaded) { showToast('Load a ROM first'); return; }
+        showCheatMenu();
+    });
+
+    function showCheatMenu() {
+        let menu = document.getElementById('cheat-menu');
+        if (menu) { menu.remove(); return; }
+
+        menu = document.createElement('div');
+        menu.id = 'cheat-menu';
+        menu.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:200;display:flex;flex-direction:column;align-items:center;padding:20px;overflow-y:auto;';
+
+        const title = document.createElement('div');
+        title.textContent = '🎮 Cheats — ' + gb.romTitle;
+        title.style.cssText = 'color:#fff;font-size:16px;font-weight:bold;margin-bottom:12px;';
+        menu.appendChild(title);
+
+        const content = document.createElement('div');
+        content.style.cssText = 'width:100%;max-width:360px;display:flex;flex-direction:column;gap:8px;';
+
+        // Presets for recognized games
+        const gameKey = getGameKey();
+        if (gameKey && presetCheats[gameKey]) {
+            const presetLabel = document.createElement('div');
+            presetLabel.textContent = '⚡ Quick Cheats';
+            presetLabel.style.cssText = 'color:#ffd700;font-size:14px;font-weight:bold;margin-bottom:4px;';
+            content.appendChild(presetLabel);
+
+            for (const preset of presetCheats[gameKey]) {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;gap:8px;';
+
+                const isActive = activeCheats.some(c => c.label === preset.label && c.active);
+
+                const btn = document.createElement('button');
+                btn.textContent = (isActive ? '✅ ' : '⬜ ') + preset.label;
+                btn.style.cssText = 'flex:1;padding:12px;background:' + (isActive ? '#1a4a1a' : '#2a2a5e') + ';border:1px solid ' + (isActive ? '#2a8a2a' : '#4a4a8e') + ';border-radius:8px;color:#e0e0ff;font-size:13px;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;';
+
+                btn.addEventListener('click', () => {
+                    if (isActive) {
+                        // Deactivate
+                        for (let i = activeCheats.length - 1; i >= 0; i--) {
+                            if (activeCheats[i].label === preset.label) {
+                                activeCheats.splice(i, 1);
+                            }
+                        }
+                        showToast(preset.label + ' OFF');
+                    } else {
+                        // Activate
+                        for (const code of preset.codes) {
+                            const parsed = parseGameShark(code);
+                            if (parsed) {
+                                activeCheats.push({
+                                    addr: parsed.addr,
+                                    value: parsed.value,
+                                    label: preset.label,
+                                    code: code,
+                                    active: true
+                                });
+                            }
+                        }
+                        showToast(preset.label + ' ON ✅');
+                    }
+                    menu.remove();
+                    showCheatMenu(); // Refresh
+                });
+                row.appendChild(btn);
+                content.appendChild(row);
+            }
+        }
+
+        // Custom GameShark code input
+        const customLabel = document.createElement('div');
+        customLabel.textContent = '🔧 Custom GameShark Code';
+        customLabel.style.cssText = 'color:#a0c4ff;font-size:14px;font-weight:bold;margin-top:16px;margin-bottom:4px;';
+        content.appendChild(customLabel);
+
+        const inputRow = document.createElement('div');
+        inputRow.style.cssText = 'display:flex;gap:8px;';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'e.g. 010146D5';
+        input.maxLength = 8;
+        input.style.cssText = 'flex:1;padding:10px;background:#1a1a3e;border:1px solid #4a4a8e;border-radius:8px;color:#fff;font-size:14px;font-family:monospace;text-transform:uppercase;';
+        inputRow.appendChild(input);
+
+        const addBtn = document.createElement('button');
+        addBtn.textContent = '+ Add';
+        addBtn.style.cssText = 'padding:10px 16px;background:#2a5a2a;border:1px solid #4a8a4a;border-radius:8px;color:#aaffaa;font-size:13px;cursor:pointer;';
+        addBtn.addEventListener('click', () => {
+            const parsed = parseGameShark(input.value);
+            if (parsed) {
+                activeCheats.push({
+                    addr: parsed.addr,
+                    value: parsed.value,
+                    label: 'Custom: ' + input.value.toUpperCase(),
+                    code: input.value.toUpperCase(),
+                    active: true
+                });
+                showToast('Cheat added: ' + input.value.toUpperCase());
+                input.value = '';
+                menu.remove();
+                showCheatMenu();
+            } else {
+                showToast('Invalid code (need 8 hex chars, type 01)');
+            }
+        });
+        inputRow.appendChild(addBtn);
+        content.appendChild(inputRow);
+
+        // Show active cheats
+        if (activeCheats.length > 0) {
+            const activeLabel = document.createElement('div');
+            activeLabel.textContent = '📋 Active Cheats (' + activeCheats.filter(c=>c.active).length + ')';
+            activeLabel.style.cssText = 'color:#ff9944;font-size:14px;font-weight:bold;margin-top:16px;margin-bottom:4px;';
+            content.appendChild(activeLabel);
+
+            // Group by label
+            const seen = new Set();
+            for (const cheat of activeCheats) {
+                if (seen.has(cheat.label)) continue;
+                seen.add(cheat.label);
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#2a1a1a;border:1px solid #5a3a3a;border-radius:6px;';
+                row.innerHTML = '<span style="color:#ffcccc;font-size:12px;">' + cheat.label + '</span>';
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = '✕';
+                removeBtn.style.cssText = 'background:none;border:none;color:#ff6666;font-size:16px;cursor:pointer;padding:4px 8px;';
+                const lbl = cheat.label;
+                removeBtn.addEventListener('click', () => {
+                    for (let i = activeCheats.length - 1; i >= 0; i--) {
+                        if (activeCheats[i].label === lbl) activeCheats.splice(i, 1);
+                    }
+                    showToast(lbl + ' removed');
+                    menu.remove();
+                    showCheatMenu();
+                });
+                row.appendChild(removeBtn);
+                content.appendChild(row);
+            }
+
+            const clearBtn = document.createElement('button');
+            clearBtn.textContent = '🗑️ Clear All Cheats';
+            clearBtn.style.cssText = 'margin-top:8px;padding:10px;background:#5a1a1a;border:1px solid #8a3a3a;border-radius:8px;color:#ffaaaa;font-size:13px;cursor:pointer;';
+            clearBtn.addEventListener('click', () => {
+                activeCheats.length = 0;
+                showToast('All cheats cleared');
+                menu.remove();
+                showCheatMenu();
+            });
+            content.appendChild(clearBtn);
+        }
+
+        menu.appendChild(content);
+
+        // Close
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕ Close';
+        closeBtn.style.cssText = 'margin-top:16px;padding:10px 24px;background:transparent;border:1px solid #666;border-radius:8px;color:#aaa;font-size:13px;cursor:pointer;';
+        closeBtn.addEventListener('click', () => menu.remove());
+        menu.appendChild(closeBtn);
+
+        document.body.appendChild(menu);
+    }
+
     // Sound toggle
     const muteBtn = document.getElementById('btn-mute');
     muteBtn.addEventListener('click', () => {
