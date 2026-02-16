@@ -31,15 +31,44 @@
         reader.readAsArrayBuffer(file);
     });
 
-    // Save/Load state
+    // Save/Load state with slots
+    function getSaveIndex() {
+        const key = 'gbc_saves_' + gb.romTitle;
+        try {
+            return JSON.parse(localStorage.getItem(key)) || [];
+        } catch(e) { return []; }
+    }
+
+    function saveSaveIndex(index) {
+        localStorage.setItem('gbc_saves_' + gb.romTitle, JSON.stringify(index));
+    }
+
     document.getElementById('btn-save-state').addEventListener('click', () => {
         if (!gb.romLoaded) { showToast('Load a ROM first'); return; }
         try {
             const state = gb.saveState();
             const stateStr = JSON.stringify(state);
-            localStorage.setItem('gbc_state_' + gb.romTitle, stateStr);
+            const now = new Date();
+            const id = 'gbc_slot_' + gb.romTitle + '_' + Date.now();
+            localStorage.setItem(id, stateStr);
             gb.saveBatterySave();
-            showToast('Saved! (' + Math.round(stateStr.length/1024) + 'KB) 💾');
+
+            const index = getSaveIndex();
+            index.push({
+                id: id,
+                time: now.toISOString(),
+                label: now.toLocaleString(),
+                size: Math.round(stateStr.length / 1024)
+            });
+
+            // Keep max 10 saves, delete oldest
+            while (index.length > 10) {
+                const old = index.shift();
+                localStorage.removeItem(old.id);
+            }
+            saveSaveIndex(index);
+
+            showToast('Saved! Slot ' + index.length + '/10 💾');
         } catch (e) {
             showToast('Save failed: ' + e.message);
             console.error('Save error:', e);
@@ -48,29 +77,80 @@
 
     document.getElementById('btn-load-state').addEventListener('click', () => {
         if (!gb.romLoaded) { showToast('Load a ROM first'); return; }
-        try {
-            const key = 'gbc_state_' + gb.romTitle;
-            const data = localStorage.getItem(key);
-            if (data) {
-                const state = JSON.parse(data);
-                gb.loadState(state);
-                showToast('State loaded! 📥');
-            } else {
-                // Show what keys exist for debugging
-                const keys = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const k = localStorage.key(i);
-                    if (k.startsWith('gbc_')) keys.push(k);
-                }
-                showToast('No save for "' + gb.romTitle + '"');
-                console.log('Looking for key:', key);
-                console.log('Available GBC keys:', keys);
-            }
-        } catch (e) {
-            showToast('Load failed: ' + e.message);
-            console.error('Load error:', e);
+        const index = getSaveIndex();
+        if (index.length === 0) {
+            showToast('No saves found');
+            return;
         }
+        showSaveMenu(index);
     });
+
+    function showSaveMenu(index) {
+        // Remove existing menu
+        let menu = document.getElementById('save-menu');
+        if (menu) { menu.remove(); return; }
+
+        menu = document.createElement('div');
+        menu.id = 'save-menu';
+        menu.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
+
+        const title = document.createElement('div');
+        title.textContent = '📥 Load Save State';
+        title.style.cssText = 'color:#fff;font-size:18px;font-weight:bold;margin-bottom:16px;';
+        menu.appendChild(title);
+
+        const list = document.createElement('div');
+        list.style.cssText = 'width:100%;max-width:360px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;';
+
+        // Show newest first
+        const reversed = [...index].reverse();
+        reversed.forEach((save, i) => {
+            const btn = document.createElement('button');
+            const date = new Date(save.time);
+            const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            const slotNum = index.length - i;
+            btn.textContent = '#' + slotNum + '  —  ' + timeStr + '  (' + save.size + 'KB)';
+            btn.style.cssText = 'padding:14px 16px;background:#2a2a5e;border:1px solid #4a4a8e;border-radius:10px;color:#e0e0ff;font-size:14px;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;';
+
+            btn.addEventListener('click', () => {
+                try {
+                    const data = localStorage.getItem(save.id);
+                    if (data) {
+                        gb.loadState(JSON.parse(data));
+                        showToast('Loaded save #' + slotNum + ' 📥');
+                    } else {
+                        showToast('Save data missing');
+                    }
+                } catch(e) {
+                    showToast('Load failed: ' + e.message);
+                }
+                menu.remove();
+            });
+            list.appendChild(btn);
+        });
+        menu.appendChild(list);
+
+        // Delete all button
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '🗑️ Delete All Saves';
+        delBtn.style.cssText = 'margin-top:12px;padding:10px 20px;background:#5a1a1a;border:1px solid #8a3a3a;border-radius:8px;color:#ffaaaa;font-size:13px;cursor:pointer;';
+        delBtn.addEventListener('click', () => {
+            index.forEach(s => localStorage.removeItem(s.id));
+            saveSaveIndex([]);
+            showToast('All saves deleted');
+            menu.remove();
+        });
+        menu.appendChild(delBtn);
+
+        // Close button
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕ Cancel';
+        closeBtn.style.cssText = 'margin-top:8px;padding:10px 20px;background:transparent;border:1px solid #666;border-radius:8px;color:#aaa;font-size:13px;cursor:pointer;';
+        closeBtn.addEventListener('click', () => menu.remove());
+        menu.appendChild(closeBtn);
+
+        document.body.appendChild(menu);
+    }
 
     // Sound toggle
     const muteBtn = document.getElementById('btn-mute');
@@ -158,27 +238,14 @@
         }
     });
 
-    // Auto-save battery every 15 seconds + save state
+    // Auto-save battery RAM only (in-game saves like Pokémon save files)
+    // No auto state saves — manual only, so you control exactly what you restore
     setInterval(() => {
-        if (gb.running) {
-            gb.saveBatterySave();
-            // Also auto-save state
-            try {
-                const state = gb.saveState();
-                localStorage.setItem('gbc_autosave_' + gb.romTitle, JSON.stringify(state));
-            } catch(e) {}
-        }
+        if (gb.running) gb.saveBatterySave();
     }, 15000);
 
-    // Save on page hide
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden && gb.running) {
-            gb.saveBatterySave();
-            try {
-                const state = gb.saveState();
-                localStorage.setItem('gbc_autosave_' + gb.romTitle, JSON.stringify(state));
-            } catch(e) {}
-        }
+        if (document.hidden && gb.running) gb.saveBatterySave();
     });
 
     // Prevent default touch behaviors
