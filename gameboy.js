@@ -59,7 +59,7 @@ class GameBoy {
         this.mmu.io[0x0F] = 0xE1; // IF
         this.mmu.ie = 0x00;
 
-        console.log(`Loaded: ${this.romTitle} (GBC: ${this.mmu.isGBC}, MBC type: 0x${romData[0x147].toString(16)})`);
+        console.log(`Loaded: ${this.romTitle} (GBC: ${this.mmu.isGBC}, MBC type: 0x${rom[0x147].toString(16)})`);
     }
 
     start() {
