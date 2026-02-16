@@ -210,8 +210,7 @@
     }
 
     document.getElementById('btn-cheats').addEventListener('click', () => {
-        showToast('Cheats tapped: loaded=' + gb.romLoaded + ' title=' + gb.romTitle);
-        if (!gb.romLoaded) { return; }
+        if (!gb.romLoaded) { showToast('Load a ROM first'); return; }
         try {
             showCheatMenu();
         } catch(e) {
