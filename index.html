@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GBC Emulator">
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>GBC Emulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="screen-container">
+            <canvas id="screen" width="160" height="144"></canvas>
+        </div>
+        <div id="controls">
+            <div id="controls-left">
+                <div id="dpad">
+                    <button class="dpad-btn" id="dpad-up" data-btn="up">▲</button>
+                    <button class="dpad-btn" id="dpad-left" data-btn="left">◄</button>
+                    <button class="dpad-btn" id="dpad-center"></button>
+                    <button class="dpad-btn" id="dpad-right" data-btn="right">►</button>
+                    <button class="dpad-btn" id="dpad-down" data-btn="down">▼</button>
+                </div>
+            </div>
+            <div id="controls-right">
+                <div id="ab-buttons">
+                    <button class="action-btn" id="btn-b" data-btn="b">B</button>
+                    <button class="action-btn" id="btn-a" data-btn="a">A</button>
+                </div>
+            </div>
+        </div>
+        <div id="menu-buttons">
+            <button class="menu-btn" id="btn-select" data-btn="select">SELECT</button>
+            <button class="menu-btn" id="btn-start" data-btn="start">START</button>
+        </div>
+        <div id="toolbar">
+            <button id="btn-load" class="toolbar-btn">📂 Load ROM</button>
+            <button id="btn-save-state" class="toolbar-btn">💾 Save</button>
+            <button id="btn-load-state" class="toolbar-btn">📥 Load</button>
+            <button id="btn-mute" class="toolbar-btn">🔊 Sound</button>
+            <button id="btn-fullscreen" class="toolbar-btn">⛶ Full</button>
+        </div>
+        <input type="file" id="rom-input" accept=".gb,.gbc,.bin" style="display:none">
+    </div>
+    <script src="cpu.js"></script>
+    <script src="mmu.js"></script>
+    <script src="ppu.js"></script>
+    <script src="apu.js"></script>
+    <script src="timer.js"></script>
+    <script src="joypad.js"></script>
+    <script src="mbc.js"></script>
+    <script src="gameboy.js"></script>
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>

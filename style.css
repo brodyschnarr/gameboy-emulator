@@ -1,0 +1,187 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #1a1a2e;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #e0e0e0;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    height: 100dvh;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: env(safe-area-inset-top) 8px env(safe-area-inset-bottom) 8px;
+}
+
+#screen-container {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 0;
+    background: #0f0f23;
+    border-radius: 12px;
+    margin: 4px 0;
+}
+
+#screen {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 160 / 144;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background: #0f380f;
+    border-radius: 8px;
+    border: 3px solid #333;
+}
+
+#controls {
+    flex: 1 1 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    min-height: 160px;
+}
+
+#controls-left, #controls-right {
+    flex: 0 0 45%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#dpad {
+    display: grid;
+    grid-template-columns: 56px 56px 56px;
+    grid-template-rows: 56px 56px 56px;
+    gap: 2px;
+}
+
+.dpad-btn {
+    background: #2d2d5e;
+    border: 2px solid #3d3d7e;
+    border-radius: 8px;
+    color: #aaa;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dpad-btn:active, .dpad-btn.pressed {
+    background: #4d4d8e;
+    border-color: #6d6dae;
+}
+
+#dpad-center {
+    background: #252550;
+    border-color: #252550;
+    border-radius: 50%;
+}
+
+#dpad-up { grid-column: 2; grid-row: 1; }
+#dpad-left { grid-column: 1; grid-row: 2; }
+#dpad-center { grid-column: 2; grid-row: 2; }
+#dpad-right { grid-column: 3; grid-row: 2; }
+#dpad-down { grid-column: 2; grid-row: 3; }
+
+#ab-buttons {
+    display: flex;
+    gap: 16px;
+    transform: rotate(-15deg);
+}
+
+.action-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #8b2252;
+    border: 3px solid #b03070;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.action-btn:active, .action-btn.pressed {
+    background: #c04080;
+    border-color: #e060a0;
+}
+
+#btn-b { margin-top: 24px; }
+
+#menu-buttons {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 4px 0;
+}
+
+.menu-btn {
+    padding: 8px 20px;
+    background: #444;
+    border: 2px solid #666;
+    border-radius: 20px;
+    color: #ccc;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transform: rotate(-5deg);
+}
+
+.menu-btn:active, .menu-btn.pressed {
+    background: #666;
+    border-color: #888;
+}
+
+#toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+}
+
+.toolbar-btn {
+    padding: 8px 12px;
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+    color: #a0c4ff;
+    font-size: 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.toolbar-btn:active {
+    background: #0f3460;
+}
+
+@media (max-height: 600px) {
+    #screen { max-width: 240px; }
+    .dpad-btn { width: 44px; height: 44px; }
+    #dpad { grid-template-columns: 44px 44px 44px; grid-template-rows: 44px 44px 44px; }
+    .action-btn { width: 52px; height: 52px; }
+}
