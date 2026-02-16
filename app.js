@@ -13,12 +13,20 @@
     romInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
+        showToast('Loading: ' + file.name + ' (' + file.size + ' bytes)');
         const reader = new FileReader();
         reader.onload = (ev) => {
-            gb.stop();
-            gb.loadROM(ev.target.result);
-            gb.start();
+            try {
+                gb.stop();
+                gb.loadROM(ev.target.result);
+                gb.start();
+                showToast('Running: ' + gb.romTitle);
+            } catch(err) {
+                showToast('Error: ' + err.message);
+                console.error(err);
+            }
         };
+        reader.onerror = () => showToast('Failed to read file');
         reader.readAsArrayBuffer(file);
     });
 

@@ -50,7 +50,16 @@ class GameBoy {
         this.cpu.reset();
         this.apu.init();
 
-        console.log(`Loaded: ${this.romTitle} (GBC: ${this.mmu.isGBC})`);
+        // Init IO registers to post-boot state
+        this.mmu.io[0x40] = 0x91; // LCDC - LCD on, BG on, OBJ on
+        this.mmu.io[0x41] = 0x85; // STAT
+        this.mmu.io[0x47] = 0xFC; // BGP
+        this.mmu.io[0x48] = 0xFF; // OBP0
+        this.mmu.io[0x49] = 0xFF; // OBP1
+        this.mmu.io[0x0F] = 0xE1; // IF
+        this.mmu.ie = 0x00;
+
+        console.log(`Loaded: ${this.romTitle} (GBC: ${this.mmu.isGBC}, MBC type: 0x${romData[0x147].toString(16)})`);
     }
 
     start() {

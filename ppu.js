@@ -133,16 +133,19 @@ class PPU {
                 bgPriority = (attr & 0x80) !== 0;
             }
 
-            if (tileData === 0x8800) tileNum = ((tileNum ^ 0x80) - 128 + 128) & 0xFF;
-
             let tileY = y & 7;
             let tileX = x & 7;
             if (flipY) tileY = 7 - tileY;
             if (flipX) tileX = 7 - tileX;
 
-            const tileAddr = (tileData === 0x8800)
-                ? 0x8800 + ((tileNum + 128) & 0xFF) * 16
-                : tileData + tileNum * 16;
+            let tileAddr;
+            if (tileData === 0x8000) {
+                tileAddr = 0x8000 + tileNum * 16;
+            } else {
+                // Signed tile numbers: 0x8800 method
+                const signed = tileNum > 127 ? tileNum - 256 : tileNum;
+                tileAddr = 0x9000 + signed * 16;
+            }
 
             const lo = this.mmu.vram[vramBank][(tileAddr + tileY * 2) - 0x8000];
             const hi = this.mmu.vram[vramBank][(tileAddr + tileY * 2 + 1) - 0x8000];
@@ -184,16 +187,18 @@ class PPU {
                 bgPriority = (attr & 0x80) !== 0;
             }
 
-            if (tileData === 0x8800) tileNum = ((tileNum ^ 0x80) - 128 + 128) & 0xFF;
-
             let tileY = y & 7;
             let tileX = x & 7;
             if (flipY) tileY = 7 - tileY;
             if (flipX) tileX = 7 - tileX;
 
-            const tileAddr = (tileData === 0x8800)
-                ? 0x8800 + ((tileNum + 128) & 0xFF) * 16
-                : tileData + tileNum * 16;
+            let tileAddr;
+            if (tileData === 0x8000) {
+                tileAddr = 0x8000 + tileNum * 16;
+            } else {
+                const signed = tileNum > 127 ? tileNum - 256 : tileNum;
+                tileAddr = 0x9000 + signed * 16;
+            }
 
             const lo = this.mmu.vram[vramBank][(tileAddr + tileY * 2) - 0x8000];
             const hi = this.mmu.vram[vramBank][(tileAddr + tileY * 2 + 1) - 0x8000];
