@@ -23,10 +23,12 @@ class Timer {
         this.timaCycles += cycles;
         while (this.timaCycles >= speed) {
             this.timaCycles -= speed;
-            this.mmu.io[0x05]++;
-            if (this.mmu.io[0x05] > 0xFF) {
+            const tima = this.mmu.io[0x05] + 1;
+            if (tima > 0xFF) {
                 this.mmu.io[0x05] = this.mmu.io[0x06]; // Reset to TMA
                 this.mmu.io[0x0F] |= 0x04; // Timer interrupt
+            } else {
+                this.mmu.io[0x05] = tima;
             }
         }
     }

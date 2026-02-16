@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GBC Emulator Tests</title>
+    <style>
+        body { font-family: monospace; background: #1a1a2e; color: #e0e0e0; padding: 20px; }
+        .pass { color: #00ff44; } .fail { color: #ff4444; }
+        h2 { color: #a0c4ff; margin-top: 20px; }
+        #results { white-space: pre-wrap; line-height: 1.6; }
+        #summary { font-size: 18px; margin-top: 20px; padding: 10px; border-radius: 8px; }
+        .summary-pass { background: #1a3a1a; } .summary-fail { background: #3a1a1a; }
+    </style>
+</head>
+<body>
+    <h1>🎮 GBC Emulator Test Suite</h1>
+    <div id="results"></div>
+    <div id="summary"></div>
+
+    <canvas id="test-canvas" width="160" height="144" style="display:none"></canvas>
+
+    <script src="cpu.js"></script>
+    <script src="mmu.js"></script>
+    <script src="ppu.js"></script>
+    <script src="apu.js"></script>
+    <script src="timer.js"></script>
+    <script src="joypad.js"></script>
+    <script src="mbc.js"></script>
+    <script src="gameboy.js"></script>
+    <script>
+    (function() {
+        const results = document.getElementById('results');
+        const summary = document.getElementById('summary');
+        let passed = 0, failed = 0;
+
+        function log(msg, isPass) {
+            const cls = isPass ? 'pass' : 'fail';
+            const icon = isPass ? '✅' : '❌';
+            results.innerHTML += `<span class="${cls}">${icon} ${msg}</span>\n`;
+            if (isPass) passed++; else failed++;
+        }
+
+        function assert(condition, msg) {
+            if (condition) log(msg, true);
+            else log(msg + ' — FAILED', false);
+        }
+
+        function assertEq(actual, expected, msg) {
+            if (actual === expected) log(msg, true);
+            else log(`${msg} — expected ${expected}, got ${actual}`, false);
+        }
+
+        // ============ CPU TESTS ============
+        results.innerHTML += '<h2>CPU Tests</h2>';
+
+        (function testCPUInit() {
+            const mmu = new MMU();
+            const cpu = new CPU(mmu);
+            assertEq(cpu.a, 0x11, 'CPU init: A = 0x11 (GBC mode)');
+            assertEq(cpu.pc, 0x0100, 'CPU init: PC = 0x0100');
+            assertEq(cpu.sp, 0xFFFE, 'CPU init: SP = 0xFFFE');
+            assertEq(cpu.ime, false, 'CPU init: IME disabled');
+        })();
+
+        (function testCPURegisters() {
+            const mmu = new MMU();
+            const cpu = new CPU(mmu);
+            cpu.bc = 0x1234;
+            assertEq(cpu.b, 0x12, 'BC write: B = high byte');
+            assertEq(cpu.c, 0x34, 'BC write: C = low byte');
+            assertEq(cpu.bc, 0x1234, 'BC read: combined');
+
+            cpu.hl = 0xABCD;
+            assertEq(cpu.h, 0xAB, 'HL write: H = high byte');
+            assertEq(cpu.l, 0xCD, 'HL write: L = low byte');
+
+            cpu.af = 0x12F0;
+            assertEq(cpu.a, 0x12, 'AF write: A');
+            assertEq(cpu.fZ, 1, 'AF write: Z flag set');
+            assertEq(cpu.fN, 1, 'AF write: N flag set');
+            assertEq(cpu.fH, 1, 'AF write: H flag set');
+            assertEq(cpu.fC, 1, 'AF write: C flag set');
+        })();
+
+        (function testALU() {
+            const mmu = new MMU();
+            const cpu = new CPU(mmu);
+
+            cpu.a = 0x0F;
+            cpu.add8(0x01);
+            assertEq(cpu.a, 0x10, 'ADD: 0x0F + 0x01 = 0x10');
+            assertEq(cpu.fH, 1, 'ADD: half-carry set');
+            assertEq(cpu.fZ, 0, 'ADD: zero not set');
+
+            cpu.a = 0xFF;
+            cpu.add8(0x01);
+            assertEq(cpu.a, 0x00, 'ADD: 0xFF + 0x01 = 0x00 (overflow)');
+            assertEq(cpu.fZ, 1, 'ADD: zero set');
+            assertEq(cpu.fC, 1, 'ADD: carry set');
+
+            cpu.a = 0x10;
+            cpu.sub8(0x10);
+            assertEq(cpu.a, 0x00, 'SUB: 0x10 - 0x10 = 0');
+            assertEq(cpu.fZ, 1, 'SUB: zero set');
+            assertEq(cpu.fN, 1, 'SUB: N set');
+
+            cpu.a = 0xF0;
+            cpu.and8(0x0F);
+            assertEq(cpu.a, 0x00, 'AND: 0xF0 & 0x0F = 0');
+            assertEq(cpu.fH, 1, 'AND: H always set');
+
+            cpu.a = 0xAA;
+            cpu.xor8(0xAA);
+            assertEq(cpu.a, 0x00, 'XOR: 0xAA ^ 0xAA = 0');
+            assertEq(cpu.fZ, 1, 'XOR: zero set');
+
+            cpu.a = 0x05;
+            cpu.or8(0xA0);
+            assertEq(cpu.a, 0xA5, 'OR: 0x05 | 0xA0 = 0xA5');
+
+            const v = cpu.inc8(0xFF);
+            assertEq(v, 0x00, 'INC: 0xFF + 1 = 0x00');
+            assertEq(cpu.fZ, 1, 'INC: zero set');
+            assertEq(cpu.fH, 1, 'INC: half-carry set');
+
+            const v2 = cpu.dec8(0x00);
+            assertEq(v2, 0xFF, 'DEC: 0x00 - 1 = 0xFF');
+            assertEq(cpu.fN, 1, 'DEC: N set');
+        })();
+
+        (function testCPUSignedByte() {
+            const mmu = new MMU();
+            const cpu = new CPU(mmu);
+            assertEq(cpu.signedByte(0), 0, 'signed: 0 = 0');
+            assertEq(cpu.signedByte(127), 127, 'signed: 127 = 127');
+            assertEq(cpu.signedByte(128), -128, 'signed: 128 = -128');
+            assertEq(cpu.signedByte(255), -1, 'signed: 255 = -1');
+        })();
+
+        // ============ MMU TESTS ============
+        results.innerHTML += '<h2>MMU Tests</h2>';
+
+        (function testMMUReadWrite() {
+            const mmu = new MMU();
+            // HRAM
+            mmu.wb(0xFF80, 0x42);
+            assertEq(mmu.rb(0xFF80), 0x42, 'HRAM: write/read 0xFF80');
+
+            // WRAM
+            mmu.wb(0xC000, 0xAB);
+            assertEq(mmu.rb(0xC000), 0xAB, 'WRAM bank 0: write/read');
+
+            // OAM
+            mmu.wb(0xFE00, 0x55);
+            assertEq(mmu.rb(0xFE00), 0x55, 'OAM: write/read');
+
+            // IE register
+            mmu.wb(0xFFFF, 0x1F);
+            assertEq(mmu.rb(0xFFFF), 0x1F, 'IE register: write/read');
+
+            // VRAM
+            mmu.wb(0x8000, 0x77);
+            assertEq(mmu.rb(0x8000), 0x77, 'VRAM bank 0: write/read');
+        })();
+
+        (function testMMUGBCBanks() {
+            const mmu = new MMU();
+            mmu.isGBC = true;
+
+            // VRAM banking
+            mmu.vramBank = 0;
+            mmu.wb(0x8000, 0xAA);
+            mmu.vramBank = 1;
+            mmu.wb(0x8000, 0xBB);
+            assertEq(mmu.rb(0x8000), 0xBB, 'VRAM bank 1 read');
+            mmu.vramBank = 0;
+            assertEq(mmu.rb(0x8000), 0xAA, 'VRAM bank 0 preserved');
+
+            // WRAM banking
+            mmu.wramBank = 2;
+            mmu.wb(0xD000, 0xCC);
+            mmu.wramBank = 3;
+            mmu.wb(0xD000, 0xDD);
+            assertEq(mmu.rb(0xD000), 0xDD, 'WRAM bank 3 read');
+            mmu.wramBank = 2;
+            assertEq(mmu.rb(0xD000), 0xCC, 'WRAM bank 2 preserved');
+        })();
+
+        // ============ MBC TESTS ============
+        results.innerHTML += '<h2>MBC Tests</h2>';
+
+        (function testMBC3() {
+            const rom = new Uint8Array(0x80000); // 512KB
+            rom[0x147] = 0x10; // MBC3+RAM+BATTERY+RTC
+            rom[0x149] = 0x03; // 32KB RAM
+            const mbc = createMBC(rom);
+            assert(mbc instanceof MBC3, 'MBC3 created for cart type 0x10');
+
+            // ROM banking
+            mbc.writeROM(0x2000, 0x05);
+            assertEq(mbc.romBank, 5, 'MBC3: ROM bank set to 5');
+
+            // Bank 0 → 1
+            mbc.writeROM(0x2000, 0x00);
+            assertEq(mbc.romBank, 1, 'MBC3: bank 0 maps to 1');
+
+            // RAM enable
+            mbc.writeROM(0x0000, 0x0A);
+            assert(mbc.ramEnabled, 'MBC3: RAM enabled');
+            mbc.writeROM(0x0000, 0x00);
+            assert(!mbc.ramEnabled, 'MBC3: RAM disabled');
+
+            // RAM read/write
+            mbc.writeROM(0x0000, 0x0A);
+            mbc.writeROM(0x4000, 0x00); // RAM bank 0
+            mbc.writeRAM(0xA000, 0x42);
+            assertEq(mbc.readRAM(0xA000), 0x42, 'MBC3: RAM write/read');
+
+            // RTC mapping
+            mbc.writeROM(0x4000, 0x08);
+            assert(mbc.rtcMapped, 'MBC3: RTC mapped for register 0x08');
+        })();
+
+        (function testMBC1() {
+            const rom = new Uint8Array(0x80000);
+            rom[0x147] = 0x01; // MBC1
+            const mbc = createMBC(rom);
+            assert(mbc instanceof MBC1, 'MBC1 created for cart type 0x01');
+        })();
+
+        (function testMBC5() {
+            const rom = new Uint8Array(0x80000);
+            rom[0x147] = 0x19; // MBC5
+            const mbc = createMBC(rom);
+            assert(mbc instanceof MBC5, 'MBC5 created for cart type 0x19');
+        })();
+
+        // ============ PPU TESTS ============
+        results.innerHTML += '<h2>PPU Tests</h2>';
+
+        (function testPPUInit() {
+            const mmu = new MMU();
+            const ppu = new PPU(mmu);
+            assertEq(ppu.framebuffer.length, 160 * 144 * 4, 'PPU: framebuffer size correct');
+            assertEq(ppu.cycles, 0, 'PPU: cycles start at 0');
+        })();
+
+        (function testPPUModes() {
+            const mmu = new MMU();
+            const ppu = new PPU(mmu);
+            mmu.io[0x40] = 0x91; // LCD on
+
+            // Mode 2 (OAM scan) at start
+            ppu.step(4);
+            assertEq(mmu.io[0x41] & 3, 2, 'PPU: mode 2 at cycle 4');
+
+            // Mode 3 (drawing) after 80 cycles
+            ppu.step(76);
+            assertEq(mmu.io[0x41] & 3, 3, 'PPU: mode 3 at cycle 80');
+
+            // Mode 0 (HBlank) after 252 cycles
+            ppu.step(172);
+            assertEq(mmu.io[0x41] & 3, 0, 'PPU: mode 0 at cycle 252');
+        })();
+
+        // ============ TIMER TESTS ============
+        results.innerHTML += '<h2>Timer Tests</h2>';
+
+        (function testTimerDIV() {
+            const mmu = new MMU();
+            const timer = new Timer(mmu);
+            mmu.io[0x04] = 0;
+            timer.step(256);
+            assertEq(mmu.io[0x04], 1, 'Timer: DIV increments after 256 cycles');
+            timer.step(256);
+            assertEq(mmu.io[0x04], 2, 'Timer: DIV increments again');
+        })();
+
+        (function testTimerTIMA() {
+            const mmu = new MMU();
+            const timer = new Timer(mmu);
+            mmu.io[0x07] = 0x05; // Enable, 16 cycles
+            mmu.io[0x05] = 0xFE;
+            mmu.io[0x06] = 0x00; // TMA
+            timer.step(16);
+            assertEq(mmu.io[0x05], 0xFF, 'Timer: TIMA increments');
+            timer.step(16);
+            assertEq(mmu.io[0x05], 0x00, 'Timer: TIMA overflows to TMA');
+            assert(mmu.io[0x0F] & 0x04, 'Timer: interrupt flag set on overflow');
+        })();
+
+        // ============ JOYPAD TESTS ============
+        results.innerHTML += '<h2>Joypad Tests</h2>';
+
+        (function testJoypad() {
+            const mmu = new MMU();
+            const jp = new Joypad(mmu);
+            mmu.onJoypad = () => jp.read();
+
+            // Select direction keys
+            mmu.io[0x00] = 0x20; // bit 5 set = buttons, bit 4 clear = directions
+            jp.press('right');
+            const val = jp.read();
+            assertEq(val & 0x01, 0, 'Joypad: right pressed (bit 0 low)');
+            jp.release('right');
+            const val2 = jp.read();
+            assertEq(val2 & 0x0F, 0x0F, 'Joypad: all released');
+
+            // Select button keys
+            mmu.io[0x00] = 0x10; // bit 4 set = directions, bit 5 clear = buttons
+            jp.press('a');
+            const val3 = jp.read();
+            assertEq(val3 & 0x01, 0, 'Joypad: A pressed (bit 0 low)');
+        })();
+
+        // ============ APU TESTS ============
+        results.innerHTML += '<h2>APU Tests</h2>';
+
+        (function testAPUInit() {
+            const apu = new APU();
+            assertEq(apu.enabled, false, 'APU: not enabled before init');
+            assertEq(apu.muted, false, 'APU: not muted');
+            assertEq(apu.powerOn, false, 'APU: power off');
+        })();
+
+        (function testAPURegisters() {
+            const apu = new APU();
+            apu.writeRegister(0xFF26, 0x80);
+            assert(apu.powerOn, 'APU: power on via NR52');
+
+            apu.writeRegister(0xFF11, 0x80); // 50% duty
+            assertEq(apu.ch1.duty, 2, 'APU: CH1 duty = 50%');
+
+            apu.writeRegister(0xFF12, 0xF3); // vol=15, down, period=3
+            assertEq(apu.ch1.envVol, 15, 'APU: CH1 envelope volume');
+            assertEq(apu.ch1.envDir, 0, 'APU: CH1 envelope direction down');
+            assertEq(apu.ch1.envPeriod, 3, 'APU: CH1 envelope period');
+
+            apu.writeRegister(0xFF25, 0xFF);
+            assertEq(apu.panning, 0xFF, 'APU: panning all channels');
+
+            apu.writeRegister(0xFF24, 0x77);
+            assertEq(apu.masterVol.left, 7, 'APU: master vol left');
+            assertEq(apu.masterVol.right, 7, 'APU: master vol right');
+        })();
+
+        (function testAPUMute() {
+            const apu = new APU();
+            assertEq(apu.toggleMute(), true, 'APU: toggle mute on');
+            assertEq(apu.toggleMute(), false, 'APU: toggle mute off');
+        })();
+
+        // ============ SAVE/LOAD TESTS ============
+        results.innerHTML += '<h2>Save/Load Tests</h2>';
+
+        (function testSaveLoadState() {
+            const canvas = document.getElementById('test-canvas');
+            const gb = new GameBoy(canvas);
+
+            // Create a minimal valid ROM
+            const rom = new Uint8Array(0x8000);
+            rom[0x143] = 0x80; // GBC flag
+            rom[0x147] = 0x00; // No MBC
+            rom[0x134] = 0x54; // 'T'
+            rom[0x135] = 0x45; // 'E'
+            rom[0x136] = 0x53; // 'S'
+            rom[0x137] = 0x54; // 'T'
+            gb.loadROM(rom.buffer);
+
+            assert(gb.romLoaded, 'Save/Load: ROM loaded');
+            assertEq(gb.romTitle, 'TEST', 'Save/Load: title parsed');
+
+            // Modify some state
+            gb.cpu.a = 0x42;
+            gb.cpu.pc = 0x1234;
+            gb.mmu.wb(0xFF80, 0xAB);
+
+            // Save
+            const state = gb.saveState();
+            assert(state !== null, 'Save/Load: state created');
+            assert(state.cpu.a === 0x42, 'Save/Load: CPU A preserved');
+            assert(state.cpu.pc === 0x1234, 'Save/Load: CPU PC preserved');
+
+            // Modify state
+            gb.cpu.a = 0x00;
+            gb.cpu.pc = 0x0000;
+
+            // Load
+            gb.loadState(state);
+            assertEq(gb.cpu.a, 0x42, 'Save/Load: CPU A restored');
+            assertEq(gb.cpu.pc, 0x1234, 'Save/Load: CPU PC restored');
+            assertEq(gb.mmu.rb(0xFF80), 0xAB, 'Save/Load: HRAM restored');
+        })();
+
+        (function testSaveLoadLocalStorage() {
+            const canvas = document.getElementById('test-canvas');
+            const gb = new GameBoy(canvas);
+
+            const rom = new Uint8Array(0x8000);
+            rom[0x147] = 0x00;
+            rom[0x134] = 0x54; rom[0x135] = 0x53; rom[0x136] = 0x54; // 'TST'
+            gb.loadROM(rom.buffer);
+
+            gb.cpu.a = 0x99;
+            const state = gb.saveState();
+            const key = 'gbc_state_' + gb.romTitle;
+            const stateStr = JSON.stringify(state);
+            localStorage.setItem(key, stateStr);
+
+            const loaded = JSON.parse(localStorage.getItem(key));
+            assert(loaded !== null, 'localStorage: state saved');
+            assertEq(loaded.cpu.a, 0x99, 'localStorage: state data correct');
+
+            // Clean up
+            localStorage.removeItem(key);
+        })();
+
+        (function testBatterySave() {
+            const canvas = document.getElementById('test-canvas');
+            const gb = new GameBoy(canvas);
+
+            const rom = new Uint8Array(0x8000);
+            rom[0x147] = 0x00;
+            rom[0x149] = 0x02; // 8KB RAM
+            rom[0x134] = 0x42; rom[0x135] = 0x41; rom[0x136] = 0x54; // 'BAT'
+            gb.loadROM(rom.buffer);
+
+            // Write to RAM via MBC
+            gb.mmu.mbc.ramEnabled = true;
+            gb.mmu.mbc.writeRAM(0xA000, 0x55);
+
+            gb.saveBatterySave();
+            const saved = localStorage.getItem('gbc_sav_' + gb.romTitle);
+            assert(saved !== null, 'Battery save: data saved to localStorage');
+
+            // Clean up
+            localStorage.removeItem('gbc_sav_' + gb.romTitle);
+        })();
+
+        // ============ INTEGRATION TESTS ============
+        results.innerHTML += '<h2>Integration Tests</h2>';
+
+        (function testGameBoyInit() {
+            const canvas = document.getElementById('test-canvas');
+            const gb = new GameBoy(canvas);
+            assert(gb.mmu instanceof MMU, 'GameBoy: MMU created');
+            assert(gb.cpu instanceof CPU, 'GameBoy: CPU created');
+            assert(gb.ppu instanceof PPU, 'GameBoy: PPU created');
+            assert(gb.apu instanceof APU, 'GameBoy: APU created');
+            assert(gb.timer instanceof Timer, 'GameBoy: Timer created');
+            assert(gb.joypad instanceof Joypad, 'GameBoy: Joypad created');
+            assertEq(gb.running, false, 'GameBoy: not running initially');
+            assertEq(gb.romLoaded, false, 'GameBoy: no ROM loaded');
+        })();
+
+        (function testCPUExecution() {
+            const mmu = new MMU();
+            const cpu = new CPU(mmu);
+
+            // Write NOP at 0x0100
+            mmu.wb(0xFF80, 0x00); // NOP
+            cpu.pc = 0xFF80;
+            const cycles = cpu.step();
+            assertEq(cycles, 4, 'CPU exec: NOP = 4 cycles');
+            assertEq(cpu.pc, 0xFF81, 'CPU exec: PC advanced');
+        })();
+
+        // ============ SUMMARY ============
+        const total = passed + failed;
+        summary.className = failed === 0 ? 'summary-pass' : 'summary-fail';
+        summary.innerHTML = failed === 0
+            ? `🎉 ALL ${total} TESTS PASSED`
+            : `⚠️ ${passed}/${total} passed, ${failed} failed`;
+    })();
+    </script>
+</body>
+</html>

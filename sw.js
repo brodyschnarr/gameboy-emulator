@@ -1,4 +1,4 @@
-const CACHE = 'gbc-v7';
+const CACHE = 'gbc-v8';
 const FILES = ['./', 'index.html', 'style.css', 'cpu.js', 'mmu.js', 'ppu.js', 'apu.js', 'timer.js', 'joypad.js', 'mbc.js', 'gameboy.js', 'app.js', 'manifest.json', 'bg.jpg'];
 
 self.addEventListener('install', e => {
@@ -11,6 +11,17 @@ self.addEventListener('activate', e => {
     self.clients.claim();
 });
 
+// Network-first strategy: always try fresh, fall back to cache for offline
 self.addEventListener('fetch', e => {
-    e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+    e.respondWith(
+        fetch(e.request).then(response => {
+            // Cache the fresh response
+            const clone = response.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+            return response;
+        }).catch(() => {
+            // Offline - serve from cache
+            return caches.match(e.request);
+        })
+    );
 });
