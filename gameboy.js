@@ -147,12 +147,23 @@ class GameBoy {
                 ram: Array.from(this.mmu.mbc.getRAM())
             },
             ppu: { cycles: this.ppu.cycles, windowLine: this.ppu.windowLine },
-            timer: { divCycles: this.timer.divCycles, timaCycles: this.timer.timaCycles }
+            timer: { divCycles: this.timer.divCycles, timaCycles: this.timer.timaCycles },
+            apu: {
+                powerOn: this.apu.powerOn,
+                panning: this.apu.panning,
+                masterVol: { ...this.apu.masterVol },
+                ch1: { enabled: this.apu.ch1.enabled, freq: this.apu.ch1.freq, vol: this.apu.ch1.vol, duty: this.apu.ch1.duty, lengthTimer: this.apu.ch1.lengthTimer, lengthEnabled: this.apu.ch1.lengthEnabled, envVol: this.apu.ch1.envVol, envDir: this.apu.ch1.envDir, envPeriod: this.apu.ch1.envPeriod, sweepPeriod: this.apu.ch1.sweepPeriod, sweepDir: this.apu.ch1.sweepDir, sweepShift: this.apu.ch1.sweepShift, shadow: this.apu.ch1.shadow, sweepEnabled: this.apu.ch1.sweepEnabled },
+                ch2: { enabled: this.apu.ch2.enabled, freq: this.apu.ch2.freq, vol: this.apu.ch2.vol, duty: this.apu.ch2.duty, lengthTimer: this.apu.ch2.lengthTimer, lengthEnabled: this.apu.ch2.lengthEnabled, envVol: this.apu.ch2.envVol, envDir: this.apu.ch2.envDir, envPeriod: this.apu.ch2.envPeriod },
+                ch3: { enabled: this.apu.ch3.enabled, freq: this.apu.ch3.freq, volShift: this.apu.ch3.volShift, lengthTimer: this.apu.ch3.lengthTimer, lengthEnabled: this.apu.ch3.lengthEnabled, dacEnabled: this.apu.ch3.dacEnabled },
+                ch4: { enabled: this.apu.ch4.enabled, vol: this.apu.ch4.vol, lengthTimer: this.apu.ch4.lengthTimer, lengthEnabled: this.apu.ch4.lengthEnabled, envVol: this.apu.ch4.envVol, envDir: this.apu.ch4.envDir, envPeriod: this.apu.ch4.envPeriod, divisor: this.apu.ch4.divisor, width: this.apu.ch4.width, clockShift: this.apu.ch4.clockShift },
+                waveRAM: Array.from(this.apu.waveRAM)
+            }
         };
         return state;
     }
 
     loadState(state) {
+        this.apu.resetBuffer();
         Object.assign(this.cpu, state.cpu);
         this.mmu.vram[0].set(state.mmu.vram0);
         this.mmu.vram[1].set(state.mmu.vram1);
@@ -171,6 +182,18 @@ class GameBoy {
         this.ppu.windowLine = state.ppu.windowLine;
         this.timer.divCycles = state.timer.divCycles;
         this.timer.timaCycles = state.timer.timaCycles;
+
+        // Restore APU state if present
+        if (state.apu) {
+            this.apu.powerOn = state.apu.powerOn;
+            this.apu.panning = state.apu.panning;
+            this.apu.masterVol = { ...state.apu.masterVol };
+            Object.assign(this.apu.ch1, state.apu.ch1);
+            Object.assign(this.apu.ch2, state.apu.ch2);
+            Object.assign(this.apu.ch3, state.apu.ch3);
+            Object.assign(this.apu.ch4, state.apu.ch4);
+            if (state.apu.waveRAM) this.apu.waveRAM.set(state.apu.waveRAM);
+        }
     }
 
     // Battery save (persists to localStorage)

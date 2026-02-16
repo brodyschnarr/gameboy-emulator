@@ -368,6 +368,35 @@ class APU {
         this.ch4.enabled = false; this.ch4.vol = 0;
     }
 
+    // Called on state load to reset audio pipeline
+    resetBuffer() {
+        if (this.ringBuffer) {
+            this.ringBuffer.fill(0);
+            this.ringWritePos = 0;
+            this.ringReadPos = 0;
+        }
+        this.sampleTimer = 0;
+        this.frameTimer = 0;
+        this.frameSequencer = 0;
+
+        // Reset channel phase/timers to avoid pops and glitches
+        this.ch1.phase = 0; this.ch1.timer = 0; this.ch1.pos = 0;
+        this.ch2.phase = 0; this.ch2.timer = 0; this.ch2.pos = 0;
+        this.ch3.phase = 0; this.ch3.timer = 0; this.ch3.pos = 0;
+        this.ch4.timer = 0; this.ch4.lfsr = 0x7FFF;
+
+        // Briefly mute then restore to prevent pop
+        try {
+            if (this.masterGain && this.audioCtx && !this.muted) {
+                const gain = this.masterGain.gain;
+                if (gain.setValueAtTime) {
+                    gain.setValueAtTime(0, this.audioCtx.currentTime);
+                    gain.linearRampToValueAtTime(0.25, this.audioCtx.currentTime + 0.05);
+                }
+            }
+        } catch(e) {}
+    }
+
     triggerCh1() {
         this.ch1.enabled = true;
         this.ch1.vol = this.ch1.envVol;
