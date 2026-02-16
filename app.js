@@ -6,14 +6,14 @@
     // ROM loading
     const romInput = document.getElementById('rom-input');
     document.getElementById('btn-load').addEventListener('click', () => {
-        gb.apu.resume(); // Need user gesture for audio
+        gb.apu.resume();
         romInput.click();
     });
 
     romInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        showToast('Loading: ' + file.name + ' (' + file.size + ' bytes)');
+        showToast('Loading: ' + file.name);
         const reader = new FileReader();
         reader.onload = (ev) => {
             try {
@@ -33,29 +33,42 @@
 
     // Save/Load state
     document.getElementById('btn-save-state').addEventListener('click', () => {
-        if (!gb.romLoaded) return;
+        if (!gb.romLoaded) { showToast('Load a ROM first'); return; }
         try {
             const state = gb.saveState();
-            localStorage.setItem(`gbc_state_${gb.romTitle}`, JSON.stringify(state));
+            const stateStr = JSON.stringify(state);
+            localStorage.setItem('gbc_state_' + gb.romTitle, stateStr);
             gb.saveBatterySave();
-            showToast('State saved! 💾');
+            showToast('Saved! (' + Math.round(stateStr.length/1024) + 'KB) 💾');
         } catch (e) {
-            showToast('Save failed ❌');
+            showToast('Save failed: ' + e.message);
+            console.error('Save error:', e);
         }
     });
 
     document.getElementById('btn-load-state').addEventListener('click', () => {
-        if (!gb.romLoaded) return;
+        if (!gb.romLoaded) { showToast('Load a ROM first'); return; }
         try {
-            const data = localStorage.getItem(`gbc_state_${gb.romTitle}`);
+            const key = 'gbc_state_' + gb.romTitle;
+            const data = localStorage.getItem(key);
             if (data) {
-                gb.loadState(JSON.parse(data));
+                const state = JSON.parse(data);
+                gb.loadState(state);
                 showToast('State loaded! 📥');
             } else {
-                showToast('No save found');
+                // Show what keys exist for debugging
+                const keys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k.startsWith('gbc_')) keys.push(k);
+                }
+                showToast('No save for "' + gb.romTitle + '"');
+                console.log('Looking for key:', key);
+                console.log('Available GBC keys:', keys);
             }
         } catch (e) {
-            showToast('Load failed ❌');
+            showToast('Load failed: ' + e.message);
+            console.error('Load error:', e);
         }
     });
 
@@ -63,7 +76,23 @@
     const muteBtn = document.getElementById('btn-mute');
     muteBtn.addEventListener('click', () => {
         const muted = gb.apu.toggleMute();
-        muteBtn.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        muteBtn.textContent = muted ? '🔇' : '🔊';
+    });
+
+    // Theme toggle
+    const themeBtn = document.getElementById('btn-theme');
+    let currentTheme = localStorage.getItem('gbc_theme') || 'default';
+    if (currentTheme === 'photo') document.body.classList.add('theme-photo');
+
+    themeBtn.addEventListener('click', () => {
+        if (currentTheme === 'default') {
+            currentTheme = 'photo';
+            document.body.classList.add('theme-photo');
+        } else {
+            currentTheme = 'default';
+            document.body.classList.remove('theme-photo');
+        }
+        localStorage.setItem('gbc_theme', currentTheme);
     });
 
     // Fullscreen
@@ -129,15 +158,26 @@
         }
     });
 
-    // Auto-save battery every 30 seconds
+    // Auto-save battery every 15 seconds + save state
     setInterval(() => {
-        if (gb.running) gb.saveBatterySave();
-    }, 30000);
+        if (gb.running) {
+            gb.saveBatterySave();
+            // Also auto-save state
+            try {
+                const state = gb.saveState();
+                localStorage.setItem('gbc_autosave_' + gb.romTitle, JSON.stringify(state));
+            } catch(e) {}
+        }
+    }, 15000);
 
     // Save on page hide
     document.addEventListener('visibilitychange', () => {
         if (document.hidden && gb.running) {
             gb.saveBatterySave();
+            try {
+                const state = gb.saveState();
+                localStorage.setItem('gbc_autosave_' + gb.romTitle, JSON.stringify(state));
+            } catch(e) {}
         }
     });
 
@@ -154,11 +194,12 @@
         if (!toast) {
             toast = document.createElement('div');
             toast.id = 'toast';
-            toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 16px;border-radius:8px;font-size:14px;z-index:100;transition:opacity 0.3s;';
+            toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 16px;border-radius:8px;font-size:14px;z-index:100;transition:opacity 0.3s;pointer-events:none;';
             document.body.appendChild(toast);
         }
         toast.textContent = msg;
         toast.style.opacity = '1';
-        setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
     }
 })();

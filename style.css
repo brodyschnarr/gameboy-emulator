@@ -17,14 +17,19 @@ html, body {
     color: #e0e0e0;
 }
 
-/* Background image layer */
+/* Background image layer - only visible in photo theme */
 #bg-image {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: url('bg.jpg') center center / cover no-repeat;
-    opacity: 0.15;
+    opacity: 0;
     z-index: 0;
     pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+body.theme-photo #bg-image {
+    opacity: 0.25;
 }
 
 /* Game Boy shell */
@@ -344,6 +349,80 @@ html, body {
 
 .toolbar-btn:active {
     background: rgba(255,255,255,0.15);
+}
+
+/* ===== PHOTO THEME ===== */
+body.theme-photo {
+    background: #e8e8e8;
+}
+
+body.theme-photo #gameboy-shell {
+    background: linear-gradient(180deg, #f0f0f0 0%, #e0e0e0 4%, #d5d5d5 100%);
+    box-shadow:
+        inset 0 2px 4px rgba(255,255,255,0.8),
+        0 4px 12px rgba(0,0,0,0.2);
+}
+
+body.theme-photo #brand {
+    color: rgba(0,0,0,0.3);
+}
+body.theme-photo #brand span {
+    color: #8b4513;
+}
+
+body.theme-photo #screen-bezel {
+    background: #b8b8b8;
+    box-shadow:
+        inset 0 3px 8px rgba(0,0,0,0.3),
+        0 1px 0 rgba(255,255,255,0.5);
+}
+
+body.theme-photo #screen-label,
+body.theme-photo #speaker-label {
+    color: rgba(0,0,0,0.25);
+}
+
+body.theme-photo .dpad-btn {
+    background: #c0c0c0;
+    color: rgba(0,0,0,0.3);
+}
+body.theme-photo .dpad-btn:active,
+body.theme-photo .dpad-btn.pressed {
+    background: #a8a8a8;
+}
+
+body.theme-photo .action-btn {
+    background: linear-gradient(180deg, #cc3333, #aa2222);
+}
+body.theme-photo .action-btn:active,
+body.theme-photo .action-btn.pressed {
+    background: linear-gradient(180deg, #ee4444, #cc3333);
+}
+
+body.theme-photo .menu-btn {
+    background: linear-gradient(180deg, #aaa, #888);
+    color: rgba(0,0,0,0.4);
+}
+body.theme-photo .menu-btn:active,
+body.theme-photo .menu-btn.pressed {
+    background: linear-gradient(180deg, #bbb, #999);
+}
+
+body.theme-photo .speaker-line {
+    background: #aaa;
+}
+
+body.theme-photo #toolbar {
+    background: linear-gradient(180deg, #ccc, #b8b8b8);
+}
+
+body.theme-photo .toolbar-btn {
+    background: rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.1);
+    color: rgba(0,0,0,0.5);
+}
+body.theme-photo .toolbar-btn:active {
+    background: rgba(0,0,0,0.12);
 }
 
 /* Responsive */
