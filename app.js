@@ -294,26 +294,29 @@
             case 'rare_candy': {
                 const addr = findItemPocket();
                 if (addr) {
+                    const countBefore = gb.mmu.rb(addr);
                     addItemToPocket(addr, ITEM_IDS.RARE_CANDY, 99);
-                    showToast('99 Rare Candies added! Check ITEMS pocket 🍬');
+                    const countAfter = gb.mmu.rb(addr);
+                    showToast('✅ Rare Candies added at 0x' + addr.toString(16).toUpperCase() + ' (count: ' + countBefore + '→' + countAfter + ')');
+                    console.log('Rare Candies: wrote to pocket at 0x' + addr.toString(16) + ', count was ' + countBefore + ' now ' + countAfter);
                 } else {
-                    showToast('Could not find Items pocket - try opening your bag first, then retry');
+                    showToast('❌ Could not find Items pocket - open your BAG in-game first!');
                 }
                 break;
             }
             case 'master_ball': {
-                const addr = findBallsPocket();
+                let addr = findBallsPocket();
                 if (addr) {
                     addItemToPocket(addr, ITEM_IDS.MASTER_BALL, 99);
-                    showToast('99 Master Balls added! Check BALLS pocket ⚾');
+                    showToast('✅ Master Balls added to BALLS pocket at 0x' + addr.toString(16).toUpperCase());
                 } else {
                     // Fallback: add to items pocket
-                    const itemsAddr = findItemPocket();
-                    if (itemsAddr) {
-                        addItemToPocket(itemsAddr, ITEM_IDS.MASTER_BALL, 99);
-                        showToast('99 Master Balls added to ITEMS pocket ⚾');
+                    addr = findItemPocket();
+                    if (addr) {
+                        addItemToPocket(addr, ITEM_IDS.MASTER_BALL, 99);
+                        showToast('✅ Master Balls added to ITEMS pocket (Balls pocket not found)');
                     } else {
-                        showToast('Could not find bag - try opening your bag first, then retry');
+                        showToast('❌ Could not find bag - open your BAG in-game first!');
                     }
                 }
                 break;
