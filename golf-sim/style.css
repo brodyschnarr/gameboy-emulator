@@ -1,21 +1,17 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-    --green: #1a5c2a;
-    --fairway: #2d8a3e;
     --accent: #f5c518;
     --dark: #0d1117;
-    --panel: #161b22;
-    --border: #30363d;
+    --panel: rgba(13,17,23,0.88);
+    --border: rgba(255,255,255,0.1);
     --text: #e6edf3;
     --muted: #7d8590;
-    --red: #e74c3c;
-    --blue: #3498db;
 }
 
 html, body {
     width: 100%; height: 100%;
-    background: var(--dark);
+    background: #0d1117;
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
     overflow: hidden;
@@ -23,15 +19,19 @@ html, body {
 }
 
 /* ── Screens ─── */
-.screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
-.screen.active { display: flex; }
+.screen { display: none; width: 100%; height: 100%; position: fixed; top: 0; left: 0; }
+.screen.active { display: block; }
 
-/* ── SETUP ─── */
+/* ═══════════════════════════════
+   SETUP SCREEN
+═══════════════════════════════ */
 #screen-setup {
+    display: none;
     align-items: center;
     justify-content: center;
     background: linear-gradient(160deg, #0d1117 0%, #1a2a1a 100%);
 }
+#screen-setup.active { display: flex; }
 
 .setup-inner {
     width: 100%;
@@ -39,23 +39,18 @@ html, body {
     padding: 32px 24px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
     align-items: center;
 }
 
-.setup-inner h1 {
-    font-size: 42px;
-    font-weight: 800;
-    letter-spacing: -1px;
-}
-
+.setup-inner h1 { font-size: 44px; font-weight: 800; letter-spacing: -1px; }
 .subtitle {
-    color: var(--fairway);
-    font-size: 16px;
-    font-weight: 600;
+    color: #2d8a3e;
+    font-size: 14px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-top: -12px;
+    letter-spacing: 3px;
+    margin-top: -10px;
 }
 
 .camera-preview-wrap {
@@ -65,39 +60,30 @@ html, body {
     overflow: hidden;
     background: #000;
     position: relative;
-    border: 2px solid var(--border);
+    border: 2px solid rgba(255,255,255,0.1);
 }
-
 .camera-preview-wrap video {
     width: 100%; height: 100%;
     object-fit: cover;
-    transform: scaleX(-1);
 }
-
 .camera-hint {
     position: absolute;
-    bottom: 10px;
-    left: 0; right: 0;
+    bottom: 0; left: 0; right: 0;
+    padding: 8px;
     text-align: center;
     font-size: 12px;
     color: rgba(255,255,255,0.7);
-    background: rgba(0,0,0,0.5);
-    padding: 6px;
+    background: rgba(0,0,0,0.55);
 }
 
-/* Club selector */
 .club-selector, .hand-selector {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-    justify-content: center;
+    display: flex; gap: 8px; width: 100%;
 }
-
 .club-btn, .hand-btn {
     flex: 1;
-    padding: 10px 6px;
-    border: 2px solid var(--border);
-    background: var(--panel);
+    padding: 10px 4px;
+    border: 2px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
     color: var(--muted);
     border-radius: 10px;
     font-size: 13px;
@@ -105,7 +91,6 @@ html, body {
     cursor: pointer;
     transition: all 0.15s;
 }
-
 .club-btn.active, .hand-btn.active {
     border-color: var(--accent);
     color: var(--accent);
@@ -122,202 +107,197 @@ html, body {
     font-size: 18px;
     font-weight: 800;
     cursor: pointer;
-    letter-spacing: 0.5px;
     transition: transform 0.1s, opacity 0.1s;
 }
-
 .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
 
-/* ── SWING SCREEN ─── */
-#screen-swing { flex-direction: column; }
+/* ═══════════════════════════════
+   SESSION SCREEN
+═══════════════════════════════ */
+#screen-session { background: #000; }
 
-.swing-layout {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    position: relative;
-    z-index: 2;
-}
-
-/* Camera wrap */
-.camera-wrap {
-    position: relative;
-    flex: 1;
-    background: #000;
-    overflow: hidden;
-}
-
-#swing-video {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1);
-}
-
-#pose-canvas {
+/* 3D Range — full screen background */
+#range-canvas {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    transform: scaleX(-1);
+    z-index: 1;
 }
 
+/* ── Camera PIP ── */
+.camera-pip {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 200px;
+    height: 150px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    z-index: 10;
+    background: #000;
+}
+
+.camera-pip video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0; left: 0;
+}
+
+.camera-pip canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+}
+
+.pip-label {
+    position: absolute;
+    top: 6px; left: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.7);
+    background: rgba(0,0,0,0.5);
+    padding: 2px 7px;
+    border-radius: 10px;
+    z-index: 2;
+}
+
+/* ── Status Badge ── */
 .swing-status {
     position: absolute;
-    top: 16px;
+    top: 20px;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0,0,0,0.7);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,255,255,0.15);
     border-radius: 20px;
-    padding: 8px 18px;
+    padding: 8px 20px;
     font-size: 15px;
     font-weight: 600;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
     white-space: nowrap;
+    z-index: 10;
 }
 
-.swing-indicator {
-    position: absolute;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    color: var(--accent);
-    font-size: 22px;
-    font-weight: 900;
-    letter-spacing: 4px;
-}
-
-.swing-indicator.hidden { display: none; }
-
-.pulse-ring {
-    width: 60px; height: 60px;
-    border: 4px solid var(--accent);
-    border-radius: 50%;
-    animation: pulse 1s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(0.8); opacity: 1; }
-    100% { transform: scale(1.4); opacity: 0; }
-}
-
-/* Stats Panel */
+/* ── Stats Panel (right side) ── */
 .stats-panel {
-    width: 280px;
-    flex-shrink: 0;
+    position: absolute;
+    top: 0; right: 0;
+    width: 260px;
+    height: 100%;
     background: var(--panel);
     border-left: 1px solid var(--border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 10;
     display: flex;
     flex-direction: column;
-    padding: 16px 12px 8px;
+    padding: 20px 14px 12px;
     gap: 12px;
     overflow-y: auto;
 }
 
 .current-club {
     text-align: center;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 800;
     color: var(--accent);
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .stat-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 7px;
 }
 
 .stat-card {
-    background: var(--dark);
+    background: rgba(255,255,255,0.04);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 10px 8px;
     text-align: center;
     transition: border-color 0.3s, background 0.3s;
 }
-
-.stat-card.wide {
-    grid-column: 1 / -1;
-}
-
+.stat-card.wide { grid-column: 1 / -1; }
 .stat-card.highlight {
     border-color: var(--accent);
-    background: rgba(245,197,24,0.08);
+    background: rgba(245,197,24,0.1);
 }
 
 .stat-label {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
-
 .stat-value {
     font-size: 26px;
     font-weight: 800;
-    color: var(--text);
     line-height: 1;
+    color: var(--text);
 }
-
 .stat-unit {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--muted);
-    margin-top: 2px;
+    margin-top: 1px;
 }
 
 /* Shot history */
-.shot-history { flex: 1; overflow: hidden; }
-.history-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-.history-list { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; }
-
+.shot-history { flex: 1; overflow: hidden; min-height: 0; }
+.history-title {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+}
 .history-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--dark);
+    background: rgba(255,255,255,0.04);
     border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 13px;
+    padding: 5px 8px;
+    font-size: 12px;
     border: 1px solid var(--border);
 }
-
-.history-item .hi-club { color: var(--muted); font-size: 11px; }
+.history-item .hi-club { color: var(--muted); font-size: 10px; }
 .history-item .hi-carry { font-weight: 700; color: var(--accent); }
-.history-item .hi-shape { font-size: 11px; color: var(--muted); }
+.history-item .hi-shape { font-size: 10px; color: var(--muted); }
 
 /* Bottom controls */
 .bottom-controls {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     align-items: center;
-    padding-top: 8px;
+    padding-top: 10px;
     border-top: 1px solid var(--border);
+    flex-shrink: 0;
 }
-
 .club-btn-sm {
     flex: 1;
-    padding: 8px 4px;
+    padding: 8px 2px;
     border: 1.5px solid var(--border);
     background: transparent;
     color: var(--muted);
     border-radius: 8px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.15s;
 }
-
-.club-btn-sm.active {
-    border-color: var(--accent);
-    color: var(--accent);
-}
-
+.club-btn-sm.active { border-color: var(--accent); color: var(--accent); }
 .btn-exit {
     padding: 8px 10px;
     border: 1.5px solid var(--border);
@@ -328,43 +308,30 @@ html, body {
     cursor: pointer;
 }
 
-/* ── 3D Range Canvas ─── */
-#range-canvas {
+/* ── Next Shot Overlay ── */
+.next-shot-overlay {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 1;
-    display: none;
-}
-
-.range-overlay {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 3;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
-    padding-bottom: 40px;
-    pointer-events: none;
+    gap: 14px;
+    z-index: 20;
 }
+.next-shot-overlay.hidden { display: none; }
 
-.range-overlay.hidden { display: none; }
-
-.shot-result-banner {
+.shot-result-card {
     background: rgba(0,0,0,0.85);
     border: 2px solid var(--accent);
     border-radius: 16px;
     padding: 16px 32px;
     text-align: center;
-    margin-bottom: 20px;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
 }
-
 .btn-next {
-    pointer-events: all;
-    padding: 14px 36px;
+    padding: 14px 40px;
     background: var(--accent);
     color: #000;
     border: none;
@@ -374,19 +341,21 @@ html, body {
     cursor: pointer;
 }
 
-/* ── Responsive: landscape phone / TV ─── */
-@media (orientation: landscape) and (max-height: 500px) {
-    .stats-panel { width: 220px; }
-    .stat-value { font-size: 20px; }
-    .setup-inner { padding: 16px; gap: 12px; }
-    .camera-preview-wrap { aspect-ratio: 16/9; }
+/* ── TV / large screen ── */
+@media (min-width: 1100px) {
+    .stats-panel { width: 320px; padding: 28px 20px; }
+    .stat-value { font-size: 34px; }
+    .stat-label { font-size: 12px; }
+    .current-club { font-size: 28px; }
+    .camera-pip { width: 280px; height: 210px; }
+    .swing-status { font-size: 18px; padding: 10px 28px; }
+    .history-list { max-height: 200px; }
 }
 
-/* TV cast: large screen */
-@media (min-width: 1200px) {
-    .stats-panel { width: 360px; padding: 24px 20px; }
-    .stat-value { font-size: 36px; }
-    .stat-label { font-size: 13px; }
-    .current-club { font-size: 28px; }
-    .swing-status { font-size: 20px; padding: 12px 28px; }
+/* ── Mobile portrait ── */
+@media (max-width: 600px) {
+    .stats-panel { width: 180px; padding: 12px 10px; }
+    .stat-value { font-size: 20px; }
+    .camera-pip { width: 130px; height: 100px; bottom: 12px; left: 12px; }
+    .swing-status { font-size: 13px; padding: 6px 14px; }
 }

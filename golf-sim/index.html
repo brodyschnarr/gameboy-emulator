@@ -11,7 +11,7 @@
 </head>
 <body>
 
-    <!-- ── SETUP SCREEN ────────────────────────── -->
+    <!-- ── SETUP SCREEN ─────────────────────── -->
     <div id="screen-setup" class="screen active">
         <div class="setup-inner">
             <h1>⛳ Golf Sim</h1>
@@ -19,7 +19,7 @@
 
             <div class="camera-preview-wrap">
                 <video id="setup-video" autoplay playsinline muted></video>
-                <div class="camera-hint">Point camera at your full body side-on or face-on</div>
+                <div class="camera-hint">Point camera at your full body — side-on or face-on</div>
             </div>
 
             <div class="club-selector" id="club-selector">
@@ -39,98 +39,94 @@
         </div>
     </div>
 
-    <!-- ── SWING SCREEN ────────────────────────── -->
-    <div id="screen-swing" class="screen">
-        <div class="swing-layout">
+    <!-- ── SESSION SCREEN ───────────────────── -->
+    <div id="screen-session" class="screen">
 
-            <!-- Camera + Pose overlay -->
-            <div class="camera-wrap">
-                <video id="swing-video" autoplay playsinline muted></video>
-                <canvas id="pose-canvas"></canvas>
-                <div id="swing-status" class="swing-status">
-                    <span id="status-text">🏌️ Address the ball</span>
+        <!-- 3D Range — full background -->
+        <canvas id="range-canvas"></canvas>
+
+        <!-- Camera PIP — bottom left -->
+        <div class="camera-pip" id="camera-pip">
+            <video id="swing-video" autoplay playsinline muted></video>
+            <canvas id="pose-canvas"></canvas>
+            <div class="pip-label">📷 Live</div>
+        </div>
+
+        <!-- Status badge — top center -->
+        <div class="swing-status" id="swing-status">
+            <span id="status-text">🏌️ Address the ball</span>
+        </div>
+
+        <!-- Stats panel — right side -->
+        <div class="stats-panel">
+            <div class="current-club" id="display-club">Driver</div>
+
+            <div class="stat-grid">
+                <div class="stat-card" id="stat-chs">
+                    <div class="stat-label">Club Speed</div>
+                    <div class="stat-value">--</div>
+                    <div class="stat-unit">mph</div>
                 </div>
-                <div id="swing-indicator" class="swing-indicator hidden">
-                    <div class="pulse-ring"></div>
-                    <span>SWING!</span>
+                <div class="stat-card" id="stat-bs">
+                    <div class="stat-label">Ball Speed</div>
+                    <div class="stat-value">--</div>
+                    <div class="stat-unit">mph</div>
+                </div>
+                <div class="stat-card" id="stat-carry">
+                    <div class="stat-label">Carry</div>
+                    <div class="stat-value">--</div>
+                    <div class="stat-unit">yds</div>
+                </div>
+                <div class="stat-card" id="stat-total">
+                    <div class="stat-label">Total</div>
+                    <div class="stat-value">--</div>
+                    <div class="stat-unit">yds</div>
+                </div>
+                <div class="stat-card" id="stat-launch">
+                    <div class="stat-label">Launch</div>
+                    <div class="stat-value">--</div>
+                    <div class="stat-unit">deg</div>
+                </div>
+                <div class="stat-card" id="stat-dir">
+                    <div class="stat-label">Direction</div>
+                    <div class="stat-value">--</div>
+                    <div class="stat-unit"></div>
+                </div>
+                <div class="stat-card wide" id="stat-shape">
+                    <div class="stat-label">Shot Shape</div>
+                    <div class="stat-value">--</div>
+                </div>
+                <div class="stat-card wide" id="stat-tempo">
+                    <div class="stat-label">Tempo</div>
+                    <div class="stat-value">--</div>
                 </div>
             </div>
 
-            <!-- Stats panel -->
-            <div class="stats-panel" id="stats-panel">
-                <div class="current-club">
-                    <span id="display-club">Driver</span>
-                </div>
+            <!-- Shot history -->
+            <div class="shot-history">
+                <div class="history-title">Shot History</div>
+                <div class="history-list" id="history-list"></div>
+            </div>
 
-                <div class="stat-grid" id="stat-grid">
-                    <div class="stat-card" id="stat-chs">
-                        <div class="stat-label">Club Speed</div>
-                        <div class="stat-value">--</div>
-                        <div class="stat-unit">mph</div>
-                    </div>
-                    <div class="stat-card" id="stat-bs">
-                        <div class="stat-label">Ball Speed</div>
-                        <div class="stat-value">--</div>
-                        <div class="stat-unit">mph</div>
-                    </div>
-                    <div class="stat-card" id="stat-carry">
-                        <div class="stat-label">Carry</div>
-                        <div class="stat-value">--</div>
-                        <div class="stat-unit">yds</div>
-                    </div>
-                    <div class="stat-card" id="stat-total">
-                        <div class="stat-label">Total</div>
-                        <div class="stat-value">--</div>
-                        <div class="stat-unit">yds</div>
-                    </div>
-                    <div class="stat-card" id="stat-launch">
-                        <div class="stat-label">Launch</div>
-                        <div class="stat-value">--</div>
-                        <div class="stat-unit">deg</div>
-                    </div>
-                    <div class="stat-card" id="stat-dir">
-                        <div class="stat-label">Direction</div>
-                        <div class="stat-value">--</div>
-                        <div class="stat-unit"></div>
-                    </div>
-                    <div class="stat-card wide" id="stat-shape">
-                        <div class="stat-label">Shot Shape</div>
-                        <div class="stat-value">--</div>
-                        <div class="stat-unit"></div>
-                    </div>
-                    <div class="stat-card wide" id="stat-tempo">
-                        <div class="stat-label">Tempo</div>
-                        <div class="stat-value">--</div>
-                        <div class="stat-unit"></div>
-                    </div>
-                </div>
-
-                <!-- Shot history -->
-                <div class="shot-history" id="shot-history">
-                    <div class="history-title">Shot History</div>
-                    <div class="history-list" id="history-list"></div>
-                </div>
-
-                <div class="bottom-controls">
-                    <button class="club-btn-sm active" data-club="driver">DR</button>
-                    <button class="club-btn-sm" data-club="3w">3W</button>
-                    <button class="club-btn-sm" data-club="5i">5I</button>
-                    <button class="club-btn-sm" data-club="7i">7I</button>
-                    <button class="club-btn-sm" data-club="pw">PW</button>
-                    <button id="btn-exit" class="btn-exit">✕</button>
-                </div>
+            <!-- Club + controls -->
+            <div class="bottom-controls">
+                <button class="club-btn-sm active" data-club="driver">DR</button>
+                <button class="club-btn-sm" data-club="3w">3W</button>
+                <button class="club-btn-sm" data-club="5i">5I</button>
+                <button class="club-btn-sm" data-club="7i">7I</button>
+                <button class="club-btn-sm" data-club="pw">PW</button>
+                <button id="btn-exit" class="btn-exit">✕</button>
             </div>
         </div>
 
-        <!-- 3D Range Canvas (full screen after shot) -->
-        <canvas id="range-canvas"></canvas>
-        <div id="range-overlay" class="range-overlay hidden">
-            <div class="shot-result-banner" id="shot-banner"></div>
+        <!-- Next shot overlay (appears after ball lands) -->
+        <div class="next-shot-overlay hidden" id="next-shot-overlay">
+            <div class="shot-result-card" id="shot-result-card"></div>
             <button id="btn-next-shot" class="btn-next">Next Shot ›</button>
         </div>
+
     </div>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>

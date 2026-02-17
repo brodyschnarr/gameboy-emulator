@@ -69,10 +69,10 @@ const App = {
 
     async _startSession() {
         this._stopSetupCamera();
-        this._showScreen('swing');
+        this._showScreen('session');
         this.state = 'session';
 
-        // Init club buttons in swing screen
+        // Init club buttons in session screen
         document.querySelectorAll('.club-btn-sm').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.club-btn-sm').forEach(b => b.classList.remove('active'));
@@ -97,7 +97,7 @@ const App = {
             this._prepareNextShot();
         });
 
-        // Init 3D range (hidden initially)
+        // Init 3D range immediately — it's always visible
         const rangeCanvas = document.getElementById('range-canvas');
         DrivingRange.init(rangeCanvas);
         this.rangeReady = true;
@@ -170,37 +170,24 @@ const App = {
     },
 
     _showRangeAnimation(shot) {
-        // Switch to range view
-        const rangeCanvas = document.getElementById('range-canvas');
-        const rangeOverlay = document.getElementById('range-overlay');
-        const swingLayout = document.querySelector('.swing-layout');
-        const banner = document.getElementById('shot-banner');
+        // Range is always visible — just animate the ball and show result card
+        SwingDetector.state = 'done'; // pause detection during flight
 
-        rangeCanvas.style.display = 'block';
-        swingLayout.style.opacity = '0.15';
-        SwingDetector.state = 'done'; // pause detection
-
-        // Update banner
-        banner.innerHTML = `
-            <div style="font-size:28px;font-weight:900;color:#f5c518;margin-bottom:4px">${shot.totalYards} yards</div>
-            <div style="font-size:16px;color:#aaa">${shot.shotShape} · ${shot.directionLabel}</div>
-            <div style="font-size:13px;color:#666;margin-top:4px">CHS: ${shot.clubHeadSpeed} mph · BS: ${shot.ballSpeed} mph</div>
+        const card = document.getElementById('shot-result-card');
+        card.innerHTML = `
+            <div style="font-size:32px;font-weight:900;color:#f5c518;margin-bottom:4px">${shot.totalYards} yds</div>
+            <div style="font-size:16px;color:#ccc">${shot.shotShape} · ${shot.directionLabel}</div>
+            <div style="font-size:13px;color:#888;margin-top:6px">CHS ${shot.clubHeadSpeed} mph &nbsp;·&nbsp; Ball ${shot.ballSpeed} mph &nbsp;·&nbsp; Launch ${shot.launchAngle}°</div>
         `;
 
         DrivingRange.reset();
         DrivingRange.animateBallFlight(shot, () => {
-            rangeOverlay.classList.remove('hidden');
+            document.getElementById('next-shot-overlay').classList.remove('hidden');
         });
     },
 
     _prepareNextShot() {
-        const rangeCanvas = document.getElementById('range-canvas');
-        const rangeOverlay = document.getElementById('range-overlay');
-        const swingLayout = document.querySelector('.swing-layout');
-
-        rangeCanvas.style.display = 'none';
-        rangeOverlay.classList.add('hidden');
-        swingLayout.style.opacity = '1';
+        document.getElementById('next-shot-overlay').classList.add('hidden');
         DrivingRange.reset();
 
         // Resume swing detection
@@ -212,10 +199,12 @@ const App = {
 
     _endSession() {
         SwingDetector.stop();
+        DrivingRange.reset();
         this._showScreen('setup');
         this.state = 'setup';
         this.shots = [];
         document.getElementById('history-list').innerHTML = '';
+        document.getElementById('next-shot-overlay').classList.add('hidden');
         this._resetStats();
         this._startSetupCamera();
     },
