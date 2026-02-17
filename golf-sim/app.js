@@ -219,8 +219,9 @@ const App = {
     // ── Utilities ────────────────────────────────
 
     _showScreen(name) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(`screen-${name}`).classList.add('active');
+        document.querySelectorAll('.screen').forEach(s => { s.style.display = 'none'; });
+        const el = document.getElementById(`screen-${name}`);
+        el.style.display = (name === 'setup') ? 'flex' : 'block';
     }
 };
 
