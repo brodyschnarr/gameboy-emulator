@@ -170,14 +170,18 @@
     // Preset cheats for popular games
     const presetCheats = {
         'POKEMON_GLD': [
-            { label: '🍬 99 Rare Candies', action: 'rare_candy', desc: 'Finds your Items pocket and adds 99 Rare Candies' },
-            { label: '⚾ 99 Master Balls', action: 'master_ball', desc: 'Finds your Balls pocket and adds 99 Master Balls' },
+            { label: '⚾ 99 Master Balls', action: 'master_ball', desc: 'Adds 99 Master Balls (ID 0x01)' },
+            { label: '🍬 Try Rare Candy (0x20)', action: 'rare_candy_alt', desc: 'Alternate Rare Candy ID' },
+            { label: '🍬 Try Rare Candy (0x3E)', action: 'rare_candy_alt2', desc: 'Another common ID' },
             { label: '💰 Max Money', action: 'max_money', desc: 'Sets money to max' },
+            { label: '🔧 Add Custom Item', action: 'custom_item', desc: 'Enter item ID + quantity' },
         ],
         'POKEMON_SLV': [
-            { label: '🍬 99 Rare Candies', action: 'rare_candy', desc: 'Finds your Items pocket and adds 99 Rare Candies' },
-            { label: '⚾ 99 Master Balls', action: 'master_ball', desc: 'Finds your Balls pocket and adds 99 Master Balls' },
+            { label: '⚾ 99 Master Balls', action: 'master_ball', desc: 'Adds 99 Master Balls (ID 0x01)' },
+            { label: '🍬 Try Rare Candy (0x20)', action: 'rare_candy_alt', desc: 'Alternate Rare Candy ID' },
+            { label: '🍬 Try Rare Candy (0x3E)', action: 'rare_candy_alt2', desc: 'Another common ID' },
             { label: '💰 Max Money', action: 'max_money', desc: 'Sets money to max' },
+            { label: '🔧 Add Custom Item', action: 'custom_item', desc: 'Enter item ID + quantity' },
         ],
     };
 
@@ -291,14 +295,39 @@
 
     function applySmartCheat(action) {
         switch (action) {
-            case 'rare_candy': {
+            case 'rare_candy':
+            case 'rare_candy_alt':
+            case 'rare_candy_alt2': {
+                const itemId = action === 'rare_candy_alt' ? 0x20 : (action === 'rare_candy_alt2' ? 0x3E : ITEM_IDS.RARE_CANDY);
                 const addr = findItemPocket();
                 if (addr) {
                     const countBefore = gb.mmu.rb(addr);
-                    addItemToPocket(addr, ITEM_IDS.RARE_CANDY, 99);
+                    addItemToPocket(addr, itemId, 99);
                     const countAfter = gb.mmu.rb(addr);
-                    showToast('✅ Rare Candies added at 0x' + addr.toString(16).toUpperCase() + ' (count: ' + countBefore + '→' + countAfter + ')');
-                    console.log('Rare Candies: wrote to pocket at 0x' + addr.toString(16) + ', count was ' + countBefore + ' now ' + countAfter);
+                    showToast('✅ Added item 0x' + itemId.toString(16).toUpperCase() + ' at 0x' + addr.toString(16).toUpperCase() + ' (count: ' + countBefore + '→' + countAfter + ')');
+                } else {
+                    showToast('❌ Could not find Items pocket - open your BAG in-game first!');
+                }
+                break;
+            }
+            case 'custom_item': {
+                const itemIdInput = prompt('Enter item ID in hex (e.g. 20 for some Rare Candy versions):', '20');
+                if (!itemIdInput) break;
+                const itemId = parseInt(itemIdInput, 16);
+                if (isNaN(itemId) || itemId < 1 || itemId > 255) {
+                    showToast('Invalid item ID');
+                    break;
+                }
+                const qtyInput = prompt('Enter quantity (1-99):', '99');
+                const qty = parseInt(qtyInput);
+                if (isNaN(qty) || qty < 1 || qty > 99) {
+                    showToast('Invalid quantity');
+                    break;
+                }
+                const addr = findItemPocket();
+                if (addr) {
+                    addItemToPocket(addr, itemId, qty);
+                    showToast('✅ Added item 0x' + itemId.toString(16).toUpperCase() + ' x' + qty);
                 } else {
                     showToast('❌ Could not find Items pocket - open your BAG in-game first!');
                 }
