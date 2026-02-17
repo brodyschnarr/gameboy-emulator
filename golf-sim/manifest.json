@@ -1,0 +1,14 @@
+{
+    "name": "Golf Sim",
+    "short_name": "Golf Sim",
+    "description": "Driving range golf simulator with AI swing detection",
+    "start_url": "/golf-sim/",
+    "display": "fullscreen",
+    "orientation": "landscape",
+    "background_color": "#0d1117",
+    "theme_color": "#f5c518",
+    "icons": [
+        { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+    ]
+}
