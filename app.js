@@ -170,18 +170,178 @@
     // Preset cheats for popular games
     const presetCheats = {
         'POKEMON_GLD': [
-            { label: '99 Rare Candies (Slot 1)', codes: ['01325ED8', '01635FD8'], desc: 'Rare Candy x99 in bag slot 1' },
-            { label: '99 Master Balls (Slot 2)', codes: ['010160D8', '016361D8'], desc: 'Master Ball x99 in bag slot 2' },
-            { label: 'Infinite Money', codes: ['019973D5', '019974D5', '019975D5'], desc: 'Max money' },
-            { label: 'Max HP in Battle', codes: ['01FF0DD2', '01FF0ED2'], desc: 'Lead Pokémon max HP in battle' },
+            { label: '🍬 99 Rare Candies', action: 'rare_candy', desc: 'Finds your Items pocket and adds 99 Rare Candies' },
+            { label: '⚾ 99 Master Balls', action: 'master_ball', desc: 'Finds your Balls pocket and adds 99 Master Balls' },
+            { label: '💰 Max Money', action: 'max_money', desc: 'Sets money to max' },
         ],
         'POKEMON_SLV': [
-            { label: '99 Rare Candies (Slot 1)', codes: ['01325ED8', '01635FD8'], desc: 'Rare Candy x99 in bag slot 1' },
-            { label: '99 Master Balls (Slot 2)', codes: ['010160D8', '016361D8'], desc: 'Master Ball x99 in bag slot 2' },
-            { label: 'Infinite Money', codes: ['019973D5', '019974D5', '019975D5'], desc: 'Max money' },
-            { label: 'Max HP in Battle', codes: ['01FF0DD2', '01FF0ED2'], desc: 'Lead Pokémon max HP in battle' },
+            { label: '🍬 99 Rare Candies', action: 'rare_candy', desc: 'Finds your Items pocket and adds 99 Rare Candies' },
+            { label: '⚾ 99 Master Balls', action: 'master_ball', desc: 'Finds your Balls pocket and adds 99 Master Balls' },
+            { label: '💰 Max Money', action: 'max_money', desc: 'Sets money to max' },
         ],
     };
+
+    // Smart cheat functions - scan WRAM to find correct addresses
+    const ITEM_IDS = {
+        MASTER_BALL: 0x01, ULTRA_BALL: 0x02, GREAT_BALL: 0x05, POKE_BALL: 0x04,
+        RARE_CANDY: 0x32, POTION: 0x11, SUPER_POTION: 0x12, ANTIDOTE: 0x0B,
+    };
+
+    // Find bag item pocket by scanning WRAM for the pocket structure
+    // Gen 2 bag format: [count] [id1] [qty1] [id2] [qty2] ... [0xFF terminator]
+    function findItemPocket() {
+        // Known candidate addresses for Items pocket count byte (Gold/Silver US variants)
+        const candidates = [0xD892, 0xD5B7, 0xD5E2, 0xD57C, 0xD688, 0xD8F1];
+        for (const addr of candidates) {
+            const count = gb.mmu.rb(addr);
+            if (count >= 0 && count <= 20) {
+                // Check if the structure looks valid: items followed by 0xFF terminator
+                const termAddr = addr + 1 + (count * 2);
+                const term = gb.mmu.rb(termAddr);
+                if (term === 0xFF) {
+                    // Verify existing items look reasonable (IDs between 1 and 255)
+                    let valid = true;
+                    for (let i = 0; i < count && i < 3; i++) {
+                        const id = gb.mmu.rb(addr + 1 + i * 2);
+                        const qty = gb.mmu.rb(addr + 2 + i * 2);
+                        if (id === 0 || qty === 0 || qty > 99) { valid = false; break; }
+                    }
+                    if (valid || count === 0) {
+                        console.log('Found Items pocket at 0x' + addr.toString(16) + ' with ' + count + ' items');
+                        return addr;
+                    }
+                }
+            }
+        }
+        // Brute force scan WRAM (C000-DFFF) for pocket-like structures
+        for (let addr = 0xC000; addr < 0xDE00; addr++) {
+            const count = gb.mmu.rb(addr);
+            if (count >= 0 && count <= 20) {
+                const termAddr = addr + 1 + (count * 2);
+                if (termAddr < 0xE000) {
+                    const term = gb.mmu.rb(termAddr);
+                    if (term === 0xFF) {
+                        let valid = true;
+                        for (let i = 0; i < count && i < 3; i++) {
+                            const id = gb.mmu.rb(addr + 1 + i * 2);
+                            const qty = gb.mmu.rb(addr + 2 + i * 2);
+                            if (id === 0 || qty === 0 || qty > 99) { valid = false; break; }
+                        }
+                        if (valid && count > 0 && count < 15) {
+                            // Extra check: next pocket should also look valid nearby
+                            console.log('Scan found possible Items pocket at 0x' + addr.toString(16) + ' count=' + count);
+                            return addr;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    function findBallsPocket() {
+        // Balls pocket is usually ~50-80 bytes after items pocket
+        const itemsAddr = findItemPocket();
+        if (!itemsAddr) return null;
+        // Scan forward from items pocket end for next pocket-like structure
+        const itemCount = gb.mmu.rb(itemsAddr);
+        let searchStart = itemsAddr + 1 + (itemCount * 2) + 1; // skip past FF terminator
+        // Balls pocket might be key items first, then balls. Scan a range.
+        for (let addr = searchStart; addr < searchStart + 200 && addr < 0xDE00; addr++) {
+            const count = gb.mmu.rb(addr);
+            if (count >= 0 && count <= 12) {
+                const termAddr = addr + 1 + (count * 2);
+                if (termAddr < 0xE000 && gb.mmu.rb(termAddr) === 0xFF) {
+                    // Check if items here look like balls (IDs 1-5 range)
+                    let hasBall = count === 0; // empty is ok
+                    for (let i = 0; i < count; i++) {
+                        const id = gb.mmu.rb(addr + 1 + i * 2);
+                        if (id >= 0x01 && id <= 0x0C) hasBall = true; // ball item IDs
+                    }
+                    if (hasBall) {
+                        console.log('Found Balls pocket at 0x' + addr.toString(16) + ' count=' + count);
+                        return addr;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    function addItemToPocket(pocketAddr, itemId, qty) {
+        if (!pocketAddr) return false;
+        const count = gb.mmu.rb(pocketAddr);
+        // Check if item already exists in pocket
+        for (let i = 0; i < count; i++) {
+            const id = gb.mmu.rb(pocketAddr + 1 + i * 2);
+            if (id === itemId) {
+                // Update quantity
+                gb.mmu.wb(pocketAddr + 2 + i * 2, qty);
+                return true;
+            }
+        }
+        // Add as new item at end
+        const newSlot = count;
+        gb.mmu.wb(pocketAddr, count + 1); // increment count
+        gb.mmu.wb(pocketAddr + 1 + newSlot * 2, itemId); // item ID
+        gb.mmu.wb(pocketAddr + 2 + newSlot * 2, qty); // quantity
+        gb.mmu.wb(pocketAddr + 3 + newSlot * 2, 0xFF); // new terminator
+        return true;
+    }
+
+    function applySmartCheat(action) {
+        switch (action) {
+            case 'rare_candy': {
+                const addr = findItemPocket();
+                if (addr) {
+                    addItemToPocket(addr, ITEM_IDS.RARE_CANDY, 99);
+                    showToast('99 Rare Candies added! Check ITEMS pocket 🍬');
+                } else {
+                    showToast('Could not find Items pocket - try opening your bag first, then retry');
+                }
+                break;
+            }
+            case 'master_ball': {
+                const addr = findBallsPocket();
+                if (addr) {
+                    addItemToPocket(addr, ITEM_IDS.MASTER_BALL, 99);
+                    showToast('99 Master Balls added! Check BALLS pocket ⚾');
+                } else {
+                    // Fallback: add to items pocket
+                    const itemsAddr = findItemPocket();
+                    if (itemsAddr) {
+                        addItemToPocket(itemsAddr, ITEM_IDS.MASTER_BALL, 99);
+                        showToast('99 Master Balls added to ITEMS pocket ⚾');
+                    } else {
+                        showToast('Could not find bag - try opening your bag first, then retry');
+                    }
+                }
+                break;
+            }
+            case 'max_money': {
+                // Money in Gen 2 is stored as 3-byte BCD. Try known addresses.
+                const moneyAddrs = [0xD573, 0xD84E, 0xD57E, 0xD5A4];
+                let found = false;
+                for (const addr of moneyAddrs) {
+                    // Check if this looks like BCD money (each nibble 0-9)
+                    const b0 = gb.mmu.rb(addr);
+                    const b1 = gb.mmu.rb(addr + 1);
+                    const b2 = gb.mmu.rb(addr + 2);
+                    const isBCD = (v) => ((v >> 4) <= 9) && ((v & 0xF) <= 9);
+                    if (isBCD(b0) && isBCD(b1) && isBCD(b2)) {
+                        gb.mmu.wb(addr, 0x99);
+                        gb.mmu.wb(addr + 1, 0x99);
+                        gb.mmu.wb(addr + 2, 0x99);
+                        console.log('Set money at 0x' + addr.toString(16));
+                        found = true;
+                    }
+                }
+                if (found) showToast('Money set to ₽999999! 💰');
+                else showToast('Could not find money address');
+                break;
+            }
+        }
+    }
 
     function parseGameShark(code) {
         // Format: ABCDEFGH -> write value CD to address GHEF
@@ -247,39 +407,46 @@
                 const row = document.createElement('div');
                 row.style.cssText = 'display:flex;align-items:center;gap:8px;';
 
-                const isActive = activeCheats.some(c => c.label === preset.label && c.active);
+                // Smart cheats (action-based) are one-shot, not persistent toggles
+                const isActive = preset.codes && activeCheats.some(c => c.label === preset.label && c.active);
+                const isSmartCheat = !!preset.action;
 
                 const btn = document.createElement('button');
-                btn.textContent = (isActive ? '✅ ' : '⬜ ') + preset.label;
+                btn.textContent = (isSmartCheat ? '⚡ ' : (isActive ? '✅ ' : '⬜ ')) + preset.label;
                 btn.style.cssText = 'flex:1;padding:12px;background:' + (isActive ? '#1a4a1a' : '#2a2a5e') + ';border:1px solid ' + (isActive ? '#2a8a2a' : '#4a4a8e') + ';border-radius:8px;color:#e0e0ff;font-size:13px;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;';
 
                 btn.addEventListener('click', () => {
-                    if (isActive) {
-                        // Deactivate
-                        for (let i = activeCheats.length - 1; i >= 0; i--) {
-                            if (activeCheats[i].label === preset.label) {
-                                activeCheats.splice(i, 1);
+                    // Smart cheats use actions instead of codes
+                    if (preset.action) {
+                        applySmartCheat(preset.action);
+                        menu.remove();
+                    } else if (preset.codes) {
+                        // Old GameShark code approach
+                        if (isActive) {
+                            for (let i = activeCheats.length - 1; i >= 0; i--) {
+                                if (activeCheats[i].label === preset.label) {
+                                    activeCheats.splice(i, 1);
+                                }
                             }
-                        }
-                        showToast(preset.label + ' OFF');
-                    } else {
-                        // Activate
-                        for (const code of preset.codes) {
-                            const parsed = parseGameShark(code);
-                            if (parsed) {
-                                activeCheats.push({
-                                    addr: parsed.addr,
-                                    value: parsed.value,
-                                    label: preset.label,
-                                    code: code,
-                                    active: true
-                                });
+                            showToast(preset.label + ' OFF');
+                        } else {
+                            for (const code of preset.codes) {
+                                const parsed = parseGameShark(code);
+                                if (parsed) {
+                                    activeCheats.push({
+                                        addr: parsed.addr,
+                                        value: parsed.value,
+                                        label: preset.label,
+                                        code: code,
+                                        active: true
+                                    });
+                                }
                             }
+                            showToast(preset.label + ' ON ✅');
                         }
-                        showToast(preset.label + ' ON ✅');
+                        menu.remove();
+                        showCheatMenu();
                     }
-                    menu.remove();
-                    showCheatMenu(); // Refresh
                 });
                 row.appendChild(btn);
                 content.appendChild(row);
