@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golf Sim Tests</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #0d1117; color: #e6edf3; }
+        h1 { color: #f5c518; }
+        .suite { margin: 20px 0; padding: 16px; background: #161b22; border-radius: 8px; }
+        .suite h2 { margin: 0 0 12px 0; font-size: 18px; color: #7d8590; }
+        .test { padding: 6px 10px; margin: 4px 0; border-radius: 4px; font-size: 14px; }
+        .test.pass { background: #1a472a; color: #7ee787; }
+        .test.fail { background: #5a1f1f; color: #ff7b72; }
+        .summary { margin-top: 24px; padding: 16px; background: #161b22; border-radius: 8px; font-size: 16px; font-weight: bold; }
+        .summary.pass { border-left: 4px solid #7ee787; }
+        .summary.fail { border-left: 4px solid #ff7b72; }
+    </style>
+</head>
+<body>
+    <h1>⛳ Golf Sim Test Suite</h1>
+    <div id="results"></div>
+    <div id="summary"></div>
+
+    <script src="shot.js"></script>
+    <script src="test-runner.js"></script>
+</body>
+</html>
