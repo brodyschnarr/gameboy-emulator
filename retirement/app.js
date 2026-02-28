@@ -406,18 +406,18 @@ const AppV4 = {
         const income = parseFloat(document.getElementById('current-income')?.value) || 0;
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
         
-        if (income > 0 && this.selectedRegion) {
-            const regionData = RegionalData.getRegion(this.selectedRegion);
-            const avgIncome = regionData.averageIncome;
-            const diff = ((income / avgIncome) - 1) * 100;
-            
-            let message = '';
-            if (diff > 20) message = `💪 ${Math.round(diff)}% above ${regionData.name} average`;
-            else if (diff > -10) message = `📊 Near ${regionData.name} average`;
-            else message = `⚠️ ${Math.round(Math.abs(diff))}% below ${regionData.name} average`;
-            
+        if (income > 0) {
+            const comparison = BenchmarksV2.compareIncome(income, age);
             const el = document.getElementById('income-benchmark');
-            if (el) el.textContent = message;
+            if (el) {
+                el.innerHTML = `
+                    ${comparison.message}<br>
+                    <small style="opacity: 0.8;">
+                        Age ${age} avg: $${comparison.ageAverage.toLocaleString()} | 
+                        Canadian median: $${comparison.median.toLocaleString()}
+                    </small>
+                `;
+            }
         }
     },
 
@@ -425,7 +425,7 @@ const AppV4 = {
         if (!this.selectedRegion) return;
         
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
-        const benchmarks = RegionalData.getRegionalBenchmarks(this.selectedRegion, age);
+        const benchmarks = RegionalDataV2.getRegionalBenchmarks(this.selectedRegion, age);
         
         // Update income benchmark
         this._updateIncomeBenchmark();
@@ -439,13 +439,19 @@ const AppV4 = {
     _updateSavingsBenchmark() {
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
         const benchmarks = this.selectedRegion 
-            ? RegionalData.getRegionalBenchmarks(this.selectedRegion, age)
-            : Benchmarks.getSavingsBenchmark(age);
+            ? RegionalDataV2.getRegionalBenchmarks(this.selectedRegion, age)
+            : BenchmarksV2.getSavingsBenchmark(age);
         
         const html = `
             <strong>Typical ${benchmarks.name || 'Canadian'} at age ${age}:</strong><br>
-            Median: $${benchmarks.median.toLocaleString()} | 
-            Average: $${benchmarks.average.toLocaleString()}
+            <div style="margin-top: 8px; font-size: 14px;">
+                📊 Median: $${benchmarks.median.toLocaleString()} | 
+                📈 Average: $${benchmarks.average.toLocaleString()}
+            </div>
+            <div style="margin-top: 4px; font-size: 13px; opacity: 0.8;">
+                25th percentile: $${(benchmarks.p25 || 0).toLocaleString()} | 
+                75th percentile: $${(benchmarks.p75 || 0).toLocaleString()}
+            </div>
         `;
         
         const el = document.getElementById('savings-benchmark');
@@ -466,11 +472,17 @@ const AppV4 = {
         }
 
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
-        const comparison = Benchmarks.compareSavings(age, total);
+        const comparison = BenchmarksV2.compareSavings(age, total);
         
         const benchmark = document.getElementById('total-savings-benchmark');
         if (benchmark) {
-            benchmark.textContent = comparison.message;
+            benchmark.innerHTML = `
+                <div>${comparison.message}</div>
+                <div style="font-size: 12px; margin-top: 4px; opacity: 0.8;">
+                    Median: $${comparison.median.toLocaleString()} | 
+                    Average: $${comparison.average.toLocaleString()}
+                </div>
+            `;
         }
     },
 
@@ -487,10 +499,17 @@ const AppV4 = {
         }
         
         if (monthly > 0) {
-            const comparison = Benchmarks.compareContribution(monthly, income);
+            const comparison = BenchmarksV2.compareContribution(monthly, income);
             const el = document.getElementById('contribution-benchmark');
             if (el) {
-                el.textContent = `${comparison.message} (Recommended: $${comparison.recommended}/month)`;
+                el.innerHTML = `
+                    <div>${comparison.message}</div>
+                    <div style="font-size: 12px; margin-top: 4px; opacity: 0.8;">
+                        Recommended (15% of income): $${comparison.recommended}/month | 
+                        Canadian median: $${BenchmarksV2.monthlyContribution.median}/month | 
+                        Avg at your income: $${comparison.incomePeerMedian}/month
+                    </div>
+                `;
             }
         }
     },
@@ -524,10 +543,21 @@ const AppV4 = {
             income = income1 + income2;
         }
         
-        const recommended = Benchmarks.getRecommendedSpending(income);
+        const spending = parseFloat(document.getElementById('annual-spending')?.value) || 0;
+        const recommended = BenchmarksV2.getRecommendedSpending(income);
+        
         const el = document.getElementById('spending-recommendation');
         if (el) {
-            el.textContent = `Recommended: $${recommended.toLocaleString()}/year (70% of current income)`;
+            let html = `Recommended (70% of income): $${recommended.toLocaleString()}/year`;
+            
+            if (spending > 0) {
+                const comparison = BenchmarksV2.compareSpending(spending);
+                html += `<br><small style="opacity: 0.8;">${comparison.message} | Median retiree: $${comparison.medianSpending.toLocaleString()}/year</small>`;
+            } else {
+                html += `<br><small style="opacity: 0.8;">Canadian retiree median: $${BenchmarksV2.retirementSpending.average.median.toLocaleString()}/year | Average: $${BenchmarksV2.retirementSpending.average.annual.toLocaleString()}/year</small>`;
+            }
+            
+            el.innerHTML = html;
         }
     },
 
