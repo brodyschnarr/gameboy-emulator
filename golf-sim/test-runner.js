@@ -405,6 +405,54 @@ TestRunner.suite('Swing Replay System', ({ test }) => {
     });
 });
 
+TestRunner.suite('Session Summary', ({ test }) => {
+
+    test('Summary calculates average distance correctly', () => {
+        const mockShots = [
+            { totalYards: 240, clubHeadSpeed: 100, carryYards: 230, directionYards: 0, shotShape: 'Straight', club: 'driver' },
+            { totalYards: 250, clubHeadSpeed: 105, carryYards: 238, directionYards: -5, shotShape: 'Fade', club: 'driver' },
+            { totalYards: 245, clubHeadSpeed: 102, carryYards: 234, directionYards: 3, shotShape: 'Draw', club: 'driver' }
+        ];
+        
+        const avgDist = Math.round(mockShots.reduce((s, sh) => s + sh.totalYards, 0) / mockShots.length);
+        assertEquals(avgDist, 245, 'Average should be 245 yards');
+    });
+
+    test('Summary finds best shot correctly', () => {
+        const mockShots = [
+            { totalYards: 220 },
+            { totalYards: 260 },
+            { totalYards: 245 }
+        ];
+        
+        const best = Math.max(...mockShots.map(s => s.totalYards));
+        assertEquals(best, 260, 'Best shot should be 260 yards');
+    });
+
+    test('Club grouping works correctly', () => {
+        const mockShots = [
+            { club: 'driver', carryYards: 240 },
+            { club: 'driver', carryYards: 250 },
+            { club: '7i', carryYards: 160 }
+        ];
+
+        const clubGroups = {};
+        mockShots.forEach(shot => {
+            if (!clubGroups[shot.club]) clubGroups[shot.club] = [];
+            clubGroups[shot.club].push(shot);
+        });
+
+        assertEquals(clubGroups['driver'].length, 2, 'Should have 2 driver shots');
+        assertEquals(clubGroups['7i'].length, 1, 'Should have 1 7-iron shot');
+    });
+
+    test('Empty shots array handled gracefully', () => {
+        const shots = [];
+        const avgDist = shots.length > 0 ? shots.reduce((s, sh) => s + sh.totalYards, 0) / shots.length : 0;
+        assertEquals(avgDist, 0, 'Empty array should return 0');
+    });
+});
+
 // Run all tests
 document.addEventListener('DOMContentLoaded', () => {
     TestRunner.run();

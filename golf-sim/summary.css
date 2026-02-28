@@ -1,0 +1,131 @@
+/* ═══════════════════════════════
+   SESSION SUMMARY SCREEN
+═══════════════════════════════ */
+#screen-summary {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background: linear-gradient(160deg, #0d1117 0%, #1a2a3a 100%);
+    overflow-y: auto;
+    padding: 40px 20px;
+}
+
+.summary-inner {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.summary-inner h2 {
+    font-size: 36px;
+    font-weight: 800;
+    text-align: center;
+    margin: 0;
+}
+
+.summary-inner h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.summary-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.summary-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 16px;
+    text-align: center;
+}
+
+.summary-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.summary-value {
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1;
+}
+
+.summary-unit {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+.club-averages {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+}
+
+.club-avg-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.club-avg-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+}
+
+.club-avg-item .club-name {
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.club-avg-item .club-stats {
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.dispersion-chart-container {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+}
+
+#dispersion-chart {
+    width: 100%;
+    height: 300px;
+    background: #000;
+    border-radius: 10px;
+}
+
+.summary-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.summary-actions button {
+    min-width: 160px;
+}
+
+@media (max-width: 600px) {
+    .summary-value { font-size: 28px; }
+    .summary-stats-grid { grid-template-columns: 1fr 1fr; }
+}

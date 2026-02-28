@@ -318,8 +318,18 @@ const App = {
 
     _endSession() {
         SwingDetector.stop();
+        
+        // Show summary if we have shots, otherwise go straight to setup
+        if (this.shots.length > 0) {
+            this._showSessionSummary();
+        } else {
+            this._backToSetup();
+        }
+    },
+
+    _backToSetup() {
         DrivingRange.reset();
-        DrivingRange.clearAllTracers(); // Clear shot tracers when ending session
+        DrivingRange.clearAllTracers();
         this._showScreen('setup');
         this.state = 'setup';
         this.shots = [];
@@ -444,6 +454,123 @@ const App = {
 
         // Draw first frame
         drawFrame(0);
+    },
+
+    // ── Session Summary ─────────────────────────
+
+    _showSessionSummary() {
+        this._showScreen('summary');
+
+        const shots = this.shots;
+        if (shots.length === 0) {
+            this._backToSetup();
+            return;
+        }
+
+        // Total shots
+        document.getElementById('sum-total-shots').textContent = shots.length;
+
+        // Average distance (total yards)
+        const avgDist = Math.round(shots.reduce((s, sh) => s + sh.totalYards, 0) / shots.length);
+        document.getElementById('sum-avg-distance').textContent = avgDist;
+
+        // Best shot
+        const bestShot = Math.max(...shots.map(sh => sh.totalYards));
+        document.getElementById('sum-best-shot').textContent = bestShot;
+
+        // Average club speed
+        const avgSpeed = Math.round(shots.reduce((s, sh) => s + sh.clubHeadSpeed, 0) / shots.length);
+        document.getElementById('sum-avg-speed').textContent = avgSpeed;
+
+        // Club averages
+        const clubGroups = {};
+        shots.forEach(shot => {
+            if (!clubGroups[shot.club]) clubGroups[shot.club] = [];
+            clubGroups[shot.club].push(shot);
+        });
+
+        const clubAvgList = document.getElementById('club-avg-list');
+        clubAvgList.innerHTML = '';
+
+        Object.entries(clubGroups).forEach(([club, clubShots]) => {
+            const avgCarry = Math.round(clubShots.reduce((s, sh) => s + sh.carryYards, 0) / clubShots.length);
+            const count = clubShots.length;
+
+            const item = document.createElement('div');
+            item.className = 'club-avg-item';
+            item.innerHTML = `
+                <span class="club-name">${this.CLUB_NAMES[club]}</span>
+                <span class="club-stats">${avgCarry} yds avg · ${count} shot${count > 1 ? 's' : ''}</span>
+            `;
+            clubAvgList.appendChild(item);
+        });
+
+        // Dispersion chart
+        this._drawDispersionChart(shots);
+
+        // Buttons
+        document.getElementById('btn-new-session').onclick = () => {
+            this.shots = [];
+            DrivingRange.clearAllTracers();
+            this._startSession();
+        };
+
+        document.getElementById('btn-back-to-setup').onclick = () => {
+            this._backToSetup();
+        };
+    },
+
+    _drawDispersionChart(shots) {
+        const canvas = document.getElementById('dispersion-chart');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width = canvas.clientWidth;
+        const H = canvas.height = 300;
+
+        ctx.clearRect(0, 0, W, H);
+
+        if (shots.length === 0) return;
+
+        // Find range
+        const maxCarry = Math.max(...shots.map(s => s.carryYards));
+        const minCarry = Math.min(...shots.map(s => s.carryYards));
+        const maxDir = Math.max(...shots.map(s => Math.abs(s.directionYards)));
+
+        // Draw fairway line (center)
+        ctx.strokeStyle = '#2d8a3e';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(W / 2, 0);
+        ctx.lineTo(W / 2, H);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw shots
+        shots.forEach((shot, i) => {
+            const x = W / 2 + (shot.directionYards / (maxDir + 10)) * (W / 2 - 40);
+            const y = H - ((shot.carryYards - minCarry + 10) / (maxCarry - minCarry + 20)) * (H - 40) - 20;
+
+            // Shot dot
+            ctx.fillStyle = shot.shotShape === 'Straight' ? '#7ee787' : 
+                            shot.shotShape.includes('Draw') || shot.shotShape.includes('Hook') ? '#58a6ff' :
+                            '#ff7b72';
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Distance label
+            ctx.fillStyle = '#7d8590';
+            ctx.font = '10px monospace';
+            ctx.fillText(`${shot.carryYards}`, x + 10, y + 4);
+        });
+
+        // Axis labels
+        ctx.fillStyle = '#7d8590';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('← Left', 10, H - 10);
+        ctx.fillText('Right →', W - 60, H - 10);
+        ctx.fillText(`${minCarry} yds`, 10, H - 20);
+        ctx.fillText(`${maxCarry} yds`, 10, 20);
     },
 
     // ── Utilities ────────────────────────────────
