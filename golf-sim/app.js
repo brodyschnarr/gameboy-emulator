@@ -9,6 +9,7 @@ const App = {
     shots: [],
     rangeReady: false,
     calibrationShots: [],
+    lastSwingReplay: null,
 
     CLUB_NAMES: {
         driver: 'Driver', '3w': '3 Wood', '5i': '5 Iron', '7i': '7 Iron', pw: 'Pitching Wedge'
@@ -201,6 +202,11 @@ const App = {
             this._endSession();
         });
 
+        // Replay button
+        document.getElementById('btn-replay').addEventListener('click', () => {
+            this._showReplay();
+        });
+
         // Next shot button
         document.getElementById('btn-next-shot').addEventListener('click', () => {
             this._prepareNextShot();
@@ -230,6 +236,10 @@ const App = {
         // Calculate shot
         const shotData = ShotCalculator.calculate(swingData, this.club);
         if (!shotData) return;
+
+        // Save swing replay
+        this.lastSwingReplay = SwingDetector.getRecordedSwing();
+        document.getElementById('btn-replay').classList.remove('hidden');
 
         // Store shot
         this.shots.push(shotData);
@@ -324,6 +334,116 @@ const App = {
             const card = document.getElementById(id);
             if (card) card.querySelector('.stat-value').textContent = '--';
         });
+    },
+
+    // ── Utilities ────────────────────────────────
+
+    // ── Replay ──────────────────────────────────
+
+    _showReplay() {
+        if (!this.lastSwingReplay || !this.lastSwingReplay.frames.length) {
+            alert('No swing to replay');
+            return;
+        }
+
+        const modal = document.getElementById('replay-modal');
+        const canvas = document.getElementById('replay-canvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('replay-slider');
+        const playPauseBtn = document.getElementById('btn-play-pause');
+        const speedSelect = document.getElementById('replay-speed');
+
+        modal.classList.remove('hidden');
+
+        // Setup canvas
+        canvas.width = 640;
+        canvas.height = 480;
+
+        let isPlaying = false;
+        let currentFrame = 0;
+        let animId = null;
+        const frames = this.lastSwingReplay.frames;
+
+        const drawFrame = (index) => {
+            if (index < 0 || index >= frames.length) return;
+            
+            const frame = frames[index];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw skeleton
+            const lm = frame.landmarks;
+            const W = canvas.width;
+            const H = canvas.height;
+
+            ctx.strokeStyle = 'rgba(245,197,24,0.9)';
+            ctx.lineWidth = 3;
+            ctx.fillStyle = 'rgba(245,197,24,0.9)';
+
+            // Connections
+            const connections = [
+                [11,12],[11,13],[13,15],[12,14],[14,16],
+                [11,23],[12,24],[23,24],
+                [23,25],[25,27],[24,26],[26,28]
+            ];
+
+            connections.forEach(([a, b]) => {
+                if (!lm[a] || !lm[b] || lm[a].visibility < 0.3 || lm[b].visibility < 0.3) return;
+                ctx.beginPath();
+                ctx.moveTo(lm[a].x * W, lm[a].y * H);
+                ctx.lineTo(lm[b].x * W, lm[b].y * H);
+                ctx.stroke();
+            });
+
+            // Joints
+            [11,12,13,14,15,16,23,24].forEach(i => {
+                if (!lm[i] || lm[i].visibility < 0.3) return;
+                ctx.beginPath();
+                ctx.arc(lm[i].x * W, lm[i].y * H, 6, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Frame number
+            ctx.fillStyle = '#fff';
+            ctx.font = '14px monospace';
+            ctx.fillText(`Frame ${index + 1} / ${frames.length}`, 10, 20);
+        };
+
+        const play = () => {
+            if (!isPlaying) return;
+            
+            currentFrame++;
+            if (currentFrame >= frames.length) {
+                currentFrame = 0; // loop
+            }
+            
+            drawFrame(currentFrame);
+            slider.value = (currentFrame / frames.length) * 100;
+            
+            const speed = parseFloat(speedSelect.value);
+            const delay = 33 / speed; // ~30fps base
+            animId = setTimeout(play, delay);
+        };
+
+        playPauseBtn.onclick = () => {
+            isPlaying = !isPlaying;
+            playPauseBtn.textContent = isPlaying ? '⏸️ Pause' : '▶️ Play';
+            if (isPlaying) play();
+            else if (animId) clearTimeout(animId);
+        };
+
+        slider.oninput = () => {
+            currentFrame = Math.floor((slider.value / 100) * frames.length);
+            drawFrame(currentFrame);
+        };
+
+        document.getElementById('btn-close-replay').onclick = () => {
+            isPlaying = false;
+            if (animId) clearTimeout(animId);
+            modal.classList.add('hidden');
+        };
+
+        // Draw first frame
+        drawFrame(0);
     },
 
     // ── Utilities ────────────────────────────────

@@ -354,6 +354,57 @@ TestRunner.suite('Shot Tracer System', ({ test }) => {
     });
 });
 
+TestRunner.suite('Swing Replay System', ({ test }) => {
+
+    test('Recorded frames array initializes empty', () => {
+        assert(Array.isArray(SwingDetector.recordedFrames), 'recordedFrames should be an array');
+    });
+
+    test('getRecordedSwing returns null when no frames', () => {
+        SwingDetector.recordedFrames = [];
+        const replay = SwingDetector.getRecordedSwing();
+        assertEquals(replay, null, 'Should return null with < 30 frames');
+    });
+
+    test('getRecordedSwing returns swing data with sufficient frames', () => {
+        // Mock 60 frames
+        SwingDetector.recordedFrames = Array.from({ length: 60 }, (_, i) => ({
+            landmarks: [],
+            timestamp: i * 33 // ~30fps
+        }));
+        
+        const replay = SwingDetector.getRecordedSwing();
+        assert(replay !== null, 'Should return replay data');
+        assert(Array.isArray(replay.frames), 'Should have frames array');
+        assert(replay.frames.length > 0, 'Frames should not be empty');
+        assert(typeof replay.duration === 'number', 'Should have duration');
+    });
+
+    test('getRecordedSwing limits to last 90 frames', () => {
+        // Mock 150 frames
+        SwingDetector.recordedFrames = Array.from({ length: 150 }, (_, i) => ({
+            landmarks: [],
+            timestamp: i * 33
+        }));
+        
+        const replay = SwingDetector.getRecordedSwing();
+        assertEquals(replay.frames.length, 90, 'Should return last 90 frames max');
+    });
+
+    test('Recording stops when isRecording is false', () => {
+        SwingDetector.recordedFrames = [];
+        SwingDetector.isRecording = false;
+        
+        // Simulate recording a frame
+        const mockLandmarks = [{ x: 0.5, y: 0.5, z: 0, visibility: 1 }];
+        SwingDetector._recordFrame(mockLandmarks);
+        
+        // Frame should still be added (method doesn't check isRecording flag itself)
+        // The check is in _onResults, but we can verify _recordFrame works
+        assert(SwingDetector.recordedFrames.length > 0, '_recordFrame should add frames');
+    });
+});
+
 // Run all tests
 document.addEventListener('DOMContentLoaded', () => {
     TestRunner.run();

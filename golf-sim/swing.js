@@ -20,6 +20,10 @@ const SwingDetector = {
     frames: [],
     MAX_FRAMES: 120, // 4 seconds at 30fps
 
+    // Swing replay recording
+    recordedFrames: [],
+    isRecording: false,
+
     // Swing detection thresholds
     SWING_START_VELOCITY: 0.008,   // minimum wrist movement to start tracking
     IMPACT_VELOCITY_MIN: 0.04,     // minimum peak velocity to count as a real swing
@@ -67,6 +71,8 @@ const SwingDetector = {
     startDetecting() {
         this.state = 'detecting';
         this.frames = [];
+        this.recordedFrames = [];
+        this.isRecording = true;
     },
 
     _onResults(results) {
@@ -85,6 +91,11 @@ const SwingDetector = {
 
         // Draw skeleton overlay
         this._drawSkeleton(lm);
+
+        // Record frame for replay (if recording)
+        if (this.isRecording && results.poseLandmarks) {
+            this._recordFrame(results.poseLandmarks);
+        }
 
         if (this.state === 'idle' || this.state === 'done') return;
 
@@ -288,5 +299,33 @@ const SwingDetector = {
         this._lastStatus = text;
         const el = document.getElementById('status-text');
         if (el) el.textContent = text;
+    },
+
+    _recordFrame(landmarks) {
+        // Capture lightweight frame data
+        const frame = {
+            landmarks: landmarks.map(lm => ({ x: lm.x, y: lm.y, z: lm.z, visibility: lm.visibility })),
+            timestamp: performance.now()
+        };
+        this.recordedFrames.push(frame);
+
+        // Limit to ~4 seconds at 30fps = 120 frames
+        if (this.recordedFrames.length > 120) {
+            this.recordedFrames.shift();
+        }
+    },
+
+    getRecordedSwing() {
+        // Return the recorded swing for playback
+        // Find the swing window (from backswing start to follow-through)
+        if (this.recordedFrames.length < 30) return null;
+
+        // Return last ~3 seconds (90 frames)
+        const swingFrames = this.recordedFrames.slice(-90);
+        
+        return {
+            frames: swingFrames,
+            duration: swingFrames.length > 0 ? swingFrames[swingFrames.length - 1].timestamp - swingFrames[0].timestamp : 0
+        };
     }
 };

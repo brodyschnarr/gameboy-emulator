@@ -161,7 +161,30 @@
                 <button class="club-btn-sm" data-club="5i">5I</button>
                 <button class="club-btn-sm" data-club="7i">7I</button>
                 <button class="club-btn-sm" data-club="pw">PW</button>
+                <button id="btn-replay" class="btn-replay hidden" title="Replay Last Swing">🎬</button>
                 <button id="btn-exit" class="btn-exit">✕</button>
+            </div>
+        </div>
+
+        <!-- Swing Replay Modal -->
+        <div class="replay-modal hidden" id="replay-modal">
+            <div class="replay-container">
+                <div class="replay-header">
+                    <h3>🎬 Swing Replay</h3>
+                    <button id="btn-close-replay" class="btn-close-modal">✕</button>
+                </div>
+                <div class="replay-viewport">
+                    <canvas id="replay-canvas"></canvas>
+                    <div class="replay-controls">
+                        <button id="btn-play-pause" class="replay-btn">▶️ Play</button>
+                        <input type="range" id="replay-slider" min="0" max="100" value="0" class="replay-slider">
+                        <select id="replay-speed" class="replay-speed-select">
+                            <option value="0.25">0.25x</option>
+                            <option value="0.5" selected>0.5x</option>
+                            <option value="1">1x</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
 
