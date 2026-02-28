@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Canadian retirement calculator with deep insights">
+    <title>Retirement Planner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <header class="header">
+        <div class="container">
+            <h1>💰 Retirement Planner</h1>
+            <p class="tagline">Canadian retirement planning made clear</p>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- ══════════════════════════════════════
+             STEP 1: Quick Start or Detailed
+        ═══════════════════════════════════════ -->
+        <section class="card mode-selector" id="mode-selector">
+            <h2>How would you like to start?</h2>
+            <div class="mode-options">
+                <button class="mode-btn" data-mode="simple">
+                    <span class="mode-icon">🎯</span>
+                    <span class="mode-title">Quick Start</span>
+                    <span class="mode-desc">Simple inputs, instant results</span>
+                </button>
+                <button class="mode-btn" data-mode="detailed">
+                    <span class="mode-icon">📊</span>
+                    <span class="mode-title">Detailed Plan</span>
+                    <span class="mode-desc">Full breakdown, all assumptions</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════
+             STEP 2: Input Form
+        ═══════════════════════════════════════ -->
+        <form id="planner-form" class="hidden">
+
+            <!-- Current Situation -->
+            <section class="card">
+                <h2>📍 Where You Are Today</h2>
+                
+                <!-- Simple Mode: Single Savings Input -->
+                <div class="input-group" data-visibility="simple">
+                    <label for="total-savings">
+                        Total Savings
+                        <button type="button" class="info-btn" data-tooltip="All your retirement savings combined">?</button>
+                    </label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="total-savings" placeholder="50000" min="0" step="1000">
+                    </div>
+                    <button type="button" class="expand-btn" id="expand-accounts">
+                        ⚙️ Break down by account type
+                    </button>
+                </div>
+
+                <!-- Detailed Mode: Account Breakdown -->
+                <div class="account-breakdown hidden" id="account-breakdown">
+                    <p class="section-intro">
+                        <strong>Why break it down?</strong> Different accounts are taxed differently in retirement.
+                        TFSA withdrawals are tax-free, RRSP withdrawals are taxed as income.
+                    </p>
+
+                    <div class="input-group">
+                        <label for="rrsp">
+                            RRSP
+                            <button type="button" class="info-btn" data-tooltip="Registered Retirement Savings Plan. Tax-deferred growth, taxed on withdrawal.">?</button>
+                        </label>
+                        <div class="input-with-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="rrsp" placeholder="0" min="0" step="1000">
+                        </div>
+                        <small class="input-hint">Tax-deferred until retirement</small>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="tfsa">
+                            TFSA
+                            <button type="button" class="info-btn" data-tooltip="Tax-Free Savings Account. Grows tax-free, withdrawals tax-free.">?</button>
+                        </label>
+                        <div class="input-with-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="tfsa" placeholder="0" min="0" step="1000">
+                        </div>
+                        <small class="input-hint">Tax-free forever 🎉</small>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="nonreg">
+                            Non-Registered
+                            <button type="button" class="info-btn" data-tooltip="Taxable investment accounts. Capital gains taxed at 50%.">?</button>
+                        </label>
+                        <div class="input-with-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="nonreg" placeholder="0" min="0" step="1000">
+                        </div>
+                        <small class="input-hint">Taxable, but only on gains</small>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="other">Other (Pension, Inheritance, etc.)</label>
+                        <div class="input-with-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="other" placeholder="0" min="0" step="1000">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Age & Contributions -->
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="current-age">Current Age</label>
+                        <input type="number" id="current-age" placeholder="35" min="18" max="100" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="retirement-age">Retirement Age</label>
+                        <input type="number" id="retirement-age" placeholder="65" min="40" max="100" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="monthly-contribution">
+                        Monthly Contribution
+                        <button type="button" class="info-btn" data-tooltip="How much you plan to save each month">?</button>
+                    </label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="monthly-contribution" placeholder="500" min="0" step="50">
+                    </div>
+                    <small class="comparison" id="contribution-comparison"></small>
+                </div>
+
+            </section>
+
+            <!-- Retirement Goals -->
+            <section class="card">
+                <h2>🎯 Your Retirement Goals</h2>
+                
+                <div class="lifestyle-selector">
+                    <p class="section-intro">Pick a lifestyle, or build your own:</p>
+                    
+                    <div class="lifestyle-grid">
+                        <button type="button" class="lifestyle-card" data-lifestyle="modest">
+                            <span class="lifestyle-icon">🏡</span>
+                            <h3>Modest</h3>
+                            <p class="lifestyle-amount">$35,000/year</p>
+                            <p class="lifestyle-desc">Simple living, stay close to home</p>
+                        </button>
+
+                        <button type="button" class="lifestyle-card" data-lifestyle="comfortable">
+                            <span class="lifestyle-icon">✈️</span>
+                            <h3>Comfortable</h3>
+                            <p class="lifestyle-amount">$60,000/year</p>
+                            <p class="lifestyle-desc">Travel occasionally, enjoy hobbies</p>
+                        </button>
+
+                        <button type="button" class="lifestyle-card" data-lifestyle="luxury">
+                            <span class="lifestyle-icon">🏖️</span>
+                            <h3>Luxury</h3>
+                            <p class="lifestyle-amount">$90,000/year</p>
+                            <p class="lifestyle-desc">Frequent travel, high-end lifestyle</p>
+                        </button>
+
+                        <button type="button" class="lifestyle-card" data-lifestyle="custom">
+                            <span class="lifestyle-icon">⚙️</span>
+                            <h3>Custom</h3>
+                            <p class="lifestyle-amount">Build your own</p>
+                            <p class="lifestyle-desc">Add activities & costs</p>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Custom Activity Builder -->
+                <div class="activity-builder hidden" id="activity-builder">
+                    <h3>Build Your Retirement Budget</h3>
+                    <p class="section-intro">Add activities and we'll show the cost impact:</p>
+
+                    <div class="activity-list" id="activity-list">
+                        <!-- Activities added here via JS -->
+                    </div>
+
+                    <button type="button" class="btn-secondary" id="add-activity">+ Add Activity</button>
+
+                    <div class="budget-summary">
+                        <strong>Estimated Annual Spending:</strong>
+                        <span class="budget-total" id="custom-budget-total">$0</span>
+                    </div>
+                </div>
+
+                <div class="canadian-avg-callout">
+                    <strong>📊 Canadian Average:</strong> Retirees spend ~$50,000/year (2024)
+                </div>
+
+            </section>
+
+            <!-- Advanced Assumptions (Collapsible) -->
+            <section class="card assumptions-section">
+                <button type="button" class="section-toggle" id="toggle-assumptions">
+                    <span class="toggle-icon">▶</span>
+                    <h2>⚙️ Assumptions & Advanced Settings</h2>
+                </button>
+
+                <div class="assumptions-content hidden" id="assumptions-content">
+                    <p class="section-intro">
+                        These defaults work for most people, but you can adjust them:
+                    </p>
+
+                    <div class="input-group">
+                        <label for="return-rate">
+                            Expected Annual Return
+                            <button type="button" class="info-btn" data-tooltip="Historical average: 7% for balanced portfolio">?</button>
+                        </label>
+                        <div class="input-with-suffix">
+                            <input type="number" id="return-rate" value="7" min="0" max="15" step="0.5">
+                            <span class="suffix">%</span>
+                        </div>
+                        <div class="preset-buttons">
+                            <button type="button" class="preset-btn" data-preset-return="5">Conservative (5%)</button>
+                            <button type="button" class="preset-btn" data-preset-return="7">Balanced (7%)</button>
+                            <button type="button" class="preset-btn" data-preset-return="9">Aggressive (9%)</button>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="inflation-rate">
+                            Inflation Rate
+                            <button type="button" class="info-btn" data-tooltip="Bank of Canada target: 2%">?</button>
+                        </label>
+                        <div class="input-with-suffix">
+                            <input type="number" id="inflation-rate" value="2.5" min="0" max="10" step="0.1">
+                            <span class="suffix">%</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="withdrawal-rate">
+                            Annual Withdrawal Rate
+                            <button type="button" class="info-btn" data-tooltip="The 4% rule is a common safe withdrawal strategy">?</button>
+                        </label>
+                        <div class="input-with-suffix">
+                            <input type="number" id="withdrawal-rate" value="4" min="2" max="8" step="0.5">
+                            <span class="suffix">%</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="life-expectancy">
+                            Plan Until Age
+                            <button type="button" class="info-btn" data-tooltip="Canadian avg life expectancy: ~82">?</button>
+                        </label>
+                        <input type="number" id="life-expectancy" value="90" min="60" max="110">
+                    </div>
+
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" id="include-cpp" checked>
+                            Include CPP/OAS Estimate
+                            <button type="button" class="info-btn" data-tooltip="We'll estimate based on average benefits">?</button>
+                        </label>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Calculate Button -->
+            <div class="action-bar">
+                <button type="submit" class="btn-primary">Calculate My Plan</button>
+            </div>
+
+        </form>
+
+        <!-- ══════════════════════════════════════
+             STEP 3: Results
+        ═══════════════════════════════════════ -->
+        <div id="results" class="hidden">
+
+            <!-- Status Banner -->
+            <section class="card status-banner" id="status-banner">
+                <!-- Filled by JS -->
+            </section>
+
+            <!-- Key Numbers -->
+            <section class="card">
+                <h2>📊 Your Numbers</h2>
+                <div class="key-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Retirement Nest Egg</div>
+                        <div class="stat-value" id="final-portfolio">$0</div>
+                        <div class="stat-note">At retirement</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Annual Income</div>
+                        <div class="stat-value" id="annual-income">$0</div>
+                        <div class="stat-note">From savings + CPP/OAS</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Money Lasts Until</div>
+                        <div class="stat-value" id="money-lasts">Age --</div>
+                        <div class="stat-note" id="longevity-note"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Projection Chart -->
+            <section class="card">
+                <h2>📈 Growth Projection</h2>
+                <canvas id="projection-chart"></canvas>
+            </section>
+
+            <!-- Breakdown -->
+            <section class="card">
+                <h2>🔍 Detailed Breakdown</h2>
+                <div id="breakdown-content"></div>
+            </section>
+
+            <!-- Actions -->
+            <div class="action-bar">
+                <button type="button" class="btn-secondary" id="btn-edit">Edit Inputs</button>
+                <button type="button" class="btn-primary" id="btn-save">Save Scenario</button>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="footer">
+        <p>Built for Canadians. All calculations use Canadian tax rules and averages.</p>
+        <p><small>This is educational. Not financial advice. Consult a pro for personalized planning.</small></p>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="calc.js"></script>
+    <script src="app.js"></script>
+
+</body>
+</html>
