@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Button Test</title>
+    <style>
+        body { padding: 40px; font-family: sans-serif; }
+        .test-btn { 
+            padding: 20px 40px; 
+            font-size: 18px; 
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+        #result { 
+            margin-top: 20px; 
+            padding: 20px; 
+            background: #f0f0f0; 
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Button Click Test</h1>
+    <p>If the button below works, the retirement calc buttons should work too.</p>
+    
+    <button type="button" class="test-btn" id="test-btn">Click Me!</button>
+    
+    <div id="result">Waiting for click...</div>
+    
+    <script>
+        console.log('Script loaded');
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+            
+            const btn = document.getElementById('test-btn');
+            console.log('Button found:', btn);
+            
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    console.log('Button clicked!');
+                    document.getElementById('result').textContent = 'SUCCESS! Button works.';
+                    document.getElementById('result').style.background = '#10b981';
+                    document.getElementById('result').style.color = 'white';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

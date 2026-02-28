@@ -24,12 +24,12 @@
         <section class="card mode-selector" id="mode-selector">
             <h2>How would you like to start?</h2>
             <div class="mode-options">
-                <button type="button" class="mode-btn" data-mode="simple">
+                <button type="button" class="mode-btn" data-mode="simple" onclick="console.log('SIMPLE CLICKED'); alert('Simple mode button clicked!');">
                     <span class="mode-icon">🎯</span>
                     <span class="mode-title">Quick Start</span>
                     <span class="mode-desc">Simple inputs, instant results</span>
                 </button>
-                <button type="button" class="mode-btn" data-mode="detailed">
+                <button type="button" class="mode-btn" data-mode="detailed" onclick="console.log('DETAILED CLICKED'); alert('Detailed mode button clicked!');">
                     <span class="mode-icon">📊</span>
                     <span class="mode-title">Detailed Plan</span>
                     <span class="mode-desc">Full breakdown, all assumptions</span>
@@ -335,6 +335,15 @@
         <p><small>This is educational. Not financial advice. Consult a pro for personalized planning.</small></p>
     </footer>
 
+    <script>
+        // Debug: verify JavaScript is running
+        console.log('[DEBUG] Inline script running');
+        window.addEventListener('load', () => {
+            console.log('[DEBUG] Window loaded');
+            console.log('[DEBUG] Mode selector exists:', !!document.getElementById('mode-selector'));
+            console.log('[DEBUG] Mode buttons found:', document.querySelectorAll('.mode-btn').length);
+        });
+    </script>
     <script src="data.js"></script>
     <script src="calc.js"></script>
     <script src="app.js"></script>

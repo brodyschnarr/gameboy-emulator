@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick Test</title>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+            
+            // Test if our scripts load
+            if (typeof RetirementData !== 'undefined') {
+                console.log('✓ data.js loaded');
+            } else {
+                console.error('✗ data.js NOT loaded');
+            }
+            
+            if (typeof RetirementCalc !== 'undefined') {
+                console.log('✓ calc.js loaded');
+            } else {
+                console.error('✗ calc.js NOT loaded');
+            }
+            
+            if (typeof App !== 'undefined') {
+                console.log('✓ app.js loaded');
+                console.log('App object:', App);
+            } else {
+                console.error('✗ app.js NOT loaded');
+            }
+        });
+    </script>
+    <script src="data.js"></script>
+    <script src="calc.js"></script>
+    <script src="app.js"></script>
+</head>
+<body>
+    <h1>Open browser console to see test results</h1>
+    
+    <button class="mode-btn" data-mode="simple">Test Button</button>
+    
+    <script>
+        // Test button click
+        const btn = document.querySelector('.mode-btn');
+        if (btn) {
+            console.log('Button found:', btn);
+            btn.addEventListener('click', () => {
+                console.log('BUTTON CLICKED!');
+            });
+        }
+    </script>
+</body>
+</html>
