@@ -105,17 +105,20 @@ body {
 
 .mode-icon {
     font-size: 40px;
+    pointer-events: none;
 }
 
 .mode-title {
     font-size: 18px;
     font-weight: 700;
     color: var(--text);
+    pointer-events: none;
 }
 
 .mode-desc {
     font-size: 13px;
     color: var(--text-muted);
+    pointer-events: none;
 }
 
 /* ── Inputs ─── */
