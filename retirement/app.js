@@ -91,14 +91,51 @@ const AppV2 = {
     _setupPresets() {
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', () => {
+                const lifestyle = btn.dataset.lifestyle;
+                const amount = parseInt(btn.dataset.amount);
+                
+                // Show detail modal
+                this._showLifestyleDetail(lifestyle);
+                
+                // Set as active and update input
                 document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
-                const amount = parseInt(btn.dataset.amount);
                 document.getElementById('annual-spending').value = amount;
                 this._updateSpendingRecommendation();
             });
         });
+
+        // Close detail modal
+        document.getElementById('close-detail').addEventListener('click', () => {
+            document.getElementById('lifestyle-detail').classList.add('hidden');
+        });
+    },
+
+    _showLifestyleDetail(lifestyle) {
+        const data = LifestyleData[lifestyle];
+        if (!data) return;
+
+        // Update header
+        document.getElementById('lifestyle-detail-title').textContent = 
+            `${data.name} Lifestyle - $${data.annual.toLocaleString()}/year`;
+        document.getElementById('lifestyle-detail-tagline').textContent = data.tagline;
+
+        // Build breakdown grid
+        const breakdownHTML = Object.entries(data.breakdown).map(([category, details]) => `
+            <div class="breakdown-item">
+                <div class="breakdown-category">${category.charAt(0).toUpperCase() + category.slice(1)}</div>
+                <div class="breakdown-amount">$${details.monthly.toLocaleString()}/month</div>
+                <div class="breakdown-description">${details.description}</div>
+            </div>
+        `).join('');
+        document.getElementById('lifestyle-breakdown').innerHTML = breakdownHTML;
+
+        // Build examples list
+        const examplesHTML = data.examples.map(ex => `<li>${ex}</li>`).join('');
+        document.getElementById('lifestyle-examples').innerHTML = examplesHTML;
+
+        // Show modal
+        document.getElementById('lifestyle-detail').classList.remove('hidden');
     },
 
     _setupCalculate() {

@@ -11,6 +11,7 @@
     
     <header class="header">
         <div class="container">
+            <a href="hub.html" class="back-link">← Back to Hub</a>
             <h1>💰 Retirement Planner</h1>
             <p class="tagline">Tax-aware Canadian retirement planning</p>
         </div>
@@ -198,19 +199,42 @@
 
             <div class="input-group">
                 <label>Annual Spending in Retirement</label>
+                <p class="section-intro" style="margin-top: 8px;">Choose a lifestyle or enter a custom amount. Click any option to see what it actually means.</p>
+                
                 <div class="lifestyle-presets">
-                    <button type="button" class="preset-btn" data-amount="35000">
+                    <button type="button" class="preset-btn" data-lifestyle="modest" data-amount="35000">
                         <div class="preset-name">Modest</div>
                         <div class="preset-amount">$35K/year</div>
                     </button>
-                    <button type="button" class="preset-btn" data-amount="60000">
+                    <button type="button" class="preset-btn" data-lifestyle="average" data-amount="48000">
+                        <div class="preset-name">Canadian Avg</div>
+                        <div class="preset-amount">$48K/year</div>
+                    </button>
+                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount="60000">
                         <div class="preset-name">Comfortable</div>
                         <div class="preset-amount">$60K/year</div>
                     </button>
-                    <button type="button" class="preset-btn" data-amount="90000">
+                    <button type="button" class="preset-btn" data-lifestyle="luxury" data-amount="90000">
                         <div class="preset-name">Luxury</div>
                         <div class="preset-amount">$90K/year</div>
                     </button>
+                </div>
+
+                <!-- Lifestyle Detail Modal -->
+                <div id="lifestyle-detail" class="lifestyle-detail hidden">
+                    <div class="lifestyle-header">
+                        <h3 id="lifestyle-detail-title"></h3>
+                        <p id="lifestyle-detail-tagline"></p>
+                    </div>
+                    
+                    <div class="breakdown-grid" id="lifestyle-breakdown"></div>
+                    
+                    <div class="examples-section">
+                        <h4>What this looks like:</h4>
+                        <ul id="lifestyle-examples"></ul>
+                    </div>
+                    
+                    <button type="button" class="btn-close-detail" id="close-detail">Close</button>
                 </div>
             </div>
 
@@ -304,11 +328,12 @@
     </main>
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=3"></script>
-    <script src="cpp-calculator.js?v=3"></script>
-    <script src="benchmarks.js?v=3"></script>
-    <script src="calc.js?v=3"></script>
-    <script src="app.js?v=3"></script>
+    <script src="canada-tax.js?v=4"></script>
+    <script src="cpp-calculator.js?v=4"></script>
+    <script src="benchmarks.js?v=4"></script>
+    <script src="lifestyle-data.js?v=4"></script>
+    <script src="calc.js?v=4"></script>
+    <script src="app.js?v=4"></script>
 
 </body>
 </html>

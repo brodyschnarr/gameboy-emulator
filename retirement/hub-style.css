@@ -1,0 +1,231 @@
+:root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --bg: #f9fafb;
+    --card-bg: #ffffff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --text-muted: #6b7280;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ── Header ─── */
+.header {
+    background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+    color: white;
+    padding: 60px 20px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+
+.header h1 {
+    font-size: 48px;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.tagline {
+    font-size: 18px;
+    opacity: 0.95;
+}
+
+/* ── Tools Grid ─── */
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    margin: 40px 0;
+}
+
+.tool-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: var(--shadow);
+    border: 2px solid var(--border);
+    transition: all 0.3s;
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.tool-card.active {
+    cursor: pointer;
+}
+
+.tool-card.active:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.tool-card.coming-soon {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.tool-icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+}
+
+.tool-card h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.tool-card p {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin-bottom: 20px;
+    flex-grow: 1;
+}
+
+.tool-status {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 20px;
+}
+
+.tool-status.live {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.tool-status:not(.live) {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.tool-features {
+    list-style: none;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.tool-features li {
+    padding: 6px 0;
+}
+
+.tool-cta {
+    background: var(--primary);
+    color: white;
+    padding: 14px 24px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    margin-top: auto;
+}
+
+.tool-card.active:hover .tool-cta {
+    background: var(--primary-hover);
+}
+
+/* ── About Section ─── */
+.about-section {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 40px;
+    margin: 40px 0;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.about-section h2 {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 32px;
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 32px;
+}
+
+.about-card {
+    text-align: center;
+}
+
+.about-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.about-card h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.about-card p {
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* ── Footer ─── */
+.footer {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+}
+
+/* ── Responsive ─── */
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 36px;
+    }
+    
+    .tools-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .about-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tool-card {
+        padding: 24px;
+    }
+}

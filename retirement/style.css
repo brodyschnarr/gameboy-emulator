@@ -765,3 +765,160 @@ input:focus {
         flex-direction: column;
     }
 }
+
+/* ═══════════════════════════════════════════
+   Lifestyle Detail Modal
+   ═══════════════════════════════════════════ */
+
+/* Update presets for 4 columns */
+.lifestyle-presets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+/* Lifestyle detail modal */
+.lifestyle-detail {
+    background: white;
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 20px;
+    box-shadow: var(--shadow-lg);
+}
+
+.lifestyle-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+}
+
+.lifestyle-header h3 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+.lifestyle-header p {
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+.breakdown-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.breakdown-item {
+    background: var(--bg);
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+}
+
+.breakdown-category {
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--primary);
+    margin-bottom: 4px;
+}
+
+.breakdown-amount {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.breakdown-description {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.examples-section {
+    background: #f0f9ff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.examples-section h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text);
+}
+
+.examples-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.examples-section li {
+    padding: 6px 0;
+    padding-left: 24px;
+    position: relative;
+    font-size: 14px;
+    color: var(--text);
+}
+
+.examples-section li:before {
+    content: '•';
+    position: absolute;
+    left: 8px;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.btn-close-detail {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-close-detail:hover {
+    background: var(--primary-hover);
+}
+
+/* Mobile responsive updates */
+@media (max-width: 768px) {
+    .lifestyle-presets {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .lifestyle-presets {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Back to Hub Link */
+.back-link {
+    display: inline-block;
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+
+.back-link:hover {
+    opacity: 1;
+}
