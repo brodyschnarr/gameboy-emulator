@@ -8,23 +8,30 @@ const App = {
     customActivities: [],
 
     init() {
+        console.log('[App] Initializing...');
         this._setupModeSelector();
         this._setupForm();
         this._setupLifestyleSelector();
         this._setupAssumptionsToggle();
         this._setupActivityBuilder();
         this._loadSavedData();
+        console.log('[App] Init complete');
     },
 
     _setupModeSelector() {
-        document.querySelectorAll('.mode-btn').forEach(btn => {
+        const buttons = document.querySelectorAll('.mode-btn');
+        console.log('[App] Found mode buttons:', buttons.length);
+        
+        buttons.forEach(btn => {
             btn.addEventListener('click', () => {
+                console.log('[App] Mode button clicked:', btn.dataset.mode);
                 this.mode = btn.dataset.mode;
                 document.getElementById('mode-selector').classList.add('hidden');
                 document.getElementById('planner-form').classList.remove('hidden');
                 
                 if (this.mode === 'detailed') {
-                    document.getElementById('expand-accounts').click();
+                    const expandBtn = document.getElementById('expand-accounts');
+                    if (expandBtn) expandBtn.click();
                 }
             });
         });
