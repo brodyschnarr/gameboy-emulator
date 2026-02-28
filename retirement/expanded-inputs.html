@@ -1,0 +1,394 @@
+<!-- This file contains the expanded input sections to be integrated into index.html -->
+
+<!-- ══════════════════════════════════════
+     SECTION 1: Income & Employment
+═══════════════════════════════════════ -->
+<section class="card collapsible-section">
+    <button type="button" class="section-toggle">
+        <span class="toggle-icon">▶</span>
+        <h2>💼 Income & Employment</h2>
+    </button>
+    
+    <div class="section-content hidden">
+        <p class="section-intro">Understanding your current income helps project future savings and tax planning</p>
+
+        <div class="input-group">
+            <label for="current-salary">
+                Current Annual Salary
+                <button type="button" class="info-btn" data-tooltip="Your gross annual income before taxes">?</button>
+            </label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="current-salary" placeholder="75000" min="0" step="1000">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="salary-growth">
+                Expected Annual Salary Growth
+                <button type="button" class="info-btn" data-tooltip="Typical: 2-3% for inflation + merit increases">?</button>
+            </label>
+            <div class="input-with-suffix">
+                <input type="number" id="salary-growth" value="2.5" min="0" max="10" step="0.5">
+                <span class="suffix">%</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="employer-match">
+                Employer RRSP Match
+                <button type="button" class="info-btn" data-tooltip="Percentage of salary your employer matches">?</button>
+            </label>
+            <div class="input-with-suffix">
+                <input type="number" id="employer-match" value="4" min="0" max="15" step="0.5">
+                <span class="suffix">% of salary</span>
+            </div>
+            <small class="input-hint">Canadian average: 4%</small>
+        </div>
+
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="has-pension">
+                I have a defined benefit (DB) pension
+            </label>
+        </div>
+
+        <div class="input-group hidden" id="pension-details">
+            <label for="pension-amount">Expected Annual Pension at Retirement</label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="pension-amount" placeholder="30000" min="0" step="1000">
+            </div>
+            <small class="input-hint">Check your pension statement for projections</small>
+        </div>
+
+        <div class="input-group">
+            <label for="province">
+                Province of Residence
+                <button type="button" class="info-btn" data-tooltip="Affects tax calculations">?</button>
+            </label>
+            <select id="province">
+                <option value="ON">Ontario</option>
+                <option value="BC">British Columbia</option>
+                <option value="AB">Alberta</option>
+                <option value="QC">Quebec</option>
+                <option value="MB">Manitoba</option>
+                <option value="SK">Saskatchewan</option>
+                <option value="NS">Nova Scotia</option>
+                <option value="NB">New Brunswick</option>
+                <option value="PE">Prince Edward Island</option>
+                <option value="NL">Newfoundland & Labrador</option>
+            </select>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     SECTION 2: Contribution Room Tracking
+═══════════════════════════════════════ -->
+<section class="card collapsible-section">
+    <button type="button" class="section-toggle">
+        <span class="toggle-icon">▶</span>
+        <h2>📋 RRSP & TFSA Contribution Room</h2>
+    </button>
+    
+    <div class="section-content hidden">
+        <p class="section-intro">Track your contribution limits to maximize tax-advantaged savings</p>
+
+        <div class="input-group">
+            <label for="rrsp-room">
+                Available RRSP Contribution Room
+                <button type="button" class="info-btn" data-tooltip="Check your CRA Notice of Assessment">?</button>
+            </label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="rrsp-room" placeholder="50000" min="0" step="1000">
+            </div>
+            <small class="input-hint">Find this on your CRA Notice of Assessment</small>
+        </div>
+
+        <div class="input-group">
+            <label for="tfsa-room">
+                Available TFSA Contribution Room
+                <button type="button" class="info-btn" data-tooltip="Total room minus what you've contributed">?</button>
+            </label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="tfsa-room" placeholder="95000" min="0" step="1000">
+            </div>
+            <small class="input-hint">2024 lifetime max if never contributed: $95,000</small>
+        </div>
+
+        <div class="recommendation-box" id="contribution-recommendation">
+            <!-- Filled by JavaScript -->
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     SECTION 3: Retirement Income Sources
+═══════════════════════════════════════ -->
+<section class="card collapsible-section">
+    <button type="button" class="section-toggle">
+        <span class="toggle-icon">▶</span>
+        <h2>💰 Retirement Income Sources</h2>
+    </button>
+    
+    <div class="section-content hidden">
+        <p class="section-intro">Government benefits and other income in retirement</p>
+
+        <h3 class="subsection-title">CPP (Canada Pension Plan)</h3>
+        
+        <div class="input-group">
+            <label for="cpp-start-age">
+                CPP Start Age
+                <button type="button" class="info-btn" data-tooltip="Age 60-70. Defer = higher monthly payment">?</button>
+            </label>
+            <input type="range" id="cpp-start-age" min="60" max="70" value="65" step="1">
+            <div class="range-display">
+                <span>Age <strong id="cpp-age-display">65</strong></span>
+                <span id="cpp-adjustment"></span>
+            </div>
+            <small class="input-hint">
+                Start at 60 = 36% less | Age 65 = 100% | Defer to 70 = 42% more
+            </small>
+        </div>
+
+        <div class="input-group">
+            <label for="cpp-estimate">
+                Estimated CPP Amount (at age 65)
+                <button type="button" class="info-btn" data-tooltip="Check My Service Canada Account">?</button>
+            </label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="cpp-estimate" value="8108" min="0" max="15679" step="100">
+                <span class="suffix">/year</span>
+            </div>
+            <small class="input-hint">Canadian average: $8,108 | Maximum: $15,679</small>
+        </div>
+
+        <h3 class="subsection-title">OAS (Old Age Security)</h3>
+        
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="defer-oas">
+                Defer OAS to age 70 (36% higher payment)
+            </label>
+        </div>
+
+        <div class="warning-box" id="oas-clawback-warning" class="hidden">
+            ⚠️ Your projected retirement income may trigger OAS clawback (starts at ~$91K)
+        </div>
+
+        <h3 class="subsection-title">Other Income</h3>
+
+        <div class="input-group">
+            <label for="rental-income">Rental or Investment Income</label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="rental-income" placeholder="0" min="0" step="1000">
+                <span class="suffix">/year</span>
+            </div>
+        </div>
+
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="semi-retirement">
+                Plan to work part-time in early retirement
+            </label>
+        </div>
+
+        <div class="input-group hidden" id="semi-retirement-details">
+            <label for="part-time-income">Part-Time Income (ages 60-65)</label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="part-time-income" placeholder="20000" min="0" step="1000">
+                <span class="suffix">/year</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     SECTION 4: Expenses Over Time
+═══════════════════════════════════════ -->
+<section class="card collapsible-section">
+    <button type="button" class="section-toggle">
+        <span class="toggle-icon">▶</span>
+        <h2>🏠 Expenses Over Time</h2>
+    </button>
+    
+    <div class="section-content hidden">
+        <p class="section-intro">Expenses change as you age - plan for it</p>
+
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="has-mortgage">
+                I have a mortgage
+            </label>
+        </div>
+
+        <div class="input-group hidden" id="mortgage-details">
+            <label for="mortgage-payoff-age">Mortgage Payoff Age</label>
+            <input type="number" id="mortgage-payoff-age" placeholder="60" min="40" max="90">
+            
+            <label for="mortgage-payment">Monthly Mortgage Payment</label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="mortgage-payment" placeholder="2500" min="0" step="100">
+                <span class="suffix">/month</span>
+            </div>
+            <small class="input-hint">After mortgage: your spending drops by this amount</small>
+        </div>
+
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="plan-downsize">
+                Plan to downsize home in retirement
+            </label>
+        </div>
+
+        <div class="input-group hidden" id="downsize-details">
+            <label for="downsize-age">Downsizing Age</label>
+            <input type="number" id="downsize-age" placeholder="70" min="60" max="90">
+            
+            <label for="downsize-equity">Expected Net Equity Release</label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="downsize-equity" placeholder="300000" min="0" step="10000">
+            </div>
+        </div>
+
+        <h3 class="subsection-title">Healthcare Costs</h3>
+        
+        <div class="input-group">
+            <label for="healthcare-annual">
+                Private Healthcare/Dental Budget
+                <button type="button" class="info-btn" data-tooltip="Not covered by provincial health plans">?</button>
+            </label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="healthcare-annual" value="3000" min="0" step="500">
+                <span class="suffix">/year</span>
+            </div>
+            <small class="input-hint">Average increases with age (70+ = higher costs)</small>
+        </div>
+
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="long-term-care">
+                Include long-term care buffer (age 80+)
+            </label>
+        </div>
+
+        <div class="input-group hidden" id="ltc-details">
+            <label for="ltc-annual">Annual Long-Term Care Cost</label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="ltc-annual" value="50000" min="0" step="5000">
+                <span class="suffix">/year</span>
+            </div>
+            <small class="input-hint">Average private LTC in Canada: $40-60K/year</small>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     SECTION 5: Debt Management
+═══════════════════════════════════════ -->
+<section class="card collapsible-section">
+    <button type="button" class="section-toggle">
+        <span class="toggle-icon">▶</span>
+        <h2>💳 Debt & Liabilities</h2>
+    </button>
+    
+    <div class="section-content hidden">
+        <p class="section-intro">Plan to eliminate debt before retirement</p>
+
+        <div class="input-group">
+            <label for="other-debt">Other Debt (car loans, line of credit, etc.)</label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="other-debt" placeholder="0" min="0" step="1000">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="debt-payoff-age">Plan to Be Debt-Free By Age</label>
+            <input type="number" id="debt-payoff-age" placeholder="60" min="40" max="90">
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     SECTION 6: Advanced Planning
+═══════════════════════════════════════ -->
+<section class="card collapsible-section">
+    <button type="button" class="section-toggle">
+        <span class="toggle-icon">▶</span>
+        <h2>🎯 Advanced Planning</h2>
+    </button>
+    
+    <div class="section-content hidden">
+        <p class="section-intro">Long-term considerations and legacy planning</p>
+
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="expect-inheritance">
+                Expect to receive inheritance
+            </label>
+        </div>
+
+        <div class="input-group hidden" id="inheritance-details">
+            <label for="inheritance-amount">Expected Inheritance Amount</label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="inheritance-amount" placeholder="200000" min="0" step="10000">
+            </div>
+            
+            <label for="inheritance-age">Expected Age to Receive</label>
+            <input type="number" id="inheritance-age" placeholder="70" min="50" max="100">
+        </div>
+
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="estate-goal">
+                I want to leave money for heirs
+            </label>
+        </div>
+
+        <div class="input-group hidden" id="estate-details">
+            <label for="estate-amount">Target Estate Value</label>
+            <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="estate-amount" placeholder="500000" min="0" step="10000">
+            </div>
+        </div>
+
+        <h3 class="subsection-title">Investment Details</h3>
+
+        <div class="input-group">
+            <label for="asset-allocation">
+                Stock/Bond Allocation
+                <button type="button" class="info-btn" data-tooltip="% in stocks (higher risk/return)">?</button>
+            </label>
+            <input type="range" id="asset-allocation" min="0" max="100" value="60" step="5">
+            <div class="range-display">
+                <span><strong id="stock-pct">60</strong>% stocks</span>
+                <span><strong id="bond-pct">40</strong>% bonds</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="investment-fees">
+                Annual Investment Fees (MER)
+                <button type="button" class="info-btn" data-tooltip="Mutual fund MERs: 1-2.5%. ETFs: 0.1-0.5%">?</button>
+            </label>
+            <div class="input-with-suffix">
+                <input type="number" id="investment-fees" value="0.5" min="0" max="3" step="0.1">
+                <span class="suffix">%</span>
+            </div>
+            <small class="input-hint">Low-cost index funds: ~0.2% | Mutual funds: ~2%</small>
+        </div>
+    </div>
+</section>

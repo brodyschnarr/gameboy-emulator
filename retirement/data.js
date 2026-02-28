@@ -87,7 +87,7 @@ const RetirementData = {
         oasAverage: 7707    // average OAS (most get full)
     },
 
-    // Tax considerations (simplified)
+    // Tax considerations (see canada-tax.js for full implementation)
     tax: {
         // Federal + provincial average effective rates
         brackets: [
@@ -95,5 +95,63 @@ const RetirementData = {
             { max: 100000, rate: 0.30 },
             { max: Infinity, rate: 0.40 }
         ]
+    },
+
+    // RRSP contribution room (2024)
+    rrsp: {
+        contributionLimit: 31560, // 2024 limit
+        carryForwardYears: Infinity, // Never expires
+        employerMatchTypical: 0.04 // 4% average employer match
+    },
+
+    // TFSA contribution room (2024)
+    tfsa: {
+        annualLimit: 7000, // 2024 limit
+        lifetimeMax: 95000 // Total room if never contributed (as of 2024)
+    },
+
+    // CPP details (2024)
+    cpp: {
+        maxAnnual: 15679, // Max at age 65
+        averageAnnual: 8108, // Average payment
+        enhancementFactor: {
+            age60: 0.64, // 36% reduction if start at 60
+            age65: 1.00, // Standard at 65
+            age70: 1.42  // 42% increase if defer to 70
+        },
+        contributionRate: 0.0595 // Employee + employer combined ~11.9%, split
+    },
+
+    // Provinces for tax calculations
+    provinces: [
+        { code: 'ON', name: 'Ontario' },
+        { code: 'BC', name: 'British Columbia' },
+        { code: 'AB', name: 'Alberta' },
+        { code: 'QC', name: 'Quebec' },
+        { code: 'MB', name: 'Manitoba' },
+        { code: 'SK', name: 'Saskatchewan' },
+        { code: 'NS', name: 'Nova Scotia' },
+        { code: 'NB', name: 'New Brunswick' },
+        { code: 'PE', name: 'Prince Edward Island' },
+        { code: 'NL', name: 'Newfoundland & Labrador' }
+    ],
+
+    // Healthcare cost escalation
+    healthcare: {
+        baseAnnual: 3000, // Base private healthcare/dental
+        ageMultipliers: {
+            65: 1.0,
+            70: 1.3,
+            75: 1.6,
+            80: 2.0,
+            85: 2.5
+        }
+    },
+
+    // Withdrawal strategies
+    withdrawalStrategies: {
+        '4percent': { name: '4% Rule (Fixed)', rate: 0.04, dynamic: false },
+        'dynamic': { name: 'Dynamic (adjust with portfolio)', baserate: 0.04, dynamic: true },
+        'guardrails': { name: 'Guardrails (5% ±20%)', rate: 0.05, min: 0.04, max: 0.06 }
     }
 };
