@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Canadian retirement calculator with tax-aware projections">
+    <title>Retirement Planner | Tax-Aware Canadian Calculator</title>
+    <link rel="stylesheet" href="style.css?v=5">
+</head>
+<body>
+    
+    <header class="header">
+        <div class="container">
+            <a href="hub.html" class="back-link">← Back to Hub</a>
+            <h1>💰 Retirement Planner</h1>
+            <p class="tagline">Tax-aware Canadian retirement planning</p>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- ══════════════════════════════════════
+             STEP 1: Basic Info
+        ═══════════════════════════════════════ -->
+        <section class="card" id="step-basic">
+            <h2>📍 Start Here</h2>
+            
+            <!-- Family Status -->
+            <div class="input-group">
+                <label>Planning for...</label>
+                <div class="toggle-buttons">
+                    <button type="button" class="toggle-btn active" data-family="single">
+                        👤 Just Me
+                    </button>
+                    <button type="button" class="toggle-btn" data-family="couple">
+                        👫 Me + Partner
+                    </button>
+                </div>
+                <small class="input-hint">Affects government benefits (GIS, OAS)</small>
+            </div>
+
+            <div class="input-group">
+                <label for="current-age">
+                    Your Age
+                    <button type="button" class="info-btn" data-tooltip="Your current age">?</button>
+                </label>
+                <input type="number" id="current-age" placeholder="35" min="18" max="100" required>
+            </div>
+
+            <div class="input-group">
+                <label>Province</label>
+                <div class="province-grid">
+                    <button type="button" class="province-btn" data-province="ON">ON</button>
+                    <button type="button" class="province-btn" data-province="QC">QC</button>
+                    <button type="button" class="province-btn" data-province="BC">BC</button>
+                    <button type="button" class="province-btn" data-province="AB">AB</button>
+                    <button type="button" class="province-btn" data-province="MB">MB</button>
+                    <button type="button" class="province-btn" data-province="SK">SK</button>
+                    <button type="button" class="province-btn" data-province="NS">NS</button>
+                    <button type="button" class="province-btn" data-province="NB">NB</button>
+                    <button type="button" class="province-btn" data-province="PE">PE</button>
+                    <button type="button" class="province-btn" data-province="NL">NL</button>
+                </div>
+                <input type="hidden" id="province" value="">
+            </div>
+
+            <div class="input-group">
+                <label for="current-income">
+                    Annual Income
+                    <button type="button" class="info-btn" data-tooltip="Used to estimate CPP benefits">?</button>
+                </label>
+                <div class="input-with-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="current-income" placeholder="75000" min="0" step="1000" required>
+                </div>
+                <small id="income-benchmark" class="benchmark-text"></small>
+            </div>
+
+            <button type="button" class="btn-primary" id="btn-next-savings">
+                Continue to Savings →
+            </button>
+        </section>
+
+        <!-- ══════════════════════════════════════
+             STEP 2: Savings
+        ═══════════════════════════════════════ -->
+        <section class="card hidden" id="step-savings">
+            <h2>💵 Current Savings</h2>
+            <p class="section-intro">How much have you saved for retirement so far?</p>
+            <p id="savings-benchmark" class="benchmark-highlight"></p>
+
+            <div class="input-group">
+                <label for="rrsp">
+                    RRSP
+                    <button type="button" class="info-btn" data-tooltip="Registered Retirement Savings Plan. Tax-deferred growth, fully taxed on withdrawal.">?</button>
+                </label>
+                <div class="input-with-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="rrsp" placeholder="0" min="0" step="1000">
+                </div>
+                <small class="input-hint">Tax-deferred until retirement</small>
+            </div>
+
+            <div class="input-group">
+                <label for="tfsa">
+                    TFSA
+                    <button type="button" class="info-btn" data-tooltip="Tax-Free Savings Account. Grows tax-free, withdrawals tax-free.">?</button>
+                </label>
+                <div class="input-with-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="tfsa" placeholder="0" min="0" step="1000">
+                </div>
+                <small class="input-hint">Tax-free forever 🎉</small>
+            </div>
+
+            <div class="input-group">
+                <label for="nonreg">
+                    Non-Registered
+                    <button type="button" class="info-btn" data-tooltip="Taxable investment accounts. Capital gains taxed at 50% inclusion rate.">?</button>
+                </label>
+                <div class="input-with-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="nonreg" placeholder="0" min="0" step="1000">
+                </div>
+                <small class="input-hint">Capital gains taxed at 50%</small>
+            </div>
+
+            <div class="input-group">
+                <label for="other">
+                    Other Investments
+                    <button type="button" class="info-btn" data-tooltip="Pension plans, real estate equity, etc.">?</button>
+                </label>
+                <div class="input-with-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="other" placeholder="0" min="0" step="1000">
+                </div>
+            </div>
+
+            <div class="total-display">
+                <strong>Total Savings:</strong> <span id="total-savings-display">$0</span>
+                <span id="total-savings-benchmark" class="benchmark-text"></span>
+            </div>
+
+            <button type="button" class="btn-secondary" id="btn-back-basic">← Back</button>
+            <button type="button" class="btn-primary" id="btn-next-contributions">Continue to Contributions →</button>
+        </section>
+
+        <!-- ══════════════════════════════════════
+             STEP 3: Contributions
+        ═══════════════════════════════════════ -->
+        <section class="card hidden" id="step-contributions">
+            <h2>📈 Monthly Contributions</h2>
+            <p class="section-intro">How much are you saving each month?</p>
+
+            <div class="input-group">
+                <label for="monthly-contribution">
+                    Monthly Contribution
+                    <button type="button" class="info-btn" data-tooltip="Total amount saved per month across all accounts">?</button>
+                </label>
+                <div class="input-with-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="monthly-contribution" placeholder="500" min="0" step="50">
+                </div>
+                <small id="contribution-benchmark" class="benchmark-text"></small>
+            </div>
+
+            <div class="input-group">
+                <label>How do you split your contributions?</label>
+                <div class="split-inputs">
+                    <div>
+                        <label for="split-rrsp">RRSP %</label>
+                        <input type="number" id="split-rrsp" placeholder="60" min="0" max="100" value="60">
+                    </div>
+                    <div>
+                        <label for="split-tfsa">TFSA %</label>
+                        <input type="number" id="split-tfsa" placeholder="40" min="0" max="100" value="40">
+                    </div>
+                    <div>
+                        <label for="split-nonreg">Non-Reg %</label>
+                        <input type="number" id="split-nonreg" placeholder="0" min="0" max="100" value="0">
+                    </div>
+                </div>
+                <small id="split-total" class="input-hint"></small>
+            </div>
+
+            <button type="button" class="btn-secondary" id="btn-back-savings">← Back</button>
+            <button type="button" class="btn-primary" id="btn-next-retirement">Continue to Retirement Plan →</button>
+        </section>
+
+        <!-- ══════════════════════════════════════
+             STEP 4: Retirement Plan
+        ═══════════════════════════════════════ -->
+        <section class="card hidden" id="step-retirement">
+            <h2>🏖️ Retirement Plan</h2>
+
+            <div class="input-group">
+                <label for="retirement-age">
+                    Retirement Age
+                    <button type="button" class="info-btn" data-tooltip="When you plan to stop working">?</button>
+                </label>
+                <input type="number" id="retirement-age" placeholder="65" min="50" max="80" value="65">
+            </div>
+
+            <div class="input-group">
+                <label for="life-expectancy">
+                    Life Expectancy
+                    <button type="button" class="info-btn" data-tooltip="Plan for longevity - average Canadian lives to 82">?</button>
+                </label>
+                <input type="number" id="life-expectancy" placeholder="90" min="65" max="110" value="90">
+            </div>
+
+            <!-- CPP/OAS Section -->
+            <div class="input-group">
+                <label>
+                    CPP/OAS Estimate
+                    <button type="button" class="info-btn" data-tooltip="Based on your income, we estimate your government benefits">?</button>
+                </label>
+                <div class="gov-benefits-preview" id="gov-benefits-preview">
+                    <div class="benefit-line">
+                        <span>CPP (estimated):</span>
+                        <span id="cpp-estimate">$0/year</span>
+                    </div>
+                    <div class="benefit-line">
+                        <span>OAS (estimated):</span>
+                        <span id="oas-estimate">$0/year</span>
+                    </div>
+                    <div class="benefit-total">
+                        <strong>Total Government Income:</strong>
+                        <strong id="gov-total-estimate">$0/year</strong>
+                    </div>
+                </div>
+                <button type="button" class="btn-link" id="btn-customize-cpp">
+                    ⚙️ Customize CPP/OAS amounts
+                </button>
+
+                <!-- Custom CPP/OAS inputs (hidden by default) -->
+                <div class="hidden" id="custom-gov-inputs">
+                    <div class="input-with-prefix" style="margin-top: 12px;">
+                        <label for="custom-cpp">CPP Annual Amount</label>
+                        <span class="prefix">$</span>
+                        <input type="number" id="custom-cpp" placeholder="Auto" min="0" step="100">
+                    </div>
+                    <div class="input-with-prefix" style="margin-top: 12px;">
+                        <label for="custom-oas">OAS Annual Amount</label>
+                        <span class="prefix">$</span>
+                        <input type="number" id="custom-oas" placeholder="Auto" min="0" step="100">
+                    </div>
+                    <small class="input-hint">Leave blank to use automatic estimates</small>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Annual Spending in Retirement</label>
+                <p class="section-intro" style="margin-top: 8px;">Choose a lifestyle or enter a custom amount. Click any option to see what it actually means.</p>
+                
+                <div class="lifestyle-presets">
+                    <button type="button" class="preset-btn" data-lifestyle="modest" data-amount="35000">
+                        <div class="preset-name">Modest</div>
+                        <div class="preset-amount">$35K/year</div>
+                    </button>
+                    <button type="button" class="preset-btn" data-lifestyle="average" data-amount="48000">
+                        <div class="preset-name">Canadian Avg</div>
+                        <div class="preset-amount">$48K/year</div>
+                    </button>
+                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount="60000">
+                        <div class="preset-name">Comfortable</div>
+                        <div class="preset-amount">$60K/year</div>
+                    </button>
+                    <button type="button" class="preset-btn" data-lifestyle="luxury" data-amount="90000">
+                        <div class="preset-name">Luxury</div>
+                        <div class="preset-amount">$90K/year</div>
+                    </button>
+                </div>
+
+                <!-- Lifestyle Detail Modal -->
+                <div id="lifestyle-detail" class="lifestyle-detail hidden">
+                    <div class="lifestyle-header">
+                        <h3 id="lifestyle-detail-title"></h3>
+                        <p id="lifestyle-detail-tagline"></p>
+                    </div>
+                    
+                    <div class="breakdown-grid" id="lifestyle-breakdown"></div>
+                    
+                    <div class="examples-section">
+                        <h4>What this looks like:</h4>
+                        <ul id="lifestyle-examples"></ul>
+                    </div>
+                    
+                    <button type="button" class="btn-close-detail" id="close-detail">Close</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="annual-spending">
+                    Or Enter Custom Amount
+                    <button type="button" class="info-btn" data-tooltip="How much you'll spend annually in today's dollars">?</button>
+                </label>
+                <div class="input-with-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="annual-spending" placeholder="60000" min="0" step="1000">
+                </div>
+                <small id="spending-recommendation" class="benchmark-text"></small>
+            </div>
+
+            <button type="button" class="btn-secondary" id="btn-back-contributions">← Back</button>
+            <button type="button" class="btn-primary" id="btn-calculate">Calculate My Plan 🚀</button>
+        </section>
+
+        <!-- ══════════════════════════════════════
+             RESULTS
+        ═══════════════════════════════════════ -->
+        <section id="results" class="hidden">
+            
+            <!-- Status Banner -->
+            <div id="status-banner" class="card status-banner"></div>
+
+            <!-- Key Stats -->
+            <section class="card">
+                <h2>📊 Your Retirement Snapshot</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Portfolio at Retirement</div>
+                        <div class="stat-value" id="stat-portfolio">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Annual Income (After-Tax)</div>
+                        <div class="stat-value" id="stat-income">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Government Benefits</div>
+                        <div class="stat-value" id="stat-government">$0</div>
+                        <small id="stat-government-breakdown"></small>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Money Lasts Until</div>
+                        <div class="stat-value" id="stat-lasts">Age 0</div>
+                        <small id="stat-lasts-note"></small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Projection Chart -->
+            <section class="card">
+                <h2>📈 Portfolio Projection</h2>
+                <canvas id="projection-chart"></canvas>
+            </section>
+
+            <!-- Year-by-Year Breakdown -->
+            <section class="card">
+                <h2>📅 Year-by-Year Breakdown</h2>
+                <p class="section-intro">See how your portfolio changes each year</p>
+                <div id="year-breakdown-chart"></div>
+            </section>
+
+            <!-- Detailed Breakdown -->
+            <section class="card">
+                <h2>🔍 Tax & Withdrawal Strategy</h2>
+                <div id="breakdown-content"></div>
+            </section>
+
+            <!-- Actions -->
+            <div class="button-row">
+                <button type="button" class="btn-secondary" id="btn-edit">✏️ Edit Inputs</button>
+                <button type="button" class="btn-secondary" id="btn-save">💾 Save Scenario</button>
+            </div>
+        </section>
+
+        <!-- Advanced Assumptions (Collapsible) -->
+        <section class="card collapsible" id="advanced-assumptions">
+            <h2 class="collapsible-header" id="toggle-assumptions">
+                ⚙️ Advanced Assumptions <span class="toggle-icon">▼</span>
+            </h2>
+            <div class="collapsible-content hidden" id="assumptions-content">
+                <div class="input-group">
+                    <label for="return-rate">Investment Return</label>
+                    <input type="number" id="return-rate" value="6" min="0" max="20" step="0.5">
+                    <small>% per year (average)</small>
+                </div>
+                <div class="input-group">
+                    <label for="inflation-rate">Inflation Rate</label>
+                    <input type="number" id="inflation-rate" value="2.5" min="0" max="10" step="0.5">
+                    <small>% per year</small>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Scripts -->
+    <script src="canada-tax.js?v=5"></script>
+    <script src="cpp-calculator.js?v=5"></script>
+    <script src="benchmarks.js?v=5"></script>
+    <script src="lifestyle-data.js?v=5"></script>
+    <script src="calc.js?v=5"></script>
+    <script src="app.js?v=5"></script>
+
+</body>
+</html>

@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Canadian retirement calculator with tax-aware projections">
-    <title>Retirement Planner | Tax-Aware Canadian Calculator</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <meta name="description" content="Canadian retirement calculator with regional data and tax-aware projections">
+    <title>Retirement Planner V4 | Visual Canadian Calculator</title>
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
     
     <header class="header">
         <div class="container">
             <a href="hub.html" class="back-link">← Back to Hub</a>
-            <h1>💰 Retirement Planner</h1>
-            <p class="tagline">Tax-aware Canadian retirement planning</p>
+            <h1>💰 Retirement Planner V4</h1>
+            <p class="tagline">Visual, regional, tax-aware Canadian retirement planning</p>
         </div>
     </header>
 
     <main class="container">
 
         <!-- ══════════════════════════════════════
-             STEP 1: Basic Info
+             STEP 1: Basic Info + Location
         ═══════════════════════════════════════ -->
         <section class="card" id="step-basic">
             <h2>📍 Start Here</h2>
@@ -29,51 +29,81 @@
             <div class="input-group">
                 <label>Planning for...</label>
                 <div class="toggle-buttons">
-                    <button type="button" class="toggle-btn active" data-family="single">
+                    <button type="button" class="toggle-btn active" data-family="single" id="family-single">
                         👤 Just Me
                     </button>
-                    <button type="button" class="toggle-btn" data-family="couple">
+                    <button type="button" class="toggle-btn" data-family="couple" id="family-couple">
                         👫 Me + Partner
                     </button>
                 </div>
-                <small class="input-hint">Affects government benefits (GIS, OAS)</small>
+                <small class="input-hint">Affects income inputs and government benefits</small>
             </div>
 
+            <!-- Age(s) -->
             <div class="input-group">
-                <label for="current-age">
-                    Your Age
-                    <button type="button" class="info-btn" data-tooltip="Your current age">?</button>
-                </label>
+                <label for="current-age">Your Age</label>
                 <input type="number" id="current-age" placeholder="35" min="18" max="100" required>
             </div>
 
-            <div class="input-group">
-                <label>Province</label>
-                <div class="province-grid">
-                    <button type="button" class="province-btn" data-province="ON">ON</button>
-                    <button type="button" class="province-btn" data-province="QC">QC</button>
-                    <button type="button" class="province-btn" data-province="BC">BC</button>
-                    <button type="button" class="province-btn" data-province="AB">AB</button>
-                    <button type="button" class="province-btn" data-province="MB">MB</button>
-                    <button type="button" class="province-btn" data-province="SK">SK</button>
-                    <button type="button" class="province-btn" data-province="NS">NS</button>
-                    <button type="button" class="province-btn" data-province="NB">NB</button>
-                    <button type="button" class="province-btn" data-province="PE">PE</button>
-                    <button type="button" class="province-btn" data-province="NL">NL</button>
-                </div>
-                <input type="hidden" id="province" value="">
+            <div class="input-group hidden" id="partner-age-group">
+                <label for="partner-age">Partner's Age</label>
+                <input type="number" id="partner-age" placeholder="35" min="18" max="100">
             </div>
 
+            <!-- Location (Map) -->
             <div class="input-group">
-                <label for="current-income">
-                    Annual Income
-                    <button type="button" class="info-btn" data-tooltip="Used to estimate CPP benefits">?</button>
-                </label>
-                <div class="input-with-prefix">
-                    <span class="prefix">$</span>
-                    <input type="number" id="current-income" placeholder="75000" min="0" step="1000" required>
+                <label>Where do you live?</label>
+                <p class="section-intro">Click your province to see regional options (e.g., Toronto vs Northern Ontario)</p>
+                <div id="map-container"></div>
+                <div id="region-picker-container" class="hidden"></div>
+                <input type="hidden" id="province" value="">
+                <input type="hidden" id="region" value="">
+                <div id="region-display" class="region-display hidden">
+                    <strong>Selected:</strong> <span id="region-name"></span>
                 </div>
-                <small id="income-benchmark" class="benchmark-text"></small>
+            </div>
+
+            <!-- Income (changes based on family status) -->
+            <div id="income-section-single">
+                <div class="input-group">
+                    <label for="current-income">
+                        Annual Income
+                        <button type="button" class="info-btn" data-tooltip="Used to estimate CPP benefits">?</button>
+                    </label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="current-income" placeholder="75000" min="0" step="1000" required>
+                    </div>
+                    <small id="income-benchmark" class="benchmark-text"></small>
+                </div>
+            </div>
+
+            <div id="income-section-couple" class="hidden">
+                <div class="input-group">
+                    <label for="income-person1">
+                        Person 1 Income
+                        <button type="button" class="info-btn" data-tooltip="Used for separate CPP calculation">?</button>
+                    </label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="income-person1" placeholder="75000" min="0" step="1000">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="income-person2">
+                        Person 2 Income
+                        <button type="button" class="info-btn" data-tooltip="Used for separate CPP calculation">?</button>
+                    </label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="income-person2" placeholder="65000" min="0" step="1000">
+                    </div>
+                </div>
+
+                <div class="total-display">
+                    <strong>Total Household Income:</strong> <span id="household-income-display">$0</span>
+                </div>
             </div>
 
             <button type="button" class="btn-primary" id="btn-next-savings">
@@ -90,10 +120,7 @@
             <p id="savings-benchmark" class="benchmark-highlight"></p>
 
             <div class="input-group">
-                <label for="rrsp">
-                    RRSP
-                    <button type="button" class="info-btn" data-tooltip="Registered Retirement Savings Plan. Tax-deferred growth, fully taxed on withdrawal.">?</button>
-                </label>
+                <label for="rrsp">RRSP</label>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="rrsp" placeholder="0" min="0" step="1000">
@@ -102,10 +129,7 @@
             </div>
 
             <div class="input-group">
-                <label for="tfsa">
-                    TFSA
-                    <button type="button" class="info-btn" data-tooltip="Tax-Free Savings Account. Grows tax-free, withdrawals tax-free.">?</button>
-                </label>
+                <label for="tfsa">TFSA</label>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="tfsa" placeholder="0" min="0" step="1000">
@@ -114,10 +138,7 @@
             </div>
 
             <div class="input-group">
-                <label for="nonreg">
-                    Non-Registered
-                    <button type="button" class="info-btn" data-tooltip="Taxable investment accounts. Capital gains taxed at 50% inclusion rate.">?</button>
-                </label>
+                <label for="nonreg">Non-Registered</label>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="nonreg" placeholder="0" min="0" step="1000">
@@ -126,10 +147,7 @@
             </div>
 
             <div class="input-group">
-                <label for="other">
-                    Other Investments
-                    <button type="button" class="info-btn" data-tooltip="Pension plans, real estate equity, etc.">?</button>
-                </label>
+                <label for="other">Other Investments</label>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="other" placeholder="0" min="0" step="1000">
@@ -142,7 +160,7 @@
             </div>
 
             <button type="button" class="btn-secondary" id="btn-back-basic">← Back</button>
-            <button type="button" class="btn-primary" id="btn-next-contributions">Continue to Contributions →</button>
+            <button type="button" class="btn-primary" id="btn-next-contributions">Continue →</button>
         </section>
 
         <!-- ══════════════════════════════════════
@@ -150,13 +168,9 @@
         ═══════════════════════════════════════ -->
         <section class="card hidden" id="step-contributions">
             <h2>📈 Monthly Contributions</h2>
-            <p class="section-intro">How much are you saving each month?</p>
 
             <div class="input-group">
-                <label for="monthly-contribution">
-                    Monthly Contribution
-                    <button type="button" class="info-btn" data-tooltip="Total amount saved per month across all accounts">?</button>
-                </label>
+                <label for="monthly-contribution">Monthly Contribution</label>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="monthly-contribution" placeholder="500" min="0" step="50">
@@ -165,7 +179,7 @@
             </div>
 
             <div class="input-group">
-                <label>How do you split your contributions?</label>
+                <label>Split</label>
                 <div class="split-inputs">
                     <div>
                         <label for="split-rrsp">RRSP %</label>
@@ -184,7 +198,7 @@
             </div>
 
             <button type="button" class="btn-secondary" id="btn-back-savings">← Back</button>
-            <button type="button" class="btn-primary" id="btn-next-retirement">Continue to Retirement Plan →</button>
+            <button type="button" class="btn-primary" id="btn-next-retirement">Continue →</button>
         </section>
 
         <!-- ══════════════════════════════════════
@@ -194,107 +208,77 @@
             <h2>🏖️ Retirement Plan</h2>
 
             <div class="input-group">
-                <label for="retirement-age">
-                    Retirement Age
-                    <button type="button" class="info-btn" data-tooltip="When you plan to stop working">?</button>
-                </label>
+                <label for="retirement-age">Retirement Age</label>
                 <input type="number" id="retirement-age" placeholder="65" min="50" max="80" value="65">
             </div>
 
             <div class="input-group">
-                <label for="life-expectancy">
-                    Life Expectancy
-                    <button type="button" class="info-btn" data-tooltip="Plan for longevity - average Canadian lives to 82">?</button>
-                </label>
+                <label for="life-expectancy">Life Expectancy</label>
                 <input type="number" id="life-expectancy" placeholder="90" min="65" max="110" value="90">
             </div>
 
-            <!-- CPP/OAS Section -->
+            <!-- CPP Start Age Optimizer -->
             <div class="input-group">
                 <label>
-                    CPP/OAS Estimate
-                    <button type="button" class="info-btn" data-tooltip="Based on your income, we estimate your government benefits">?</button>
+                    When to start CPP?
+                    <button type="button" class="info-btn" data-tooltip="Starting CPP early means lower payments for life. Starting late means higher payments.">?</button>
                 </label>
-                <div class="gov-benefits-preview" id="gov-benefits-preview">
-                    <div class="benefit-line">
-                        <span>CPP (estimated):</span>
-                        <span id="cpp-estimate">$0/year</span>
+                <div class="cpp-optimizer">
+                    <div class="slider-container">
+                        <input type="range" id="cpp-start-age" min="60" max="70" value="65" step="1">
+                        <div class="slider-labels">
+                            <span>60</span>
+                            <span>65</span>
+                            <span>70</span>
+                        </div>
                     </div>
-                    <div class="benefit-line">
-                        <span>OAS (estimated):</span>
-                        <span id="oas-estimate">$0/year</span>
+                    <div class="cpp-preview">
+                        <div class="cpp-age-display">Age: <strong id="cpp-age-value">65</strong></div>
+                        <div class="cpp-amount-display">Estimated: <strong id="cpp-amount-value">$0/year</strong></div>
+                        <div class="cpp-lifetime-display">Lifetime total: <strong id="cpp-lifetime-value">$0</strong></div>
                     </div>
-                    <div class="benefit-total">
-                        <strong>Total Government Income:</strong>
-                        <strong id="gov-total-estimate">$0/year</strong>
-                    </div>
-                </div>
-                <button type="button" class="btn-link" id="btn-customize-cpp">
-                    ⚙️ Customize CPP/OAS amounts
-                </button>
-
-                <!-- Custom CPP/OAS inputs (hidden by default) -->
-                <div class="hidden" id="custom-gov-inputs">
-                    <div class="input-with-prefix" style="margin-top: 12px;">
-                        <label for="custom-cpp">CPP Annual Amount</label>
-                        <span class="prefix">$</span>
-                        <input type="number" id="custom-cpp" placeholder="Auto" min="0" step="100">
-                    </div>
-                    <div class="input-with-prefix" style="margin-top: 12px;">
-                        <label for="custom-oas">OAS Annual Amount</label>
-                        <span class="prefix">$</span>
-                        <input type="number" id="custom-oas" placeholder="Auto" min="0" step="100">
-                    </div>
-                    <small class="input-hint">Leave blank to use automatic estimates</small>
+                    <button type="button" class="btn-link" id="btn-cpp-details">See detailed comparison →</button>
                 </div>
             </div>
 
+            <!-- Lifestyle -->
             <div class="input-group">
-                <label>Annual Spending in Retirement</label>
-                <p class="section-intro" style="margin-top: 8px;">Choose a lifestyle or enter a custom amount. Click any option to see what it actually means.</p>
-                
+                <label>Annual Spending</label>
                 <div class="lifestyle-presets">
                     <button type="button" class="preset-btn" data-lifestyle="modest" data-amount="35000">
                         <div class="preset-name">Modest</div>
-                        <div class="preset-amount">$35K/year</div>
+                        <div class="preset-amount">$35K</div>
                     </button>
                     <button type="button" class="preset-btn" data-lifestyle="average" data-amount="48000">
-                        <div class="preset-name">Canadian Avg</div>
-                        <div class="preset-amount">$48K/year</div>
+                        <div class="preset-name">Avg</div>
+                        <div class="preset-amount">$48K</div>
                     </button>
                     <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount="60000">
                         <div class="preset-name">Comfortable</div>
-                        <div class="preset-amount">$60K/year</div>
+                        <div class="preset-amount">$60K</div>
                     </button>
                     <button type="button" class="preset-btn" data-lifestyle="luxury" data-amount="90000">
                         <div class="preset-name">Luxury</div>
-                        <div class="preset-amount">$90K/year</div>
+                        <div class="preset-amount">$90K</div>
                     </button>
                 </div>
 
-                <!-- Lifestyle Detail Modal -->
                 <div id="lifestyle-detail" class="lifestyle-detail hidden">
                     <div class="lifestyle-header">
                         <h3 id="lifestyle-detail-title"></h3>
                         <p id="lifestyle-detail-tagline"></p>
                     </div>
-                    
                     <div class="breakdown-grid" id="lifestyle-breakdown"></div>
-                    
                     <div class="examples-section">
                         <h4>What this looks like:</h4>
                         <ul id="lifestyle-examples"></ul>
                     </div>
-                    
                     <button type="button" class="btn-close-detail" id="close-detail">Close</button>
                 </div>
             </div>
 
             <div class="input-group">
-                <label for="annual-spending">
-                    Or Enter Custom Amount
-                    <button type="button" class="info-btn" data-tooltip="How much you'll spend annually in today's dollars">?</button>
-                </label>
+                <label for="annual-spending">Or Custom Amount</label>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="annual-spending" placeholder="60000" min="0" step="1000">
@@ -302,7 +286,63 @@
                 <small id="spending-recommendation" class="benchmark-text"></small>
             </div>
 
+            <!-- Additional Income Sources -->
+            <div class="input-group">
+                <label>Additional Income Sources</label>
+                <p class="section-intro">Pension, annuity, rental income, etc.</p>
+                <div id="income-sources-list"></div>
+                <button type="button" class="btn-secondary" id="btn-add-income-source">
+                    + Add Income Source
+                </button>
+            </div>
+
             <button type="button" class="btn-secondary" id="btn-back-contributions">← Back</button>
+            <button type="button" class="btn-primary" id="btn-next-healthcare">Continue →</button>
+        </section>
+
+        <!-- ══════════════════════════════════════
+             STEP 5: Healthcare & Debt
+        ═══════════════════════════════════════ -->
+        <section class="card hidden" id="step-healthcare">
+            <h2>🏥 Healthcare & Debt</h2>
+
+            <!-- Healthcare -->
+            <div class="input-group">
+                <label>Healthcare Costs</label>
+                <p class="section-intro">Often overlooked but important</p>
+                <div class="health-status-selector">
+                    <button type="button" class="health-btn active" data-health="average">Average Health</button>
+                    <button type="button" class="health-btn" data-health="excellent">Excellent Health</button>
+                    <button type="button" class="health-btn" data-health="fair">Fair Health</button>
+                </div>
+                <div class="healthcare-preview" id="healthcare-preview">
+                    <div class="preview-line">
+                        <span>Estimated annual cost:</span>
+                        <span id="healthcare-annual">$0</span>
+                    </div>
+                    <div class="preview-line">
+                        <span>Total over retirement:</span>
+                        <span id="healthcare-total">$0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debt -->
+            <div class="input-group">
+                <label>Current Debt</label>
+                <div class="input-with-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="current-debt" placeholder="0" min="0" step="1000">
+                </div>
+                <small class="input-hint">Mortgage, loans, etc. (not credit cards)</small>
+            </div>
+
+            <div class="input-group hidden" id="debt-payoff-group">
+                <label for="debt-payoff-age">Plan to pay off by age:</label>
+                <input type="number" id="debt-payoff-age" placeholder="65" min="0" max="100">
+            </div>
+
+            <button type="button" class="btn-secondary" id="btn-back-retirement">← Back</button>
             <button type="button" class="btn-primary" id="btn-calculate">Calculate My Plan 🚀</button>
         </section>
 
@@ -311,10 +351,9 @@
         ═══════════════════════════════════════ -->
         <section id="results" class="hidden">
             
-            <!-- Status Banner -->
             <div id="status-banner" class="card status-banner"></div>
 
-            <!-- Key Stats -->
+            <!-- Quick Stats -->
             <section class="card">
                 <h2>📊 Your Retirement Snapshot</h2>
                 <div class="stats-grid">
@@ -323,76 +362,171 @@
                         <div class="stat-value" id="stat-portfolio">$0</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Annual Income (After-Tax)</div>
+                        <div class="stat-label">Annual Income</div>
                         <div class="stat-value" id="stat-income">$0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Government Benefits</div>
-                        <div class="stat-value" id="stat-government">$0</div>
-                        <small id="stat-government-breakdown"></small>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Money Lasts Until</div>
                         <div class="stat-value" id="stat-lasts">Age 0</div>
                         <small id="stat-lasts-note"></small>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Probability of Success</div>
+                        <div class="stat-value" id="stat-probability">0%</div>
+                        <small id="stat-probability-note"></small>
+                    </div>
                 </div>
             </section>
 
-            <!-- Projection Chart -->
+            <!-- Charts -->
             <section class="card">
                 <h2>📈 Portfolio Projection</h2>
                 <canvas id="projection-chart"></canvas>
             </section>
 
-            <!-- Year-by-Year Breakdown -->
             <section class="card">
                 <h2>📅 Year-by-Year Breakdown</h2>
-                <p class="section-intro">See how your portfolio changes each year</p>
                 <div id="year-breakdown-chart"></div>
             </section>
 
-            <!-- Detailed Breakdown -->
+            <!-- Legacy View -->
+            <section class="card">
+                <h2>🎁 Legacy / Estate</h2>
+                <div id="legacy-content">
+                    <div class="legacy-display">
+                        <div class="legacy-amount" id="legacy-amount">$0</div>
+                        <p class="legacy-description" id="legacy-description"></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tax & Withdrawal -->
             <section class="card">
                 <h2>🔍 Tax & Withdrawal Strategy</h2>
                 <div id="breakdown-content"></div>
             </section>
 
+            <!-- Scenario Comparison -->
+            <section class="card">
+                <h2>🔀 What If Scenarios</h2>
+                <p class="section-intro">Compare different retirement options</p>
+                <button type="button" class="btn-secondary" id="btn-add-scenario">+ Add Scenario</button>
+                <div id="scenario-comparison"></div>
+            </section>
+
             <!-- Actions -->
             <div class="button-row">
                 <button type="button" class="btn-secondary" id="btn-edit">✏️ Edit Inputs</button>
-                <button type="button" class="btn-secondary" id="btn-save">💾 Save Scenario</button>
+                <button type="button" class="btn-secondary" id="btn-save">💾 Save</button>
             </div>
         </section>
 
-        <!-- Advanced Assumptions (Collapsible) -->
-        <section class="card collapsible" id="advanced-assumptions">
+        <!-- Advanced Assumptions -->
+        <section class="card collapsible">
             <h2 class="collapsible-header" id="toggle-assumptions">
                 ⚙️ Advanced Assumptions <span class="toggle-icon">▼</span>
             </h2>
             <div class="collapsible-content hidden" id="assumptions-content">
                 <div class="input-group">
-                    <label for="return-rate">Investment Return</label>
+                    <label for="return-rate">Investment Return (%)</label>
                     <input type="number" id="return-rate" value="6" min="0" max="20" step="0.5">
-                    <small>% per year (average)</small>
                 </div>
                 <div class="input-group">
-                    <label for="inflation-rate">Inflation Rate</label>
+                    <label for="inflation-rate">Inflation Rate (%)</label>
                     <input type="number" id="inflation-rate" value="2.5" min="0" max="10" step="0.5">
-                    <small>% per year</small>
                 </div>
             </div>
         </section>
 
     </main>
 
+    <!-- ══════════════════════════════════════
+         MODALS
+    ═══════════════════════════════════════ -->
+
+    <!-- Income Source Modal -->
+    <div id="income-source-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Add Income Source</h3>
+            <form id="income-source-form">
+                <div class="input-group">
+                    <label for="income-source-type">Type</label>
+                    <select id="income-source-type" required>
+                        <option value="pension">Defined Benefit Pension</option>
+                        <option value="annuity">Annuity</option>
+                        <option value="rental">Rental Income</option>
+                        <option value="partTime">Part-Time Work</option>
+                        <option value="other">Other Income</option>
+                    </select>
+                    <small id="income-type-description" class="input-hint"></small>
+                </div>
+
+                <div class="input-group">
+                    <label for="income-custom-name">Name (optional)</label>
+                    <input type="text" id="income-custom-name" placeholder="e.g., Teacher's Pension">
+                </div>
+
+                <div class="input-group">
+                    <label for="income-amount">Annual Amount</label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="income-amount" placeholder="12000" min="0" step="100" required>
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="income-start-age">Start Age</label>
+                        <input type="number" id="income-start-age" placeholder="65" min="0" max="110" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="income-end-age">End Age (optional)</label>
+                        <input type="number" id="income-end-age" placeholder="Lifetime" min="0" max="110">
+                        <small class="input-hint">Leave blank for lifetime</small>
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    <button type="button" class="btn-secondary" id="close-income-modal">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Income Source</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CPP Details Modal -->
+    <div id="cpp-details-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>CPP Start Age Comparison</h3>
+            <div id="cpp-comparison-table"></div>
+            <button type="button" class="btn-primary" id="close-cpp-modal">Close</button>
+        </div>
+    </div>
+
+    <!-- Scenario Modal -->
+    <div id="scenario-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Add Scenario</h3>
+            <p>Choose a template or create custom:</p>
+            <div id="scenario-templates"></div>
+            <button type="button" class="btn-secondary" id="close-scenario-modal">Cancel</button>
+        </div>
+    </div>
+
     <!-- Scripts -->
-    <script src="canada-tax.js?v=5"></script>
-    <script src="cpp-calculator.js?v=5"></script>
-    <script src="benchmarks.js?v=5"></script>
-    <script src="lifestyle-data.js?v=5"></script>
-    <script src="calc.js?v=5"></script>
-    <script src="app.js?v=5"></script>
+    <script src="canada-tax.js?v=6"></script>
+    <script src="cpp-calculator.js?v=6"></script>
+    <script src="benchmarks.js?v=6"></script>
+    <script src="lifestyle-data.js?v=6"></script>
+    <script src="regional-data.js?v=6"></script>
+    <script src="canada-map.js?v=6"></script>
+    <script src="income-sources.js?v=6"></script>
+    <script src="cpp-optimizer.js?v=6"></script>
+    <script src="scenario-manager.js?v=6"></script>
+    <script src="healthcare-estimator.js?v=6"></script>
+    <script src="calc.js?v=6"></script>
+    <script src="app.js?v=6"></script>
 
 </body>
 </html>
