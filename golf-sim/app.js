@@ -309,6 +309,7 @@ const App = {
     _endSession() {
         SwingDetector.stop();
         DrivingRange.reset();
+        DrivingRange.clearAllTracers(); // Clear shot tracers when ending session
         this._showScreen('setup');
         this.state = 'setup';
         this.shots = [];

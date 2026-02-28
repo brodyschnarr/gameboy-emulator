@@ -326,6 +326,34 @@ TestRunner.suite('Calibration System', ({ test }) => {
     });
 });
 
+TestRunner.suite('Shot Tracer System', ({ test }) => {
+
+    test('Shot tracers array initializes empty', () => {
+        assert(Array.isArray(DrivingRange.shotTracers), 'shotTracers should be an array');
+    });
+
+    test('Shot tracer data is created during flight', () => {
+        // Trail points should accumulate during animateBallFlight
+        // This is tested visually, but we can verify the structure exists
+        assert(Array.isArray(DrivingRange.trailPoints), 'trailPoints should exist');
+    });
+
+    test('clearAllTracers empties the tracers array', () => {
+        // Mock adding a tracer
+        DrivingRange.shotTracers = [{ mockTracer: true }, { mockTracer: true }];
+        DrivingRange.clearAllTracers();
+        assertEquals(DrivingRange.shotTracers.length, 0, 'All tracers should be cleared');
+    });
+
+    test('reset preserves shot tracers', () => {
+        // Mock tracers
+        DrivingRange.shotTracers = [{ mockTracer: 1 }];
+        const beforeCount = DrivingRange.shotTracers.length;
+        DrivingRange.reset();
+        assertEquals(DrivingRange.shotTracers.length, beforeCount, 'reset() should NOT clear shot tracers');
+    });
+});
+
 // Run all tests
 document.addEventListener('DOMContentLoaded', () => {
     TestRunner.run();

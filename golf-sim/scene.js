@@ -8,6 +8,7 @@ const DrivingRange = {
     renderer: null,
     ball: null,
     ballTrail: [],
+    shotTracers: [],      // Array of persistent shot tracer lines
     animFrame: null,
     isAnimating: false,
 
@@ -243,12 +244,12 @@ const DrivingRange = {
             this.ball.position.set(ballX, ballY, ballZ);
             this.ballShadow.position.set(ballX, 0.01, ballZ);
 
-            // Trail
+            // Trail (temporary during flight)
             this.trailPoints.push(new THREE.Vector3(ballX, ballY, ballZ));
             if (this.trailPoints.length > 2) {
                 if (this.trailLine) this.scene.remove(this.trailLine);
                 const geo = new THREE.BufferGeometry().setFromPoints(this.trailPoints);
-                const mat = new THREE.LineBasicMaterial({ color: 0xffee88, opacity: 0.6, transparent: true });
+                const mat = new THREE.LineBasicMaterial({ color: 0xffee88, opacity: 0.8, transparent: true, linewidth: 2 });
                 this.trailLine = new THREE.Line(geo, mat);
                 this.scene.add(this.trailLine);
             }
@@ -273,8 +274,13 @@ const DrivingRange = {
                 requestAnimationFrame(animate);
             } else {
                 this.isAnimating = false;
+                
+                // Convert temporary trail to permanent shot tracer
+                this._createShotTracer(this.trailPoints.slice());
+                
                 // Show landing marker
                 this._showLandingMarker(endX, totalZ);
+                
                 // Pan back slowly
                 this._panBack(endX, totalZ, onComplete);
             }
@@ -291,6 +297,28 @@ const DrivingRange = {
         ring.position.set(x, 0.05, z);
         this.scene.add(ring);
         this.landingMarker = ring;
+    },
+
+    _createShotTracer(points) {
+        if (points.length < 2) return;
+        
+        // Create a permanent shot tracer line
+        const geo = new THREE.BufferGeometry().setFromPoints(points);
+        const mat = new THREE.LineBasicMaterial({
+            color: 0xf5c518,      // Gold color
+            opacity: 0.7,
+            transparent: true,
+            linewidth: 2
+        });
+        const tracer = new THREE.Line(geo, mat);
+        this.scene.add(tracer);
+        this.shotTracers.push(tracer);
+        
+        // Limit to last 10 shots to avoid clutter
+        if (this.shotTracers.length > 10) {
+            const oldTracer = this.shotTracers.shift();
+            this.scene.remove(oldTracer);
+        }
     },
 
     _panBack(landX, landZ, onComplete) {
@@ -321,9 +349,19 @@ const DrivingRange = {
         this.camera.position.set(0, 3, 8);
         this.camera.lookAt(0, 0, -50);
 
+        // Clear temporary trail and landing marker
         if (this.trailLine) { this.scene.remove(this.trailLine); this.trailLine = null; }
         if (this.landingMarker) { this.scene.remove(this.landingMarker); this.landingMarker = null; }
         this.trailPoints = [];
+        
+        // DON'T clear shot tracers — they persist across shots
+        
         this.isAnimating = false;
+    },
+
+    clearAllTracers() {
+        // Method to manually clear all shot tracers (e.g., when ending session)
+        this.shotTracers.forEach(tracer => this.scene.remove(tracer));
+        this.shotTracers = [];
     }
 };
