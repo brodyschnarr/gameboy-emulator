@@ -196,6 +196,50 @@
 
     </div>
 
+    <!-- ── SESSION SUMMARY SCREEN ──────────── -->
+    <div id="screen-summary" class="screen">
+        <div class="summary-inner">
+            <h2>📊 Session Summary</h2>
+            
+            <div class="summary-stats-grid">
+                <div class="summary-card">
+                    <div class="summary-label">Total Shots</div>
+                    <div class="summary-value" id="sum-total-shots">--</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Avg Distance</div>
+                    <div class="summary-value" id="sum-avg-distance">--</div>
+                    <div class="summary-unit">yds</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Best Shot</div>
+                    <div class="summary-value" id="sum-best-shot">--</div>
+                    <div class="summary-unit">yds</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Avg Club Speed</div>
+                    <div class="summary-value" id="sum-avg-speed">--</div>
+                    <div class="summary-unit">mph</div>
+                </div>
+            </div>
+
+            <div class="club-averages" id="club-averages">
+                <h3>Club Averages</h3>
+                <div class="club-avg-list" id="club-avg-list"></div>
+            </div>
+
+            <div class="dispersion-chart-container">
+                <h3>Shot Dispersion</h3>
+                <canvas id="dispersion-chart"></canvas>
+            </div>
+
+            <div class="summary-actions">
+                <button id="btn-new-session" class="btn-primary">New Session</button>
+                <button id="btn-back-to-setup" class="btn-secondary">Back to Setup</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Show setup screen immediately — don't wait for scripts
         document.addEventListener('DOMContentLoaded', () => {
