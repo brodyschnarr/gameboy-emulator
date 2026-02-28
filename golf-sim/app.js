@@ -258,8 +258,12 @@ const App = {
         const update = (id, value, unit) => {
             const card = document.getElementById(id);
             if (!card) return;
-            card.querySelector('.stat-value').textContent = value;
-            if (unit !== undefined) card.querySelector('.stat-unit').textContent = unit;
+            const valueEl = card.querySelector('.stat-value');
+            if (valueEl) valueEl.textContent = value;
+            if (unit !== undefined) {
+                const unitEl = card.querySelector('.stat-unit');
+                if (unitEl) unitEl.textContent = unit;
+            }
             card.classList.add('highlight');
             setTimeout(() => card.classList.remove('highlight'), 1500);
         };
