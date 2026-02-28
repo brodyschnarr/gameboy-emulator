@@ -24,12 +24,12 @@
         <section class="card mode-selector" id="mode-selector">
             <h2>How would you like to start?</h2>
             <div class="mode-options">
-                <button type="button" class="mode-btn" data-mode="simple" onclick="console.log('SIMPLE CLICKED'); alert('Simple mode button clicked!');">
+                <button type="button" class="mode-btn" data-mode="simple" onclick="window.startMode('simple')">
                     <span class="mode-icon">🎯</span>
                     <span class="mode-title">Quick Start</span>
                     <span class="mode-desc">Simple inputs, instant results</span>
                 </button>
-                <button type="button" class="mode-btn" data-mode="detailed" onclick="console.log('DETAILED CLICKED'); alert('Detailed mode button clicked!');">
+                <button type="button" class="mode-btn" data-mode="detailed" onclick="window.startMode('detailed')">
                     <span class="mode-icon">📊</span>
                     <span class="mode-title">Detailed Plan</span>
                     <span class="mode-desc">Full breakdown, all assumptions</span>

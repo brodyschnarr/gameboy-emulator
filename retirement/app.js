@@ -373,3 +373,31 @@ const App = {
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
+
+// Global function for inline onclick handlers
+window.startMode = function(mode) {
+    console.log('[startMode] Called with mode:', mode);
+    
+    const modeSelector = document.getElementById('mode-selector');
+    const plannerForm = document.getElementById('planner-form');
+    
+    console.log('[startMode] Mode selector:', modeSelector);
+    console.log('[startMode] Planner form:', plannerForm);
+    
+    if (modeSelector) {
+        modeSelector.classList.add('hidden');
+        console.log('[startMode] Hid mode selector');
+    }
+    
+    if (plannerForm) {
+        plannerForm.classList.remove('hidden');
+        console.log('[startMode] Showed planner form');
+    }
+    
+    if (mode === 'detailed') {
+        const expandBtn = document.getElementById('expand-accounts');
+        if (expandBtn) {
+            setTimeout(() => expandBtn.click(), 100);
+        }
+    }
+};
