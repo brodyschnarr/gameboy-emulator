@@ -39,29 +39,41 @@ const App = {
 
     _setupForm() {
         const form = document.getElementById('planner-form');
+        if (!form) {
+            console.error('[App] Form not found!');
+            return;
+        }
         
         // Account breakdown toggle
-        document.getElementById('expand-accounts').addEventListener('click', () => {
-            const breakdown = document.getElementById('account-breakdown');
-            breakdown.classList.toggle('hidden');
-            document.getElementById('total-savings').disabled = !breakdown.classList.contains('hidden');
-        });
+        const expandBtn = document.getElementById('expand-accounts');
+        if (expandBtn) {
+            expandBtn.addEventListener('click', () => {
+                const breakdown = document.getElementById('account-breakdown');
+                const totalSavings = document.getElementById('total-savings');
+                if (breakdown) breakdown.classList.toggle('hidden');
+                if (totalSavings) totalSavings.disabled = breakdown && !breakdown.classList.contains('hidden');
+            });
+        }
 
         // Auto-update contribution comparison
-        document.getElementById('monthly-contribution').addEventListener('input', (e) => {
-            const value = parseFloat(e.target.value) || 0;
-            const annual = value * 12;
-            const avgAnnual = RetirementData.averages.annualSaving;
-            
-            let comparison = '';
-            if (annual > avgAnnual * 1.2) {
-                comparison = `💪 ${Math.round((annual / avgAnnual - 1) * 100)}% above Canadian average`;
-            } else if (annual < avgAnnual * 0.8) {
-                comparison = `📊 Canadian avg: $${Math.round(avgAnnual/12)}/month`;
-            }
-            
-            document.getElementById('contribution-comparison').textContent = comparison;
-        });
+        const monthlyContrib = document.getElementById('monthly-contribution');
+        if (monthlyContrib) {
+            monthlyContrib.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value) || 0;
+                const annual = value * 12;
+                const avgAnnual = RetirementData.averages.annualSaving;
+                
+                let comparison = '';
+                if (annual > avgAnnual * 1.2) {
+                    comparison = `💪 ${Math.round((annual / avgAnnual - 1) * 100)}% above Canadian average`;
+                } else if (annual < avgAnnual * 0.8) {
+                    comparison = `📊 Canadian avg: $${Math.round(avgAnnual/12)}/month`;
+                }
+                
+                const comparisonEl = document.getElementById('contribution-comparison');
+                if (comparisonEl) comparisonEl.textContent = comparison;
+            });
+        }
 
         // Form submission
         form.addEventListener('submit', (e) => {
@@ -73,7 +85,8 @@ const App = {
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const rate = btn.dataset.presetReturn;
-                document.getElementById('return-rate').value = rate;
+                const rateInput = document.getElementById('return-rate');
+                if (rateInput) rateInput.value = rate;
             });
         });
     },
@@ -88,32 +101,43 @@ const App = {
                 this.selectedLifestyle = lifestyle;
 
                 const builder = document.getElementById('activity-builder');
-                if (lifestyle === 'custom') {
-                    builder.classList.remove('hidden');
-                } else {
-                    builder.classList.add('hidden');
+                if (builder) {
+                    if (lifestyle === 'custom') {
+                        builder.classList.remove('hidden');
+                    } else {
+                        builder.classList.add('hidden');
+                    }
                 }
             });
         });
 
         // Pre-select comfortable as default
-        document.querySelector('[data-lifestyle="comfortable"]').click();
+        const defaultCard = document.querySelector('[data-lifestyle="comfortable"]');
+        if (defaultCard) {
+            defaultCard.click();
+        }
     },
 
     _setupAssumptionsToggle() {
-        document.getElementById('toggle-assumptions').addEventListener('click', () => {
-            const content = document.getElementById('assumptions-content');
-            const icon = document.querySelector('.toggle-icon');
-            
-            content.classList.toggle('hidden');
-            icon.classList.toggle('expanded');
-        });
+        const toggleBtn = document.getElementById('toggle-assumptions');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const content = document.getElementById('assumptions-content');
+                const icon = document.querySelector('.toggle-icon');
+                
+                if (content) content.classList.toggle('hidden');
+                if (icon) icon.classList.toggle('expanded');
+            });
+        }
     },
 
     _setupActivityBuilder() {
-        document.getElementById('add-activity').addEventListener('click', () => {
-            this._addActivity();
-        });
+        const addBtn = document.getElementById('add-activity');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                this._addActivity();
+            });
+        }
     },
 
     _addActivity() {
@@ -215,7 +239,7 @@ const App = {
         const banner = document.getElementById('status-banner');
         if (results.onTrack) {
             banner.className = 'card status-banner on-track';
-            banner.textContent = '✅ You're on track for retirement!';
+            banner.textContent = 'You are on track for retirement!';
         } else {
             banner.className = 'card status-banner needs-work';
             const neededSavings = RetirementCalc.calculateNeededSavings(
@@ -223,7 +247,7 @@ const App = {
                 inputs.retirementAge - inputs.currentAge,
                 inputs.returnRate
             );
-            banner.innerHTML = `⚠️ You need to save an additional <strong>$${neededSavings.toLocaleString()}/month</strong> to reach your goal`;
+            banner.innerHTML = `You need to save an additional <strong>$${neededSavings.toLocaleString()}/month</strong> to reach your goal`;
         }
 
         // Key stats
