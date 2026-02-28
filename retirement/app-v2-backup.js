@@ -1,27 +1,20 @@
 // ═══════════════════════════════════════════
-//  Retirement Planner V3 - App Controller
+//  Retirement Planner V2 - App Controller
 // ═══════════════════════════════════════════
 
-const AppV3 = {
+const AppV2 = {
     currentStep: 'basic',
     inputs: {},
-    familyStatus: 'single',
-    selectedProvince: '',
-    customCPP: null,
-    customOAS: null,
 
     init() {
-        console.log('[AppV3] Initializing...');
+        console.log('[AppV2] Initializing...');
         this._setupNavigation();
-        this._setupFamilyToggle();
-        this._setupProvinceSelector();
         this._setupBenchmarks();
         this._setupPresets();
-        this._setupCPPCustomization();
         this._setupCalculate();
         this._setupAdvancedToggle();
         this._loadSavedData();
-        console.log('[AppV3] Init complete');
+        console.log('[AppV2] Init complete');
     },
 
     _setupNavigation() {
@@ -43,7 +36,6 @@ const AppV3 = {
         document.getElementById('btn-next-retirement').addEventListener('click', () => {
             this._showStep('retirement');
             this._updateSpendingRecommendation();
-            this._updateGovBenefitsPreview();
         });
 
         // Back buttons
@@ -60,37 +52,8 @@ const AppV3 = {
         });
     },
 
-    _setupFamilyToggle() {
-        document.querySelectorAll('[data-family]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('[data-family]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.familyStatus = btn.dataset.family;
-                console.log('[AppV3] Family status:', this.familyStatus);
-            });
-        });
-    },
-
-    _setupProvinceSelector() {
-        document.querySelectorAll('.province-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.province-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.selectedProvince = btn.dataset.province;
-                document.getElementById('province').value = this.selectedProvince;
-                console.log('[AppV3] Province selected:', this.selectedProvince);
-            });
-        });
-
-        // Set default province (ON)
-        const defaultBtn = document.querySelector('.province-btn[data-province="ON"]');
-        if (defaultBtn) {
-            defaultBtn.click();
-        }
-    },
-
     _setupBenchmarks() {
-        // Income benchmark
+        // Income benchmark (on input)
         document.getElementById('current-income').addEventListener('input', (e) => {
             const income = parseFloat(e.target.value) || 0;
             const age = parseInt(document.getElementById('current-age').value) || 35;
@@ -106,9 +69,6 @@ const AppV3 = {
                 
                 document.getElementById('income-benchmark').textContent = message;
             }
-
-            // Update CPP estimate when income changes
-            this._updateGovBenefitsPreview();
         });
 
         // Total savings calculator
@@ -151,22 +111,31 @@ const AppV3 = {
         });
     },
 
-    _setupCPPCustomization() {
-        document.getElementById('btn-customize-cpp').addEventListener('click', () => {
-            const customInputs = document.getElementById('custom-gov-inputs');
-            customInputs.classList.toggle('hidden');
-        });
+    _showLifestyleDetail(lifestyle) {
+        const data = LifestyleData[lifestyle];
+        if (!data) return;
 
-        // Listen for custom inputs
-        document.getElementById('custom-cpp').addEventListener('input', (e) => {
-            this.customCPP = e.target.value ? parseFloat(e.target.value) : null;
-            this._updateGovBenefitsPreview();
-        });
+        // Update header
+        document.getElementById('lifestyle-detail-title').textContent = 
+            `${data.name} Lifestyle - $${data.annual.toLocaleString()}/year`;
+        document.getElementById('lifestyle-detail-tagline').textContent = data.tagline;
 
-        document.getElementById('custom-oas').addEventListener('input', (e) => {
-            this.customOAS = e.target.value ? parseFloat(e.target.value) : null;
-            this._updateGovBenefitsPreview();
-        });
+        // Build breakdown grid
+        const breakdownHTML = Object.entries(data.breakdown).map(([category, details]) => `
+            <div class="breakdown-item">
+                <div class="breakdown-category">${category.charAt(0).toUpperCase() + category.slice(1)}</div>
+                <div class="breakdown-amount">$${details.monthly.toLocaleString()}/month</div>
+                <div class="breakdown-description">${details.description}</div>
+            </div>
+        `).join('');
+        document.getElementById('lifestyle-breakdown').innerHTML = breakdownHTML;
+
+        // Build examples list
+        const examplesHTML = data.examples.map(ex => `<li>${ex}</li>`).join('');
+        document.getElementById('lifestyle-examples').innerHTML = examplesHTML;
+
+        // Show modal
+        document.getElementById('lifestyle-detail').classList.remove('hidden');
     },
 
     _setupCalculate() {
@@ -196,19 +165,23 @@ const AppV3 = {
     },
 
     _showStep(step) {
+        // Hide all steps
         ['basic', 'savings', 'contributions', 'retirement'].forEach(s => {
             document.getElementById(`step-${s}`).classList.add('hidden');
         });
         
+        // Show target step
         document.getElementById(`step-${step}`).classList.remove('hidden');
         this.currentStep = step;
+        
+        // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     _validateBasic() {
         const age = parseInt(document.getElementById('current-age').value);
         const income = parseFloat(document.getElementById('current-income').value);
-        const province = this.selectedProvince;
+        const province = document.getElementById('province').value;
 
         if (!age || age < 18 || age > 100) {
             alert('Please enter a valid age (18-100)');
@@ -229,6 +202,7 @@ const AppV3 = {
     },
 
     _validateAllInputs() {
+        // Basic checks
         if (!this._validateBasic()) return false;
 
         const retirementAge = parseInt(document.getElementById('retirement-age').value);
@@ -276,6 +250,7 @@ const AppV3 = {
         const total = rrsp + tfsa + nonreg + other;
         document.getElementById('total-savings-display').textContent = `$${total.toLocaleString()}`;
 
+        // Benchmark comparison
         const age = parseInt(document.getElementById('current-age').value) || 35;
         const comparison = Benchmarks.compareSavings(age, total);
         document.getElementById('total-savings-benchmark').textContent = comparison.message;
@@ -317,52 +292,13 @@ const AppV3 = {
             `Recommended: $${recommended.toLocaleString()}/year (70% of current income)`;
     },
 
-    _updateGovBenefitsPreview() {
-        const income = parseFloat(document.getElementById('current-income').value) || 60000;
-        const retirementAge = parseInt(document.getElementById('retirement-age').value) || 65;
-        const yearsContributing = Math.min(retirementAge - 18, 39);
-        
-        const isSingle = this.familyStatus === 'single';
-        const govBenefits = CPPCalculator.getGovernmentBenefits(income, yearsContributing, 0, isSingle);
-
-        const cpp = this.customCPP !== null ? this.customCPP : govBenefits.cppTotal;
-        const oas = this.customOAS !== null ? this.customOAS : govBenefits.oas;
-        const total = cpp + oas + govBenefits.gis;
-
-        document.getElementById('cpp-estimate').textContent = `$${Math.round(cpp).toLocaleString()}/year`;
-        document.getElementById('oas-estimate').textContent = `$${Math.round(oas).toLocaleString()}/year`;
-        document.getElementById('gov-total-estimate').textContent = `$${Math.round(total).toLocaleString()}/year`;
-    },
-
-    _showLifestyleDetail(lifestyle) {
-        const data = LifestyleData[lifestyle];
-        if (!data) return;
-
-        document.getElementById('lifestyle-detail-title').textContent = 
-            `${data.name} Lifestyle - $${data.annual.toLocaleString()}/year`;
-        document.getElementById('lifestyle-detail-tagline').textContent = data.tagline;
-
-        const breakdownHTML = Object.entries(data.breakdown).map(([category, details]) => `
-            <div class="breakdown-item">
-                <div class="breakdown-category">${category.charAt(0).toUpperCase() + category.slice(1)}</div>
-                <div class="breakdown-amount">$${details.monthly.toLocaleString()}/month</div>
-                <div class="breakdown-description">${details.description}</div>
-            </div>
-        `).join('');
-        document.getElementById('lifestyle-breakdown').innerHTML = breakdownHTML;
-
-        const examplesHTML = data.examples.map(ex => `<li>${ex}</li>`).join('');
-        document.getElementById('lifestyle-examples').innerHTML = examplesHTML;
-
-        document.getElementById('lifestyle-detail').classList.remove('hidden');
-    },
-
     _runCalculation() {
+        // Gather all inputs
         const inputs = {
             currentAge: parseInt(document.getElementById('current-age').value),
             retirementAge: parseInt(document.getElementById('retirement-age').value),
             lifeExpectancy: parseInt(document.getElementById('life-expectancy').value),
-            province: this.selectedProvince,
+            province: document.getElementById('province').value,
             currentIncome: parseFloat(document.getElementById('current-income').value),
             
             rrsp: parseFloat(document.getElementById('rrsp').value) || 0,
@@ -380,20 +316,19 @@ const AppV3 = {
             annualSpending: parseFloat(document.getElementById('annual-spending').value),
             
             returnRate: parseFloat(document.getElementById('return-rate').value) || 6,
-            inflationRate: parseFloat(document.getElementById('inflation-rate').value) || 2.5,
-
-            familyStatus: this.familyStatus,
-            customCPP: this.customCPP,
-            customOAS: this.customOAS
+            inflationRate: parseFloat(document.getElementById('inflation-rate').value) || 2.5
         };
 
-        console.log('[AppV3] Inputs:', inputs);
+        console.log('[AppV2] Inputs:', inputs);
 
+        // Run calculation
         const results = RetirementCalcV2.calculate(inputs);
-        console.log('[AppV3] Results:', results);
+        console.log('[AppV2] Results:', results);
 
+        // Display results
         this._displayResults(results, inputs);
         
+        // Hide all steps, show results
         ['basic', 'savings', 'contributions', 'retirement'].forEach(s => {
             document.getElementById(`step-${s}`).classList.add('hidden');
         });
@@ -402,6 +337,7 @@ const AppV3 = {
     },
 
     _displayResults(results, inputs) {
+        // Status banner
         const banner = document.getElementById('status-banner');
         if (results.onTrack) {
             banner.className = 'card status-banner on-track';
@@ -411,6 +347,7 @@ const AppV3 = {
             banner.innerHTML = `⚠️ You may need to adjust your plan to meet your retirement goals`;
         }
 
+        // Key stats
         document.getElementById('stat-portfolio').textContent = 
             `$${results.summary.portfolioAtRetirement.toLocaleString()}`;
         
@@ -439,20 +376,18 @@ const AppV3 = {
             lastsNote.style.color = 'var(--danger, red)';
         }
 
+        // Draw chart
         this._drawChart(results.yearByYear, inputs.retirementAge);
-        this._drawYearBreakdown(results.yearByYear, inputs.retirementAge);
+
+        // Breakdown
         this._displayBreakdown(results, inputs);
     },
 
     _drawChart(yearByYear, retirementAge) {
         const canvas = document.getElementById('projection-chart');
-        if (!canvas) return;
-
         const ctx = canvas.getContext('2d');
         
-        // Set canvas size to match container
-        const container = canvas.parentElement;
-        canvas.width = container.offsetWidth - 40;
+        canvas.width = canvas.offsetWidth;
         canvas.height = 400;
 
         const w = canvas.width;
@@ -512,52 +447,6 @@ const AppV3 = {
         
         ctx.fillStyle = '#f59e0b';
         ctx.fillText('Retirement', retireX - 35, padding - 10);
-    },
-
-    _drawYearBreakdown(yearByYear, retirementAge) {
-        const container = document.getElementById('year-breakdown-chart');
-        if (!container) return;
-
-        // Filter to retirement years only
-        const retirementYears = yearByYear.filter(y => y.age >= retirementAge).slice(0, 25); // Show first 25 years
-
-        if (retirementYears.length === 0) {
-            container.innerHTML = '<p>No retirement data available</p>';
-            return;
-        }
-
-        const maxBalance = Math.max(...retirementYears.map(y => y.totalBalance));
-
-        const html = retirementYears.map(year => {
-            const rrspPct = (year.rrsp / maxBalance) * 100;
-            const tfsaPct = (year.tfsa / maxBalance) * 100;
-            const nonRegPct = (year.nonReg / maxBalance) * 100;
-            const otherPct = (year.other / maxBalance) * 100;
-
-            return `
-                <div class="year-bar-row">
-                    <div class="year-label">Age ${year.age}</div>
-                    <div class="year-bar">
-                        <div class="bar-segment rrsp" style="width: ${rrspPct}%" title="RRSP: $${year.rrsp.toLocaleString()}"></div>
-                        <div class="bar-segment tfsa" style="width: ${tfsaPct}%" title="TFSA: $${year.tfsa.toLocaleString()}"></div>
-                        <div class="bar-segment nonreg" style="width: ${nonRegPct}%" title="Non-Reg: $${year.nonReg.toLocaleString()}"></div>
-                        ${otherPct > 0 ? `<div class="bar-segment other" style="width: ${otherPct}%" title="Other: $${year.other.toLocaleString()}"></div>` : ''}
-                    </div>
-                    <div class="year-total">$${year.totalBalance.toLocaleString()}</div>
-                </div>
-            `;
-        }).join('');
-
-        const legend = `
-            <div class="chart-legend">
-                <div class="legend-item"><span class="legend-color rrsp"></span> RRSP</div>
-                <div class="legend-item"><span class="legend-color tfsa"></span> TFSA</div>
-                <div class="legend-item"><span class="legend-color nonreg"></span> Non-Reg</div>
-                ${retirementYears.some(y => y.other > 0) ? '<div class="legend-item"><span class="legend-color other"></span> Other</div>' : ''}
-            </div>
-        `;
-
-        container.innerHTML = legend + html;
     },
 
     _displayBreakdown(results, inputs) {
@@ -621,9 +510,8 @@ const AppV3 = {
 
     _saveScenario() {
         const data = {
-            familyStatus: this.familyStatus,
             currentAge: document.getElementById('current-age').value,
-            province: this.selectedProvince,
+            province: document.getElementById('province').value,
             currentIncome: document.getElementById('current-income').value,
             rrsp: document.getElementById('rrsp').value,
             tfsa: document.getElementById('tfsa').value,
@@ -635,40 +523,25 @@ const AppV3 = {
             annualSpending: document.getElementById('annual-spending').value
         };
 
-        localStorage.setItem('retirementPlannerV3', JSON.stringify(data));
+        localStorage.setItem('retirementPlannerV2', JSON.stringify(data));
         alert('✅ Scenario saved!');
     },
 
     _loadSavedData() {
-        const saved = localStorage.getItem('retirementPlannerV3');
+        const saved = localStorage.getItem('retirementPlannerV2');
         if (!saved) return;
 
         const data = JSON.parse(saved);
-        
-        // Restore family status
-        if (data.familyStatus) {
-            this.familyStatus = data.familyStatus;
-            document.querySelector(`[data-family="${data.familyStatus}"]`)?.click();
-        }
-
-        // Restore province
-        if (data.province) {
-            this.selectedProvince = data.province;
-            document.querySelector(`[data-province="${data.province}"]`)?.click();
-        }
-
-        // Restore other fields
         Object.keys(data).forEach(key => {
             const el = document.getElementById(key);
-            if (el && key !== 'familyStatus' && key !== 'province') {
-                el.value = data[key];
-            }
+            if (el) el.value = data[key];
         });
 
-        console.log('[AppV3] Loaded saved data');
+        console.log('[AppV2] Loaded saved data');
     }
 };
 
+// Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-    AppV3.init();
+    AppV2.init();
 });

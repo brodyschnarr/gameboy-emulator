@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Canadian retirement calculator with tax-aware projections">
     <title>Retirement Planner | Tax-Aware Canadian Calculator</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
     
@@ -25,20 +25,6 @@
         <section class="card" id="step-basic">
             <h2>📍 Start Here</h2>
             
-            <!-- Family Status -->
-            <div class="input-group">
-                <label>Planning for...</label>
-                <div class="toggle-buttons">
-                    <button type="button" class="toggle-btn active" data-family="single">
-                        👤 Just Me
-                    </button>
-                    <button type="button" class="toggle-btn" data-family="couple">
-                        👫 Me + Partner
-                    </button>
-                </div>
-                <small class="input-hint">Affects government benefits (GIS, OAS)</small>
-            </div>
-
             <div class="input-group">
                 <label for="current-age">
                     Your Age
@@ -48,20 +34,22 @@
             </div>
 
             <div class="input-group">
-                <label>Province</label>
-                <div class="province-grid">
-                    <button type="button" class="province-btn" data-province="ON">ON</button>
-                    <button type="button" class="province-btn" data-province="QC">QC</button>
-                    <button type="button" class="province-btn" data-province="BC">BC</button>
-                    <button type="button" class="province-btn" data-province="AB">AB</button>
-                    <button type="button" class="province-btn" data-province="MB">MB</button>
-                    <button type="button" class="province-btn" data-province="SK">SK</button>
-                    <button type="button" class="province-btn" data-province="NS">NS</button>
-                    <button type="button" class="province-btn" data-province="NB">NB</button>
-                    <button type="button" class="province-btn" data-province="PE">PE</button>
-                    <button type="button" class="province-btn" data-province="NL">NL</button>
-                </div>
-                <input type="hidden" id="province" value="">
+                <label for="province">
+                    Province
+                    <button type="button" class="info-btn" data-tooltip="Tax calculations vary by province">?</button>
+                </label>
+                <select id="province" required>
+                    <option value="ON">Ontario</option>
+                    <option value="BC">British Columbia</option>
+                    <option value="AB">Alberta</option>
+                    <option value="QC">Quebec</option>
+                    <option value="MB">Manitoba</option>
+                    <option value="SK">Saskatchewan</option>
+                    <option value="NS">Nova Scotia</option>
+                    <option value="NB">New Brunswick</option>
+                    <option value="PE">Prince Edward Island</option>
+                    <option value="NL">Newfoundland & Labrador</option>
+                </select>
             </div>
 
             <div class="input-group">
@@ -209,46 +197,6 @@
                 <input type="number" id="life-expectancy" placeholder="90" min="65" max="110" value="90">
             </div>
 
-            <!-- CPP/OAS Section -->
-            <div class="input-group">
-                <label>
-                    CPP/OAS Estimate
-                    <button type="button" class="info-btn" data-tooltip="Based on your income, we estimate your government benefits">?</button>
-                </label>
-                <div class="gov-benefits-preview" id="gov-benefits-preview">
-                    <div class="benefit-line">
-                        <span>CPP (estimated):</span>
-                        <span id="cpp-estimate">$0/year</span>
-                    </div>
-                    <div class="benefit-line">
-                        <span>OAS (estimated):</span>
-                        <span id="oas-estimate">$0/year</span>
-                    </div>
-                    <div class="benefit-total">
-                        <strong>Total Government Income:</strong>
-                        <strong id="gov-total-estimate">$0/year</strong>
-                    </div>
-                </div>
-                <button type="button" class="btn-link" id="btn-customize-cpp">
-                    ⚙️ Customize CPP/OAS amounts
-                </button>
-
-                <!-- Custom CPP/OAS inputs (hidden by default) -->
-                <div class="hidden" id="custom-gov-inputs">
-                    <div class="input-with-prefix" style="margin-top: 12px;">
-                        <label for="custom-cpp">CPP Annual Amount</label>
-                        <span class="prefix">$</span>
-                        <input type="number" id="custom-cpp" placeholder="Auto" min="0" step="100">
-                    </div>
-                    <div class="input-with-prefix" style="margin-top: 12px;">
-                        <label for="custom-oas">OAS Annual Amount</label>
-                        <span class="prefix">$</span>
-                        <input type="number" id="custom-oas" placeholder="Auto" min="0" step="100">
-                    </div>
-                    <small class="input-hint">Leave blank to use automatic estimates</small>
-                </div>
-            </div>
-
             <div class="input-group">
                 <label>Annual Spending in Retirement</label>
                 <p class="section-intro" style="margin-top: 8px;">Choose a lifestyle or enter a custom amount. Click any option to see what it actually means.</p>
@@ -342,14 +290,7 @@
             <!-- Projection Chart -->
             <section class="card">
                 <h2>📈 Portfolio Projection</h2>
-                <canvas id="projection-chart"></canvas>
-            </section>
-
-            <!-- Year-by-Year Breakdown -->
-            <section class="card">
-                <h2>📅 Year-by-Year Breakdown</h2>
-                <p class="section-intro">See how your portfolio changes each year</p>
-                <div id="year-breakdown-chart"></div>
+                <canvas id="projection-chart" width="800" height="400"></canvas>
             </section>
 
             <!-- Detailed Breakdown -->
@@ -387,12 +328,12 @@
     </main>
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=5"></script>
-    <script src="cpp-calculator.js?v=5"></script>
-    <script src="benchmarks.js?v=5"></script>
-    <script src="lifestyle-data.js?v=5"></script>
-    <script src="calc.js?v=5"></script>
-    <script src="app.js?v=5"></script>
+    <script src="canada-tax.js?v=4"></script>
+    <script src="cpp-calculator.js?v=4"></script>
+    <script src="benchmarks.js?v=4"></script>
+    <script src="lifestyle-data.js?v=4"></script>
+    <script src="calc.js?v=4"></script>
+    <script src="app.js?v=4"></script>
 
 </body>
 </html>

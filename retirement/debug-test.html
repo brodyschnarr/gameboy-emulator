@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html><head><title>Debug Test</title></head><body>
+<pre id="output"></pre>
+<script src="canada-tax.js"></script>
+<script src="cpp-calculator.js"></script>
+<script src="benchmarks.js"></script>
+<script src="calc.js"></script>
+<script>
+const inputs = {
+    currentAge: 35,
+    retirementAge: 65,
+    lifeExpectancy: 90,
+    province: 'ON',
+    currentIncome: 75000,
+    rrsp: 200000,
+    tfsa: 0,
+    nonReg: 0,
+    other: 0,
+    monthlyContribution: 0,
+    contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+    annualSpending: 50000,
+    returnRate: 6,
+    inflationRate: 2.5
+};
+
+const results = RetirementCalcV2.calculate(inputs);
+document.getElementById('output').textContent = JSON.stringify(results, null, 2);
+</script>
+</body></html>

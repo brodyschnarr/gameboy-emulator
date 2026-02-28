@@ -38,15 +38,7 @@ const RetirementCalcV2 = {
         const yearsToRetirement = retirementAge - currentAge;
         const yearsInRetirement = lifeExpectancy - retirementAge;
 
-        // 1. Project account growth until retirement
-        const projectedAccounts = this._projectAccountGrowth({
-            rrsp,
-            tfsa,
-            nonReg,
-            other
-        }, monthlyContribution, contributionSplit, yearsToRetirement, returnRate, currentIncome, province);
-
-        // 2. Calculate government benefits
+        // 1. Calculate government benefits
         const yearsContributing = Math.min(retirementAge - 18, 39); // Assume started at 18
         const govBenefits = CPPCalculator.getGovernmentBenefits(
             currentIncome,
@@ -55,16 +47,16 @@ const RetirementCalcV2 = {
             true // Assume single for now
         );
 
-        // 3. Inflation-adjusted spending
+        // 2. Inflation-adjusted spending
         const inflationMultiplier = Math.pow(1 + inflationRate / 100, yearsToRetirement);
         const futureAnnualSpending = annualSpending * inflationMultiplier;
 
-        // 4. Year-by-year tax-aware projection
+        // 3. Year-by-year tax-aware projection (handles growth internally)
         const projection = this._generateTaxAwareProjection({
             startAge: currentAge,
             retirementAge,
             lifeExpectancy,
-            accounts: projectedAccounts,
+            accounts: { rrsp, tfsa, nonReg, other }, // Pass CURRENT balances, not projected
             annualContribution: monthlyContribution * 12,
             contributionSplit,
             targetSpending: futureAnnualSpending,
@@ -74,6 +66,16 @@ const RetirementCalcV2 = {
             govBenefits,
             currentIncome
         });
+
+        // 4. Get projected accounts at retirement from the projection
+        const retirementYear = projection.find(p => p.age === retirementAge);
+        const projectedAccounts = retirementYear ? {
+            rrsp: retirementYear.rrsp,
+            tfsa: retirementYear.tfsa,
+            nonReg: retirementYear.nonReg,
+            other: retirementYear.other,
+            total: retirementYear.totalBalance
+        } : { rrsp: 0, tfsa: 0, nonReg: 0, other: 0, total: 0 };
 
         // 5. Summary stats
         const retirementYear = projection.find(p => p.age === retirementAge);
