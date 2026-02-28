@@ -40,6 +40,51 @@
         </div>
     </div>
 
+    <!-- ── CALIBRATION SCREEN ──────────────── -->
+    <div id="screen-calibration" class="screen">
+        <div class="calibration-inner">
+            <h2>🎯 Calibration</h2>
+            <p class="cal-subtitle">Hit 3 driver shots to tune the sim to your swing</p>
+
+            <div class="calibration-steps">
+                <div class="cal-shot" data-shot="1">
+                    <div class="shot-number">Shot 1</div>
+                    <div class="shot-status">Waiting...</div>
+                    <div class="shot-distance" id="cal-dist-1">-- yds</div>
+                </div>
+                <div class="cal-shot" data-shot="2">
+                    <div class="shot-number">Shot 2</div>
+                    <div class="shot-status">Waiting...</div>
+                    <div class="shot-distance" id="cal-dist-2">-- yds</div>
+                </div>
+                <div class="cal-shot" data-shot="3">
+                    <div class="shot-number">Shot 3</div>
+                    <div class="shot-status">Waiting...</div>
+                    <div class="shot-distance" id="cal-dist-3">-- yds</div>
+                </div>
+            </div>
+
+            <div class="cal-instruction" id="cal-instruction">
+                Stand in front of camera and hit your driver
+            </div>
+
+            <div class="cal-input-section hidden" id="cal-input-section">
+                <label for="typical-distance">Your typical driver carry distance:</label>
+                <input type="number" id="typical-distance" placeholder="e.g. 240" min="100" max="350" step="5">
+                <span class="input-unit">yards</span>
+            </div>
+
+            <button id="btn-complete-cal" class="btn-primary hidden">Complete Calibration</button>
+            <button id="btn-skip-cal" class="btn-secondary">Skip Calibration</button>
+
+            <!-- Small camera preview -->
+            <div class="cal-camera-preview">
+                <video id="cal-video" autoplay playsinline muted></video>
+                <canvas id="cal-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
     <!-- ── SESSION SCREEN ───────────────────── -->
     <div id="screen-session" class="screen">
 

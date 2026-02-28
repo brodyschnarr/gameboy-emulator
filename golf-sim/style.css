@@ -116,6 +116,175 @@ html, body {
 .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
 
 /* ═══════════════════════════════
+   CALIBRATION SCREEN
+═══════════════════════════════ */
+#screen-calibration {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #0d1117 0%, #1a2a3a 100%);
+}
+
+.calibration-inner {
+    width: 100%;
+    max-width: 520px;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.calibration-inner h2 {
+    font-size: 36px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.cal-subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+    margin: -12px 0 0 0;
+}
+
+.calibration-steps {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.cal-shot {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 12px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.cal-shot.active {
+    border-color: var(--accent);
+    background: rgba(245,197,24,0.08);
+}
+
+.cal-shot.complete {
+    border-color: #7ee787;
+    background: rgba(126,231,135,0.08);
+}
+
+.shot-number {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.shot-status {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 4px 0;
+}
+
+.shot-distance {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text);
+    margin-top: 6px;
+}
+
+.cal-instruction {
+    background: rgba(245,197,24,0.1);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.cal-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    align-items: center;
+}
+
+.cal-input-section label {
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.cal-input-section input {
+    width: 180px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.cal-input-section input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.input-unit {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: -6px;
+}
+
+.btn-secondary {
+    padding: 12px 28px;
+    background: transparent;
+    border: 2px solid var(--border);
+    color: var(--muted);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.cal-camera-preview {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 160px;
+    height: 120px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: #000;
+}
+
+.cal-camera-preview video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+
+.cal-camera-preview canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+}
+
+.hidden { display: none !important; }
+
+/* ═══════════════════════════════
    SESSION SCREEN
 ═══════════════════════════════ */
 #screen-session { background: #000; }

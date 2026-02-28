@@ -3,17 +3,21 @@
 // ─────────────────────────────────────────────
 
 const App = {
-    state: 'setup',   // setup | session | results
+    state: 'setup',   // setup | calibration | session | results
     club: 'driver',
     hand: 'right',
     shots: [],
     rangeReady: false,
+    calibrationShots: [],
 
     CLUB_NAMES: {
         driver: 'Driver', '3w': '3 Wood', '5i': '5 Iron', '7i': '7 Iron', pw: 'Pitching Wedge'
     },
 
     init() {
+        // Load existing calibration
+        ShotCalculator.loadCalibration();
+        
         this._initSetupScreen();
         this._startSetupCamera();
     },
@@ -41,7 +45,13 @@ const App = {
 
         // Start button
         document.getElementById('btn-start').addEventListener('click', () => {
-            this._startSession();
+            // Check if calibrated
+            const hasCalibration = localStorage.getItem('golf_sim_calibration');
+            if (hasCalibration) {
+                this._startSession();
+            } else {
+                this._startCalibration();
+            }
         });
     },
 
@@ -63,6 +73,105 @@ const App = {
             this._setupStream.getTracks().forEach(t => t.stop());
             this._setupStream = null;
         }
+    },
+
+    // ── Calibration ─────────────────────────────
+
+    async _startCalibration() {
+        this._stopSetupCamera();
+        this._showScreen('calibration');
+        this.state = 'calibration';
+        this.calibrationShots = [];
+
+        // Skip button
+        document.getElementById('btn-skip-cal').addEventListener('click', () => {
+            this._startSession();
+        });
+
+        // Complete button
+        document.getElementById('btn-complete-cal').addEventListener('click', () => {
+            this._completeCalibration();
+        });
+
+        // Init swing detector for calibration
+        try {
+            const videoEl = document.getElementById('cal-video');
+            const canvasEl = document.getElementById('cal-canvas');
+            await SwingDetector.init(videoEl, canvasEl, (swingData) => {
+                this._onCalibrationSwing(swingData);
+            }, this.hand);
+
+            SwingDetector.startDetecting();
+            this._updateCalibrationUI();
+        } catch (e) {
+            console.error('Calibration camera init failed:', e);
+            alert('Camera error. Skipping calibration.');
+            this._startSession();
+        }
+    },
+
+    _onCalibrationSwing(swingData) {
+        if (this.calibrationShots.length >= 3) return;
+
+        // Calculate shot without calibration (use default multiplier 1.0)
+        const shot = ShotCalculator.calculate(swingData, 'driver');
+        if (!shot) return;
+
+        this.calibrationShots.push(shot);
+        const shotNum = this.calibrationShots.length;
+
+        // Update UI
+        document.getElementById(`cal-dist-${shotNum}`).textContent = `${shot.carryYards} yds`;
+        const shotCard = document.querySelector(`.cal-shot[data-shot="${shotNum}"]`);
+        shotCard.classList.remove('active');
+        shotCard.classList.add('complete');
+        shotCard.querySelector('.shot-status').textContent = 'Measured';
+
+        if (shotNum < 3) {
+            // Next shot
+            SwingDetector.state = 'detecting';
+            SwingDetector.frames = [];
+            SwingDetector.startDetecting();
+            this._updateCalibrationUI();
+        } else {
+            // All 3 shots done
+            SwingDetector.stop();
+            document.getElementById('cal-instruction').textContent = 'Great! Now enter your typical driver carry distance';
+            document.getElementById('cal-input-section').classList.remove('hidden');
+            document.getElementById('btn-complete-cal').classList.remove('hidden');
+            
+            // Pre-fill with measured average
+            const avg = Math.round(this.calibrationShots.reduce((s, shot) => s + shot.carryYards, 0) / 3);
+            document.getElementById('typical-distance').value = avg;
+        }
+    },
+
+    _updateCalibrationUI() {
+        const nextShot = this.calibrationShots.length + 1;
+        if (nextShot <= 3) {
+            const shotCard = document.querySelector(`.cal-shot[data-shot="${nextShot}"]`);
+            shotCard.classList.add('active');
+            shotCard.querySelector('.shot-status').textContent = 'Ready...';
+        }
+    },
+
+    _completeCalibration() {
+        const typicalInput = document.getElementById('typical-distance');
+        const typicalCarry = parseInt(typicalInput.value);
+
+        if (!typicalCarry || typicalCarry < 100 || typicalCarry > 350) {
+            alert('Please enter a valid distance (100-350 yards)');
+            return;
+        }
+
+        // Save calibration
+        const multiplier = ShotCalculator.saveCalibration(typicalCarry, this.calibrationShots);
+        
+        console.log(`[Calibration] Multiplier set to ${multiplier.toFixed(2)}x`);
+        
+        // Move to session
+        SwingDetector.stop();
+        this._startSession();
     },
 
     // ── Session ─────────────────────────────────

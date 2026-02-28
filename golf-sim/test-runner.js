@@ -251,6 +251,81 @@ TestRunner.suite('Shot Calculator - Edge Cases', ({ test }) => {
     });
 });
 
+TestRunner.suite('Calibration System', ({ test }) => {
+
+    test('Calibration multiplier defaults to 1.0', () => {
+        ShotCalculator.resetCalibration();
+        assertEquals(ShotCalculator.calibrationMultiplier, 1.0, 'Default multiplier should be 1.0');
+    });
+
+    test('Save calibration calculates correct multiplier', () => {
+        ShotCalculator.resetCalibration();
+        const mockShots = [
+            { carryYards: 200 },
+            { carryYards: 210 },
+            { carryYards: 205 }
+        ];
+        const typicalCarry = 240; // User says they typically hit 240
+        const avgMeasured = 205; // System measured 205 average
+        
+        const multiplier = ShotCalculator.saveCalibration(typicalCarry, mockShots);
+        
+        // Expected: 240 / 205 = 1.17
+        assertRange(multiplier, 1.16, 1.18, 'Multiplier should be ~1.17');
+    });
+
+    test('Calibration multiplier affects shot distance', () => {
+        ShotCalculator.resetCalibration();
+        const swing = { peakVelocity: 0.10, swingPath: 0, tempoRatio: 3.0, attackAngle: -2, faceAngle: 0, confidence: 0.9 };
+        
+        const baseShot = ShotCalculator.calculate(swing, 'driver');
+        const baseDistance = baseShot.carryYards;
+        
+        // Set calibration to 1.2x
+        ShotCalculator.calibrationMultiplier = 1.2;
+        const boostedShot = ShotCalculator.calculate(swing, 'driver');
+        
+        assertRange(boostedShot.carryYards, baseDistance * 1.18, baseDistance * 1.22, 'Calibration should increase distance by ~20%');
+    });
+
+    test('Calibration persists to localStorage', () => {
+        ShotCalculator.resetCalibration();
+        const mockShots = [{ carryYards: 220 }, { carryYards: 230 }, { carryYards: 225 }];
+        ShotCalculator.saveCalibration(250, mockShots);
+        
+        // Reset and reload
+        ShotCalculator.calibrationMultiplier = 1.0;
+        ShotCalculator.loadCalibration();
+        
+        assert(ShotCalculator.calibrationMultiplier > 1.0, 'Calibration should persist after reload');
+        assertRange(ShotCalculator.calibrationMultiplier, 1.10, 1.12, 'Loaded multiplier should match saved');
+    });
+
+    test('Calibration clamps to reasonable range', () => {
+        ShotCalculator.resetCalibration();
+        
+        // Extreme case: measured 100, typical 300 → would be 3.0x, should clamp to 2.0x
+        const extremeShots = [{ carryYards: 100 }, { carryYards: 100 }, { carryYards: 100 }];
+        const multiplier = ShotCalculator.saveCalibration(300, extremeShots);
+        
+        assertEquals(multiplier, 2.0, 'Multiplier should clamp at 2.0x max');
+        
+        // Opposite: measured 300, typical 100 → would be 0.33x, should clamp to 0.5x
+        const reverseShots = [{ carryYards: 300 }, { carryYards: 300 }, { carryYards: 300 }];
+        const lowMultiplier = ShotCalculator.saveCalibration(100, reverseShots);
+        
+        assertEquals(lowMultiplier, 0.5, 'Multiplier should clamp at 0.5x min');
+    });
+
+    test('Reset calibration clears localStorage', () => {
+        ShotCalculator.saveCalibration(240, [{ carryYards: 200 }]);
+        ShotCalculator.resetCalibration();
+        
+        assertEquals(ShotCalculator.calibrationMultiplier, 1.0, 'Multiplier should reset to 1.0');
+        assert(!localStorage.getItem('golf_sim_calibration'), 'localStorage should be cleared');
+    });
+});
+
 // Run all tests
 document.addEventListener('DOMContentLoaded', () => {
     TestRunner.run();

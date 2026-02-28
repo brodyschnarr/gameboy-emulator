@@ -16,6 +16,50 @@ const ShotCalculator = {
     // Average club head speeds for calibration (recreational golfer = ~85 mph driver)
     AVG_SWING_SPEED: 85,
 
+    // Calibration multiplier (1.0 = default, loaded from localStorage)
+    calibrationMultiplier: 1.0,
+
+    loadCalibration() {
+        try {
+            const stored = localStorage.getItem('golf_sim_calibration');
+            if (stored) {
+                const data = JSON.parse(stored);
+                this.calibrationMultiplier = data.multiplier || 1.0;
+                console.log('[ShotCalculator] Loaded calibration:', this.calibrationMultiplier);
+            }
+        } catch (e) {
+            console.warn('[ShotCalculator] Failed to load calibration:', e);
+        }
+    },
+
+    saveCalibration(typicalCarry, measuredShots) {
+        // Calculate average measured carry
+        const avgMeasured = measuredShots.reduce((sum, s) => sum + s.carryYards, 0) / measuredShots.length;
+        
+        // Calculate multiplier: (user's typical / what we measured)
+        const multiplier = typicalCarry / avgMeasured;
+        
+        // Clamp to reasonable range (0.5x to 2.0x)
+        this.calibrationMultiplier = Math.max(0.5, Math.min(2.0, multiplier));
+        
+        const data = {
+            multiplier: this.calibrationMultiplier,
+            typicalCarry,
+            avgMeasured,
+            calibratedAt: new Date().toISOString()
+        };
+        
+        localStorage.setItem('golf_sim_calibration', JSON.stringify(data));
+        console.log('[ShotCalculator] Saved calibration:', data);
+        
+        return this.calibrationMultiplier;
+    },
+
+    resetCalibration() {
+        this.calibrationMultiplier = 1.0;
+        localStorage.removeItem('golf_sim_calibration');
+    },
+
     // Convert raw wrist velocity (px/frame) to estimated club head speed (mph)
     // This is the calibration layer — adjustable per user
     calibrate(rawVelocity, club) {
@@ -60,7 +104,8 @@ const ShotCalculator = {
         const rawCarry = (vMetric * vMetric * Math.sin(2 * angle)) / 9.81;
         // Apply golf-specific correction factor (ball carries much farther than projectile due to aerodynamics)
         const carryMeters = rawCarry * 1.85;
-        const carryYards = Math.round(carryMeters * 1.09361);
+        // Apply calibration multiplier
+        const carryYards = Math.round(carryMeters * 1.09361 * this.calibrationMultiplier);
         const totalYards = Math.round(carryYards * clubData.rollFactor);
 
         // 5. Direction (yards left/right at landing)
