@@ -96,6 +96,7 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    font-size: 16px;
 }
 
 .mode-btn:hover {
@@ -535,5 +536,232 @@ input:focus {
     
     .stat-value {
         font-size: 24px;
+    }
+}
+
+/* ═══════════════════════════════════════════
+   V2 Additions - Multi-step & Benchmarks
+   ═══════════════════════════════════════════ */
+
+/* ── Benchmarks ─── */
+.benchmark-text {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.benchmark-highlight {
+    background: #f3f4f6;
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* ── Total Display ─── */
+.total-display {
+    background: var(--bg);
+    padding: 16px;
+    border-radius: 8px;
+    margin: 20px 0;
+    text-align: center;
+    font-size: 18px;
+}
+
+.total-display strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* ── Lifestyle Presets ─── */
+.lifestyle-presets {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.preset-btn {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.preset-btn:hover {
+    border-color: var(--primary);
+    background: white;
+}
+
+.preset-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.preset-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.preset-amount {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+/* ── Split Inputs ─── */
+.split-inputs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.split-inputs div {
+    display: flex;
+    flex-direction: column;
+}
+
+.split-inputs label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.split-inputs input {
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+/* ── Stats Grid ─── */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.stats-grid .stat-card {
+    background: var(--bg);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stats-grid .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.stats-grid .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.stats-grid small {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+}
+
+/* ── Breakdown Table ─── */
+.breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.breakdown-table th,
+.breakdown-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.breakdown-table th {
+    background: var(--bg);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.breakdown-table .total-row {
+    background: var(--bg);
+    font-weight: 600;
+}
+
+.breakdown-table td:last-child {
+    text-align: right;
+}
+
+.tax-note {
+    background: #eff6ff;
+    border-left: 4px solid var(--primary);
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 20px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ── Button Row ─── */
+.button-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 24px 0;
+}
+
+/* ── Collapsible ─── */
+.collapsible-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+
+.collapsible-header:hover {
+    color: var(--primary);
+}
+
+.toggle-icon {
+    font-size: 14px;
+    transition: transform 0.2s;
+}
+
+.collapsible-content {
+    margin-top: 20px;
+}
+
+/* ── Mobile Responsive V2 ─── */
+@media (max-width: 600px) {
+    .lifestyle-presets {
+        grid-template-columns: 1fr;
+    }
+    
+    .split-inputs {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .button-row {
+        flex-direction: column;
     }
 }

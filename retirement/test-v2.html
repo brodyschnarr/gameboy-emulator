@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Retirement Calculator V2 - Tests</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .test { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+        .pass { background: #d4edda; }
+        .fail { background: #f8d7da; }
+    </style>
+</head>
+<body>
+    <h1>Retirement Calculator V2 - Component Tests</h1>
+    <div id="results"></div>
+
+    <script src="canada-tax.js"></script>
+    <script src="cpp-calculator.js"></script>
+    <script src="benchmarks.js"></script>
+    <script src="calc-v2.js"></script>
+
+    <script>
+        const tests = [];
+        const log = (name, pass, msg = '') => {
+            tests.push({ name, pass, msg });
+        };
+
+        // Test 1: Tax Calculator
+        try {
+            const tax = CanadianTax.calculateTax(75000, 'ON');
+            log('Tax Calculator - Basic', tax.total > 0 && tax.total < 75000, `Tax: $${tax.total.toFixed(2)}`);
+        } catch (e) {
+            log('Tax Calculator - Basic', false, e.message);
+        }
+
+        // Test 2: Capital Gains Tax
+        try {
+            const capGains = CanadianTax.calculateCapitalGainsTax(10000, 50000, 'ON');
+            log('Capital Gains Tax', capGains.capitalGainsTax > 0, `Tax on $10K gain: $${capGains.capitalGainsTax.toFixed(2)}`);
+        } catch (e) {
+            log('Capital Gains Tax', false, e.message);
+        }
+
+        // Test 3: CPP Estimation
+        try {
+            const cpp = CPPCalculator.estimateCPP(75000, 30);
+            log('CPP Estimation', cpp.total > 0 && cpp.total <= CPPCalculator.cpp1.maxAnnual, `CPP: $${cpp.total}`);
+        } catch (e) {
+            log('CPP Estimation', false, e.message);
+        }
+
+        // Test 4: Government Benefits
+        try {
+            const gov = CPPCalculator.getGovernmentBenefits(75000, 30, 20000, true);
+            log('Government Benefits', gov.totalGovernment > 0, `Total Gov: $${gov.totalGovernment}`);
+        } catch (e) {
+            log('Government Benefits', false, e.message);
+        }
+
+        // Test 5: GIS (Low Income)
+        try {
+            const gis = CPPCalculator.calculateGIS(15000, true);
+            log('GIS Calculation', gis >= 0, `GIS: $${gis}`);
+        } catch (e) {
+            log('GIS Calculation', false, e.message);
+        }
+
+        // Test 6: Benchmarks
+        try {
+            const savings = Benchmarks.getSavingsBenchmark(35);
+            log('Benchmarks - Savings', savings.median > 0, `Median at 35: $${savings.median}`);
+        } catch (e) {
+            log('Benchmarks - Savings', false, e.message);
+        }
+
+        // Test 7: Savings Comparison
+        try {
+            const comp = Benchmarks.compareSavings(35, 50000);
+            log('Savings Comparison', comp.message.length > 0, comp.message);
+        } catch (e) {
+            log('Savings Comparison', false, e.message);
+        }
+
+        // Test 8: Full Calculation
+        try {
+            const inputs = {
+                currentAge: 35,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                currentIncome: 75000,
+                rrsp: 50000,
+                tfsa: 30000,
+                nonReg: 10000,
+                other: 0,
+                monthlyContribution: 500,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 50000,
+                returnRate: 6,
+                inflationRate: 2.5
+            };
+            
+            const results = RetirementCalcV2.calculate(inputs);
+            log('Full Calculation', 
+                results.yearByYear.length > 0 && results.summary.portfolioAtRetirement > 0,
+                `Portfolio at retirement: $${results.summary.portfolioAtRetirement.toLocaleString()}`
+            );
+        } catch (e) {
+            log('Full Calculation', false, e.message);
+        }
+
+        // Test 9: Tax-Aware Withdrawals
+        try {
+            const inputs = {
+                currentAge: 64,
+                retirementAge: 65,
+                lifeExpectancy: 75,
+                province: 'ON',
+                currentIncome: 75000,
+                rrsp: 200000,
+                tfsa: 100000,
+                nonReg: 50000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 60000,
+                returnRate: 6,
+                inflationRate: 2.5
+            };
+            
+            const results = RetirementCalcV2.calculate(inputs);
+            const firstRetirementYear = results.yearByYear.find(y => y.phase === 'retirement');
+            
+            log('Tax-Aware Withdrawals',
+                firstRetirementYear && firstRetirementYear.withdrawalBreakdown.tfsa > 0,
+                `TFSA: $${firstRetirementYear?.withdrawalBreakdown?.tfsa || 0}, RRSP: $${firstRetirementYear?.withdrawalBreakdown?.rrsp || 0}`
+            );
+        } catch (e) {
+            log('Tax-Aware Withdrawals', false, e.message);
+        }
+
+        // Render results
+        const resultsDiv = document.getElementById('results');
+        const passCount = tests.filter(t => t.pass).length;
+        
+        resultsDiv.innerHTML = `
+            <h2>Results: ${passCount}/${tests.length} passed</h2>
+            ${tests.map(t => `
+                <div class="test ${t.pass ? 'pass' : 'fail'}">
+                    <strong>${t.pass ? '✅' : '❌'} ${t.name}</strong>
+                    ${t.msg ? `<br><small>${t.msg}</small>` : ''}
+                </div>
+            `).join('')}
+        `;
+
+        console.log(`Tests: ${passCount}/${tests.length} passed`);
+    </script>
+</body>
+</html>

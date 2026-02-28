@@ -147,5 +147,22 @@ const CanadianTax = {
     calculateRRSPSavings(contribution, income, province = 'ON') {
         const marginalRate = this.getMarginalRate(income, province);
         return contribution * marginalRate;
+    },
+
+    // Capital gains tax calculation (50% inclusion rate as of 2024)
+    calculateCapitalGainsTax(capitalGain, otherIncome, province = 'ON') {
+        const inclusionRate = 0.50; // 50% of capital gains are taxable
+        const taxableGain = capitalGain * inclusionRate;
+        const totalIncome = otherIncome + taxableGain;
+        
+        // Tax on total income minus tax on other income = tax on capital gain
+        const taxWithGain = this.calculateTax(totalIncome, province).total;
+        const taxWithoutGain = this.calculateTax(otherIncome, province).total;
+        
+        return {
+            capitalGainsTax: taxWithGain - taxWithoutGain,
+            effectiveRate: (taxWithGain - taxWithoutGain) / capitalGain,
+            taxableGain
+        };
     }
 };
