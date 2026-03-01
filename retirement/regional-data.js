@@ -67,6 +67,18 @@ const RegionalDataV2 = {
         costOfLivingIndex: 98
     },
     
+    ON_Southern: {
+        name: 'Southern Ontario',
+        province: 'ON',
+        incomeMultiplier: 1.05,
+        savingsMultiplier: 1.08,
+        housingCostMultiplier: 1.25,
+        averageIncome: 65000,
+        medianIncome: 55000,
+        medianHome: 675000,
+        costOfLivingIndex: 105
+    },
+    
     ON_Northern: {
         name: 'Northern Ontario',
         province: 'ON',

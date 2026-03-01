@@ -118,7 +118,7 @@ const CanadaMap = {
         this.selectedProvince = province;
         
         // Check if province has regions
-        const regions = RegionalData.getProvincialRegions(province);
+        const regions = RegionalDataV2.getProvincialRegions(province);
         
         if (regions.length > 1) {
             // Show region picker
@@ -141,7 +141,7 @@ const CanadaMap = {
 
         const html = `
             <div class="region-picker">
-                <h4>Select a region in ${RegionalData.getRegion(province).name || province}:</h4>
+                <h4>Select a region in ${RegionalDataV2.getRegion(province)?.name || province}:</h4>
                 <div class="region-buttons">
                     ${regions.map(r => `
                         <button type="button" class="region-btn" data-region="${r.code}">
