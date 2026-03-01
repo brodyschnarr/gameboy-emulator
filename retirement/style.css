@@ -25,7 +25,7 @@ body {
 .container {
     max-width: 100%;
     margin: 0 auto;
-    padding: 0 8px;
+    padding: 0;
 }
 
 @media (min-width: 769px) {
@@ -1343,8 +1343,8 @@ input:focus {
 /* Money Music Button */
 .money-music-btn {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: 10px;
+    right: 10px;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     border: none;
     border-radius: 50px;
@@ -1823,14 +1823,14 @@ input:focus {
     align-items: center;
     max-width: 800px;
     margin: 18px auto 22px;
-    padding: 0 8px;
+    padding: 0;
     position: relative;
 }
 
 @media (max-width: 768px) {
     .progress-indicator {
         margin: 14px auto 18px;
-        padding: 0 8px;
+        padding: 0;
     }
 }
 
