@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Timing Fix - Chart Drawing</title>
+    <style>
+        body {
+            font-family: system-ui;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .hidden { display: none; }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            max-width: 100%;
+        }
+        .test {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #10b981;
+            background: #d1fae5;
+        }
+        .test.fail {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test: Chart Drawing Timing Fix</h1>
+    
+    <p>This tests the critical bug: <strong>Drawing canvas to hidden parent</strong></p>
+    
+    <button onclick="testOldWay()">❌ Test OLD Way (Broken)</button>
+    <button onclick="testNewWay()">✅ Test NEW Way (Fixed)</button>
+    <button onclick="location.reload()">🔄 Reset</button>
+    
+    <div id="results"></div>
+
+    <script>
+        function testOldWay() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>❌ OLD WAY (Draw while hidden)</h2>';
+            
+            // Create hidden section (simulates results section before being shown)
+            const section = document.createElement('section');
+            section.id = 'test-old';
+            section.className = 'card hidden';  // HIDDEN!
+            section.innerHTML = '<h3>📈 Portfolio Projection</h3><canvas id="old-canvas"></canvas>';
+            results.appendChild(section);
+            
+            // Try to draw chart while hidden (OLD BUG)
+            const canvas = document.getElementById('old-canvas');
+            const container = section;
+            
+            console.log('[OLD] Parent visible?', container.offsetWidth > 0);
+            console.log('[OLD] Container offsetWidth:', container.offsetWidth);
+            
+            const containerWidth = Math.max(container.offsetWidth - 40, 300);  // Gets 300 (fallback)
+            canvas.width = containerWidth;
+            canvas.height = 400;
+            
+            drawTestChart(canvas, '[OLD]');
+            
+            // Log dimensions
+            const log1 = document.createElement('div');
+            log1.className = 'test fail';
+            log1.innerHTML = `
+                <strong>OLD WAY:</strong><br>
+                Container offsetWidth: ${container.offsetWidth}px (ZERO because hidden!)<br>
+                Canvas width: ${canvas.width}px (fallback to 300)<br>
+                Chart drawn: ${isCanvasDrawn(canvas) ? 'Yes' : 'No'}<br>
+                <small>Drawing to hidden parent - chart might not render correctly</small>
+            `;
+            results.appendChild(log1);
+            
+            // NOW make it visible (simulates showing results section)
+            section.classList.remove('hidden');
+            
+            const log2 = document.createElement('div');
+            log2.className = 'test';
+            log2.innerHTML = `
+                <strong>After making visible:</strong><br>
+                Container offsetWidth: ${container.offsetWidth}px<br>
+                Canvas width: ${canvas.width}px (unchanged - already drawn)<br>
+                Chart visible: ${isCanvasDrawn(canvas) ? 'Yes' : 'No'}<br>
+                <small>⚠️ Canvas size doesn't match parent! Chart may be stretched/blank.</small>
+            `;
+            results.appendChild(log2);
+        }
+        
+        function testNewWay() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>✅ NEW WAY (Make visible first, THEN draw)</h2>';
+            
+            // Create hidden section
+            const section = document.createElement('section');
+            section.id = 'test-new';
+            section.className = 'card hidden';  // HIDDEN!
+            section.innerHTML = '<h3>📈 Portfolio Projection</h3><canvas id="new-canvas"></canvas>';
+            results.appendChild(section);
+            
+            const log1 = document.createElement('div');
+            log1.className = 'test';
+            log1.innerHTML = `
+                <strong>Step 1: Section created (hidden)</strong><br>
+                Container offsetWidth: ${section.offsetWidth}px (zero - still hidden)
+            `;
+            results.appendChild(log1);
+            
+            // FIX: Make visible FIRST
+            section.classList.remove('hidden');
+            
+            const log2 = document.createElement('div');
+            log2.className = 'test';
+            log2.innerHTML = `
+                <strong>Step 2: Section made visible</strong><br>
+                Container offsetWidth: ${section.offsetWidth}px (✅ Now has real width!)
+            `;
+            results.appendChild(log2);
+            
+            // NOW draw chart (parent is visible)
+            const canvas = document.getElementById('new-canvas');
+            const container = section;
+            
+            console.log('[NEW] Parent visible?', container.offsetWidth > 0);
+            console.log('[NEW] Container offsetWidth:', container.offsetWidth);
+            
+            const containerWidth = Math.max(container.offsetWidth - 40, 300);
+            canvas.width = containerWidth;
+            canvas.height = 400;
+            
+            drawTestChart(canvas, '[NEW]');
+            
+            const log3 = document.createElement('div');
+            log3.className = 'test';
+            log3.innerHTML = `
+                <strong>Step 3: Chart drawn</strong><br>
+                Container offsetWidth: ${container.offsetWidth}px<br>
+                Canvas width: ${canvas.width}px (matches parent!)<br>
+                Chart drawn: ${isCanvasDrawn(canvas) ? 'Yes' : 'No'}<br>
+                <small>✅ Canvas size matches parent - chart renders correctly</small>
+            `;
+            results.appendChild(log3);
+        }
+        
+        function drawTestChart(canvas, label) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const padding = 60;
+            
+            console.log(label, 'Drawing chart, canvas dimensions:', w, 'x', h);
+            
+            ctx.clearRect(0, 0, w, h);
+            
+            // Draw background
+            ctx.fillStyle = '#f9fafb';
+            ctx.fillRect(0, 0, w, h);
+            
+            // Draw axes
+            ctx.strokeStyle = '#d1d5db';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, h - padding);
+            ctx.lineTo(w - padding, h - padding);
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, h - padding);
+            ctx.stroke();
+            
+            // Draw test line
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(padding, h - padding);
+            ctx.lineTo(w - padding, padding);
+            ctx.stroke();
+            
+            // Draw label
+            ctx.fillStyle = '#111827';
+            ctx.font = '16px sans-serif';
+            ctx.fillText('Test Chart', w / 2 - 40, 30);
+            ctx.fillText(`${w}x${h}`, w / 2 - 30, 50);
+        }
+        
+        function isCanvasDrawn(canvas) {
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            return imageData.data.some(pixel => pixel !== 0);
+        }
+    </script>
+</body>
+</html>

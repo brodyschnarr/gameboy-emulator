@@ -874,7 +874,13 @@ const AppV4 = {
             // Auto-calculate common scenarios
             this._autoCalculateScenarios(inputs);
 
-            // Display base results
+            // FIX: Show results section FIRST (so charts can measure parent dimensions correctly)
+            ['basic', 'savings', 'contributions', 'retirement', 'healthcare'].forEach(s => {
+                document.getElementById(`step-${s}`)?.classList.add('hidden');
+            });
+            document.getElementById('results')?.classList.remove('hidden');
+            
+            // NOW display results (charts will draw to visible parent)
             this.currentScenario = 'base';
             console.log('[AppV4] ========== DISPLAYING RESULTS ==========');
             console.log('[AppV4] Portfolio at retirement:', baseResults.summary.portfolioAtRetirement);
@@ -882,14 +888,9 @@ const AppV4 = {
             console.log('[AppV4] Full summary:', baseResults.summary);
             this._displayResults(baseResults, inputs);
             
-            // Setup scenario tab switching
+            // Setup scenario tab switching (after results are visible)
             this._setupScenarioTabs();
             
-            // Show results
-            ['basic', 'savings', 'contributions', 'retirement', 'healthcare'].forEach(s => {
-                document.getElementById(`step-${s}`)?.classList.add('hidden');
-            });
-            document.getElementById('results')?.classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             
             // Run V5 Enhanced Analysis (Monte Carlo, Tax Optimization, What-If)
