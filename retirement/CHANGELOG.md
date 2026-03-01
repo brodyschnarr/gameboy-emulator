@@ -1,5 +1,74 @@
 # Retirement Calculator Changelog
 
+## V5.2.1 - Mobile Polish (2026-03-02)
+
+### 📱 Major Improvement: iPhone-First Mobile Optimization
+
+#### What It Is
+Comprehensive mobile UI polish focused on iPhone experience. Better touch targets, responsive charts, improved layouts, and smooth interactions.
+
+#### Key Improvements
+
+**Touch Targets:**
+- All buttons/inputs: 48px minimum height
+- Sliders: 28px thumbs (easy dragging)
+- Full-width buttons on mobile
+- No more mis-taps
+
+**Responsive Charts:**
+- Auto-resize to screen width
+- 300px height on mobile (vs 400px desktop)
+- Redraw on orientation change
+- Debounced resize (300ms)
+- Cached data for performance
+
+**Forms & Layouts:**
+- Single-column stack (vs 2-column cramped)
+- Better spacing (16px gaps)
+- 16px font inputs (prevents iOS auto-zoom)
+- Improved labels and hints
+
+**Tab Navigation:**
+- Horizontal scroll with touch
+- Smooth scroll behavior
+- Visual scroll indicator
+- Min 120px per tab
+
+**Safe Areas:**
+- iOS notch support
+- Home indicator spacing
+- All safe area insets
+
+**Typography:**
+- Mobile-optimized sizes
+- Better line-heights
+- No zoom required
+
+#### Files Created/Modified
+- **Created:**
+  - `mobile-polish.css` (600+ lines) - Complete mobile CSS
+  - `MOBILE-POLISH.md` (350+ lines) - Documentation
+  
+- **Modified:**
+  - `index.html` - Added mobile-polish.css
+  - `advanced-charts.js` - Responsive sizing + resize listeners
+  - `app-v5-enhanced.js` - Chart data caching
+
+#### Statistics
+- **CSS Added:** 600+ lines mobile-specific
+- **Touch Targets:** All 48px+ minimum
+- **Charts:** Fully responsive (4 charts)
+- **Breakpoints:** 768px, 375px, landscape
+- **Performance:** 300ms debounced redraws
+
+#### Impact
+- ✅ One-handed iPhone use
+- ✅ No zooming required
+- ✅ No horizontal scroll
+- ✅ Charts fit perfectly
+- ✅ Easy tapping (no mis-taps)
+- ✅ Smooth 60fps performance
+
 ## V5.2.0 - Windfall Modeling (2026-03-02)
 
 ### 💰 Major Feature: Windfall Modeling
