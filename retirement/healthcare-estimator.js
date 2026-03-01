@@ -55,14 +55,21 @@ const HealthcareEstimator = {
      */
     projectTotal(retirementAge, lifeExpectancy, province = 'ON', healthStatus = 'average') {
         let total = 0;
+        const byYear = [];
         
         for (let age = retirementAge; age <= lifeExpectancy; age++) {
-            total += this.estimateAnnual(age, province, healthStatus);
+            const annualCost = this.estimateAnnual(age, province, healthStatus);
+            total += annualCost;
+            byYear.push({
+                age: age,
+                cost: annualCost
+            });
         }
 
         return {
             total: Math.round(total),
             averageAnnual: Math.round(total / (lifeExpectancy - retirementAge + 1)),
+            byYear: byYear,
             breakdown: {
                 prescriptions: Math.round(total * 0.40),  // 40% prescriptions
                 dental: Math.round(total * 0.25),         // 25% dental
