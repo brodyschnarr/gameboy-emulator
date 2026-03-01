@@ -28,20 +28,27 @@ body {
     padding: 0;
 }
 
+@media (min-width: 769px) {
+    .container {
+        max-width: 640px;
+        padding: 0 16px;
+    }
+}
+
 .hidden { display: none !important; }
 
 /* ── Header ─── */
 .header {
     background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
     color: white;
-    padding: 32px 20px 28px;
+    padding: 28px 20px 24px;
     text-align: center;
     box-shadow: var(--shadow-lg);
 }
 
 @media (max-width: 768px) {
     .header {
-        padding: 24px 16px 20px;
+        padding: 20px 16px 18px;
     }
 }
 
@@ -60,16 +67,16 @@ body {
 .card {
     background: var(--card-bg);
     border-radius: 20px;
-    padding: 28px 24px;
-    margin: 16px;
+    padding: 32px 24px;
+    margin: 16px 12px;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
 }
 
 @media (max-width: 768px) {
     .card {
-        padding: 24px 18px;
-        margin: 12px;
+        padding: 28px 20px;
+        margin: 16px 12px;
         border-radius: 20px;
     }
 }
@@ -138,13 +145,7 @@ body {
 
 /* ── Inputs ─── */
 .input-group {
-    margin-bottom: 18px;
-}
-
-@media (max-width: 768px) {
-    .input-group {
-        margin-bottom: 16px;
-    }
+    margin-bottom: 20px;
 }
 
 .input-row {
@@ -1821,15 +1822,15 @@ input:focus {
     justify-content: space-between;
     align-items: center;
     max-width: 800px;
-    margin: 20px auto 24px;
-    padding: 0 20px;
+    margin: 18px auto 22px;
+    padding: 0 16px;
     position: relative;
 }
 
 @media (max-width: 768px) {
     .progress-indicator {
-        margin: 16px auto 20px;
-        padding: 0 12px;
+        margin: 14px auto 18px;
+        padding: 0 16px;
     }
 }
 

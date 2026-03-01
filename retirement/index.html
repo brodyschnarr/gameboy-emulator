@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset=10000001"UTF-8">
-    <meta name="viewport" content=10000001"width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content=10000001"no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content=10000001"no-cache">
-    <meta http-equiv="Expires" content=10000001"0">
-    <meta name="description" content=10000001"Canadian retirement calculator with regional data and tax-aware projections">
+    <meta charset=11000001"UTF-8">
+    <meta name="viewport" content=11000001"width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content=11000001"no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content=11000001"no-cache">
+    <meta http-equiv="Expires" content=11000001"0">
+    <meta name="description" content=11000001"Canadian retirement calculator with regional data and tax-aware projections">
     <title>Retirement Planner V4 | Visual Canadian Calculator</title>
-    <link rel="stylesheet" href="style.css?v=12&t=10000001">
+    <link rel="stylesheet" href="style.css?v=12&t=11000001">
 </head>
 <body>
     
@@ -22,8 +22,8 @@
 
     <!-- Money Music Button -->
     <button id="money-music-btn" class="money-music-btn" aria-label="Toggle music player">
-        <span class="music-icon">💸</span>
-        <span class="music-text">Make It Rain</span>
+        <span class="music-icon">💰</span>
+        <span class="music-text">Money Music</span>
     </button>
     
     <main class="container">
@@ -292,23 +292,23 @@
             <div class="input-group">
                 <label>Annual Spending</label>
                 <div class="lifestyle-presets">
-                    <button type="button" class="preset-btn" data-lifestyle="modest" data-amount=10000001"35000">
+                    <button type="button" class="preset-btn" data-lifestyle="modest" data-amount=11000001"35000">
                         <div class="preset-name">Modest</div>
                         <div class="preset-amount">$35K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="average" data-amount=10000001"48000">
+                    <button type="button" class="preset-btn" data-lifestyle="average" data-amount=11000001"48000">
                         <div class="preset-name">Avg</div>
                         <div class="preset-amount">$48K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount=10000001"62000">
+                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount=11000001"62000">
                         <div class="preset-name">Comfortable</div>
                         <div class="preset-amount">$62K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="affluent" data-amount=10000001"95000">
+                    <button type="button" class="preset-btn" data-lifestyle="affluent" data-amount=11000001"95000">
                         <div class="preset-name">Affluent</div>
                         <div class="preset-amount">$95K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="ultrawealthy" data-amount=10000001"150000">
+                    <button type="button" class="preset-btn" data-lifestyle="ultrawealthy" data-amount=11000001"150000">
                         <div class="preset-name">Ultra-Wealthy</div>
                         <div class="preset-amount">$150K</div>
                     </button>
@@ -552,48 +552,67 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=12&t=10000001"></script>
-    <script src="cpp-calculator.js?v=12&t=10000001"></script>
-    <script src="benchmarks.js?v=12&t=10000001"></script>
-    <script src="lifestyle-data.js?v=12&t=10000001"></script>
-    <script src="regional-data.js?v=12&t=10000001"></script>
-    <script src="canada-map.js?v=12&t=10000001"></script>
-    <script src="income-sources.js?v=12&t=10000001"></script>
-    <script src="cpp-optimizer.js?v=12&t=10000001"></script>
-    <script src="scenario-manager.js?v=12&t=10000001"></script>
-    <script src="healthcare-estimator.js?v=12&t=10000001"></script>
-    <script src="calc.js?v=12&t=10000001"></script>
-    <script src="app.js?v=12&t=10000001"></script>
+    <script src="canada-tax.js?v=12&t=11000001"></script>
+    <script src="cpp-calculator.js?v=12&t=11000001"></script>
+    <script src="benchmarks.js?v=12&t=11000001"></script>
+    <script src="lifestyle-data.js?v=12&t=11000001"></script>
+    <script src="regional-data.js?v=12&t=11000001"></script>
+    <script src="canada-map.js?v=12&t=11000001"></script>
+    <script src="income-sources.js?v=12&t=11000001"></script>
+    <script src="cpp-optimizer.js?v=12&t=11000001"></script>
+    <script src="scenario-manager.js?v=12&t=11000001"></script>
+    <script src="healthcare-estimator.js?v=12&t=11000001"></script>
+    <script src="calc.js?v=12&t=11000001"></script>
+    <script src="app.js?v=12&t=11000001"></script>
     
+    <!-- Mini Music Player (slides in when activated) -->
+    <div id="music-player" class="music-player hidden">
+        <div class="music-player-header">
+            <span>🎵 Loading music...</span>
+            <button id="close-music" class="close-music-btn">✕</button>
+        </div>
+        <iframe 
+            id="youtube-iframe"
+            width="100%" 
+            height="152" 
+            src="" 
+            frameborder="0" 
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+            loading="lazy">
+        </iframe>
+    </div>
+
     <!-- Money Music Player -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('money-music-btn');
+            const player = document.getElementById('music-player');
+            const iframe = document.getElementById('youtube-iframe');
+            const closeBtn = document.getElementById('close-music');
             
-            // Make It Rain Remix - Fat Joe ft. Lil Wayne
-            // YouTube Music link (more reliable than Spotify embed)
-            const musicUrl = 'https://music.youtube.com/watch?v=SVrHlXhGqCM';
+            // Money Longer by Lil Uzi Vert (known to work on Spotify embeds)
+            const spotifyTrackId = '5rrJFnO3TIpv8IQHXX0tPU';
             
             btn.addEventListener('click', () => {
-                // Open in new tab
-                window.open(musicUrl, '_blank', 'noopener,noreferrer');
-                
-                // Visual feedback
-                btn.classList.add('playing');
-                
-                // Update button text
-                const textEl = btn.querySelector('.music-text');
-                if (textEl) {
-                    textEl.textContent = 'Playing ↗';
-                }
-                
-                // Reset after 3 seconds
-                setTimeout(() => {
+                if (player.classList.contains('hidden')) {
+                    // Show player with single track
+                    iframe.src = `https://open.spotify.com/embed/track/${spotifyTrackId}?utm_source=generator`;
+                    player.classList.remove('hidden');
+                    btn.classList.add('playing');
+                    
+                    document.querySelector('.music-player-header span').textContent = '🎵 Money Longer';
+                } else {
+                    // Hide player
+                    player.classList.add('hidden');
+                    iframe.src = '';
                     btn.classList.remove('playing');
-                    if (textEl) {
-                        textEl.textContent = 'Make It Rain';
-                    }
-                }, 3000);
+                }
+            });
+            
+            closeBtn.addEventListener('click', () => {
+                player.classList.add('hidden');
+                iframe.src = '';
+                btn.classList.remove('playing');
             });
         });
     </script>
