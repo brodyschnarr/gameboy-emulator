@@ -22,6 +22,7 @@ const AppV4 = {
     cppStartAge: 65,
     scenarioResults: {},
     currentScenario: 'base',
+    windfalls: [],
 
     init() {
         console.log('[AppV4] Initializing...');
@@ -35,6 +36,7 @@ const AppV4 = {
         this._setupHealthcare();
         this._setupDebt();
         this._setupIncomeSources();
+        this._setupWindfalls();
         this._setupCalculate();
         this._setupScenarios();
         this._setupModals();
@@ -348,6 +350,72 @@ const AppV4 = {
 
     _setupIncomeSources() {
         IncomeSources.initModal();
+    },
+
+    _setupWindfalls() {
+        if (typeof WindfallManager === 'undefined') {
+            console.warn('[AppV4] WindfallManager not loaded, skipping windfall setup');
+            return;
+        }
+        
+        const addBtn = document.getElementById('btn-add-windfall');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                this._showWindfallForm();
+            });
+        }
+        
+        this._updateWindfallsList();
+    },
+
+    _showWindfallForm(editIndex = null) {
+        const container = document.getElementById('windfall-form-container');
+        if (!container) return;
+        
+        const windfall = editIndex !== null ? this.windfalls[editIndex] : null;
+        
+        WindfallManager.renderForm(
+            'windfall-form-container',
+            windfall,
+            (data) => {
+                if (editIndex !== null) {
+                    this.windfalls[editIndex] = data;
+                } else {
+                    this.windfalls.push(data);
+                }
+                this._updateWindfallsList();
+                container.innerHTML = '';
+            },
+            () => {
+                container.innerHTML = '';
+            }
+        );
+    },
+
+    _updateWindfallsList() {
+        WindfallManager.renderList(this.windfalls, 'windfalls-list');
+        
+        // Attach edit/delete listeners
+        WindfallManager._attachListeners = () => {
+            document.querySelectorAll('.btn-edit-windfall').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    this._showWindfallForm(index);
+                });
+            });
+            
+            document.querySelectorAll('.btn-delete-windfall').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    if (confirm('Delete this windfall?')) {
+                        this.windfalls.splice(index, 1);
+                        this._updateWindfallsList();
+                    }
+                });
+            });
+        };
+        
+        WindfallManager._attachListeners();
     },
 
     _setupCalculate() {
@@ -945,6 +1013,7 @@ const AppV4 = {
             
             cppStartAge: this.cppStartAge,
             additionalIncomeSources: IncomeSources.getAll(),
+            windfalls: (typeof WindfallManager !== 'undefined') ? (this.windfalls || []) : [],
             
             returnRate: parseFloat(document.getElementById('return-rate')?.value) || 6,
             inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2.5

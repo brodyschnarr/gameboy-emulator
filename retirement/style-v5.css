@@ -766,3 +766,306 @@ canvas {
         width: 100%;
     }
 }
+
+/* Windfalls */
+.windfalls-container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin: 25px 0;
+}
+
+.windfalls-summary {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #bae6fd;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.summary-stat {
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #0284c7;
+}
+
+.windfalls-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.windfall-item {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 15px;
+    transition: all 0.2s;
+}
+
+.windfall-item:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.windfall-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.windfall-name {
+    font-weight: 600;
+    color: #111827;
+    font-size: 16px;
+}
+
+.windfall-amount {
+    font-weight: bold;
+    color: #0284c7;
+    font-size: 18px;
+}
+
+.windfall-details {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 12px;
+}
+
+.windfall-details span {
+    margin-right: 5px;
+}
+
+.windfall-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-edit-windfall,
+.btn-delete-windfall {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-edit-windfall {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-edit-windfall:hover {
+    background: #4b5563;
+}
+
+.btn-delete-windfall {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-delete-windfall:hover {
+    background: #dc2626;
+}
+
+/* Windfall Form */
+.windfall-form {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 20px 0;
+}
+
+.windfall-form h4 {
+    margin: 0 0 20px 0;
+    color: #111827;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-add-windfall {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background: #d1d5db;
+}
+
+.btn-add-windfall {
+    background: #10b981;
+    color: white;
+}
+
+.btn-add-windfall:hover {
+    background: #059669;
+}
+
+.windfall-impact-card {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #fbbf24;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.windfall-impact-card h4 {
+    margin: 0 0 15px 0;
+    color: #78350f;
+}
+
+.impact-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.impact-scenario {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.impact-label {
+    font-size: 12px;
+    color: #78350f;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.impact-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111827;
+}
+
+.impact-improvement {
+    margin-top: 15px;
+    padding: 12px;
+    background: #10b981;
+    color: white;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .impact-comparison {
+        grid-template-columns: 1fr;
+    }
+    
+    .windfall-actions {
+        flex-direction: column;
+    }
+    
+    .btn-edit-windfall,
+    .btn-delete-windfall {
+        width: 100%;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+}

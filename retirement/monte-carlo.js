@@ -107,6 +107,7 @@ const MonteCarloSimulator = {
             debtPayoffAge,
             cppStartAge,
             additionalIncomeSources,
+            windfalls,
             returnSequence, // Array of annual returns
             inflationRate
         } = inputs;
@@ -158,6 +159,44 @@ const MonteCarloSimulator = {
                 phase: isRetired ? 'retirement' : 'accumulation',
                 returnRate: returnRate * 100 // Store as percentage
             };
+            
+            // Check for windfalls this year (randomize by probability)
+            if (windfalls && windfalls.length > 0 && typeof WindfallManager !== 'undefined') {
+                const applicableWindfalls = windfalls.filter(w => {
+                    const targetAge = w.year || (currentAge + w.yearsFromNow);
+                    return targetAge === age;
+                });
+                
+                applicableWindfalls.forEach(windfall => {
+                    // Randomize based on probability
+                    const occurs = Math.random() * 100 <= windfall.probability;
+                    
+                    if (occurs) {
+                        // Calculate after-tax amount (simplified)
+                        const afterTaxAmount = windfall.taxable
+                            ? windfall.amount * 0.7 // Assume 30% tax rate (simplified)
+                            : windfall.amount;
+                        
+                        // Add to appropriate account
+                        if (windfall.destination === 'rrsp') {
+                            balances.rrsp += afterTaxAmount;
+                        } else if (windfall.destination === 'tfsa') {
+                            balances.tfsa += afterTaxAmount;
+                        } else if (windfall.destination === 'nonReg') {
+                            balances.nonReg += afterTaxAmount;
+                        } else if (windfall.destination === 'split') {
+                            // Default split: 50% TFSA, 50% non-reg
+                            balances.tfsa += afterTaxAmount * 0.5;
+                            balances.nonReg += afterTaxAmount * 0.5;
+                        }
+                        
+                        yearData.windfall = {
+                            name: windfall.name,
+                            amount: afterTaxAmount
+                        };
+                    }
+                });
+            }
             
             if (!isRetired) {
                 // ACCUMULATION PHASE
