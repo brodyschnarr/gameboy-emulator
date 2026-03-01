@@ -72,6 +72,15 @@
     <button onclick="runCalcTests()">Run Calculation Tests</button>
     
     <div id="results"></div>
+    
+    <!-- Test Fixtures (hidden DOM elements for testing) -->
+    <div style="display: none;">
+        <div id="map-container"></div>
+        <div id="region-picker-container"></div>
+        <div id="region-display">
+            <span id="region-name"></span>
+        </div>
+    </div>
 
     <script src="canada-tax.js"></script>
     <script src="cpp-calculator.js"></script>
@@ -380,6 +389,24 @@
             TestRunner.assert(typeof BenchmarkData !== 'undefined', 'BenchmarkData module loaded');
             TestRunner.assert(typeof LifestyleData !== 'undefined', 'LifestyleData module loaded');
             
+            // Test location display elements exist
+            TestRunner.assert(
+                document.getElementById('region-display') !== null,
+                'Location display element (#region-display) exists in DOM'
+            );
+            TestRunner.assert(
+                document.getElementById('region-name') !== null,
+                'Region name element (#region-name) exists in DOM'
+            );
+            TestRunner.assert(
+                document.getElementById('map-container') !== null,
+                'Map container element exists in DOM'
+            );
+            TestRunner.assert(
+                document.getElementById('region-picker-container') !== null,
+                'Region picker container exists in DOM'
+            );
+            
             // Test regional data
             const toronto = RegionalDataV2.getRegion('ON', 'ON_Toronto');
             TestRunner.assert(toronto !== null, 'Toronto region data exists');
@@ -416,6 +443,49 @@
             TestRunner.assert(age35, 'Benchmark data for age 35 exists');
             TestRunner.assert(age35.savings.median > 0, 'Savings median > 0');
             TestRunner.assert(age35.savings.average > age35.savings.median, 'Average > median (right-skewed)');
+            
+            // Test map rendering and location display
+            const mapContainer = document.getElementById('map-container');
+            if (mapContainer) {
+                CanadaMap.render('map-container');
+                
+                TestRunner.assert(
+                    mapContainer.innerHTML.includes('svg'),
+                    'Map renders SVG content'
+                );
+                
+                TestRunner.assert(
+                    mapContainer.innerHTML.includes('data-province'),
+                    'Map includes clickable provinces'
+                );
+                
+                // Test location display functionality
+                CanadaMap.setSelection('ON', 'ON_Toronto');
+                
+                const regionDisplay = document.getElementById('region-display');
+                const regionName = document.getElementById('region-name');
+                
+                TestRunner.assert(
+                    !regionDisplay.classList.contains('hidden'),
+                    'Location display is visible after selection'
+                );
+                
+                TestRunner.assert(
+                    regionName.textContent.length > 0,
+                    'Region name is populated after selection'
+                );
+                
+                TestRunner.assert(
+                    regionName.textContent.includes('Toronto'),
+                    'Region name shows "Toronto" for ON_Toronto selection'
+                );
+                
+                // Test _showLocationDisplay method exists
+                TestRunner.assert(
+                    typeof CanadaMap._showLocationDisplay === 'function',
+                    'CanadaMap._showLocationDisplay method exists'
+                );
+            }
             
             TestRunner.render();
         }

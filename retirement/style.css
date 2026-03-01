@@ -1228,11 +1228,23 @@ input:focus {
 
 /* Region Display */
 .region-display {
-    background: var(--bg);
-    padding: 12px;
-    border-radius: 8px;
-    margin-top: 12px;
+    background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+    border: 2px solid #3b82f6;
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
     text-align: center;
+    font-size: 1.1em;
+}
+
+.region-display strong {
+    color: #1e40af;
+}
+
+.region-display #region-name {
+    color: #2563eb;
+    font-weight: 700;
+    font-size: 1.15em;
 }
 
 /* Region Picker */

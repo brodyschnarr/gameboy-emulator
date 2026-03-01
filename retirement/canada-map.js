@@ -139,9 +139,15 @@ const CanadaMap = {
         const regions = RegionalDataV2.getRegionsByProvince(province);
         if (regions && regions.length > 0) {
             this._showRegionPicker(province, regions);
+            // Don't show location display yet - wait for region selection
+            const displayEl = document.getElementById('region-display');
+            if (displayEl) {
+                displayEl.classList.add('hidden');
+            }
         } else {
             // Province has no sub-regions, select it directly
             this.selectedRegion = province;
+            this._showLocationDisplay(province, province);
             if (this.onSelect) {
                 this.onSelect(province, province);
             }
@@ -196,19 +202,31 @@ const CanadaMap = {
         
         this.selectedRegion = regionId;
         
-        // Show selected region name
-        const displayEl = document.getElementById('region-display');
-        const nameEl = document.getElementById('region-name');
-        if (displayEl && nameEl) {
-            const region = RegionalDataV2.getRegion(province, regionId);
-            nameEl.textContent = region ? region.name : regionId;
-            displayEl.classList.remove('hidden');
-        }
+        // Show selected region
+        this._showLocationDisplay(province, regionId);
         
         // Call callback
         if (this.onSelect) {
             this.onSelect(province, regionId);
         }
+    },
+
+    _showLocationDisplay(province, regionId) {
+        const displayEl = document.getElementById('region-display');
+        const nameEl = document.getElementById('region-name');
+        
+        if (!displayEl || !nameEl) {
+            console.warn('[CanadaMap] Location display elements not found');
+            return;
+        }
+        
+        const region = RegionalDataV2.getRegion(province, regionId);
+        const displayName = region ? region.name : regionId;
+        
+        nameEl.textContent = displayName;
+        displayEl.classList.remove('hidden');
+        
+        console.log('[CanadaMap] Location display shown:', displayName);
     },
 
     setSelection(province, region) {
@@ -226,22 +244,17 @@ const CanadaMap = {
         if (regions && regions.length > 0) {
             this._showRegionPicker(province, regions);
             
-            // Select the region button
+            // Select the region button and show location display
             setTimeout(() => {
                 document.querySelectorAll('.region-btn').forEach(btn => {
                     btn.classList.remove('active');
                 });
                 document.querySelector(`[data-region="${region}"]`)?.classList.add('active');
                 
-                // Show region display
-                const displayEl = document.getElementById('region-display');
-                const nameEl = document.getElementById('region-name');
-                if (displayEl && nameEl) {
-                    const regionData = RegionalDataV2.getRegion(province, region);
-                    nameEl.textContent = regionData ? regionData.name : region;
-                    displayEl.classList.remove('hidden');
-                }
+                this._showLocationDisplay(province, region);
             }, 50);
+        } else {
+            this._showLocationDisplay(province, region);
         }
     }
 };
