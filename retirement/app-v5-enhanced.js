@@ -582,19 +582,20 @@ const AppV5Enhanced = {
     },
     
     _drawAllCharts(baseInputs) {
-        // Monte Carlo confidence bands
+        // Cache data for responsive redrawing
         if (this.monteCarloResults) {
+            AdvancedCharts.cacheData('monteCarlo', this.monteCarloResults);
             AdvancedCharts.drawConfidenceBands('confidence-bands-chart', this.monteCarloResults);
             AdvancedCharts.drawProbabilityDistribution('probability-distribution-chart', this.monteCarloResults);
         }
         
-        // Tax optimization
         if (this.taxOptimizationResults) {
+            AdvancedCharts.cacheData('tax', this.taxOptimizationResults);
             AdvancedCharts.drawWithdrawalComparison('withdrawal-strategy-chart', this.taxOptimizationResults);
         }
         
-        // Success heatmap
         if (baseInputs) {
+            AdvancedCharts.cacheData('inputs', baseInputs);
             AdvancedCharts.drawSuccessHeatmap('success-heatmap', baseInputs);
         }
         

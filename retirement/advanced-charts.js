@@ -16,8 +16,11 @@ const AdvancedCharts = {
         
         const ctx = canvas.getContext('2d');
         const container = canvas.parentElement;
-        canvas.width = container.offsetWidth - 40;
-        canvas.height = 400;
+        
+        // Responsive sizing
+        const isMobile = window.innerWidth <= 768;
+        canvas.width = isMobile ? container.offsetWidth : Math.min(container.offsetWidth - 40, 800);
+        canvas.height = isMobile ? 300 : 400;
         
         const w = canvas.width;
         const h = canvas.height;
@@ -156,8 +159,12 @@ const AdvancedCharts = {
         if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
-        canvas.width = 600;
-        canvas.height = 400;
+        const container = canvas.parentElement;
+        
+        // Responsive sizing
+        const isMobile = window.innerWidth <= 768;
+        canvas.width = isMobile ? container.offsetWidth : Math.min(600, container.offsetWidth - 40);
+        canvas.height = isMobile ? 300 : 400;
         
         const w = canvas.width;
         const h = canvas.height;
@@ -298,8 +305,12 @@ const AdvancedCharts = {
         if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
-        canvas.width = 500;
-        canvas.height = 300;
+        const container = canvas.parentElement;
+        
+        // Responsive sizing
+        const isMobile = window.innerWidth <= 768;
+        canvas.width = isMobile ? container.offsetWidth : Math.min(500, container.offsetWidth - 40);
+        canvas.height = isMobile ? 250 : 300;
         
         const w = canvas.width;
         const h = canvas.height;
@@ -396,8 +407,12 @@ const AdvancedCharts = {
         if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
-        canvas.width = 600;
-        canvas.height = 350;
+        const container = canvas.parentElement;
+        
+        // Responsive sizing
+        const isMobile = window.innerWidth <= 768;
+        canvas.width = isMobile ? container.offsetWidth : Math.min(600, container.offsetWidth - 40);
+        canvas.height = isMobile ? 280 : 350;
         
         const w = canvas.width;
         const h = canvas.height;
@@ -519,7 +534,57 @@ const AdvancedCharts = {
         ctx.font = 'bold 14px system-ui';
         ctx.textAlign = 'center';
         ctx.fillText('Optimal Withdrawal Strategy Over Time', w / 2, 20);
+    },
+    
+    /**
+     * Store references for redrawing
+     */
+    _cachedData: {},
+    
+    /**
+     * Cache data for potential redraw
+     */
+    cacheData(type, data) {
+        this._cachedData[type] = data;
+    },
+    
+    /**
+     * Redraw all charts (e.g., on window resize)
+     */
+    redrawAll() {
+        if (this._cachedData.monteCarlo) {
+            this.drawConfidenceBands('confidence-bands-chart', this._cachedData.monteCarlo);
+            this.drawProbabilityDistribution('probability-distribution-chart', this._cachedData.monteCarlo);
+        }
+        
+        if (this._cachedData.tax) {
+            this.drawWithdrawalComparison('withdrawal-strategy-chart', this._cachedData.tax);
+        }
+        
+        if (this._cachedData.inputs) {
+            this.drawSuccessHeatmap('success-heatmap', this._cachedData.inputs);
+        }
     }
 };
 
-console.log('[AdvancedCharts] Module loaded');
+// Responsive chart redraw on window resize (debounced)
+let chartResizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(chartResizeTimer);
+    chartResizeTimer = setTimeout(() => {
+        if (typeof AdvancedCharts !== 'undefined') {
+            AdvancedCharts.redrawAll();
+        }
+    }, 300); // Debounce 300ms
+});
+
+// Orientation change (mobile)
+window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+        if (typeof AdvancedCharts !== 'undefined') {
+            AdvancedCharts.redrawAll();
+        }
+    }, 300);
+});
+
+console.log('[AdvancedCharts] Module loaded with responsive sizing');
