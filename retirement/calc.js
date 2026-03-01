@@ -106,22 +106,59 @@ const RetirementCalcV4 = {
         
         const finalYear = projection[projection.length - 1];
         const legacyAmount = finalYear ? finalYear.totalBalance : 0;
+        
+        // Find when money runs out (balance drops to 0 or below)
+        const runsOutYear = projection.find(p => p.totalBalance <= 0);
+        const moneyLastsAge = runsOutYear ? runsOutYear.age : lifeExpectancy;
+        
+        // First retirement year income
+        const firstRetirementYear = projection.find(p => p.age === retirementAge);
+        const annualIncomeAtRetirement = firstRetirementYear 
+            ? (firstRetirementYear.governmentIncome || 0) + (firstRetirementYear.withdrawal || 0)
+            : 0;
+        
+        // Portfolio at retirement
+        const portfolioAtRetirement = firstRetirementYear ? firstRetirementYear.totalBalance : 0;
+        
+        // On track = money lasts until life expectancy
+        const onTrack = moneyLastsAge >= lifeExpectancy;
+        
+        // Legacy description
+        let legacyDescription = '';
+        if (legacyAmount > 1000000) {
+            legacyDescription = 'Significant legacy for heirs';
+        } else if (legacyAmount > 500000) {
+            legacyDescription = 'Comfortable legacy';
+        } else if (legacyAmount > 100000) {
+            legacyDescription = 'Modest legacy';
+        } else if (legacyAmount > 0) {
+            legacyDescription = 'Small legacy';
+        } else {
+            legacyDescription = 'No legacy remaining';
+        }
 
         return {
             yearByYear: projection,
             summary: {
-                totalSavingsAtRetirement: projection.find(p => p.age === retirementAge)?.totalBalance || 0,
+                portfolioAtRetirement: Math.round(portfolioAtRetirement),
+                annualIncomeAtRetirement: Math.round(annualIncomeAtRetirement),
+                moneyLastsAge: moneyLastsAge,
                 totalWithdrawals: Math.round(totalWithdrawals),
                 totalGovernmentIncome: Math.round(retirementYears.reduce((sum, y) => sum + (y.governmentIncome || 0), 0)),
                 avgTaxRateInRetirement: avgTaxRate,
                 legacyAmount: Math.round(legacyAmount)
             },
+            legacy: {
+                amount: Math.round(legacyAmount),
+                description: legacyDescription
+            },
+            probability: Math.round(probability),
+            onTrack: onTrack,
             govBenefits,
             healthcareCosts: {
                 total: healthcareCosts.total,
                 averageAnnual: Math.round(healthcareCosts.total / (lifeExpectancy - retirementAge))
-            },
-            probabilityOfSuccess: Math.round(probability)
+            }
         };
     },
 
