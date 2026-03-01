@@ -896,6 +896,12 @@ const AppV4 = {
             if (typeof AppV5Enhanced !== 'undefined') {
                 console.log('[AppV4] Launching V5 enhanced analysis...');
                 AppV5Enhanced.runEnhancedAnalysis(inputs, baseResults);
+                
+                // Store Monte Carlo results for use in main stats display
+                if (AppV5Enhanced.monteCarloResults) {
+                    this.monteCarloResults = AppV5Enhanced.monteCarloResults;
+                    console.log('[AppV4] Stored Monte Carlo results, success rate:', this.monteCarloResults.successRate + '%');
+                }
             }
         } catch (error) {
             console.error('[AppV4] Calculation error:', error);
@@ -1058,36 +1064,49 @@ const AppV4 = {
     },
 
     _setupScenarioTabs() {
-        const tabs = document.querySelectorAll('.scenario-tab');
-        console.log('[AppV4] Setting up', tabs.length, 'scenario tabs');
+        // FIX: Use event delegation instead of cloning (more robust)
+        const tabContainer = document.getElementById('scenario-tabs');
+        if (!tabContainer) {
+            console.error('[AppV4] Scenario tabs container not found!');
+            return;
+        }
         
-        tabs.forEach(tab => {
-            // Remove old listeners
-            const newTab = tab.cloneNode(true);
-            tab.parentNode.replaceChild(newTab, tab);
+        // Remove old listener if it exists
+        if (tabContainer._scenarioClickHandler) {
+            tabContainer.removeEventListener('click', tabContainer._scenarioClickHandler);
+        }
+        
+        // Add delegated listener to parent container
+        const handler = (e) => {
+            const tab = e.target.closest('.scenario-tab');
+            if (!tab) return; // Click wasn't on a tab
             
-            // Add fresh listener
-            newTab.addEventListener('click', (e) => {
-                e.preventDefault();
-                const scenario = e.currentTarget.dataset.scenario;
-                console.log('[AppV4] Scenario tab clicked:', scenario);
-                this._switchScenario(scenario);
-            });
-        });
+            e.preventDefault();
+            const scenario = tab.dataset.scenario;
+            console.log('[AppV4] Scenario tab clicked:', scenario);
+            
+            // Update active state
+            tabContainer.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // Switch scenario
+            this._switchScenario(scenario);
+        };
+        
+        // Store handler reference for cleanup
+        tabContainer._scenarioClickHandler = handler;
+        tabContainer.addEventListener('click', handler);
+        
+        console.log('[AppV4] Scenario tabs setup complete (event delegation)');
     },
 
     _switchScenario(scenarioKey) {
-        if (!this.scenarioResults[scenarioKey]) return;
+        if (!this.scenarioResults[scenarioKey]) {
+            console.warn('[AppV4] Scenario not found:', scenarioKey);
+            return;
+        }
 
-        // Update active tab
-        document.querySelectorAll('.scenario-tab').forEach(tab => {
-            tab.classList.remove('active');
-            if (tab.dataset.scenario === scenarioKey) {
-                tab.classList.add('active');
-            }
-        });
-
-        // Display scenario results
+        // Display scenario results (active state handled by _setupScenarioTabs)
         this.currentScenario = scenarioKey;
         const scenario = this.scenarioResults[scenarioKey];
         this._displayResults(scenario.results, scenario.inputs);
@@ -1165,7 +1184,15 @@ const AppV4 = {
         const portfolio = results.summary.portfolioAtRetirement || 0;
         const income = results.summary.annualIncomeAtRetirement || 0;
         const lastsAge = results.summary.moneyLastsAge || inputs.lifeExpectancy;
-        const probability = results.probability || 0;
+        
+        // FIX: Use Monte Carlo probability if available (more accurate than deterministic)
+        let probability = results.probability || 0;
+        if (this.monteCarloResults && this.monteCarloResults.successRate !== undefined) {
+            probability = this.monteCarloResults.successRate;
+            console.log('[AppV4] Using Monte Carlo probability:', probability + '%');
+        } else {
+            console.log('[AppV4] Using deterministic probability:', probability + '%');
+        }
         
         console.log('[AppV4] Displaying stats - Portfolio:', portfolio, 'Income:', income, 'Lasts:', lastsAge, 'Probability:', probability);
         
@@ -1221,9 +1248,17 @@ const AppV4 = {
 
     _drawChart(yearByYear, retirementAge) {
         const canvas = document.getElementById('projection-chart');
-        if (!canvas) return;
+        if (!canvas) {
+            console.error('[AppV4] Portfolio chart canvas not found!');
+            return;
+        }
 
         const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            console.error('[AppV4] Cannot get 2D context from canvas!');
+            return;
+        }
+        
         const container = canvas.parentElement;
         canvas.width = container.offsetWidth - 40;
         canvas.height = 400;
@@ -1234,9 +1269,22 @@ const AppV4 = {
 
         ctx.clearRect(0, 0, w, h);
 
-        if (yearByYear.length === 0) return;
+        if (yearByYear.length === 0) {
+            console.warn('[AppV4] No data for portfolio chart');
+            return;
+        }
 
-        const maxBalance = Math.max(...yearByYear.map(y => y.totalBalance));
+        // FIX: Use fallback for totalBalance (might be undefined in some years)
+        const maxBalance = Math.max(...yearByYear.map(y => y.totalBalance || y.totalPortfolio || 0));
+        
+        if (maxBalance === 0 || isNaN(maxBalance)) {
+            console.error('[AppV4] Invalid maxBalance:', maxBalance);
+            ctx.fillStyle = '#ef4444';
+            ctx.font = '16px sans-serif';
+            ctx.fillText('Error: No valid balance data', w / 2 - 100, h / 2);
+            return;
+        }
+        
         const minAge = yearByYear[0].age;
         const maxAge = yearByYear[yearByYear.length - 1].age;
 
@@ -1267,7 +1315,10 @@ const AppV4 = {
 
         yearByYear.forEach((point, i) => {
             const x = padding + ((point.age - minAge) / (maxAge - minAge)) * (w - 2 * padding);
-            const y = h - padding - (point.totalBalance / maxBalance) * (h - 2 * padding);
+            
+            // FIX: Use fallback for balance value
+            const balance = point.totalBalance || point.totalPortfolio || 0;
+            const y = h - padding - (balance / maxBalance) * (h - 2 * padding);
             
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
@@ -1298,11 +1349,12 @@ const AppV4 = {
         }
 
         const html = retirementYears.map(year => {
-            const total = year.totalBalance;
-            const rrspPct = total > 0 ? (year.rrsp / total) * 100 : 0;
-            const tfsaPct = total > 0 ? (year.tfsa / total) * 100 : 0;
-            const nonRegPct = total > 0 ? (year.nonReg / total) * 100 : 0;
-            const otherPct = total > 0 ? (year.other / total) * 100 : 0;
+            // FIX: Use fallback for total balance
+            const total = year.totalBalance || year.totalPortfolio || 0;
+            const rrspPct = total > 0 ? ((year.rrsp || 0) / total) * 100 : 0;
+            const tfsaPct = total > 0 ? ((year.tfsa || 0) / total) * 100 : 0;
+            const nonRegPct = total > 0 ? ((year.nonReg || 0) / total) * 100 : 0;
+            const otherPct = total > 0 ? ((year.other || 0) / total) * 100 : 0;
 
             return `
                 <div class="year-bar-row">

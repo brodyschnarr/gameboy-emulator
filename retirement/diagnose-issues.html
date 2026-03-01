@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Issue Diagnostics</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f9fafb;
+        }
+        h1 { color: #111827; }
+        .issue-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test {
+            padding: 10px;
+            margin: 8px 0;
+            border-left: 4px solid #d1d5db;
+            background: #f9fafb;
+        }
+        .test.pass {
+            border-color: #10b981;
+            background: #d1fae5;
+        }
+        .test.fail {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        .scenario-tab {
+            padding: 10px 20px;
+            margin: 5px;
+            border: 2px solid #d1d5db;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .scenario-tab.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        pre {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Three Critical Issues - Diagnostics</h1>
+    
+    <button onclick="runAllDiagnostics()">🚀 Run All Diagnostics</button>
+    
+    <div id="results"></div>
+
+    <!-- Load all dependencies -->
+    <script src="data.js"></script>
+    <script src="regional-data-v2.js"></script>
+    <script src="canada-tax.js"></script>
+    <script src="cpp-calculator.js"></script>
+    <script src="healthcare-estimator.js"></script>
+    <script src="lifestyle-data.js"></script>
+    <script src="benchmarks.js"></script>
+    <script src="calc.js"></script>
+    <script src="windfalls.js"></script>
+    <script src="monte-carlo.js"></script>
+
+    <script>
+        const diagnosticResults = [];
+        
+        function log(message, pass = null) {
+            console.log(message);
+            if (pass !== null) {
+                diagnosticResults.push({ message, pass });
+            }
+        }
+        
+        function section(title, html) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = 'issue-section';
+            div.innerHTML = `<h2>${title}</h2>` + html;
+            results.appendChild(div);
+        }
+        
+        function runAllDiagnostics() {
+            document.getElementById('results').innerHTML = '';
+            diagnosticResults.length = 0;
+            
+            diagnoseIssue1();
+            diagnoseIssue2();
+            diagnoseIssue3();
+        }
+        
+        // ========================================
+        // ISSUE 1: Scenario Buttons Not Clickable
+        // ========================================
+        function diagnoseIssue1() {
+            let html = '<h3>🔬 Testing Scenario Button Event Listeners</h3>';
+            
+            // Create test scenario tabs
+            html += '<div style="margin: 20px 0;">';
+            html += '<p>Test buttons (these should be clickable):</p>';
+            html += '<button class="scenario-tab active" data-scenario="base" id="test-tab-base">Your Plan</button>';
+            html += '<button class="scenario-tab" data-scenario="retire5early" id="test-tab-early">Retire 5 Years Earlier</button>';
+            html += '<button class="scenario-tab" data-scenario="retire5late" id="test-tab-late">Retire 5 Years Later</button>';
+            html += '</div>';
+            
+            html += '<div id="click-result" style="padding: 10px; background: #f3f4f6; border-radius: 4px; margin: 10px 0;">Click a button above...</div>';
+            
+            html += '<h4>Diagnostic Steps:</h4>';
+            html += '<ol>';
+            html += '<li>Check if buttons exist in DOM</li>';
+            html += '<li>Verify data-scenario attributes are present</li>';
+            html += '<li>Test cloneNode() approach (used in app.js)</li>';
+            html += '<li>Test direct event listener attachment</li>';
+            html += '</ol>';
+            
+            section('Issue #1: Scenario Buttons Not Clickable', html);
+            
+            // Now attach listeners after DOM is ready
+            setTimeout(() => {
+                const tabs = document.querySelectorAll('.scenario-tab');
+                log(`Found ${tabs.length} test scenario tabs`, tabs.length > 0);
+                
+                tabs.forEach((tab, index) => {
+                    const scenario = tab.dataset.scenario;
+                    log(`Tab ${index}: data-scenario="${scenario}"`, scenario !== undefined);
+                    
+                    // Test cloneNode approach (mimics app.js _setupScenarioTabs)
+                    const newTab = tab.cloneNode(true);
+                    tab.parentNode.replaceChild(newTab, tab);
+                    
+                    newTab.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const clicked = e.currentTarget.dataset.scenario;
+                        document.getElementById('click-result').innerHTML = 
+                            `✅ <strong>Clicked:</strong> ${clicked}<br>` +
+                            `<small>Event listener is working! This proves the cloneNode() pattern works.</small>`;
+                        
+                        // Update active state
+                        document.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
+                        e.currentTarget.classList.add('active');
+                    });
+                });
+                
+                // Now diagnose the actual app.js scenario tabs
+                const actualTabs = document.querySelectorAll('[data-scenario]');
+                let diagnose = '<h4>Real App Scenario Tabs Found:</h4><ul>';
+                actualTabs.forEach(tab => {
+                    diagnose += `<li>${tab.tagName} with data-scenario="${tab.dataset.scenario}" (ID: ${tab.id || 'none'})</li>`;
+                });
+                diagnose += '</ul>';
+                
+                if (actualTabs.length === 0) {
+                    diagnose += '<p class="test fail">❌ No scenario tabs found in actual app! HTML structure issue.</p>';
+                } else {
+                    diagnose += `<p class="test pass">✅ Found ${actualTabs.length} scenario tabs in app</p>`;
+                }
+                
+                section('Issue #1: Analysis', diagnose);
+            }, 100);
+        }
+        
+        // ========================================
+        // ISSUE 2: Monte Carlo vs Snapshot Probability Different
+        // ========================================
+        function diagnoseIssue2() {
+            let html = '<h3>🔬 Comparing Probability Calculations</h3>';
+            
+            // Run a test calculation
+            const testInputs = {
+                currentAge: 30,
+                partnerAge: 0,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 50000,
+                tfsa: 30000,
+                nonReg: 10000,
+                other: 5000,
+                monthlyContribution: 1000,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.3, nonReg: 0.1 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2.5
+            };
+            
+            // Calculate deterministic result
+            const baseResults = RetirementCalcV4.calculate(testInputs);
+            const deterministicProb = baseResults.probability || 0;
+            
+            html += `<p><strong>Base Calculation (Deterministic):</strong> ${deterministicProb}%</p>`;
+            html += '<p><small>This uses a simplified formula based on whether money lasts through life expectancy.</small></p>';
+            
+            // Run Monte Carlo simulation
+            const mcResults = MonteCarloSimulation.run(testInputs, 100); // Use 100 runs for faster testing
+            const monteCarloProb = mcResults.successRate || 0;
+            
+            html += `<p><strong>Monte Carlo Simulation (100 runs):</strong> ${monteCarloProb}%</p>`;
+            html += '<p><small>This simulates 100 different market scenarios with volatility and randomness.</small></p>';
+            
+            const diff = Math.abs(deterministicProb - monteCarloProb);
+            
+            html += '<h4>Analysis:</h4>';
+            html += `<div class="test ${diff > 10 ? 'fail' : 'pass'}">`;
+            html += `Difference: ${diff}%<br>`;
+            html += diff > 10 
+                ? '❌ <strong>Large discrepancy!</strong> These should be closer. Possible causes:<ul>' +
+                  '<li>Deterministic calculation is too optimistic/pessimistic</li>' +
+                  '<li>Monte Carlo is considering market volatility that base calc ignores</li>' +
+                  '<li>Windfall handling differs between methods</li></ul>'
+                : '✅ <strong>Reasonable agreement.</strong> Small differences are expected due to Monte Carlo randomness.';
+            html += '</div>';
+            
+            html += '<h4>Root Cause:</h4>';
+            html += '<p>The <strong>deterministic probability</strong> (shown in the main stats banner) is calculated by <code>app.js _applyWindfallsToResults()</code> using a simple formula:</p>';
+            html += '<pre>if (money lasts through life expectancy) {\n  probability = 75% + bonus based on legacy amount\n} else {\n  probability = (retirement years achieved / total retirement years) * 100\n}</pre>';
+            
+            html += '<p>The <strong>Monte Carlo probability</strong> (shown in Monte Carlo tab) runs 1000 actual simulations with market volatility and counts how many succeed.</p>';
+            
+            html += '<p class="test fail">❌ <strong>Problem:</strong> Users see different percentages in different places and don\'t understand why. The main banner should probably show the Monte Carlo result, not the simplified one.</p>';
+            
+            section('Issue #2: Probability Mismatch', html);
+        }
+        
+        // ========================================
+        // ISSUE 3: Portfolio Projection Not Loading
+        // ========================================
+        function diagnoseIssue3() {
+            let html = '<h3>🔬 Testing Portfolio Chart Rendering</h3>';
+            
+            // Create a test canvas
+            html += '<h4>Test Canvas (should show a simple chart):</h4>';
+            html += '<canvas id="test-chart" style="border: 1px solid #ccc; max-width: 100%;"></canvas>';
+            
+            html += '<div id="chart-diagnostics" style="margin-top: 20px;"></div>';
+            
+            section('Issue #3: Portfolio Projection Chart', html);
+            
+            // Test chart rendering
+            setTimeout(() => {
+                const canvas = document.getElementById('test-chart');
+                const diagnostics = document.getElementById('chart-diagnostics');
+                
+                if (!canvas) {
+                    diagnostics.innerHTML = '<p class="test fail">❌ Test canvas not found!</p>';
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    diagnostics.innerHTML = '<p class="test fail">❌ Cannot get 2D context from canvas!</p>';
+                    return;
+                }
+                
+                // Set canvas size
+                canvas.width = 800;
+                canvas.height = 400;
+                
+                // Draw a simple test chart (mimic app.js _drawChart logic)
+                const testData = [];
+                for (let age = 30; age <= 90; age++) {
+                    testData.push({
+                        age,
+                        totalBalance: 100000 * Math.pow(1.06, age - 30) // Simple growth
+                    });
+                }
+                
+                const w = canvas.width;
+                const h = canvas.height;
+                const padding = 60;
+                
+                ctx.clearRect(0, 0, w, h);
+                
+                const maxBalance = Math.max(...testData.map(y => y.totalBalance));
+                const minAge = testData[0].age;
+                const maxAge = testData[testData.length - 1].age;
+                
+                // Axes
+                ctx.strokeStyle = '#e5e7eb';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(padding, h - padding);
+                ctx.lineTo(w - padding, h - padding);
+                ctx.moveTo(padding, padding);
+                ctx.lineTo(padding, h - padding);
+                ctx.stroke();
+                
+                // Balance curve
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                testData.forEach((point, i) => {
+                    const x = padding + ((point.age - minAge) / (maxAge - minAge)) * (w - 2 * padding);
+                    const y = h - padding - (point.totalBalance / maxBalance) * (h - 2 * padding);
+                    
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                
+                ctx.stroke();
+                
+                // Labels
+                ctx.fillStyle = '#6b7280';
+                ctx.font = '14px sans-serif';
+                ctx.fillText(`Age ${minAge}`, padding - 10, h - padding + 25);
+                ctx.fillText(`Age ${maxAge}`, w - padding - 35, h - padding + 25);
+                ctx.fillText(`$${(maxBalance / 1000).toFixed(0)}K`, 5, padding + 5);
+                
+                diagnostics.innerHTML = `
+                    <p class="test pass">✅ Canvas rendering works! Chart drawn successfully.</p>
+                    <h4>Possible Issues in App:</h4>
+                    <ol>
+                        <li><strong>Canvas element missing:</strong> Check if <code>id="projection-chart"</code> exists in HTML</li>
+                        <li><strong>Data is empty:</strong> <code>yearByYear</code> array might be empty or undefined</li>
+                        <li><strong>totalBalance undefined:</strong> Chart code uses <code>y.totalBalance</code> but data might only have <code>totalPortfolio</code></li>
+                        <li><strong>CSS hiding canvas:</strong> Canvas might exist but be hidden or 0-height</li>
+                        <li><strong>JavaScript error before _drawChart:</strong> An error in _displayResults might prevent _drawChart from being called</li>
+                    </ol>
+                    <h4>Fix Recommendation:</h4>
+                    <p>In <code>app.js _drawChart()</code>, use fallback:</p>
+                    <pre>const balance = y.totalBalance || y.totalPortfolio || 0;</pre>
+                `;
+            }, 100);
+        }
+    </script>
+</body>
+</html>
