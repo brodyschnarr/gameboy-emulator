@@ -1708,3 +1708,58 @@ input:focus {
     background: #dbeafe;
     color: #1e40af;
 }
+
+/* ═══════════════════════════════════════════
+   Scenario Tabs (Auto-Run Scenarios)
+   ═══════════════════════════════════════════ */
+
+.scenario-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-bottom: 2px solid var(--border);
+}
+
+.scenario-tab {
+    padding: 12px 20px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    transition: all 0.2s;
+    border-bottom: none;
+    margin-bottom: -2px;
+}
+
+.scenario-tab:hover {
+    background: var(--bg);
+    border-color: var(--primary);
+}
+
+.scenario-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.scenario-tab.loading {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+@media (max-width: 768px) {
+    .scenario-tabs {
+        overflow-x: scroll;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .scenario-tab {
+        font-size: 12px;
+        padding: 10px 16px;
+    }
+}

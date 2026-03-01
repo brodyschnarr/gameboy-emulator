@@ -274,26 +274,47 @@ const BenchmarksV2 = {
     /**
      * Compare retirement spending to actual Canadian retiree spending
      */
-    compareSpending(spending) {
-        const vsMedian = ((spending / this.retirementSpending.average.median) - 1) * 100;
+    compareSpending(spending, isSingle = true) {
+        const medianKey = isSingle ? 'median' : 'coupleMedian';
+        const vsMedian = ((spending / this.retirementSpending.average[medianKey]) - 1) * 100;
         
         let category = '';
-        if (spending <= this.retirementSpending.modest.annual) {
+        const annualKey = isSingle ? 'annual' : 'coupleAnnual';
+        if (spending <= this.retirementSpending.modest[annualKey]) {
             category = 'modest';
-        } else if (spending <= this.retirementSpending.average.annual) {
+        } else if (spending <= this.retirementSpending.average[annualKey]) {
             category = 'average';
-        } else if (spending <= this.retirementSpending.comfortable.annual) {
+        } else if (spending <= this.retirementSpending.comfortable[annualKey]) {
             category = 'comfortable';
-        } else {
+        } else if (spending <= this.retirementSpending.affluent[annualKey]) {
             category = 'affluent';
+        } else {
+            category = 'ultrawealthy';
         }
         
         return {
             category,
             vsMedian: Math.round(vsMedian),
-            medianSpending: this.retirementSpending.average.median,
+            medianSpending: this.retirementSpending.average[medianKey],
             message: this._getSpendingMessage(category, vsMedian)
         };
+    },
+
+    /**
+     * Get regional spending estimate (scales by cost of living)
+     */
+    getRegionalSpending(baseSpending, regionCode) {
+        if (!regionCode) return baseSpending;
+        
+        // Import regional data if available
+        if (typeof RegionalDataV2 !== 'undefined') {
+            const region = RegionalDataV2.getRegion(regionCode);
+            // Scale spending by cost of living index (100 = national average)
+            const multiplier = region.costOfLivingIndex / 100;
+            return Math.round(baseSpending * multiplier);
+        }
+        
+        return baseSpending;
     },
 
     // Internal: Generate savings comparison message

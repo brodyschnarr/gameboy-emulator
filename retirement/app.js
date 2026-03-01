@@ -9,6 +9,8 @@ const AppV4 = {
     selectedRegion: null,
     healthStatus: 'average',
     cppStartAge: 65,
+    scenarioResults: {},
+    currentScenario: 'base',
 
     init() {
         console.log('[AppV4] Initializing...');
@@ -291,12 +293,7 @@ const AppV4 = {
     },
 
     _setupScenarios() {
-        const addScenarioBtn = document.getElementById('btn-add-scenario');
-        if (addScenarioBtn) {
-            addScenarioBtn.addEventListener('click', () => {
-                this._showScenarioModal();
-            });
-        }
+        // Scenarios now auto-run on calculate - see _autoCalculateScenarios
     },
 
     _setupModals() {
@@ -305,14 +302,6 @@ const AppV4 = {
         if (closeCPPBtn) {
             closeCPPBtn.addEventListener('click', () => {
                 document.getElementById('cpp-details-modal')?.classList.add('hidden');
-            });
-        }
-
-        // Close scenario modal
-        const closeScenarioBtn = document.getElementById('close-scenario-modal');
-        if (closeScenarioBtn) {
-            closeScenarioBtn.addEventListener('click', () => {
-                document.getElementById('scenario-modal')?.classList.add('hidden');
             });
         }
     },
@@ -562,16 +551,27 @@ const AppV4 = {
         const spending = parseFloat(document.getElementById('annual-spending')?.value) || 0;
         const recommended = BenchmarksV2.getRecommendedSpending(income);
         
+        // Get regional spending averages
+        const isSingle = this.familyStatus === 'single';
+        const baseMedian = isSingle ? BenchmarksV2.retirementSpending.average.median : BenchmarksV2.retirementSpending.average.coupleMedian;
+        const baseAverage = isSingle ? BenchmarksV2.retirementSpending.average.annual : BenchmarksV2.retirementSpending.average.coupleAnnual;
+        
+        const regionalMedian = BenchmarksV2.getRegionalSpending(baseMedian, this.selectedRegion);
+        const regionalAverage = BenchmarksV2.getRegionalSpending(baseAverage, this.selectedRegion);
+        
         const el = document.getElementById('spending-recommendation');
         if (el) {
             let html = `Recommended (70% of income): $${recommended.toLocaleString()}/year`;
             
             if (spending > 0) {
-                const comparison = BenchmarksV2.compareSpending(spending);
-                html += `<br><small style="opacity: 0.8;">${comparison.message} | Median retiree: $${comparison.medianSpending.toLocaleString()}/year</small>`;
-            } else {
-                html += `<br><small style="opacity: 0.8;">Canadian retiree median: $${BenchmarksV2.retirementSpending.average.median.toLocaleString()}/year | Average: $${BenchmarksV2.retirementSpending.average.annual.toLocaleString()}/year</small>`;
+                const comparison = BenchmarksV2.compareSpending(spending, isSingle);
+                html += `<br><small style="opacity: 0.8;">${comparison.message}</small>`;
             }
+            
+            const regionData = this.selectedRegion ? RegionalDataV2.getRegion(this.selectedRegion) : null;
+            const regionName = regionData ? regionData.name : 'Canada';
+            
+            html += `<br><small style="opacity: 0.8;">${regionName} retiree ${isSingle ? '' : 'couple '}median: $${regionalMedian.toLocaleString()}/year | Average: $${regionalAverage.toLocaleString()}/year</small>`;
             
             el.innerHTML = html;
         }
@@ -686,18 +686,101 @@ const AppV4 = {
         const inputs = this._gatherInputs();
         console.log('[AppV4] Inputs:', inputs);
 
-        const results = RetirementCalcV4.calculate(inputs);
-        console.log('[AppV4] Results:', results);
+        // Calculate base scenario
+        const baseResults = RetirementCalcV4.calculate(inputs);
+        console.log('[AppV4] Base Results:', baseResults);
 
-        ScenarioManager.setBaseInputs(inputs);
+        // Store base scenario
+        this.scenarioResults = {
+            base: { inputs, results: baseResults }
+        };
 
-        this._displayResults(results, inputs);
+        // Auto-calculate common scenarios
+        this._autoCalculateScenarios(inputs);
+
+        // Display base results
+        this.currentScenario = 'base';
+        this._displayResults(baseResults, inputs);
         
+        // Setup scenario tab switching
+        this._setupScenarioTabs();
+        
+        // Show results
         ['basic', 'savings', 'contributions', 'retirement', 'healthcare'].forEach(s => {
             document.getElementById(`step-${s}`)?.classList.add('hidden');
         });
         document.getElementById('results')?.classList.remove('hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    _autoCalculateScenarios(baseInputs) {
+        // Scenario 1: Retire 5 years earlier
+        const retire5early = {
+            ...baseInputs,
+            retirementAge: baseInputs.retirementAge - 5
+        };
+        this.scenarioResults.retire5early = {
+            inputs: retire5early,
+            results: RetirementCalcV4.calculate(retire5early)
+        };
+
+        // Scenario 2: Retire 5 years later
+        const retire5late = {
+            ...baseInputs,
+            retirementAge: baseInputs.retirementAge + 5
+        };
+        this.scenarioResults.retire5late = {
+            inputs: retire5late,
+            results: RetirementCalcV4.calculate(retire5late)
+        };
+
+        // Scenario 3: Spend 20% less
+        const spend20less = {
+            ...baseInputs,
+            annualSpending: Math.round(baseInputs.annualSpending * 0.8)
+        };
+        this.scenarioResults.spend20less = {
+            inputs: spend20less,
+            results: RetirementCalcV4.calculate(spend20less)
+        };
+
+        // Scenario 4: Spend 20% more
+        const spend20more = {
+            ...baseInputs,
+            annualSpending: Math.round(baseInputs.annualSpending * 1.2)
+        };
+        this.scenarioResults.spend20more = {
+            inputs: spend20more,
+            results: RetirementCalcV4.calculate(spend20more)
+        };
+
+        console.log('[AppV4] Auto-calculated scenarios:', Object.keys(this.scenarioResults));
+    },
+
+    _setupScenarioTabs() {
+        document.querySelectorAll('.scenario-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const scenario = e.target.dataset.scenario;
+                this._switchScenario(scenario);
+            });
+        });
+    },
+
+    _switchScenario(scenarioKey) {
+        if (!this.scenarioResults[scenarioKey]) return;
+
+        // Update active tab
+        document.querySelectorAll('.scenario-tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.dataset.scenario === scenarioKey) {
+                tab.classList.add('active');
+            }
+        });
+
+        // Display scenario results
+        this.currentScenario = scenarioKey;
+        const scenario = this.scenarioResults[scenarioKey];
+        this._displayResults(scenario.results, scenario.inputs);
     },
 
     _gatherInputs() {
@@ -985,62 +1068,6 @@ const AppV4 = {
         document.getElementById('breakdown-content').innerHTML = html;
     },
 
-    _showScenarioModal() {
-        const inputs = this._gatherInputs();
-        const templates = ScenarioManager.getTemplates(inputs);
-
-        const html = templates.map(t => `
-            <button type="button" class="scenario-template-btn" data-scenario='${JSON.stringify(t.modifications)}'>
-                ${t.name}
-            </button>
-        `).join('');
-
-        document.getElementById('scenario-templates').innerHTML = html;
-        document.getElementById('scenario-modal')?.classList.remove('hidden');
-
-        document.querySelectorAll('.scenario-template-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const mods = JSON.parse(btn.dataset.scenario);
-                this._runScenario(btn.textContent, mods);
-            });
-        });
-    },
-
-    _runScenario(name, modifications) {
-        const scenario = ScenarioManager.create(name, modifications);
-        ScenarioManager.calculate(scenario, RetirementCalcV4);
-        
-        const comparison = ScenarioManager.getComparison();
-        this._displayScenarioComparison(comparison);
-        
-        document.getElementById('scenario-modal')?.classList.add('hidden');
-    },
-
-    _displayScenarioComparison(comparison) {
-        if (!comparison) return;
-
-        const html = `
-            <table class="scenario-table">
-                <thead>
-                    <tr>
-                        <th>Scenario</th>
-                        <th>Portfolio at Retirement</th>
-                        <th>Annual Income</th>
-                        <th>Money Lasts</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${comparison.scenarios.map(s => `
-                        <tr>
-                            <td>${s.name}</td>
-                            <td>$${s.portfolioAtRetirement.toLocaleString()}</td>
-                            <td>$${s.annualIncome.toLocaleString()}</td>
-                            <td>Age ${s.moneyLastsAge}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
 
         document.getElementById('scenario-comparison').innerHTML = html;
     },

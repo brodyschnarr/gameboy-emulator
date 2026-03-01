@@ -379,6 +379,15 @@
         ═══════════════════════════════════════ -->
         <section id="results" class="hidden">
             
+            <!-- Scenario Tabs -->
+            <div class="scenario-tabs" id="scenario-tabs">
+                <button class="scenario-tab active" data-scenario="base">Your Plan</button>
+                <button class="scenario-tab" data-scenario="retire5early">Retire 5 Years Earlier</button>
+                <button class="scenario-tab" data-scenario="retire5late">Retire 5 Years Later</button>
+                <button class="scenario-tab" data-scenario="spend20less">Spend 20% Less</button>
+                <button class="scenario-tab" data-scenario="spend20more">Spend 20% More</button>
+            </div>
+
             <div id="status-banner" class="card status-banner"></div>
 
             <!-- Quick Stats -->
@@ -434,13 +443,8 @@
                 <div id="breakdown-content"></div>
             </section>
 
-            <!-- Scenario Comparison -->
-            <section class="card">
-                <h2>🔀 What If Scenarios</h2>
-                <p class="section-intro">Compare different retirement options</p>
-                <button type="button" class="btn-secondary" id="btn-add-scenario">+ Add Scenario</button>
-                <div id="scenario-comparison"></div>
-            </section>
+            <!-- Scenario Comparison (now handled by tabs above) -->
+            <!-- Removed manual scenario section - use tabs instead -->
 
             <!-- Actions -->
             <div class="button-row">
@@ -532,15 +536,7 @@
         </div>
     </div>
 
-    <!-- Scenario Modal -->
-    <div id="scenario-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Add Scenario</h3>
-            <p>Choose a template or create custom:</p>
-            <div id="scenario-templates"></div>
-            <button type="button" class="btn-secondary" id="close-scenario-modal">Cancel</button>
-        </div>
-    </div>
+    <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
     <script src="canada-tax.js?v=6"></script>
