@@ -304,7 +304,7 @@ const AppV5Enhanced = {
                 </div>
             </div>
             
-            ${this._renderWindfallSummary(baseResults.inputs)}
+            ${this._renderWindfallSummary(baseInputs)}
             
             <h3>📈 Confidence Bands</h3>
             <p>This chart shows the range of possible outcomes based on 1000 simulations with realistic market volatility:</p>
@@ -639,6 +639,8 @@ const AppV5Enhanced = {
     },
     
     _renderWindfallSummary(inputs) {
+        if (!inputs) return '';
+        
         const windfalls = inputs.windfalls || [];
         
         if (windfalls.length === 0 || typeof WindfallManager === 'undefined') {
