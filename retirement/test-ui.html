@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI & Functionality Tests</title>
+    <style>
+        body {
+            font-family: system-ui;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #ddd;
+        }
+        .test-case.pass {
+            border-left-color: #22c55e;
+            background: #f0fdf4;
+        }
+        .test-case.fail {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        .test-error {
+            color: #dc2626;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .summary {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .summary.pass { color: #22c55e; }
+        .summary.fail { color: #ef4444; }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Retirement Calculator - UI & Functionality Tests</h1>
+    
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="runUITests()">UI Layout Tests</button>
+    <button onclick="runButtonTests()">Button Tests</button>
+    
+    <div id="results"></div>
+    
+    <div class="test-section">
+        <h2>Live Preview (Mobile View)</h2>
+        <iframe id="preview" src="index.html"></iframe>
+    </div>
+
+    <script>
+        const TestRunner = {
+            results: [],
+            
+            assert(condition, testName, errorMsg = '') {
+                const result = {
+                    name: testName,
+                    pass: !!condition,
+                    error: condition ? null : errorMsg
+                };
+                this.results.push(result);
+                return condition;
+            },
+            
+            render() {
+                const passed = this.results.filter(r => r.pass).length;
+                const failed = this.results.filter(r => !r.pass).length;
+                const total = this.results.length;
+                
+                let html = `
+                    <div class="summary ${failed === 0 ? 'pass' : 'fail'}">
+                        ${passed}/${total} tests passed
+                        ${failed > 0 ? `(${failed} FAILED)` : '✅'}
+                    </div>
+                `;
+                
+                this.results.forEach(result => {
+                    html += `
+                        <div class="test-case ${result.pass ? 'pass' : 'fail'}">
+                            <div>${result.pass ? '✅' : '❌'} ${result.name}</div>
+                            ${result.error ? `<div class="test-error">${result.error}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('results').innerHTML = html;
+            },
+            
+            reset() {
+                this.results = [];
+            }
+        };
+
+        function runUITests() {
+            TestRunner.reset();
+            
+            const iframe = document.getElementById('preview');
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            
+            // Wait for iframe to load
+            setTimeout(() => {
+                // Test 1: Check container has no padding on mobile
+                const style = window.getComputedStyle(iframeDoc.querySelector('.container'));
+                const containerPadding = parseInt(style.paddingLeft) + parseInt(style.paddingRight);
+                
+                TestRunner.assert(
+                    containerPadding <= 16,
+                    'Container padding ≤ 16px on mobile',
+                    `Container has ${containerPadding}px horizontal padding`
+                );
+                
+                // Test 2: Check card width
+                const card = iframeDoc.querySelector('.card');
+                if (card) {
+                    const cardStyle = window.getComputedStyle(card);
+                    const cardWidth = card.offsetWidth;
+                    const viewportWidth = iframe.contentWindow.innerWidth;
+                    
+                    TestRunner.assert(
+                        cardWidth >= viewportWidth * 0.95,
+                        'Card fills at least 95% of viewport width',
+                        `Card is ${cardWidth}px, viewport is ${viewportWidth}px (${Math.round(cardWidth/viewportWidth*100)}%)`
+                    );
+                    
+                    const marginLeft = parseInt(cardStyle.marginLeft);
+                    const marginRight = parseInt(cardStyle.marginRight);
+                    
+                    TestRunner.assert(
+                        Math.abs(marginLeft) < 20 && Math.abs(marginRight) < 20,
+                        'Card side margins < 20px',
+                        `Card margins: left=${marginLeft}px, right=${marginRight}px`
+                    );
+                }
+                
+                // Test 3: Check body/html don't have overflow hidden or padding
+                const body = iframeDoc.body;
+                const bodyStyle = window.getComputedStyle(body);
+                
+                TestRunner.assert(
+                    parseInt(bodyStyle.paddingLeft) === 0 && parseInt(bodyStyle.paddingRight) === 0,
+                    'Body has no horizontal padding',
+                    `Body padding: ${bodyStyle.paddingLeft} / ${bodyStyle.paddingRight}`
+                );
+                
+                TestRunner.render();
+            }, 1000);
+        }
+
+        function runButtonTests() {
+            TestRunner.reset();
+            
+            const iframe = document.getElementById('preview');
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            
+            setTimeout(() => {
+                // Test button existence
+                const calculateBtn = iframeDoc.getElementById('btn-calculate');
+                TestRunner.assert(
+                    calculateBtn !== null,
+                    'Calculate button exists in DOM',
+                    'btn-calculate not found'
+                );
+                
+                if (calculateBtn) {
+                    TestRunner.assert(
+                        !calculateBtn.disabled,
+                        'Calculate button is not disabled',
+                        'Button is disabled'
+                    );
+                    
+                    const btnStyle = window.getComputedStyle(calculateBtn);
+                    TestRunner.assert(
+                        btnStyle.display !== 'none',
+                        'Calculate button is visible',
+                        `Button display: ${btnStyle.display}`
+                    );
+                }
+                
+                // Test navigation buttons
+                const nextBtns = iframeDoc.querySelectorAll('[id^="btn-next"]');
+                TestRunner.assert(
+                    nextBtns.length >= 4,
+                    `Found ${nextBtns.length} navigation buttons (expected 4+)`,
+                    `Only ${nextBtns.length} next buttons found`
+                );
+                
+                // Test back buttons
+                const backBtns = iframeDoc.querySelectorAll('[id^="btn-back"]');
+                TestRunner.assert(
+                    backBtns.length >= 4,
+                    `Found ${backBtns.length} back buttons (expected 4+)`,
+                    `Only ${backBtns.length} back buttons found`
+                );
+                
+                // Test family mode buttons
+                const familyBtns = iframeDoc.querySelectorAll('[id^="family-"]');
+                TestRunner.assert(
+                    familyBtns.length === 2,
+                    'Family mode toggle buttons exist (Just Me + Me + Partner)',
+                    `Found ${familyBtns.length} family buttons instead of 2`
+                );
+                
+                TestRunner.render();
+            }, 1000);
+        }
+
+        function runAllTests() {
+            runUITests();
+            setTimeout(() => {
+                runButtonTests();
+            }, 1500);
+        }
+        
+        // Auto-run on load
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('[Tests] Page loaded');
+            setTimeout(runAllTests, 1500);
+        });
+    </script>
+</body>
+</html>
