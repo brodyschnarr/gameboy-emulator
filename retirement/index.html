@@ -19,11 +19,35 @@
 
     <main class="container">
 
+        <!-- Progress Indicator -->
+        <div class="progress-indicator" id="progress-indicator">
+            <div class="progress-step active" data-step="basic">
+                <div class="step-number">1</div>
+                <div class="step-label">Basic Info</div>
+            </div>
+            <div class="progress-step" data-step="savings">
+                <div class="step-number">2</div>
+                <div class="step-label">Savings</div>
+            </div>
+            <div class="progress-step" data-step="contributions">
+                <div class="step-number">3</div>
+                <div class="step-label">Contributions</div>
+            </div>
+            <div class="progress-step" data-step="retirement">
+                <div class="step-number">4</div>
+                <div class="step-label">Retirement</div>
+            </div>
+            <div class="progress-step" data-step="healthcare">
+                <div class="step-number">5</div>
+                <div class="step-label">Healthcare</div>
+            </div>
+        </div>
+
         <!-- ══════════════════════════════════════
              STEP 1: Basic Info + Location
         ═══════════════════════════════════════ -->
         <section class="card" id="step-basic">
-            <h2>📍 Start Here</h2>
+            <h2>📍 Step 1 of 5: Start Here</h2>
             
             <!-- Family Status -->
             <div class="input-group">
@@ -115,7 +139,7 @@
              STEP 2: Savings
         ═══════════════════════════════════════ -->
         <section class="card hidden" id="step-savings">
-            <h2>💵 Current Savings</h2>
+            <h2>💵 Step 2 of 5: Current Savings</h2>
             <p class="section-intro">How much have you saved for retirement so far?</p>
             <p id="savings-benchmark" class="benchmark-highlight"></p>
 
@@ -167,7 +191,7 @@
              STEP 3: Contributions
         ═══════════════════════════════════════ -->
         <section class="card hidden" id="step-contributions">
-            <h2>📈 Monthly Contributions</h2>
+            <h2>📈 Step 3 of 5: Monthly Contributions</h2>
 
             <div class="input-group">
                 <label for="monthly-contribution">Monthly Contribution</label>
@@ -205,7 +229,7 @@
              STEP 4: Retirement Plan
         ═══════════════════════════════════════ -->
         <section class="card hidden" id="step-retirement">
-            <h2>🏖️ Retirement Plan</h2>
+            <h2>🏖️ Step 4 of 5: Retirement Plan</h2>
 
             <div class="input-group">
                 <label for="retirement-age">Retirement Age</label>
@@ -253,13 +277,17 @@
                         <div class="preset-name">Avg</div>
                         <div class="preset-amount">$48K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount="60000">
+                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount="62000">
                         <div class="preset-name">Comfortable</div>
-                        <div class="preset-amount">$60K</div>
+                        <div class="preset-amount">$62K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="luxury" data-amount="90000">
-                        <div class="preset-name">Luxury</div>
-                        <div class="preset-amount">$90K</div>
+                    <button type="button" class="preset-btn" data-lifestyle="affluent" data-amount="95000">
+                        <div class="preset-name">Affluent</div>
+                        <div class="preset-amount">$95K</div>
+                    </button>
+                    <button type="button" class="preset-btn" data-lifestyle="ultrawealthy" data-amount="150000">
+                        <div class="preset-name">Ultra-Wealthy</div>
+                        <div class="preset-amount">$150K</div>
                     </button>
                 </div>
 
@@ -304,7 +332,7 @@
              STEP 5: Healthcare & Debt
         ═══════════════════════════════════════ -->
         <section class="card hidden" id="step-healthcare">
-            <h2>🏥 Healthcare & Debt</h2>
+            <h2>🏥 Step 5 of 5: Healthcare <h2>🏥 Healthcare & Debt</h2> Debt</h2>
 
             <!-- Healthcare -->
             <div class="input-group">

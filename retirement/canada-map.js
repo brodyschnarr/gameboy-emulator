@@ -139,9 +139,23 @@ const CanadaMap = {
         const container = document.getElementById('region-picker-container');
         if (!container) return;
 
+        // Get province name from any region in that province
+        const provinceNames = {
+            'ON': 'Ontario',
+            'BC': 'British Columbia',
+            'AB': 'Alberta',
+            'QC': 'Quebec',
+            'MB': 'Manitoba',
+            'SK': 'Saskatchewan',
+            'NS': 'Nova Scotia',
+            'NB': 'New Brunswick',
+            'PE': 'Prince Edward Island',
+            'NL': 'Newfoundland & Labrador'
+        };
+
         const html = `
             <div class="region-picker">
-                <h4>Select a region in ${RegionalDataV2.getRegion(province)?.name || province}:</h4>
+                <h4>Select a region in ${provinceNames[province] || province}:</h4>
                 <div class="region-buttons">
                     ${regions.map(r => `
                         <button type="button" class="region-btn" data-region="${r.code}">

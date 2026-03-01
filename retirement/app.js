@@ -334,12 +334,28 @@ const AppV4 = {
     },
 
     _showStep(step) {
-        ['basic', 'savings', 'contributions', 'retirement', 'healthcare'].forEach(s => {
+        const steps = ['basic', 'savings', 'contributions', 'retirement', 'healthcare'];
+        
+        // Hide all steps
+        steps.forEach(s => {
             document.getElementById(`step-${s}`)?.classList.add('hidden');
         });
         
+        // Show target step
         document.getElementById(`step-${step}`)?.classList.remove('hidden');
         this.currentStep = step;
+        
+        // Update progress indicator
+        const currentIndex = steps.indexOf(step);
+        document.querySelectorAll('.progress-step').forEach((el, index) => {
+            el.classList.remove('active', 'completed');
+            if (index < currentIndex) {
+                el.classList.add('completed');
+            } else if (index === currentIndex) {
+                el.classList.add('active');
+            }
+        });
+        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 

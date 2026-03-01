@@ -98,26 +98,42 @@ const BenchmarksV2 = {
     },
 
     // Annual spending in retirement (actual Canadian retiree data)
+    // Note: Single vs Couple spending differs significantly
     retirementSpending: {
         modest: {
             annual: 35000,
             median: 32000,
+            coupleAnnual: 48000,     // ~1.35x single
+            coupleMedian: 44000,
             description: 'Basic needs, limited discretionary spending'
         },
         average: {
-            annual: 48000,       // What typical Canadian retirees actually spend
+            annual: 48000,           // Single retiree
             median: 44000,
+            coupleAnnual: 65000,     // Couple (combined household)
+            coupleMedian: 60000,
             description: 'What most Canadian retirees actually spend'
         },
         comfortable: {
-            annual: 62000,
+            annual: 62000,           // Single
             median: 58000,
+            coupleAnnual: 85000,     // Couple
+            coupleMedian: 78000,
             description: 'Above-average lifestyle, regular travel'
         },
         affluent: {
-            annual: 95000,
+            annual: 95000,           // Single
             median: 85000,
+            coupleAnnual: 130000,    // Couple
+            coupleMedian: 115000,
             description: 'High-end lifestyle, frequent travel, luxury'
+        },
+        ultrawealthy: {
+            annual: 150000,          // Single - ultra-high-net-worth
+            median: 135000,
+            coupleAnnual: 200000,    // Couple
+            coupleMedian: 180000,
+            description: 'Top 5% lifestyle, unlimited travel, luxury everything'
         },
         replacementRate: 0.70  // Rule of thumb: 70% of pre-retirement income
     },

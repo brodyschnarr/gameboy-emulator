@@ -160,12 +160,40 @@ input:focus {
 .input-with-suffix {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0;
+    transition: border-color 0.2s;
+}
+
+.input-with-prefix:focus-within,
+.input-with-suffix:focus-within {
+    border-color: var(--primary);
 }
 
 .prefix, .suffix {
-    font-weight: 600;
-    color: var(--text-muted);
+    font-weight: 700;
+    color: var(--text);
+    background: var(--bg);
+    padding: 12px;
+    border-radius: 6px 0 0 6px;
+    font-size: 16px;
+}
+
+.input-with-prefix input,
+.input-with-suffix input {
+    border: none !important;
+    flex: 1;
+    padding: 12px;
+    border-radius: 0 6px 6px 0;
+}
+
+.input-with-prefix input:focus,
+.input-with-suffix input:focus {
+    outline: none;
+    box-shadow: none;
 }
 
 .input-hint {
@@ -770,11 +798,11 @@ input:focus {
    Lifestyle Detail Modal
    ═══════════════════════════════════════════ */
 
-/* Update presets for 4 columns */
+/* Lifestyle presets grid (5 options) */
 .lifestyle-presets {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
     margin-bottom: 20px;
 }
 
@@ -1538,5 +1566,104 @@ input:focus {
     
     .legacy-amount {
         font-size: 36px;
+    }
+}
+
+/* ═══════════════════════════════════════════
+   Progress Indicator
+   ═══════════════════════════════════════════ */
+
+.progress-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 0 20px;
+    position: relative;
+}
+
+.progress-indicator::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 60px;
+    right: 60px;
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text-muted);
+    transition: all 0.3s;
+    margin-bottom: 8px;
+}
+
+.step-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.progress-step.active .step-number {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.progress-step.active .step-label {
+    color: var(--primary);
+}
+
+.progress-step.completed .step-number {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+.progress-step.completed .step-label {
+    color: var(--success);
+}
+
+@media (max-width: 768px) {
+    .progress-indicator {
+        padding: 0 10px;
+    }
+    
+    .progress-indicator::before {
+        left: 40px;
+        right: 40px;
+    }
+    
+    .step-label {
+        font-size: 10px;
+    }
+    
+    .step-number {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
     }
 }

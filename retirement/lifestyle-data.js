@@ -96,3 +96,27 @@ const LifestyleData = {
         ]
     }
 };
+
+    ultrawealthy: {
+        name: 'Ultra-Wealthy',
+        annual: 150000,
+        tagline: 'Top 5% lifestyle, unlimited travel, luxury everything',
+        breakdown: {
+            housing: { monthly: 4000, annual: 48000, description: 'Luxury condo or estate, property tax $8K+/year, high-end maintenance, second home' },
+            food: { monthly: 2000, annual: 24000, description: 'Fine dining 4-5x/week, premium groceries, private chef occasionally, wine cellar' },
+            transportation: { monthly: 1500, annual: 18000, description: 'Multiple luxury vehicles (lease), premium insurance, chauffeur occasionally' },
+            healthcare: { monthly: 800, annual: 9600, description: 'Concierge medicine, private clinic, wellness retreats, preventive care' },
+            travel: { monthly: 2500, annual: 30000, description: '4-6 international trips/year, business/first class, 5-star resorts, exotic destinations' },
+            entertainment: { monthly: 1500, annual: 18000, description: 'Exclusive memberships (golf, yacht, country club), expensive hobbies, art collecting' },
+            misc: { monthly: 1700, annual: 20400, description: 'Designer wardrobe, luxury goods, philanthropic giving, family gifts, concierge services' }
+        },
+        examples: [
+            'Waterfront penthouse or luxury estate + vacation property',
+            'Michelin-star dining regularly, sommelier, private chef',
+            'Porsche + Range Rover, both leased, detailed monthly',
+            'Patagonia hiking, Maldives resorts, African safari, European tours, Antarctica cruise',
+            'Private golf club, sailing/yachting, art collecting, wine investment',
+            'Generous gifting to family, charitable foundation, concierge healthcare'
+        ]
+    }
+};
