@@ -76,11 +76,15 @@ const AppV4 = {
 
     _setupFamilyMode() {
         const toggleButtons = document.querySelectorAll('[data-family]');
+        console.log('[AppV4] Found family toggle buttons:', toggleButtons.length);
+        
         toggleButtons.forEach(btn => {
             btn.addEventListener('click', () => {
+                console.log('[AppV4] Family button clicked:', btn.dataset.family);
                 toggleButtons.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.familyStatus = btn.dataset.family;
+                console.log('[AppV4] Family status set to:', this.familyStatus);
                 this._toggleFamilyUI();
             });
         });
@@ -88,18 +92,33 @@ const AppV4 = {
 
     _toggleFamilyUI() {
         const isCouple = this.familyStatus === 'couple';
+        console.log('[AppV4] Toggling family UI, isCouple:', isCouple);
         
         // Show/hide partner age
-        document.getElementById('partner-age-group')?.classList.toggle('hidden', !isCouple);
+        const partnerAgeGroup = document.getElementById('partner-age-group');
+        console.log('[AppV4] Partner age group element:', partnerAgeGroup);
+        if (partnerAgeGroup) {
+            partnerAgeGroup.classList.toggle('hidden', !isCouple);
+        }
         
         // Show/hide income sections
-        document.getElementById('income-section-single')?.classList.toggle('hidden', isCouple);
-        document.getElementById('income-section-couple')?.classList.toggle('hidden', !isCouple);
+        const singleSection = document.getElementById('income-section-single');
+        const coupleSection = document.getElementById('income-section-couple');
+        console.log('[AppV4] Single section:', singleSection, 'Couple section:', coupleSection);
+        
+        if (singleSection) {
+            singleSection.classList.toggle('hidden', isCouple);
+        }
+        if (coupleSection) {
+            coupleSection.classList.toggle('hidden', !isCouple);
+        }
         
         // Update household income if couple
         if (isCouple) {
             this._updateHouseholdIncome();
         }
+        
+        console.log('[AppV4] Family UI toggled successfully');
     },
 
     _updateHouseholdIncome() {
