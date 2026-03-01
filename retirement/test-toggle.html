@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Family Toggle Test</title>
+    <style>
+        .toggle-btn {
+            padding: 20px;
+            margin: 10px;
+            border: 2px solid #ccc;
+            background: #f0f0f0;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .toggle-btn.active {
+            background: #2563eb;
+            color: white;
+            border-color: #1e40af;
+        }
+        .hidden { display: none; }
+        #result {
+            margin: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Family Toggle Test</h1>
+    
+    <button class="toggle-btn active" id="family-single">
+        👤 Just Me
+    </button>
+    
+    <button class="toggle-btn" id="family-couple">
+        👫 Me + Partner
+    </button>
+    
+    <div id="result">
+        <p><strong>Status:</strong> <span id="status">single</span></p>
+        <div id="single-content">Single mode active</div>
+        <div id="couple-content" class="hidden">Couple mode active</div>
+    </div>
+
+    <script>
+        const singleBtn = document.getElementById('family-single');
+        const coupleBtn = document.getElementById('family-couple');
+        const status = document.getElementById('status');
+        const singleContent = document.getElementById('single-content');
+        const coupleContent = document.getElementById('couple-content');
+        
+        singleBtn.addEventListener('click', () => {
+            console.log('Single clicked');
+            singleBtn.classList.add('active');
+            coupleBtn.classList.remove('active');
+            status.textContent = 'single';
+            singleContent.classList.remove('hidden');
+            coupleContent.classList.add('hidden');
+        });
+        
+        coupleBtn.addEventListener('click', () => {
+            console.log('Couple clicked');
+            coupleBtn.classList.add('active');
+            singleBtn.classList.remove('active');
+            status.textContent = 'couple';
+            singleContent.classList.add('hidden');
+            coupleContent.classList.remove('hidden');
+        });
+        
+        console.log('Toggle test loaded');
+    </script>
+</body>
+</html>
