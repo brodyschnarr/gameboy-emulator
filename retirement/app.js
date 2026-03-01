@@ -930,7 +930,11 @@ const AppV4 = {
             const yearIndex = results.yearByYear.findIndex(y => y.age === targetAge);
             
             if (yearIndex === -1) {
-                console.warn(`[AppV4] Windfall year ${targetAge} not found in projection`);
+                console.error(`[AppV4] ❌ WINDFALL SKIPPED: Age ${targetAge} not in projection (age range: ${inputs.currentAge}-${inputs.lifeExpectancy})`);
+                console.error(`[AppV4] Windfall "${windfall.name}" for $${windfall.amount.toLocaleString()} will NOT be applied!`);
+                if (typeof MobileDebug !== 'undefined') {
+                    MobileDebug.addLog(`❌ Windfall age ${targetAge} out of range!`, true);
+                }
                 return; // Year not in projection
             }
             
@@ -959,8 +963,8 @@ const AppV4 = {
                     year.nonReg = (year.nonReg || 0) + (grownAmount * 0.5);
                 }
                 
-                // Update total
-                year.totalPortfolio = (year.rrsp || 0) + (year.tfsa || 0) + (year.nonReg || 0);
+                // Update total (include ALL accounts)
+                year.totalPortfolio = (year.rrsp || 0) + (year.tfsa || 0) + (year.nonReg || 0) + (year.other || 0);
             }
             
             // Mark windfall in the year it occurs

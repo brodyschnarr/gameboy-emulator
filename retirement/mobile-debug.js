@@ -9,10 +9,10 @@ const MobileDebug = {
         this.overlay = document.createElement('div');
         this.overlay.id = 'mobile-debug-overlay';
         this.overlay.innerHTML = `
-            <div style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.95); color: #0f0; font-family: monospace; font-size: 11px; max-height: 200px; overflow-y: auto; z-index: 99999; padding: 10px; border-top: 2px solid #0f0;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #0f0;">
-                    <strong style="color: #0ff;">🐛 Debug Log</strong>
-                    <button onclick="MobileDebug.toggle()" style="background: #f00; color: white; border: none; padding: 2px 8px; border-radius: 3px; font-size: 10px;">Hide</button>
+            <div style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.95); color: #0f0; font-family: monospace; font-size: 10px; max-height: 120px; overflow-y: auto; z-index: 99999; padding: 8px; border-top: 2px solid #0f0; pointer-events: none;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px; padding-bottom: 3px; border-bottom: 1px solid #0f0;">
+                    <strong style="color: #0ff; font-size: 10px;">🐛 Debug</strong>
+                    <button onclick="MobileDebug.toggle()" style="background: #f00; color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 9px; pointer-events: auto;">Hide</button>
                 </div>
                 <div id="debug-logs"></div>
             </div>
