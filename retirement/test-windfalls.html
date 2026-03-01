@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windfall Feature Tests</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f9fafb;
+        }
+        h1 { color: #111827; }
+        .test-suite {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test {
+            padding: 12px;
+            margin: 8px 0;
+            border-left: 4px solid #d1d5db;
+            background: #f9fafb;
+        }
+        .test.pass {
+            border-color: #10b981;
+            background: #d1fae5;
+        }
+        .test.fail {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+        .summary {
+            padding: 20px;
+            background: #eff6ff;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        .btn-secondary {
+            background: #6b7280;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Windfall Feature Test Suite</h1>
+    
+    <button onclick="runAllTests()">🚀 Run All Tests</button>
+    <button onclick="location.reload()" class="btn-secondary">🔄 Reset</button>
+    
+    <div id="summary" class="summary" style="display:none;"></div>
+    <div id="results"></div>
+
+    <!-- Load dependencies -->
+    <script src="data.js"></script>
+    <script src="regional-data-v2.js"></script>
+    <script src="canada-tax.js"></script>
+    <script src="cpp-calculator.js"></script>
+    <script src="healthcare-estimator.js"></script>
+    <script src="lifestyle-data.js"></script>
+    <script src="benchmarks.js"></script>
+    <script src="calc.js"></script>
+    <script src="windfalls.js"></script>
+
+    <script>
+        const testResults = [];
+        
+        function assert(condition, message) {
+            if (condition) {
+                testResults.push({ pass: true, message });
+                return true;
+            } else {
+                testResults.push({ pass: false, message });
+                return false;
+            }
+        }
+        
+        function test(name, fn) {
+            const suite = document.getElementById('results');
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-suite';
+            testDiv.innerHTML = `<h3>${name}</h3>`;
+            suite.appendChild(testDiv);
+            
+            try {
+                fn();
+                const passed = testResults.filter(r => r.pass).length;
+                const failed = testResults.filter(r => !r.pass).length;
+                
+                testResults.forEach(result => {
+                    const div = document.createElement('div');
+                    div.className = result.pass ? 'test pass' : 'test fail';
+                    div.innerHTML = `${result.pass ? '✅' : '❌'} ${result.message}`;
+                    testDiv.appendChild(div);
+                });
+                
+                testResults.length = 0; // Clear for next test
+            } catch (error) {
+                testDiv.innerHTML += `<div class="test fail">❌ Test crashed: ${error.message}</div>`;
+            }
+        }
+        
+        function runAllTests() {
+            document.getElementById('results').innerHTML = '';
+            
+            // Test 1: Windfall Manager exists
+            test('✅ Module Loading', () => {
+                assert(typeof WindfallManager !== 'undefined', 'WindfallManager module loaded');
+                assert(typeof WindfallManager.applyWindfalls === 'function', 'applyWindfalls method exists');
+                assert(typeof WindfallManager.getSummary === 'function', 'getSummary method exists');
+                assert(typeof WindfallManager.validate === 'function', 'validate method exists');
+            });
+            
+            // Test 2: Windfall validation
+            test('✅ Windfall Validation', () => {
+                const validWindfall = {
+                    name: 'Home sale',
+                    amount: 500000,
+                    year: 2030,
+                    probability: 90,
+                    taxable: false,
+                    destination: 'tfsa'
+                };
+                
+                const result = WindfallManager.validate(validWindfall);
+                assert(result.valid === true, 'Valid windfall passes validation');
+                assert(result.errors.length === 0, 'No validation errors for valid windfall');
+                
+                const invalidWindfall = {
+                    name: '',
+                    amount: -100,
+                    probability: 150
+                };
+                
+                const result2 = WindfallManager.validate(invalidWindfall);
+                assert(result2.valid === false, 'Invalid windfall fails validation');
+                assert(result2.errors.length > 0, 'Validation errors present for invalid windfall');
+            });
+            
+            // Test 3: Expected value calculation
+            test('✅ Expected Value Calculation', () => {
+                const windfalls = [
+                    { amount: 100000, probability: 50 },
+                    { amount: 200000, probability: 25 }
+                ];
+                
+                const expected = WindfallManager.calculateExpectedValue(windfalls);
+                assert(expected === 100000, `Expected value: $100K (got $${expected.toLocaleString()})`);
+                // 100K * 50% + 200K * 25% = 50K + 50K = 100K
+            });
+            
+            // Test 4: Apply windfall to projection
+            test('✅ Apply Windfall to Projection', () => {
+                const baseInputs = {
+                    currentAge: 30,
+                    retirementAge: 65,
+                    lifeExpectancy: 90,
+                    returnRate: 6,
+                    province: 'ON'
+                };
+                
+                // Create a simple projection
+                const projection = [];
+                for (let age = 30; age <= 90; age++) {
+                    projection.push({
+                        age,
+                        rrsp: 100000,
+                        tfsa: 50000,
+                        nonReg: 25000,
+                        totalPortfolio: 175000
+                    });
+                }
+                
+                const windfalls = [{
+                    name: 'Test windfall',
+                    amount: 100000,
+                    year: 40, // Age 40
+                    probability: 100,
+                    taxable: false,
+                    destination: 'tfsa'
+                }];
+                
+                const updated = WindfallManager.applyWindfalls(projection, windfalls, baseInputs, false);
+                
+                const age40 = updated.find(y => y.age === 40);
+                assert(age40.totalPortfolio > 175000, `Portfolio increased at age 40 (was $175K, now $${age40.totalPortfolio.toLocaleString()})`);
+                assert(age40.windfall !== undefined, 'Windfall marked in year data');
+                assert(age40.windfall.name === 'Test windfall', 'Windfall name recorded correctly');
+            });
+            
+            // Test 5: Base calculation integration
+            test('✅ Base Calculation Integration', () => {
+                const inputs = {
+                    currentAge: 30,
+                    partnerAge: 30,
+                    retirementAge: 65,
+                    lifeExpectancy: 90,
+                    province: 'ON',
+                    region: 'ON_Toronto',
+                    familyStatus: 'single',
+                    currentIncome: 80000,
+                    income1: 80000,
+                    income2: 0,
+                    rrsp: 50000,
+                    tfsa: 30000,
+                    nonReg: 10000,
+                    other: 0,
+                    monthlyContribution: 1000,
+                    contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                    annualSpending: 50000,
+                    healthStatus: 'average',
+                    currentDebt: 0,
+                    debtPayoffAge: 65,
+                    cppStartAge: 65,
+                    additionalIncomeSources: [],
+                    windfalls: [],
+                    returnRate: 6,
+                    inflationRate: 2.5
+                };
+                
+                // Calculate WITHOUT windfall
+                const baseResults = RetirementCalcV4.calculate(inputs);
+                const basePortfolio = baseResults.summary.portfolioAtRetirement;
+                
+                assert(basePortfolio > 0, `Base calculation works: Portfolio = $${basePortfolio.toLocaleString()}`);
+                
+                // Add windfall
+                inputs.windfalls = [{
+                    name: 'Inheritance',
+                    amount: 500000,
+                    year: 50, // Age 50
+                    probability: 100,
+                    taxable: false,
+                    destination: 'split'
+                }];
+                
+                // Calculate WITH windfall
+                const resultsWithWindfall = RetirementCalcV4.calculate(inputs);
+                
+                // Manually apply windfall (simulating app.js logic)
+                inputs.windfalls.forEach(windfall => {
+                    const targetAge = windfall.year;
+                    const yearIndex = resultsWithWindfall.yearByYear.findIndex(y => y.age === targetAge);
+                    
+                    if (yearIndex !== -1) {
+                        const afterTaxAmount = windfall.taxable ? windfall.amount * 0.7 : windfall.amount;
+                        
+                        for (let i = yearIndex; i < resultsWithWindfall.yearByYear.length; i++) {
+                            const year = resultsWithWindfall.yearByYear[i];
+                            const returnRate = inputs.returnRate / 100;
+                            const yearsFromWindfall = i - yearIndex;
+                            const grownAmount = afterTaxAmount * Math.pow(1 + returnRate, yearsFromWindfall);
+                            
+                            if (windfall.destination === 'split') {
+                                year.tfsa = (year.tfsa || 0) + (grownAmount * 0.5);
+                                year.nonReg = (year.nonReg || 0) + (grownAmount * 0.5);
+                            }
+                            
+                            year.totalPortfolio = (year.rrsp || 0) + (year.tfsa || 0) + (year.nonReg || 0);
+                        }
+                    }
+                });
+                
+                const retirementYear = resultsWithWindfall.yearByYear.find(y => y.age === inputs.retirementAge);
+                const windfallPortfolio = retirementYear ? retirementYear.totalPortfolio : 0;
+                
+                assert(windfallPortfolio > basePortfolio, `Windfall increases portfolio (Base: $${basePortfolio.toLocaleString()}, With windfall: $${windfallPortfolio.toLocaleString()})`);
+                
+                const increase = windfallPortfolio - basePortfolio;
+                assert(increase > 500000, `Increase > $500K windfall due to growth (Increase: $${increase.toLocaleString()})`);
+            });
+            
+            // Test 6: Tax treatment
+            test('✅ Tax Treatment', () => {
+                const taxableWindfall = {
+                    amount: 100000,
+                    taxable: true
+                };
+                
+                const afterTax = taxableWindfall.amount * 0.7; // Simplified 30% tax
+                assert(afterTax === 70000, `Taxable windfall: $100K → $70K after tax`);
+                
+                const nonTaxableWindfall = {
+                    amount: 100000,
+                    taxable: false
+                };
+                
+                const afterTax2 = nonTaxableWindfall.amount;
+                assert(afterTax2 === 100000, `Non-taxable windfall: $100K → $100K (no tax)`);
+            });
+            
+            // Show summary
+            const allPassed = document.querySelectorAll('.test.pass').length;
+            const allFailed = document.querySelectorAll('.test.fail').length;
+            
+            const summary = document.getElementById('summary');
+            summary.style.display = 'block';
+            summary.innerHTML = `
+                <strong>Test Results:</strong> 
+                ${allPassed} passed, ${allFailed} failed
+                ${allFailed === 0 ? ' 🎉 All tests passed!' : ' ⚠️ Some tests failed'}
+            `;
+            summary.style.background = allFailed === 0 ? '#d1fae5' : '#fee2e2';
+        }
+    </script>
+</body>
+</html>

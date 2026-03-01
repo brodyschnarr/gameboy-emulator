@@ -861,70 +861,10 @@ const AppV4 = {
             // Calculate base scenario
             const baseResults = RetirementCalcV4.calculate(inputs);
             console.log('[AppV4] Base Results:', baseResults);
+            console.log('[AppV4] Portfolio BEFORE windfalls:', baseResults.summary.portfolioAtRetirement);
             
             // Apply windfalls to base calculation (deterministic - 100% probability)
-            if (inputs.windfalls && inputs.windfalls.length > 0) {
-                console.log('[AppV4] Applying', inputs.windfalls.length, 'windfalls to base calculation...');
-                
-                inputs.windfalls.forEach(windfall => {
-                    const targetAge = windfall.year || (inputs.currentAge + (windfall.yearsFromNow || 0));
-                    const yearIndex = baseResults.yearByYear.findIndex(y => y.age === targetAge);
-                    
-                    if (yearIndex === -1) return; // Year not in projection
-                    
-                    // Calculate after-tax amount (simplified)
-                    const afterTaxAmount = windfall.taxable 
-                        ? windfall.amount * 0.7 // 30% tax rate (simplified)
-                        : windfall.amount;
-                    
-                    console.log(`[AppV4] Adding $${afterTaxAmount.toLocaleString()} windfall at age ${targetAge}`);
-                    
-                    // Add windfall to appropriate account(s) for THIS year and all future years
-                    for (let i = yearIndex; i < baseResults.yearByYear.length; i++) {
-                        const year = baseResults.yearByYear[i];
-                        const returnRate = inputs.returnRate / 100;
-                        const yearsFromWindfall = i - yearIndex;
-                        const grownAmount = afterTaxAmount * Math.pow(1 + returnRate, yearsFromWindfall);
-                        
-                        if (windfall.destination === 'rrsp') {
-                            year.rrsp = (year.rrsp || 0) + grownAmount;
-                        } else if (windfall.destination === 'tfsa') {
-                            year.tfsa = (year.tfsa || 0) + grownAmount;
-                        } else if (windfall.destination === 'nonReg') {
-                            year.nonReg = (year.nonReg || 0) + grownAmount;
-                        } else if (windfall.destination === 'split') {
-                            year.tfsa = (year.tfsa || 0) + (grownAmount * 0.5);
-                            year.nonReg = (year.nonReg || 0) + (grownAmount * 0.5);
-                        }
-                        
-                        // Update total
-                        year.totalPortfolio = (year.rrsp || 0) + (year.tfsa || 0) + (year.nonReg || 0);
-                    }
-                    
-                    // Mark windfall in the year it occurs
-                    baseResults.yearByYear[yearIndex].windfall = {
-                        name: windfall.name,
-                        amount: windfall.amount,
-                        afterTaxAmount
-                    };
-                });
-                
-                // Recalculate summary based on updated projection
-                const lastYear = baseResults.yearByYear[baseResults.yearByYear.length - 1];
-                const retirementYear = baseResults.yearByYear.find(y => y.age === inputs.retirementAge);
-                
-                if (retirementYear) {
-                    baseResults.summary.portfolioAtRetirement = retirementYear.totalPortfolio || 0;
-                }
-                
-                baseResults.summary.legacyAmount = lastYear.totalPortfolio || 0;
-                
-                // Find when money runs out
-                const runOutYear = baseResults.yearByYear.find(y => (y.totalPortfolio || 0) <= 0);
-                baseResults.summary.moneyLastsAge = runOutYear ? runOutYear.age : inputs.lifeExpectancy;
-                
-                console.log('[AppV4] Updated portfolio at retirement:', baseResults.summary.portfolioAtRetirement);
-            }
+            this._applyWindfallsToResults(baseResults, inputs);
 
             // Store base scenario
             this.scenarioResults = {
@@ -959,46 +899,119 @@ const AppV4 = {
         }
     },
 
+    _applyWindfallsToResults(results, inputs) {
+        if (!inputs.windfalls || inputs.windfalls.length === 0) return;
+        
+        console.log('[AppV4] Applying', inputs.windfalls.length, 'windfalls...');
+        
+        inputs.windfalls.forEach(windfall => {
+            // Handle both calendar year (e.g., 2030) and age (e.g., 65)
+            let targetAge;
+            if (windfall.year > 150) {
+                // Likely a calendar year, convert to age
+                const currentYear = new Date().getFullYear();
+                const yearsFromNow = windfall.year - currentYear;
+                targetAge = inputs.currentAge + yearsFromNow;
+                console.log(`[AppV4] Converted year ${windfall.year} to age ${targetAge}`);
+            } else {
+                // Already an age or yearsFromNow offset
+                targetAge = windfall.year || (inputs.currentAge + (windfall.yearsFromNow || 0));
+            }
+            
+            const yearIndex = results.yearByYear.findIndex(y => y.age === targetAge);
+            
+            if (yearIndex === -1) {
+                console.warn(`[AppV4] Windfall year ${targetAge} not found in projection`);
+                return; // Year not in projection
+            }
+            
+            // Calculate after-tax amount (simplified)
+            const afterTaxAmount = windfall.taxable 
+                ? windfall.amount * 0.7 // 30% tax rate (simplified)
+                : windfall.amount;
+            
+            console.log(`[AppV4] Adding $${afterTaxAmount.toLocaleString()} windfall "${windfall.name}" at age ${targetAge}`);
+            
+            // Add windfall to appropriate account(s) for THIS year and all future years
+            for (let i = yearIndex; i < results.yearByYear.length; i++) {
+                const year = results.yearByYear[i];
+                const returnRate = inputs.returnRate / 100;
+                const yearsFromWindfall = i - yearIndex;
+                const grownAmount = afterTaxAmount * Math.pow(1 + returnRate, yearsFromWindfall);
+                
+                if (windfall.destination === 'rrsp') {
+                    year.rrsp = (year.rrsp || 0) + grownAmount;
+                } else if (windfall.destination === 'tfsa') {
+                    year.tfsa = (year.tfsa || 0) + grownAmount;
+                } else if (windfall.destination === 'nonReg') {
+                    year.nonReg = (year.nonReg || 0) + grownAmount;
+                } else if (windfall.destination === 'split') {
+                    year.tfsa = (year.tfsa || 0) + (grownAmount * 0.5);
+                    year.nonReg = (year.nonReg || 0) + (grownAmount * 0.5);
+                }
+                
+                // Update total
+                year.totalPortfolio = (year.rrsp || 0) + (year.tfsa || 0) + (year.nonReg || 0);
+            }
+            
+            // Mark windfall in the year it occurs
+            results.yearByYear[yearIndex].windfall = {
+                name: windfall.name,
+                amount: windfall.amount,
+                afterTaxAmount
+            };
+        });
+        
+        // Recalculate summary based on updated projection
+        const lastYear = results.yearByYear[results.yearByYear.length - 1];
+        const retirementYear = results.yearByYear.find(y => y.age === inputs.retirementAge);
+        
+        if (retirementYear) {
+            results.summary.portfolioAtRetirement = retirementYear.totalPortfolio || 0;
+        }
+        
+        results.summary.legacyAmount = lastYear.totalPortfolio || 0;
+        
+        // Find when money runs out
+        const runOutYear = results.yearByYear.find(y => (y.totalPortfolio || 0) <= 0);
+        results.summary.moneyLastsAge = runOutYear ? runOutYear.age : inputs.lifeExpectancy;
+        
+        console.log('[AppV4] Updated portfolio at retirement:', results.summary.portfolioAtRetirement);
+    },
+
     _autoCalculateScenarios(baseInputs) {
-        // Scenario 1: Retire 5 years earlier
-        const retire5early = {
-            ...baseInputs,
-            retirementAge: baseInputs.retirementAge - 5
+        const scenarios = {
+            retire5early: {
+                ...baseInputs,
+                retirementAge: baseInputs.retirementAge - 5
+            },
+            retire5late: {
+                ...baseInputs,
+                retirementAge: baseInputs.retirementAge + 5
+            },
+            spend20less: {
+                ...baseInputs,
+                annualSpending: Math.round(baseInputs.annualSpending * 0.8)
+            },
+            spend20more: {
+                ...baseInputs,
+                annualSpending: Math.round(baseInputs.annualSpending * 1.2)
+            }
         };
-        this.scenarioResults.retire5early = {
-            inputs: retire5early,
-            results: RetirementCalcV4.calculate(retire5early)
-        };
-
-        // Scenario 2: Retire 5 years later
-        const retire5late = {
-            ...baseInputs,
-            retirementAge: baseInputs.retirementAge + 5
-        };
-        this.scenarioResults.retire5late = {
-            inputs: retire5late,
-            results: RetirementCalcV4.calculate(retire5late)
-        };
-
-        // Scenario 3: Spend 20% less
-        const spend20less = {
-            ...baseInputs,
-            annualSpending: Math.round(baseInputs.annualSpending * 0.8)
-        };
-        this.scenarioResults.spend20less = {
-            inputs: spend20less,
-            results: RetirementCalcV4.calculate(spend20less)
-        };
-
-        // Scenario 4: Spend 20% more
-        const spend20more = {
-            ...baseInputs,
-            annualSpending: Math.round(baseInputs.annualSpending * 1.2)
-        };
-        this.scenarioResults.spend20more = {
-            inputs: spend20more,
-            results: RetirementCalcV4.calculate(spend20more)
-        };
+        
+        // Calculate each scenario and apply windfalls
+        Object.keys(scenarios).forEach(key => {
+            const scenarioInputs = scenarios[key];
+            const results = RetirementCalcV4.calculate(scenarioInputs);
+            
+            // Apply windfalls to this scenario too
+            this._applyWindfallsToResults(results, scenarioInputs);
+            
+            this.scenarioResults[key] = {
+                inputs: scenarioInputs,
+                results
+            };
+        });
 
         console.log('[AppV4] Auto-calculated scenarios:', Object.keys(this.scenarioResults));
     },
