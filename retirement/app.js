@@ -75,18 +75,30 @@ const AppV4 = {
     },
 
     _setupFamilyMode() {
-        const toggleButtons = document.querySelectorAll('[data-family]');
-        console.log('[AppV4] Found family toggle buttons:', toggleButtons.length);
+        const singleBtn = document.getElementById('family-single');
+        const coupleBtn = document.getElementById('family-couple');
         
-        toggleButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                console.log('[AppV4] Family button clicked:', btn.dataset.family);
-                toggleButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.familyStatus = btn.dataset.family;
-                console.log('[AppV4] Family status set to:', this.familyStatus);
-                this._toggleFamilyUI();
-            });
+        if (!singleBtn || !coupleBtn) {
+            console.error('[AppV4] Family toggle buttons not found!');
+            return;
+        }
+        
+        console.log('[AppV4] Family mode setup, buttons found');
+        
+        singleBtn.addEventListener('click', () => {
+            console.log('[AppV4] Single clicked');
+            singleBtn.classList.add('active');
+            coupleBtn.classList.remove('active');
+            this.familyStatus = 'single';
+            this._toggleFamilyUI();
+        });
+        
+        coupleBtn.addEventListener('click', () => {
+            console.log('[AppV4] Couple clicked');
+            coupleBtn.classList.add('active');
+            singleBtn.classList.remove('active');
+            this.familyStatus = 'couple';
+            this._toggleFamilyUI();
         });
     },
 
