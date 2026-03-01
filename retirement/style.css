@@ -23,9 +23,15 @@ body {
 }
 
 .container {
-    max-width: 900px;
+    max-width: 680px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 16px;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 12px;
+    }
 }
 
 .hidden { display: none !important; }
@@ -58,6 +64,14 @@ body {
     margin: 24px 0;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+    .card {
+        padding: 20px 16px;
+        margin: 16px 0;
+        border-radius: 8px;
+    }
 }
 
 .card h2 {
@@ -1389,6 +1403,56 @@ input:focus {
     }
 }
 
+/* Music Player Panel */
+.music-player {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    z-index: 999;
+    transition: all 0.3s ease;
+}
+
+.music-player.hidden {
+    transform: translateY(120%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.music-player-header {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
+.close-music-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.close-music-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
 /* Mobile adjustments */
 @media (max-width: 768px) {
     .money-music-btn {
@@ -1404,6 +1468,13 @@ input:focus {
     
     .music-icon {
         font-size: 1.5em;
+    }
+    
+    .music-player {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        width: auto;
     }
 }
 

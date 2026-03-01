@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset=4000001"UTF-8">
-    <meta name="viewport" content=4000001"width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content=4000001"no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content=4000001"no-cache">
-    <meta http-equiv="Expires" content=4000001"0">
-    <meta name="description" content=4000001"Canadian retirement calculator with regional data and tax-aware projections">
+    <meta charset=5000001"UTF-8">
+    <meta name="viewport" content=5000001"width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content=5000001"no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content=5000001"no-cache">
+    <meta http-equiv="Expires" content=5000001"0">
+    <meta name="description" content=5000001"Canadian retirement calculator with regional data and tax-aware projections">
     <title>Retirement Planner V4 | Visual Canadian Calculator</title>
-    <link rel="stylesheet" href="style.css?v=12&t=4000001">
+    <link rel="stylesheet" href="style.css?v=12&t=5000001">
 </head>
 <body>
     
@@ -21,13 +21,27 @@
     </header>
 
     <!-- Money Music Button -->
-    <button id="money-music-btn" class="money-music-btn" aria-label="Toggle music">
+    <button id="money-music-btn" class="money-music-btn" aria-label="Toggle music player">
         <span class="music-icon">💸</span>
         <span class="music-text">Make It Rain</span>
     </button>
     
-    <!-- Hidden YouTube Player -->
-    <div id="youtube-player-container" style="display: none;"></div>
+    <!-- Mini Music Player (slides in when activated) -->
+    <div id="music-player" class="music-player hidden">
+        <div class="music-player-header">
+            <span>🎵 Make It Rain - Fat Joe</span>
+            <button id="close-music" class="close-music-btn">✕</button>
+        </div>
+        <iframe 
+            id="youtube-iframe"
+            width="100%" 
+            height="80" 
+            src="" 
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen>
+        </iframe>
+    </div>
 
     <main class="container">
 
@@ -295,23 +309,23 @@
             <div class="input-group">
                 <label>Annual Spending</label>
                 <div class="lifestyle-presets">
-                    <button type="button" class="preset-btn" data-lifestyle="modest" data-amount=4000001"35000">
+                    <button type="button" class="preset-btn" data-lifestyle="modest" data-amount=5000001"35000">
                         <div class="preset-name">Modest</div>
                         <div class="preset-amount">$35K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="average" data-amount=4000001"48000">
+                    <button type="button" class="preset-btn" data-lifestyle="average" data-amount=5000001"48000">
                         <div class="preset-name">Avg</div>
                         <div class="preset-amount">$48K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount=4000001"62000">
+                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount=5000001"62000">
                         <div class="preset-name">Comfortable</div>
                         <div class="preset-amount">$62K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="affluent" data-amount=4000001"95000">
+                    <button type="button" class="preset-btn" data-lifestyle="affluent" data-amount=5000001"95000">
                         <div class="preset-name">Affluent</div>
                         <div class="preset-amount">$95K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="ultrawealthy" data-amount=4000001"150000">
+                    <button type="button" class="preset-btn" data-lifestyle="ultrawealthy" data-amount=5000001"150000">
                         <div class="preset-name">Ultra-Wealthy</div>
                         <div class="preset-amount">$150K</div>
                     </button>
@@ -555,61 +569,50 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=12&t=4000001"></script>
-    <script src="cpp-calculator.js?v=12&t=4000001"></script>
-    <script src="benchmarks.js?v=12&t=4000001"></script>
-    <script src="lifestyle-data.js?v=12&t=4000001"></script>
-    <script src="regional-data.js?v=12&t=4000001"></script>
-    <script src="canada-map.js?v=12&t=4000001"></script>
-    <script src="income-sources.js?v=12&t=4000001"></script>
-    <script src="cpp-optimizer.js?v=12&t=4000001"></script>
-    <script src="scenario-manager.js?v=12&t=4000001"></script>
-    <script src="healthcare-estimator.js?v=12&t=4000001"></script>
-    <script src="calc.js?v=12&t=4000001"></script>
-    <script src="app.js?v=12&t=4000001"></script>
+    <script src="canada-tax.js?v=12&t=5000001"></script>
+    <script src="cpp-calculator.js?v=12&t=5000001"></script>
+    <script src="benchmarks.js?v=12&t=5000001"></script>
+    <script src="lifestyle-data.js?v=12&t=5000001"></script>
+    <script src="regional-data.js?v=12&t=5000001"></script>
+    <script src="canada-map.js?v=12&t=5000001"></script>
+    <script src="income-sources.js?v=12&t=5000001"></script>
+    <script src="cpp-optimizer.js?v=12&t=5000001"></script>
+    <script src="scenario-manager.js?v=12&t=5000001"></script>
+    <script src="healthcare-estimator.js?v=12&t=5000001"></script>
+    <script src="calc.js?v=12&t=5000001"></script>
+    <script src="app.js?v=12&t=5000001"></script>
     
-    <!-- YouTube IFrame API -->
-    <script src="https://www.youtube.com/iframe_api"></script>
+    <!-- Money Music Player -->
     <script>
-        let player;
-        let isPlaying = false;
-
-        // YouTube API ready callback
-        function onYouTubeIframeAPIReady() {
-            player = new YT.Player('youtube-player-container', {
-                height: '0',
-                width: '0',
-                videoId: 'SVrHlXhGqCM', // Make It Rain Remix - Fat Joe ft. Lil Wayne
-                playerVars: {
-                    autoplay: 0,
-                    controls: 0,
-                    loop: 1,
-                    playlist: 'SVrHlXhGqCM'
-                },
-                events: {
-                    onReady: onPlayerReady
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('money-music-btn');
+            const player = document.getElementById('music-player');
+            const iframe = document.getElementById('youtube-iframe');
+            const closeBtn = document.getElementById('close-music');
+            
+            // Make It Rain Remix - Fat Joe ft. Lil Wayne
+            const videoId = 'SVrHlXhGqCM';
+            
+            btn.addEventListener('click', () => {
+                if (player.classList.contains('hidden')) {
+                    // Show player and load video
+                    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}`;
+                    player.classList.remove('hidden');
+                    btn.classList.add('playing');
+                } else {
+                    // Hide player
+                    player.classList.add('hidden');
+                    iframe.src = '';
+                    btn.classList.remove('playing');
                 }
             });
-        }
-
-        function onPlayerReady(event) {
-            const btn = document.getElementById('money-music-btn');
-            btn.addEventListener('click', toggleMusic);
-        }
-
-        function toggleMusic() {
-            const btn = document.getElementById('money-music-btn');
             
-            if (isPlaying) {
-                player.pauseVideo();
+            closeBtn.addEventListener('click', () => {
+                player.classList.add('hidden');
+                iframe.src = '';
                 btn.classList.remove('playing');
-                isPlaying = false;
-            } else {
-                player.playVideo();
-                btn.classList.add('playing');
-                isPlaying = true;
-            }
-        }
+            });
+        });
     </script>
 
 </body>
