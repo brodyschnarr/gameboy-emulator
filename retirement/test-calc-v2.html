@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retirement Calculator Tests V2 - Comprehensive Suite</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        h2 { color: #555; margin-top: 30px; }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-left: 4px solid #ddd;
+            font-size: 14px;
+        }
+        .test-case.pass {
+            border-left-color: #22c55e;
+            background: #f0fdf4;
+        }
+        .test-case.fail {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        .test-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .test-error {
+            color: #dc2626;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .summary {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .summary.pass { 
+            color: #22c55e; 
+            background: #f0fdf4;
+            border: 2px solid #22c55e;
+        }
+        .summary.fail { 
+            color: #ef4444; 
+            background: #fef2f2;
+            border: 2px solid #ef4444;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        .section-summary {
+            font-weight: bold;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #e0e7ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Retirement Calculator Test Suite V2</h1>
+    <p><strong>Comprehensive Test Coverage:</strong> Edge cases, stress tests, tax boundaries, portfolio depletion, government benefits</p>
+    
+    <button onclick="runAllTests()">🚀 Run All Tests</button>
+    <button onclick="runEdgeCaseTests()">⚡ Edge Cases</button>
+    <button onclick="runStressTests()">🔥 Stress Tests</button>
+    <button onclick="runTaxTests()">💰 Tax Tests</button>
+    <button onclick="runGovernmentTests()">🏛️ Government Benefits</button>
+    <button onclick="runPortfolioTests()">📊 Portfolio Tests</button>
+    
+    <div id="results"></div>
+    
+    <!-- Test Fixtures -->
+    <div style="display: none;">
+        <div id="map-container"></div>
+        <div id="region-picker-container"></div>
+        <div id="region-display">
+            <span id="region-name"></span>
+        </div>
+    </div>
+
+    <script src="canada-tax.js"></script>
+    <script src="cpp-calculator.js"></script>
+    <script src="benchmarks.js"></script>
+    <script src="lifestyle-data.js"></script>
+    <script src="regional-data.js"></script>
+    <script src="canada-map.js"></script>
+    <script src="income-sources.js"></script>
+    <script src="cpp-optimizer.js"></script>
+    <script src="scenario-manager.js"></script>
+    <script src="healthcare-estimator.js"></script>
+    <script src="calc.js"></script>
+    
+    <script>
+        const TestRunner = {
+            results: [],
+            currentSection: '',
+            
+            setSection(name) {
+                this.currentSection = name;
+            },
+            
+            assert(condition, testName, errorMsg = '') {
+                const result = {
+                    name: testName,
+                    section: this.currentSection,
+                    pass: !!condition,
+                    error: condition ? null : errorMsg
+                };
+                this.results.push(result);
+                return condition;
+            },
+            
+            assertEqual(actual, expected, testName) {
+                const pass = actual === expected;
+                this.assert(
+                    pass,
+                    testName,
+                    `Expected ${expected}, got ${actual}`
+                );
+            },
+            
+            assertApprox(actual, expected, tolerance, testName) {
+                const diff = Math.abs(actual - expected);
+                const pass = diff <= tolerance;
+                this.assert(
+                    pass,
+                    testName,
+                    `Expected ~${expected} (±${tolerance}), got ${actual} (diff: ${diff})`
+                );
+            },
+            
+            assertRange(value, min, max, testName) {
+                const pass = value >= min && value <= max;
+                this.assert(
+                    pass,
+                    testName,
+                    `Expected ${min} ≤ value ≤ ${max}, got ${value}`
+                );
+            },
+            
+            render() {
+                const passed = this.results.filter(r => r.pass).length;
+                const failed = this.results.filter(r => !r.pass).length;
+                const total = this.results.length;
+                
+                let html = `
+                    <div class="summary ${failed === 0 ? 'pass' : 'fail'}">
+                        ${failed === 0 ? '✅' : '❌'} ${passed}/${total} tests passed
+                        ${failed > 0 ? `<div style="font-size: 20px; margin-top: 10px;">${failed} tests failed</div>` : ''}
+                    </div>
+                `;
+                
+                // Group by section
+                const sections = [...new Set(this.results.map(r => r.section))];
+                
+                sections.forEach(section => {
+                    const sectionResults = this.results.filter(r => r.section === section);
+                    const sectionPassed = sectionResults.filter(r => r.pass).length;
+                    const sectionTotal = sectionResults.length;
+                    
+                    html += `
+                        <div class="test-section">
+                            <h2>${section}</h2>
+                            <div class="section-summary">
+                                ${sectionPassed}/${sectionTotal} passed
+                            </div>
+                    `;
+                    
+                    sectionResults.forEach(result => {
+                        html += `
+                            <div class="test-case ${result.pass ? 'pass' : 'fail'}">
+                                <div class="test-name">
+                                    ${result.pass ? '✅' : '❌'} ${result.name}
+                                </div>
+                                ${result.error ? `<div class="test-error">${result.error}</div>` : ''}
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                });
+                
+                document.getElementById('results').innerHTML = html;
+            },
+            
+            reset() {
+                this.results = [];
+            }
+        };
+
+        // ═══════════════════════════════════════
+        //  EDGE CASE TESTS
+        // ═══════════════════════════════════════
+        
+        function runEdgeCaseTests() {
+            TestRunner.reset();
+            TestRunner.setSection('🔬 Edge Cases');
+            
+            // Test: $0 starting balance
+            const zeroBalance = RetirementCalcV4.calculate({
+                currentAge: 25,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 60000,
+                income1: 60000,
+                income2: 0,
+                rrsp: 0,
+                tfsa: 0,
+                nonReg: 0,
+                other: 0,
+                monthlyContribution: 500,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 40000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                zeroBalance.yearByYear.length > 0,
+                '$0 starting balance: Should generate projection'
+            );
+            
+            const retYear = zeroBalance.yearByYear.find(y => y.age === 65);
+            TestRunner.assert(
+                retYear && retYear.totalBalance > 0,
+                '$0 starting balance: Should accumulate savings by retirement ($500/mo × 40 years)'
+            );
+            
+            // Test: Retiring tomorrow (age = retirement age)
+            const immediateRetirement = RetirementCalcV4.calculate({
+                currentAge: 65,
+                retirementAge: 65,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 500000,
+                tfsa: 100000,
+                nonReg: 50000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 45000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                immediateRetirement.yearByYear.length === 21, // Ages 65-85
+                'Immediate retirement: Should project 20 years (65-85)'
+            );
+            
+            TestRunner.assert(
+                immediateRetirement.summary.portfolioAtRetirement === 650000,
+                'Immediate retirement: Portfolio at retirement = starting balance'
+            );
+            
+            // Test: Living to 110 (extreme longevity)
+            const superLongevity = RetirementCalcV4.calculate({
+                currentAge: 30,
+                retirementAge: 65,
+                lifeExpectancy: 110,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 100000,
+                income1: 100000,
+                income2: 0,
+                rrsp: 100000,
+                tfsa: 50000,
+                nonReg: 30000,
+                other: 0,
+                monthlyContribution: 2000,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 60000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                superLongevity.yearByYear.length === 81, // Ages 30-110
+                'Living to 110: Should project 80 years'
+            );
+            
+            const lastYear = superLongevity.yearByYear[superLongevity.yearByYear.length - 1];
+            TestRunner.assert(
+                lastYear.age === 110,
+                'Living to 110: Last year should be age 110'
+            );
+            
+            // Test: Massive debt ($500K)
+            const massiveDebt = RetirementCalcV4.calculate({
+                currentAge: 35,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 120000,
+                income1: 120000,
+                income2: 0,
+                rrsp: 200000,
+                tfsa: 100000,
+                nonReg: 50000,
+                other: 0,
+                monthlyContribution: 3000,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 70000,
+                healthStatus: 'average',
+                currentDebt: 500000,
+                debtPayoffAge: 55, // Pay off in 20 years
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            const debtPayoffYear = massiveDebt.yearByYear.find(y => y.age === 55);
+            TestRunner.assert(
+                debtPayoffYear && debtPayoffYear.debt === 0,
+                'Massive debt: Should be paid off by age 55'
+            );
+            
+            const beforePayoff = massiveDebt.yearByYear.find(y => y.age === 45);
+            TestRunner.assert(
+                beforePayoff && beforePayoff.debt > 0,
+                'Massive debt: Should still have debt before payoff age'
+            );
+            
+            // Test: Very low income ($20K)
+            const lowIncome = RetirementCalcV4.calculate({
+                currentAge: 30,
+                retirementAge: 65,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 20000,
+                income1: 20000,
+                income2: 0,
+                rrsp: 5000,
+                tfsa: 3000,
+                nonReg: 0,
+                other: 0,
+                monthlyContribution: 200,
+                contributionSplit: { rrsp: 0.5, tfsa: 0.5, nonReg: 0 },
+                annualSpending: 25000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                lowIncome.govBenefits.cpp1 < 10000,
+                'Low income: CPP should be reduced (<$10K due to low earnings)'
+            );
+            
+            TestRunner.assert(
+                lowIncome.govBenefits.oasMax > 0,
+                'Low income: OAS should still be available (not income-tested before 65)'
+            );
+            
+            // Test: Very high income ($500K)
+            const highIncome = RetirementCalcV4.calculate({
+                currentAge: 40,
+                retirementAge: 60,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 500000,
+                income1: 500000,
+                income2: 0,
+                rrsp: 1000000,
+                tfsa: 200000,
+                nonReg: 800000,
+                other: 500000,
+                monthlyContribution: 10000,
+                contributionSplit: { rrsp: 0.3, tfsa: 0.2, nonReg: 0.5 },
+                annualSpending: 150000,
+                healthStatus: 'excellent',
+                currentDebt: 0,
+                debtPayoffAge: 60,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 7,
+                inflationRate: 2
+            });
+            
+            const highIncomeRet = highIncome.yearByYear.find(y => y.age === 60);
+            TestRunner.assert(
+                highIncomeRet && highIncomeRet.totalBalance > 2000000,
+                'High income: Should accumulate substantial portfolio (>$2M)'
+            );
+            
+            // Test: Age gap couple (10 years)
+            const ageGap = RetirementCalcV4.calculate({
+                currentAge: 50,
+                partnerAge: 40, // 10 year gap
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'couple',
+                income1: 90000,
+                income2: 70000,
+                rrsp: 300000,
+                tfsa: 150000,
+                nonReg: 100000,
+                other: 0,
+                monthlyContribution: 2500,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 80000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                ageGap.govBenefits.cpp1 > 0 && ageGap.govBenefits.cpp2 > 0,
+                'Age gap couple: Both should have CPP'
+            );
+            
+            TestRunner.render();
+        }
+
+        // ═══════════════════════════════════════
+        //  STRESS TESTS
+        // ═══════════════════════════════════════
+        
+        function runStressTests() {
+            TestRunner.reset();
+            TestRunner.setSection('🔥 Stress Tests');
+            
+            // Test: 0% inflation
+            const zeroInflation = RetirementCalcV4.calculate({
+                currentAge: 30,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 100000,
+                tfsa: 50000,
+                nonReg: 30000,
+                other: 0,
+                monthlyContribution: 1500,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 0
+            });
+            
+            const zeroRetYear1 = zeroInflation.yearByYear.find(y => y.age === 66);
+            const zeroRetYear10 = zeroInflation.yearByYear.find(y => y.age === 75);
+            
+            TestRunner.assert(
+                zeroRetYear1 && zeroRetYear10 && 
+                Math.abs(zeroRetYear1.targetSpending - zeroRetYear10.targetSpending) < 100,
+                '0% inflation: Spending should stay flat (no inflation adjustment)'
+            );
+            
+            // Test: 5% inflation (high)
+            const highInflation = RetirementCalcV4.calculate({
+                currentAge: 30,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 100000,
+                tfsa: 50000,
+                nonReg: 30000,
+                other: 0,
+                monthlyContribution: 1500,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 5
+            });
+            
+            const highRetYear1 = highInflation.yearByYear.find(y => y.age === 66);
+            const highRetYear10 = highInflation.yearByYear.find(y => y.age === 75);
+            
+            TestRunner.assert(
+                highRetYear10 && highRetYear1 &&
+                highRetYear10.targetSpending > highRetYear1.targetSpending * 1.4,
+                '5% inflation: Spending should grow >40% over 10 years (compound effect)'
+            );
+            
+            // Test: 10% inflation (hyperinflation scenario)
+            const hyperInflation = RetirementCalcV4.calculate({
+                currentAge: 65,
+                retirementAge: 65,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 100000,
+                income1: 100000,
+                income2: 0,
+                rrsp: 800000,
+                tfsa: 200000,
+                nonReg: 200000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 60000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 12, // High returns to offset
+                inflationRate: 10
+            });
+            
+            TestRunner.assert(
+                hyperInflation.summary.moneyLastsAge < 85,
+                '10% inflation: Even with 12% returns, portfolio depletes faster'
+            );
+            
+            // Test: 0% returns (cash under mattress)
+            const zeroReturns = RetirementCalcV4.calculate({
+                currentAge: 65,
+                retirementAge: 65,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 500000,
+                tfsa: 100000,
+                nonReg: 50000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 40000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 0,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                zeroReturns.summary.moneyLastsAge < 85,
+                '0% returns: Portfolio depletes before life expectancy (no growth to offset spending)'
+            );
+            
+            // Test: 15% returns (bull market)
+            const bullMarket = RetirementCalcV4.calculate({
+                currentAge: 30,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 50000,
+                tfsa: 30000,
+                nonReg: 20000,
+                other: 0,
+                monthlyContribution: 1000,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 15,
+                inflationRate: 2
+            });
+            
+            const bullRetAge = bullMarket.yearByYear.find(y => y.age === 65);
+            TestRunner.assert(
+                bullRetAge && bullRetAge.totalBalance > 3000000,
+                '15% returns: Massive portfolio growth (>$3M at retirement)'
+            );
+            
+            // Test: Very high spending ($200K/year) with modest portfolio
+            const overspending = RetirementCalcV4.calculate({
+                currentAge: 65,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 150000,
+                income1: 150000,
+                income2: 0,
+                rrsp: 500000,
+                tfsa: 100000,
+                nonReg: 100000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 200000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                overspending.summary.moneyLastsAge < 70,
+                'Overspending: $200K/year on $700K portfolio depletes quickly (<age 70)'
+            );
+            
+            TestRunner.assert(
+                !overspending.onTrack,
+                'Overspending: Should be flagged as NOT on track'
+            );
+            
+            TestRunner.render();
+        }
+
+        // ═══════════════════════════════════════
+        //  TAX TESTS
+        // ═══════════════════════════════════════
+        
+        function runTaxTests() {
+            TestRunner.reset();
+            TestRunner.setSection('💰 Tax Boundary Tests');
+            
+            // Test: Basic personal amount (low income, minimal tax)
+            const lowTax = CanadianTax.calculateTax(15000, 'ON');
+            TestRunner.assert(
+                lowTax.total < 1000,
+                'Income below basic personal amount: Minimal tax (<$1000)'
+            );
+            
+            // Test: First tax bracket (ON)
+            const bracket1 = CanadianTax.calculateTax(50000, 'ON');
+            TestRunner.assertRange(
+                bracket1.effectiveRate,
+                15,
+                25,
+                '$50K income: Effective rate 15-25%'
+            );
+            
+            // Test: Second tax bracket
+            const bracket2 = CanadianTax.calculateTax(100000, 'ON');
+            TestRunner.assertRange(
+                bracket2.effectiveRate,
+                25,
+                35,
+                '$100K income: Effective rate 25-35%'
+            );
+            
+            // Test: High income (top bracket)
+            const topBracket = CanadianTax.calculateTax(250000, 'ON');
+            TestRunner.assertRange(
+                topBracket.marginalRate,
+                48,
+                54,
+                '$250K income: Marginal rate near top (~50%)'
+            );
+            
+            // Test: Provincial differences (ON vs BC vs AB)
+            const taxON = CanadianTax.calculateTax(100000, 'ON');
+            const taxBC = CanadianTax.calculateTax(100000, 'BC');
+            const taxAB = CanadianTax.calculateTax(100000, 'AB');
+            
+            TestRunner.assert(
+                Math.abs(taxON.total - taxBC.total) > 1000 ||
+                Math.abs(taxON.total - taxAB.total) > 1000,
+                'Provincial tax differences: ON/BC/AB should differ by >$1000 on $100K'
+            );
+            
+            // Test: RRSP withdrawal tax efficiency
+            const rrspWithdrawal = RetirementCalcV4.calculate({
+                currentAge: 65,
+                retirementAge: 65,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 800000,  // All RRSP
+                tfsa: 0,
+                nonReg: 0,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            const firstRetYear = rrspWithdrawal.yearByYear.find(y => y.age === 65);
+            TestRunner.assert(
+                firstRetYear && firstRetYear.taxPaid > 5000,
+                'All-RRSP portfolio: Should pay significant tax on withdrawals'
+            );
+            
+            // Test: TFSA withdrawal (tax-free)
+            const tfsaWithdrawal = RetirementCalcV4.calculate({
+                currentAge: 65,
+                retirementAge: 65,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 0,
+                tfsa: 500000,  // All TFSA
+                nonReg: 0,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            const tfsaYear = tfsaWithdrawal.yearByYear.find(y => y.age === 65);
+            TestRunner.assert(
+                tfsaYear && tfsaYear.taxPaid < 3000,
+                'All-TFSA portfolio: Lower tax (only on gov benefits, not withdrawals)'
+            );
+            
+            TestRunner.render();
+        }
+
+        // ═══════════════════════════════════════
+        //  GOVERNMENT BENEFIT TESTS
+        // ═══════════════════════════════════════
+        
+        function runGovernmentTests() {
+            TestRunner.reset();
+            TestRunner.setSection('🏛️ Government Benefits (CPP/OAS)');
+            
+            // Test: CPP at 60 (early, reduced)
+            const cpp60 = RetirementCalcV4.calculate({
+                currentAge: 60,
+                retirementAge: 60,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 600000,
+                tfsa: 150000,
+                nonReg: 100000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 60,
+                cppStartAge: 60, // Start at 60
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            // Test: CPP at 65 (normal)
+            const cpp65 = RetirementCalcV4.calculate({
+                currentAge: 60,
+                retirementAge: 60,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 600000,
+                tfsa: 150000,
+                nonReg: 100000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 60,
+                cppStartAge: 65, // Start at 65
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            // Test: CPP at 70 (delayed, enhanced)
+            const cpp70 = RetirementCalcV4.calculate({
+                currentAge: 60,
+                retirementAge: 60,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 600000,
+                tfsa: 150000,
+                nonReg: 100000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 60,
+                cppStartAge: 70, // Start at 70
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                cpp60.govBenefits.cppTotal < cpp65.govBenefits.cppTotal,
+                'CPP at 60 < CPP at 65 (early penalty)'
+            );
+            
+            TestRunner.assert(
+                cpp70.govBenefits.cppTotal > cpp65.govBenefits.cppTotal,
+                'CPP at 70 > CPP at 65 (delayed bonus)'
+            );
+            
+            // Rough estimate: 60 gets ~64%, 65 gets 100%, 70 gets ~142%
+            const ratio60to65 = cpp60.govBenefits.cppTotal / cpp65.govBenefits.cppTotal;
+            const ratio70to65 = cpp70.govBenefits.cppTotal / cpp65.govBenefits.cppTotal;
+            
+            TestRunner.assertRange(
+                ratio60to65,
+                0.55,
+                0.75,
+                'CPP at 60 should be ~64% of CPP at 65 (0.55-0.75 range)'
+            );
+            
+            TestRunner.assertRange(
+                ratio70to65,
+                1.35,
+                1.50,
+                'CPP at 70 should be ~142% of CPP at 65 (1.35-1.50 range)'
+            );
+            
+            // Test: OAS starts at 65
+            const age64 = cpp65.yearByYear.find(y => y.age === 64);
+            const age65 = cpp65.yearByYear.find(y => y.age === 65);
+            
+            TestRunner.assert(
+                age65 && age64 &&
+                age65.governmentIncome > age64.governmentIncome + 7000,
+                'OAS kicks in at 65: Gov income jumps by ~$8K (OAS max)'
+            );
+            
+            TestRunner.render();
+        }
+
+        // ═══════════════════════════════════════
+        //  PORTFOLIO DEPLETION TESTS
+        // ═══════════════════════════════════════
+        
+        function runPortfolioTests() {
+            TestRunner.reset();
+            TestRunner.setSection('📊 Portfolio Sustainability');
+            
+            // Test: Underfunded (should run out)
+            const underfunded = RetirementCalcV4.calculate({
+                currentAge: 65,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 60000,
+                income1: 60000,
+                income2: 0,
+                rrsp: 100000,  // Very low for 25 years
+                tfsa: 50000,
+                nonReg: 30000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 40000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                underfunded.summary.moneyLastsAge < 90,
+                'Underfunded: $180K portfolio should deplete before age 90'
+            );
+            
+            TestRunner.assert(
+                !underfunded.onTrack,
+                'Underfunded: Should be flagged as NOT on track'
+            );
+            
+            TestRunner.assertRange(
+                underfunded.summary.moneyLastsAge,
+                70,
+                82,
+                'Underfunded: Money should last ~70-82 years (portfolio + gov benefits)'
+            );
+            
+            // Test: Well-funded (should last)
+            const wellFunded = RetirementCalcV4.calculate({
+                currentAge: 65,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 100000,
+                income1: 100000,
+                income2: 0,
+                rrsp: 1000000,
+                tfsa: 200000,
+                nonReg: 300000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 60000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                wellFunded.summary.moneyLastsAge >= 90,
+                'Well-funded: $1.5M portfolio should last to age 90+'
+            );
+            
+            TestRunner.assert(
+                wellFunded.onTrack,
+                'Well-funded: Should be on track'
+            );
+            
+            TestRunner.assertRange(
+                wellFunded.probability,
+                80,
+                100,
+                'Well-funded: High probability of success (80-100%)'
+            );
+            
+            // Test: Exact sustainability (4% rule)
+            const fourPercentRule = RetirementCalcV4.calculate({
+                currentAge: 65,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 1000000,
+                tfsa: 0,
+                nonReg: 0,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 40000, // 4% of $1M
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                fourPercentRule.summary.moneyLastsAge >= 85,
+                '4% withdrawal rule: Should sustain ~25+ years'
+            );
+            
+            TestRunner.render();
+        }
+
+        // ═══════════════════════════════════════
+        //  RUN ALL
+        // ═══════════════════════════════════════
+        
+        function runAllTests() {
+            runEdgeCaseTests();
+            setTimeout(() => runStressTests(), 100);
+            setTimeout(() => runTaxTests(), 200);
+            setTimeout(() => runGovernmentTests(), 300);
+            setTimeout(() => runPortfolioTests(), 400);
+        }
+    </script>
+</body>
+</html>
