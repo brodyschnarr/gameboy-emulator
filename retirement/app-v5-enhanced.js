@@ -330,6 +330,9 @@ const AppV5Enhanced = {
             <h3>🔮 What-If Scenario Analysis</h3>
             <p>See how small changes impact your retirement outcome:</p>
             
+            <h4>🎛️ Interactive Sliders</h4>
+            <div id="interactive-sliders-container"></div>
+            
             <h4>📊 Scenario Heatmap</h4>
             <p>Success rate by retirement age and portfolio size:</p>
             <canvas id="success-heatmap"></canvas>
@@ -360,6 +363,9 @@ const AppV5Enhanced = {
                     </div>
                 `).join('')}
             </div>
+            
+            <h4>💾 Saved Scenarios</h4>
+            <div id="saved-scenarios-container"></div>
         `;
     },
     
@@ -466,6 +472,26 @@ const AppV5Enhanced = {
         // Success heatmap
         if (baseInputs) {
             AdvancedCharts.drawSuccessHeatmap('success-heatmap', baseInputs);
+        }
+        
+        // Interactive sliders (if module loaded and container exists)
+        if (typeof InteractiveSliders !== 'undefined' && document.getElementById('interactive-sliders-container')) {
+            const baseResults = RetirementCalcV4.calculate(baseInputs);
+            InteractiveSliders.init(baseInputs, baseResults);
+            InteractiveSliders.render('interactive-sliders-container');
+        }
+        
+        // Saved scenarios (if module loaded and container exists)
+        if (typeof ScenarioStorage !== 'undefined' && document.getElementById('saved-scenarios-container')) {
+            ScenarioStorage.renderSavedScenarios('saved-scenarios-container');
+            
+            // Set up callbacks
+            ScenarioStorage.onDelete = () => {
+                ScenarioStorage.renderSavedScenarios('saved-scenarios-container');
+            };
+            ScenarioStorage.onClearAll = () => {
+                ScenarioStorage.renderSavedScenarios('saved-scenarios-container');
+            };
         }
     },
     
