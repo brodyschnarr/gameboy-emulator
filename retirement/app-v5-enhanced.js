@@ -220,7 +220,7 @@ const AppV5Enhanced = {
                 
                 <!-- Tab content areas -->
                 <div id="tab-overview" class="tab-content active">
-                    ${this._renderOverviewTab(baseResults)}
+                    ${this._renderOverviewTab(baseResults, baseInputs)}
                 </div>
                 
                 <div id="tab-monte-carlo" class="tab-content hidden">
@@ -252,7 +252,7 @@ const AppV5Enhanced = {
         }, 100);
     },
     
-    _renderOverviewTab(baseResults) {
+    _renderOverviewTab(baseResults, baseInputs) {
         const mc = this.monteCarloResults;
         const tax = this.taxOptimizationResults;
         
