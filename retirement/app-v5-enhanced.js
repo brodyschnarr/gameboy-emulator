@@ -297,7 +297,7 @@ const AppV5Enhanced = {
             <div class="insight-box">
                 <h4>💡 Key Tax Insights</h4>
                 <ul>
-                    ${tax.optimalStrategy.reasoning.map(r => `<li>${r}</li>`).join('')}
+                    ${(tax.optimalStrategy.reasoning || []).map(r => `<li>${r}</li>`).join('')}
                 </ul>
             </div>
         `;
