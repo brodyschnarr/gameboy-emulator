@@ -994,6 +994,14 @@ const AppV4 = {
         
         results.summary.legacyAmount = lastYear.totalBalance || lastYear.totalPortfolio || 0;
         
+        // FIX: Also update results.legacy object (display uses this, not summary.legacyAmount!)
+        results.legacy.amount = results.summary.legacyAmount;
+        results.legacy.description = results.summary.legacyAmount > 0 
+            ? `You'll leave an estate of $${results.summary.legacyAmount.toLocaleString()} for your beneficiaries.`
+            : 'No legacy remaining - money runs out before end of life.';
+        
+        console.log('[AppV4] Updated legacy.amount:', results.legacy.amount);
+        
         // Find when money runs out (check totalBalance first, then totalPortfolio)
         const runOutYear = results.yearByYear.find(y => {
             const balance = y.totalBalance !== undefined ? y.totalBalance : y.totalPortfolio;
@@ -1067,23 +1075,30 @@ const AppV4 = {
         // FIX: Use event delegation instead of cloning (more robust)
         const tabContainer = document.getElementById('scenario-tabs');
         if (!tabContainer) {
-            console.error('[AppV4] Scenario tabs container not found!');
+            console.error('[AppV4] ❌ Scenario tabs container not found! DOM not ready?');
             return;
         }
         
+        const tabs = tabContainer.querySelectorAll('.scenario-tab');
+        console.log('[AppV4] ✅ Found scenario tabs container with', tabs.length, 'tabs');
+        
         // Remove old listener if it exists
         if (tabContainer._scenarioClickHandler) {
+            console.log('[AppV4] Removing old event handler');
             tabContainer.removeEventListener('click', tabContainer._scenarioClickHandler);
         }
         
         // Add delegated listener to parent container
         const handler = (e) => {
             const tab = e.target.closest('.scenario-tab');
-            if (!tab) return; // Click wasn't on a tab
+            if (!tab) {
+                console.log('[AppV4] Click on tab container but not on a tab');
+                return; // Click wasn't on a tab
+            }
             
             e.preventDefault();
             const scenario = tab.dataset.scenario;
-            console.log('[AppV4] Scenario tab clicked:', scenario);
+            console.log('[AppV4] ✅ Scenario tab clicked:', scenario);
             
             // Update active state
             tabContainer.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
@@ -1097,7 +1112,8 @@ const AppV4 = {
         tabContainer._scenarioClickHandler = handler;
         tabContainer.addEventListener('click', handler);
         
-        console.log('[AppV4] Scenario tabs setup complete (event delegation)');
+        console.log('[AppV4] ✅ Scenario tabs setup complete (event delegation)');
+        console.log('[AppV4] Handler attached:', !!tabContainer._scenarioClickHandler);
     },
 
     _switchScenario(scenarioKey) {
@@ -1260,17 +1276,32 @@ const AppV4 = {
         }
         
         const container = canvas.parentElement;
-        canvas.width = container.offsetWidth - 40;
+        
+        // FIX: Ensure minimum width (container might be hidden or have 0 width)
+        const containerWidth = Math.max(container.offsetWidth - 40, 300);
+        canvas.width = containerWidth;
         canvas.height = 400;
 
         const w = canvas.width;
         const h = canvas.height;
         const padding = 60;
 
+        console.log('[AppV4] Chart canvas dimensions:', w, 'x', h, '(parent width:', container.offsetWidth, ')');
+
         ctx.clearRect(0, 0, w, h);
 
         if (yearByYear.length === 0) {
             console.warn('[AppV4] No data for portfolio chart');
+            return;
+        }
+        
+        // FIX: Check if canvas is too small to render
+        if (w < 100) {
+            console.error('[AppV4] Canvas too narrow to render chart:', w);
+            ctx.fillStyle = '#ef4444';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('Error: Container too narrow', 10, h / 2);
+            ctx.fillText(`Width: ${w}px (need 300+)`, 10, h / 2 + 20);
             return;
         }
 
