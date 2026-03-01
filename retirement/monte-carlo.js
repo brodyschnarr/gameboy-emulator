@@ -107,7 +107,7 @@ const MonteCarloSimulator = {
             debtPayoffAge,
             cppStartAge,
             additionalIncomeSources,
-            windfalls,
+            windfalls = [],
             returnSequence, // Array of annual returns
             inflationRate
         } = inputs;
