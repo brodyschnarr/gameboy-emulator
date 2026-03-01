@@ -982,13 +982,17 @@ const AppV4 = {
         const retirementYear = results.yearByYear.find(y => y.age === inputs.retirementAge);
         
         if (retirementYear) {
-            results.summary.portfolioAtRetirement = retirementYear.totalPortfolio || 0;
+            // Use totalBalance (that's what the base calculation creates)
+            results.summary.portfolioAtRetirement = retirementYear.totalBalance || retirementYear.totalPortfolio || 0;
         }
         
-        results.summary.legacyAmount = lastYear.totalPortfolio || 0;
+        results.summary.legacyAmount = lastYear.totalBalance || lastYear.totalPortfolio || 0;
         
-        // Find when money runs out
-        const runOutYear = results.yearByYear.find(y => (y.totalPortfolio || 0) <= 0);
+        // Find when money runs out (check totalBalance first, then totalPortfolio)
+        const runOutYear = results.yearByYear.find(y => {
+            const balance = y.totalBalance !== undefined ? y.totalBalance : y.totalPortfolio;
+            return (balance || 0) <= 0;
+        });
         results.summary.moneyLastsAge = runOutYear ? runOutYear.age : inputs.lifeExpectancy;
         
         // Recalculate probability based on updated projection
