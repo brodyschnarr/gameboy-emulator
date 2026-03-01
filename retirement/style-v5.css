@@ -1042,6 +1042,43 @@ canvas {
     font-weight: 600;
 }
 
+.windfall-item-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: white;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.windfall-name-summary {
+    flex: 2;
+    font-weight: 600;
+    color: #111827;
+}
+
+.windfall-amount-summary {
+    flex: 1;
+    color: #0284c7;
+    font-weight: bold;
+    text-align: right;
+}
+
+.windfall-prob-summary {
+    flex: 1;
+    color: #6b7280;
+    text-align: right;
+}
+
+.windfall-year-summary {
+    flex: 1;
+    color: #9ca3af;
+    font-size: 12px;
+    text-align: right;
+}
+
 @media (max-width: 768px) {
     .form-row {
         grid-template-columns: 1fr;

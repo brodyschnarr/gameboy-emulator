@@ -304,6 +304,8 @@ const AppV5Enhanced = {
                 </div>
             </div>
             
+            ${this._renderWindfallSummary(baseResults.inputs)}
+            
             <h3>📈 Confidence Bands</h3>
             <p>This chart shows the range of possible outcomes based on 1000 simulations with realistic market volatility:</p>
             <canvas id="confidence-bands-chart"></canvas>
@@ -633,6 +635,60 @@ const AppV5Enhanced = {
     _hideLoadingOverlay() {
         const overlay = document.getElementById('loading-overlay');
         if (overlay) overlay.remove();
+    },
+    
+    _renderWindfallSummary(inputs) {
+        const windfalls = inputs.windfalls || [];
+        
+        if (windfalls.length === 0 || typeof WindfallManager === 'undefined') {
+            return '';
+        }
+        
+        const summary = WindfallManager.getSummary(windfalls);
+        
+        return `
+            <div class="windfall-impact-card">
+                <h4>💰 Potential Windfalls</h4>
+                <p>You've modeled ${summary.count} potential windfall${summary.count !== 1 ? 's' : ''} with probability-weighted expected value:</p>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Count</div>
+                        <div class="stat-value">${summary.count}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Amount</div>
+                        <div class="stat-value">$${(summary.totalAmount / 1000).toFixed(0)}K</div>
+                        <div class="stat-note">If all occur</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Expected Value</div>
+                        <div class="stat-value">$${(summary.expectedValue / 1000).toFixed(0)}K</div>
+                        <div class="stat-note">Probability-weighted</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Probability</div>
+                        <div class="stat-value">${summary.averageProbability.toFixed(0)}%</div>
+                    </div>
+                </div>
+                
+                <div class="windfalls-list" style="margin-top: 20px;">
+                    ${windfalls.map(w => `
+                        <div class="windfall-item-summary">
+                            <span class="windfall-name-summary">${w.name}</span>
+                            <span class="windfall-amount-summary">$${(w.amount / 1000).toFixed(0)}K</span>
+                            <span class="windfall-prob-summary">${w.probability}% likely</span>
+                            <span class="windfall-year-summary">Age ${w.year || '?'}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <p style="margin-top: 15px; font-size: 13px; color: #78350f;">
+                    <strong>Note:</strong> Monte Carlo simulation randomizes windfalls based on probability. 
+                    Success rate reflects scenarios where windfalls may or may not occur.
+                </p>
+            </div>
+        `;
     }
 };
 
