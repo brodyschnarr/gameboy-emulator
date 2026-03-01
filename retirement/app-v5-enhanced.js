@@ -17,6 +17,15 @@ const AppV5Enhanced = {
     runEnhancedAnalysis(baseInputs, baseResults) {
         console.log('[AppV5] Running enhanced analysis suite...');
         
+        // Validate inputs
+        if (typeof ErrorHandler !== 'undefined') {
+            const validation = ErrorHandler.validateInputs(baseInputs);
+            if (!validation.valid) {
+                validation.errors.forEach(err => ErrorHandler.showWarning('Input Error', err));
+                return;
+            }
+        }
+        
         // Show loading indicator
         this._showLoadingOverlay('Running 1000+ simulations and optimizations...');
         
@@ -25,42 +34,75 @@ const AppV5Enhanced = {
             try {
                 // 1. Monte Carlo simulation (this is the heavy one)
                 console.log('[AppV5] Starting Monte Carlo simulation...');
-                this.monteCarloResults = MonteCarloSimulator.simulate(baseInputs, {
-                    iterations: 1000,
-                    volatility: 0.15,
-                    marketCrashProbability: 0.10
-                });
+                try {
+                    this.monteCarloResults = MonteCarloSimulator.simulate(baseInputs, {
+                        iterations: 1000,
+                        volatility: 0.15,
+                        marketCrashProbability: 0.10
+                    });
+                } catch (mcError) {
+                    console.error('[AppV5] Monte Carlo error:', mcError);
+                    if (typeof ErrorHandler !== 'undefined') {
+                        ErrorHandler.handleCalculationError(mcError, 'Monte Carlo simulation');
+                    }
+                    // Use base results as fallback
+                    this.monteCarloResults = this._fallbackMonteCarloResults(baseResults);
+                }
                 
                 // 2. Tax optimization
                 console.log('[AppV5] Analyzing tax strategies...');
-                this.taxOptimizationResults = TaxOptimizer.optimizeWithdrawals({
-                    rrsp: baseInputs.rrsp,
-                    tfsa: baseInputs.tfsa,
-                    nonReg: baseInputs.nonReg,
-                    annualSpending: baseInputs.annualSpending,
-                    cppAnnual: baseResults.govBenefits.cppTotal,
-                    oasAnnual: baseResults.govBenefits.oasMax,
-                    province: baseInputs.province,
-                    retirementAge: baseInputs.retirementAge,
-                    lifeExpectancy: baseInputs.lifeExpectancy
-                });
+                try {
+                    this.taxOptimizationResults = TaxOptimizer.optimizeWithdrawals({
+                        rrsp: baseInputs.rrsp,
+                        tfsa: baseInputs.tfsa,
+                        nonReg: baseInputs.nonReg,
+                        annualSpending: baseInputs.annualSpending,
+                        cppAnnual: baseResults.govBenefits.cppTotal,
+                        oasAnnual: baseResults.govBenefits.oasMax,
+                        province: baseInputs.province,
+                        retirementAge: baseInputs.retirementAge,
+                        lifeExpectancy: baseInputs.lifeExpectancy
+                    });
+                } catch (taxError) {
+                    console.error('[AppV5] Tax optimization error:', taxError);
+                    if (typeof ErrorHandler !== 'undefined') {
+                        ErrorHandler.handleCalculationError(taxError, 'Tax optimization');
+                    }
+                    this.taxOptimizationResults = this._fallbackTaxResults();
+                }
                 
                 // 3. What-if scenarios
                 console.log('[AppV5] Generating what-if scenarios...');
-                this.whatIfResults = WhatIfAnalyzer.analyzeAll(baseInputs);
+                try {
+                    this.whatIfResults = WhatIfAnalyzer.analyzeAll(baseInputs);
+                } catch (whatIfError) {
+                    console.error('[AppV5] What-if error:', whatIfError);
+                    if (typeof ErrorHandler !== 'undefined') {
+                        ErrorHandler.handleCalculationError(whatIfError, 'What-if analysis');
+                    }
+                    this.whatIfResults = this._fallbackWhatIfResults(baseInputs, baseResults);
+                }
                 
                 // 4. Safe withdrawal analysis
                 console.log('[AppV5] Calculating safe withdrawal rates...');
-                const portfolioAtRetirement = baseResults.summary.portfolioAtRetirement;
-                const retirementYears = baseInputs.lifeExpectancy - baseInputs.retirementAge;
-                this.safeWithdrawalResults = SafeWithdrawalCalculator.calculate({
-                    portfolioValue: portfolioAtRetirement,
-                    retirementYears: retirementYears,
-                    inflationRate: baseInputs.inflationRate,
-                    successTarget: 90,
-                    includeGovernmentBenefits: true,
-                    governmentBenefitsAnnual: baseResults.govBenefits.total
-                });
+                try {
+                    const portfolioAtRetirement = baseResults.summary.portfolioAtRetirement;
+                    const retirementYears = baseInputs.lifeExpectancy - baseInputs.retirementAge;
+                    this.safeWithdrawalResults = SafeWithdrawalCalculator.calculate({
+                        portfolioValue: portfolioAtRetirement,
+                        retirementYears: retirementYears,
+                        inflationRate: baseInputs.inflationRate,
+                        successTarget: 90,
+                        includeGovernmentBenefits: true,
+                        governmentBenefitsAnnual: baseResults.govBenefits.total
+                    });
+                } catch (swrError) {
+                    console.error('[AppV5] Safe withdrawal error:', swrError);
+                    if (typeof ErrorHandler !== 'undefined') {
+                        ErrorHandler.handleCalculationError(swrError, 'Safe withdrawal calculation');
+                    }
+                    this.safeWithdrawalResults = this._fallbackSWRResults(baseResults);
+                }
                 
                 // Hide loading, show enhanced results
                 this._hideLoadingOverlay();
@@ -70,9 +112,89 @@ const AppV5Enhanced = {
             } catch (error) {
                 console.error('[AppV5] Analysis error:', error);
                 this._hideLoadingOverlay();
-                alert('Analysis error: ' + error.message);
+                if (typeof ErrorHandler !== 'undefined') {
+                    ErrorHandler.handleCalculationError(error, 'Enhanced analysis');
+                } else {
+                    alert('Analysis error: ' + error.message);
+                }
             }
         }, 100);
+    },
+    
+    _fallbackMonteCarloResults(baseResults) {
+        return {
+            successRate: baseResults.probability,
+            totalRuns: 1,
+            successfulRuns: baseResults.onTrack ? 1 : 0,
+            finalBalance: {
+                p10: Math.round(baseResults.summary.legacyAmount * 0.5),
+                p50: baseResults.summary.legacyAmount,
+                p90: Math.round(baseResults.summary.legacyAmount * 1.5)
+            },
+            portfolioAtRetirement: {
+                p10: Math.round(baseResults.summary.portfolioAtRetirement * 0.85),
+                p50: baseResults.summary.portfolioAtRetirement,
+                p90: Math.round(baseResults.summary.portfolioAtRetirement * 1.15)
+            },
+            moneyLastsAge: {
+                worst: baseResults.summary.moneyLastsAge - 3,
+                p50: baseResults.summary.moneyLastsAge,
+                best: baseResults.summary.moneyLastsAge + 5
+            },
+            percentiles: {
+                p50: {
+                    projection: baseResults.yearByYear
+                }
+            }
+        };
+    },
+    
+    _fallbackTaxResults() {
+        return {
+            recommended: 'naive',
+            taxSavings: 0,
+            comparison: {
+                naive: {
+                    strategy: 'Standard withdrawal',
+                    totalTax: 0,
+                    oasClawback: 0,
+                    netIncome: 0
+                }
+            },
+            optimalStrategy: {
+                name: 'Standard Withdrawal',
+                description: 'Tax optimization unavailable',
+                reasoning: ['Using standard withdrawal approach']
+            }
+        };
+    },
+    
+    _fallbackWhatIfResults(inputs, results) {
+        return {
+            scenarios: {
+                base: {
+                    name: 'Base Plan',
+                    description: 'Your current plan',
+                    inputs,
+                    results
+                }
+            },
+            comparison: {},
+            recommendations: []
+        };
+    },
+    
+    _fallbackSWRResults(results) {
+        return {
+            recommended: {
+                name: '4% Rule',
+                withdrawalRate: 0.04,
+                firstYearAmount: results.summary.portfolioAtRetirement * 0.04,
+                successRate: results.probability
+            },
+            strategies: [],
+            comparison: []
+        };
     },
     
     /**
