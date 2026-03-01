@@ -23,15 +23,9 @@ body {
 }
 
 .container {
-    max-width: 680px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 0 16px;
-}
-
-@media (max-width: 768px) {
-    .container {
-        padding: 0 12px;
-    }
+    padding: 0;
 }
 
 .hidden { display: none !important; }
@@ -59,18 +53,18 @@ body {
 /* ── Cards ─── */
 .card {
     background: var(--card-bg);
-    border-radius: 12px;
-    padding: 28px;
-    margin: 24px 0;
+    border-radius: 16px;
+    padding: 32px;
+    margin: 20px;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
 }
 
 @media (max-width: 768px) {
     .card {
-        padding: 20px 16px;
-        margin: 16px 0;
-        border-radius: 8px;
+        padding: 24px 20px;
+        margin: 16px;
+        border-radius: 16px;
     }
 }
 
