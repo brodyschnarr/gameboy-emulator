@@ -815,6 +815,12 @@ const AppV4 = {
             });
             document.getElementById('results')?.classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Run V5 Enhanced Analysis (Monte Carlo, Tax Optimization, What-If)
+            if (typeof AppV5Enhanced !== 'undefined') {
+                console.log('[AppV4] Launching V5 enhanced analysis...');
+                AppV5Enhanced.runEnhancedAnalysis(inputs, baseResults);
+            }
         } catch (error) {
             console.error('[AppV4] Calculation error:', error);
             alert(`❌ Calculation failed: ${error.message}\n\nPlease check the console for details.`);
