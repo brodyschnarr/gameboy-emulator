@@ -861,6 +861,33 @@ const AppV4 = {
             // Calculate base scenario
             const baseResults = RetirementCalcV4.calculate(inputs);
             console.log('[AppV4] Base Results:', baseResults);
+            
+            // Apply windfalls to base calculation (deterministic - 100% probability)
+            if (inputs.windfalls && inputs.windfalls.length > 0 && typeof WindfallManager !== 'undefined') {
+                console.log('[AppV4] Applying', inputs.windfalls.length, 'windfalls to base calculation...');
+                baseResults.yearByYear = WindfallManager.applyWindfalls(
+                    baseResults.yearByYear, 
+                    inputs.windfalls, 
+                    inputs, 
+                    false // deterministic - all windfalls occur at 100%
+                );
+                
+                // Recalculate summary based on updated projection
+                const lastYear = baseResults.yearByYear[baseResults.yearByYear.length - 1];
+                const retirementYear = baseResults.yearByYear.find(y => y.age === inputs.retirementAge);
+                
+                if (retirementYear) {
+                    baseResults.summary.portfolioAtRetirement = retirementYear.totalPortfolio || 0;
+                }
+                
+                baseResults.summary.legacyAmount = lastYear.totalPortfolio || 0;
+                
+                // Find when money runs out
+                const runOutYear = baseResults.yearByYear.find(y => (y.totalPortfolio || 0) <= 0);
+                baseResults.summary.moneyLastsAge = runOutYear ? runOutYear.age : inputs.lifeExpectancy;
+                
+                console.log('[AppV4] Updated portfolio at retirement:', baseResults.summary.portfolioAtRetirement);
+            }
 
             // Store base scenario
             this.scenarioResults = {
