@@ -75,9 +75,12 @@ body {
 
 @media (max-width: 768px) {
     .card {
-        padding: 28px 20px;
-        margin: 16px 0;
-        border-radius: 20px;
+        padding: 28px 16px;
+        margin: 12px 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        box-shadow: none;
     }
 }
 
@@ -1830,7 +1833,7 @@ input:focus {
 @media (max-width: 768px) {
     .progress-indicator {
         margin: 14px auto 18px;
-        padding: 0;
+        padding: 0 16px;
     }
 }
 
