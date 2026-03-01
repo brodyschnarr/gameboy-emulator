@@ -863,14 +863,51 @@ const AppV4 = {
             console.log('[AppV4] Base Results:', baseResults);
             
             // Apply windfalls to base calculation (deterministic - 100% probability)
-            if (inputs.windfalls && inputs.windfalls.length > 0 && typeof WindfallManager !== 'undefined') {
+            if (inputs.windfalls && inputs.windfalls.length > 0) {
                 console.log('[AppV4] Applying', inputs.windfalls.length, 'windfalls to base calculation...');
-                baseResults.yearByYear = WindfallManager.applyWindfalls(
-                    baseResults.yearByYear, 
-                    inputs.windfalls, 
-                    inputs, 
-                    false // deterministic - all windfalls occur at 100%
-                );
+                
+                inputs.windfalls.forEach(windfall => {
+                    const targetAge = windfall.year || (inputs.currentAge + (windfall.yearsFromNow || 0));
+                    const yearIndex = baseResults.yearByYear.findIndex(y => y.age === targetAge);
+                    
+                    if (yearIndex === -1) return; // Year not in projection
+                    
+                    // Calculate after-tax amount (simplified)
+                    const afterTaxAmount = windfall.taxable 
+                        ? windfall.amount * 0.7 // 30% tax rate (simplified)
+                        : windfall.amount;
+                    
+                    console.log(`[AppV4] Adding $${afterTaxAmount.toLocaleString()} windfall at age ${targetAge}`);
+                    
+                    // Add windfall to appropriate account(s) for THIS year and all future years
+                    for (let i = yearIndex; i < baseResults.yearByYear.length; i++) {
+                        const year = baseResults.yearByYear[i];
+                        const returnRate = inputs.returnRate / 100;
+                        const yearsFromWindfall = i - yearIndex;
+                        const grownAmount = afterTaxAmount * Math.pow(1 + returnRate, yearsFromWindfall);
+                        
+                        if (windfall.destination === 'rrsp') {
+                            year.rrsp = (year.rrsp || 0) + grownAmount;
+                        } else if (windfall.destination === 'tfsa') {
+                            year.tfsa = (year.tfsa || 0) + grownAmount;
+                        } else if (windfall.destination === 'nonReg') {
+                            year.nonReg = (year.nonReg || 0) + grownAmount;
+                        } else if (windfall.destination === 'split') {
+                            year.tfsa = (year.tfsa || 0) + (grownAmount * 0.5);
+                            year.nonReg = (year.nonReg || 0) + (grownAmount * 0.5);
+                        }
+                        
+                        // Update total
+                        year.totalPortfolio = (year.rrsp || 0) + (year.tfsa || 0) + (year.nonReg || 0);
+                    }
+                    
+                    // Mark windfall in the year it occurs
+                    baseResults.yearByYear[yearIndex].windfall = {
+                        name: windfall.name,
+                        amount: windfall.amount,
+                        afterTaxAmount
+                    };
+                });
                 
                 // Recalculate summary based on updated projection
                 const lastYear = baseResults.yearByYear[baseResults.yearByYear.length - 1];
