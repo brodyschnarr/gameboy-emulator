@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Windfall Integration Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #0f0; }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        .test { margin: 10px 0; padding: 10px; background: #2e2e2e; }
+        h2 { color: #0ff; }
+        button { padding: 10px 20px; background: #0f0; color: #000; border: none; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Windfall Integration Test</h1>
+    <button onclick="runTest()">Run Test</button>
+    <div id="output"></div>
+
+    <!-- Load all dependencies -->
+    <script src="data.js"></script>
+    <script src="regional-data-v2.js"></script>
+    <script src="canada-tax.js"></script>
+    <script src="cpp-calculator.js"></script>
+    <script src="healthcare-estimator.js"></script>
+    <script src="lifestyle-data.js"></script>
+    <script src="benchmarks.js"></script>
+    <script src="calc.js"></script>
+    
+    <script>
+        function log(msg, pass = null) {
+            const div = document.createElement('div');
+            div.className = 'test';
+            if (pass === true) div.classList.add('pass');
+            if (pass === false) div.classList.add('fail');
+            div.innerHTML = (pass === true ? '✅ ' : pass === false ? '❌ ' : '') + msg;
+            document.getElementById('output').appendChild(div);
+        }
+        
+        function runTest() {
+            document.getElementById('output').innerHTML = '<h2>Running Integration Test...</h2>';
+            
+            // Test inputs (simulating user's scenario)
+            const inputs = {
+                currentAge: 30,
+                partnerAge: 30,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 80000,
+                income1: 80000,
+                income2: 0,
+                rrsp: 50000,
+                tfsa: 30000,
+                nonReg: 10000,
+                other: 0,
+                monthlyContribution: 1000,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                windfalls: [],
+                returnRate: 6,
+                inflationRate: 2.5
+            };
+            
+            log('📋 Test Scenario:');
+            log(`Age 30, retire at 65, $90K saved, $1K/month contribution`);
+            log(`Annual spending: $50K`);
+            
+            // Step 1: Calculate WITHOUT windfall
+            log('<h2>Step 1: Base Calculation (No Windfall)</h2>');
+            const baseResults = RetirementCalcV4.calculate(inputs);
+            
+            log(`Portfolio at retirement: $${baseResults.summary.portfolioAtRetirement.toLocaleString()}`);
+            log(`Money lasts until: Age ${baseResults.summary.moneyLastsAge}`);
+            log(`Success probability: ${baseResults.probability}%`);
+            
+            const basePortfolio = baseResults.summary.portfolioAtRetirement;
+            const baseMoneyLasts = baseResults.summary.moneyLastsAge;
+            const baseProbability = baseResults.probability;
+            
+            // Step 2: Add $1M windfall at retirement age
+            log('<h2>Step 2: Add $1M Windfall at Age 65</h2>');
+            inputs.windfalls = [{
+                name: 'Test Windfall',
+                amount: 1000000,
+                year: 65,
+                probability: 100,
+                taxable: false,
+                destination: 'split'
+            }];
+            
+            const resultsWithWindfall = RetirementCalcV4.calculate(inputs);
+            
+            // Step 3: Apply windfall manually (simulating app.js logic)
+            log('<h2>Step 3: Apply Windfall</h2>');
+            
+            const windfall = inputs.windfalls[0];
+            const targetAge = windfall.year;
+            const yearIndex = resultsWithWindfall.yearByYear.findIndex(y => y.age === targetAge);
+            
+            if (yearIndex === -1) {
+                log(`❌ FAIL: Age ${targetAge} not found in projection!`, false);
+                return;
+            }
+            
+            log(`Found windfall year at index ${yearIndex} (age ${targetAge})`);
+            
+            const afterTaxAmount = windfall.taxable ? windfall.amount * 0.7 : windfall.amount;
+            log(`After-tax amount: $${afterTaxAmount.toLocaleString()}`);
+            
+            // Apply windfall to projection
+            for (let i = yearIndex; i < resultsWithWindfall.yearByYear.length; i++) {
+                const year = resultsWithWindfall.yearByYear[i];
+                const returnRate = inputs.returnRate / 100;
+                const yearsFromWindfall = i - yearIndex;
+                const grownAmount = afterTaxAmount * Math.pow(1 + returnRate, yearsFromWindfall);
+                
+                // Add to accounts
+                year.tfsa = (year.tfsa || 0) + (grownAmount * 0.5);
+                year.nonReg = (year.nonReg || 0) + (grownAmount * 0.5);
+                
+                // Update BOTH totalBalance and totalPortfolio
+                const newTotal = (year.rrsp || 0) + (year.tfsa || 0) + (year.nonReg || 0) + (year.other || 0);
+                year.totalBalance = newTotal;
+                year.totalPortfolio = newTotal;
+            }
+            
+            // Recalculate summary
+            const lastYear = resultsWithWindfall.yearByYear[resultsWithWindfall.yearByYear.length - 1];
+            const retirementYear = resultsWithWindfall.yearByYear.find(y => y.age === inputs.retirementAge);
+            
+            if (retirementYear) {
+                resultsWithWindfall.summary.portfolioAtRetirement = retirementYear.totalBalance || retirementYear.totalPortfolio || 0;
+            }
+            
+            resultsWithWindfall.summary.legacyAmount = lastYear.totalBalance || lastYear.totalPortfolio || 0;
+            
+            const runOutYear = resultsWithWindfall.yearByYear.find(y => {
+                const balance = y.totalBalance !== undefined ? y.totalBalance : y.totalPortfolio;
+                return (balance || 0) <= 0;
+            });
+            resultsWithWindfall.summary.moneyLastsAge = runOutYear ? runOutYear.age : inputs.lifeExpectancy;
+            
+            // Recalculate probability
+            const yearsShort = runOutYear ? (inputs.lifeExpectancy - runOutYear.age) : 0;
+            if (yearsShort === 0) {
+                resultsWithWindfall.probability = Math.min(95, 75 + Math.floor(resultsWithWindfall.summary.legacyAmount / 50000));
+                resultsWithWindfall.onTrack = true;
+            } else {
+                const retirementYears = inputs.lifeExpectancy - inputs.retirementAge;
+                const successRatio = (retirementYears - yearsShort) / retirementYears;
+                resultsWithWindfall.probability = Math.round(successRatio * 100);
+                resultsWithWindfall.onTrack = resultsWithWindfall.probability >= 70;
+            }
+            
+            // Step 4: Verify results
+            log('<h2>Step 4: Verify Results</h2>');
+            
+            const windfallPortfolio = resultsWithWindfall.summary.portfolioAtRetirement;
+            const windfallMoneyLasts = resultsWithWindfall.summary.moneyLastsAge;
+            const windfallProbability = resultsWithWindfall.probability;
+            
+            log(`Portfolio at retirement: $${windfallPortfolio.toLocaleString()}`);
+            log(`Money lasts until: Age ${windfallMoneyLasts}`);
+            log(`Success probability: ${windfallProbability}%`);
+            
+            // Assertions
+            log('<h2>Test Results:</h2>');
+            
+            const portfolioIncreased = windfallPortfolio > basePortfolio;
+            log(`Portfolio increased? ${portfolioIncreased ? 'YES' : 'NO'} (${basePortfolio.toLocaleString()} → ${windfallPortfolio.toLocaleString()})`, portfolioIncreased);
+            
+            const portfolioIncreasedBy = windfallPortfolio - basePortfolio;
+            const expectedIncrease = 1000000; // $1M windfall at retirement (no growth)
+            const increaseCorrect = portfolioIncreasedBy >= expectedIncrease * 0.95 && portfolioIncreasedBy <= expectedIncrease * 1.05;
+            log(`Portfolio increase ~$1M? ${increaseCorrect ? 'YES' : 'NO'} (actual: +$${portfolioIncreasedBy.toLocaleString()})`, increaseCorrect);
+            
+            const moneyLastsLonger = windfallMoneyLasts > baseMoneyLasts;
+            log(`Money lasts longer? ${moneyLastsLonger ? 'YES' : 'NO'} (${baseMoneyLasts} → ${windfallMoneyLasts})`, moneyLastsLonger);
+            
+            const probabilityHigher = windfallProbability > baseProbability;
+            log(`Success probability higher? ${probabilityHigher ? 'YES' : 'NO'} (${baseProbability}% → ${windfallProbability}%)`, probabilityHigher);
+            
+            const portfolioNotZero = windfallPortfolio > 0;
+            log(`Portfolio not $0? ${portfolioNotZero ? 'YES' : 'NO'}`, portfolioNotZero);
+            
+            // Final verdict
+            const allPassed = portfolioIncreased && increaseCorrect && moneyLastsLonger && probabilityHigher && portfolioNotZero;
+            
+            if (allPassed) {
+                log('<h2 style="color: #0f0;">✅ ALL TESTS PASSED!</h2>');
+            } else {
+                log('<h2 style="color: #f00;">❌ SOME TESTS FAILED!</h2>');
+            }
+        }
+    </script>
+</body>
+</html>
