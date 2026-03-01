@@ -163,6 +163,25 @@ const AppV5Enhanced = {
                 </div>
             </div>
             
+            <h3>🏛️ Government Benefits</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">CPP (Annual)</div>
+                    <div class="stat-value">$${(baseResults.govBenefits.cppTotal || 0).toLocaleString()}</div>
+                    <div class="stat-note">Starting at age ${baseResults.govBenefits.cppStartAge || 65}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">OAS (Annual)</div>
+                    <div class="stat-value">$${(baseResults.govBenefits.oasMax || 0).toLocaleString()}</div>
+                    <div class="stat-note">Starting at age 65</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Gov Benefits</div>
+                    <div class="stat-value">$${(baseResults.govBenefits.total || 0).toLocaleString()}/year</div>
+                    <div class="stat-note">Reduces portfolio withdrawals</div>
+                </div>
+            </div>
+            
             <h3>📈 Confidence Bands</h3>
             <p>This chart shows the range of possible outcomes based on 1000 simulations with realistic market volatility:</p>
             <canvas id="confidence-bands-chart"></canvas>
@@ -172,6 +191,7 @@ const AppV5Enhanced = {
                 <ul>
                     <li><strong>Probability:</strong> ${mc.successRate}% chance your money lasts until age ${baseResults.summary.moneyLastsAge || 90}</li>
                     <li><strong>Range:</strong> In 80% of scenarios, you'll have between $${(mc.finalBalance.p10 / 1000).toFixed(0)}K and $${(mc.finalBalance.p90 / 1000).toFixed(0)}K at the end</li>
+                    <li><strong>Government Support:</strong> CPP ($${(baseResults.govBenefits.cppTotal || 0).toLocaleString()}) + OAS ($${(baseResults.govBenefits.oasMax || 0).toLocaleString()}) = $${(baseResults.govBenefits.total || 0).toLocaleString()}/year reduces portfolio stress</li>
                     <li><strong>Tax Efficiency:</strong> Optimized withdrawal strategy saves $${(tax.taxSavings / 1000).toFixed(0)}K over your lifetime</li>
                 </ul>
             </div>

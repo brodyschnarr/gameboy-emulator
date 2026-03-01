@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retirement Calculator Tests V3 - CPP/OAS & V5 Features</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        h2 { color: #555; margin-top: 30px; }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-left: 4px solid #ddd;
+            font-size: 14px;
+        }
+        .test-case.pass {
+            border-left-color: #22c55e;
+            background: #f0fdf4;
+        }
+        .test-case.fail {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        .test-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .test-error {
+            color: #dc2626;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .summary {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .summary.pass { 
+            color: #22c55e; 
+            background: #f0fdf4;
+            border: 2px solid #22c55e;
+        }
+        .summary.fail { 
+            color: #ef4444; 
+            background: #fef2f2;
+            border: 2px solid #ef4444;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        .section-summary {
+            font-weight: bold;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #e0e7ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Retirement Calculator Test Suite V3</h1>
+    <p><strong>Focus:</strong> CPP/OAS calculations, government benefits integration, V5 Monte Carlo & tax optimization</p>
+    
+    <button onclick="runAllTests()">🚀 Run All Tests</button>
+    <button onclick="runCPPOASTests()">🏛️ CPP/OAS Tests</button>
+    <button onclick="runMonteCarloTests()">🎲 Monte Carlo Tests</button>
+    <button onclick="runTaxOptimizationTests()">💰 Tax Tests</button>
+    <button onclick="runIntegrationTests()">🔗 Integration Tests</button>
+    
+    <div id="results"></div>
+
+    <script src="canada-tax.js"></script>
+    <script src="cpp-calculator.js"></script>
+    <script src="benchmarks.js"></script>
+    <script src="lifestyle-data.js"></script>
+    <script src="regional-data.js"></script>
+    <script src="canada-map.js"></script>
+    <script src="income-sources.js"></script>
+    <script src="cpp-optimizer.js"></script>
+    <script src="scenario-manager.js"></script>
+    <script src="healthcare-estimator.js"></script>
+    <script src="calc.js"></script>
+    <script src="monte-carlo.js"></script>
+    <script src="tax-optimizer.js"></script>
+    <script src="what-if-analyzer.js"></script>
+    <script src="safe-withdrawal.js"></script>
+    
+    <script>
+        const TestRunner = {
+            results: [],
+            currentSection: '',
+            
+            setSection(name) {
+                this.currentSection = name;
+            },
+            
+            assert(condition, testName, errorMsg = '') {
+                const result = {
+                    name: testName,
+                    section: this.currentSection,
+                    pass: !!condition,
+                    error: condition ? null : errorMsg
+                };
+                this.results.push(result);
+                return condition;
+            },
+            
+            assertEqual(actual, expected, testName) {
+                const pass = actual === expected;
+                this.assert(
+                    pass,
+                    testName,
+                    `Expected ${expected}, got ${actual}`
+                );
+            },
+            
+            assertApprox(actual, expected, tolerance, testName) {
+                const diff = Math.abs(actual - expected);
+                const pass = diff <= tolerance;
+                this.assert(
+                    pass,
+                    testName,
+                    `Expected ~${expected} (±${tolerance}), got ${actual} (diff: ${diff})`
+                );
+            },
+            
+            assertRange(value, min, max, testName) {
+                const pass = value >= min && value <= max;
+                this.assert(
+                    pass,
+                    testName,
+                    `Expected ${min} ≤ value ≤ ${max}, got ${value}`
+                );
+            },
+            
+            render() {
+                const passed = this.results.filter(r => r.pass).length;
+                const failed = this.results.filter(r => !r.pass).length;
+                const total = this.results.length;
+                
+                let html = `
+                    <div class="summary ${failed === 0 ? 'pass' : 'fail'}">
+                        ${failed === 0 ? '✅' : '❌'} ${passed}/${total} tests passed
+                        ${failed > 0 ? `<div style="font-size: 20px; margin-top: 10px;">${failed} tests failed</div>` : ''}
+                    </div>
+                `;
+                
+                const sections = [...new Set(this.results.map(r => r.section))];
+                
+                sections.forEach(section => {
+                    const sectionResults = this.results.filter(r => r.section === section);
+                    const sectionPassed = sectionResults.filter(r => r.pass).length;
+                    const sectionTotal = sectionResults.length;
+                    
+                    html += `
+                        <div class="test-section">
+                            <h2>${section}</h2>
+                            <div class="section-summary">
+                                ${sectionPassed}/${sectionTotal} passed
+                            </div>
+                    `;
+                    
+                    sectionResults.forEach(result => {
+                        html += `
+                            <div class="test-case ${result.pass ? 'pass' : 'fail'}">
+                                <div class="test-name">
+                                    ${result.pass ? '✅' : '❌'} ${result.name}
+                                </div>
+                                ${result.error ? `<div class="test-error">${result.error}</div>` : ''}
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                });
+                
+                document.getElementById('results').innerHTML = html;
+            },
+            
+            reset() {
+                this.results = [];
+            }
+        };
+
+        // ═══════════════════════════════════════
+        //  CPP/OAS CALCULATION TESTS
+        // ═══════════════════════════════════════
+        
+        function runCPPOASTests() {
+            TestRunner.reset();
+            TestRunner.setSection('🏛️ CPP & OAS Calculations');
+            
+            // Test 1: Basic CPP calculation
+            const avgIncome = RetirementCalcV4.calculate({
+                currentAge: 30,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 75000,
+                income1: 75000,
+                income2: 0,
+                rrsp: 100000,
+                tfsa: 50000,
+                nonReg: 30000,
+                other: 0,
+                monthlyContribution: 1500,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                avgIncome.govBenefits && avgIncome.govBenefits.cppTotal > 0,
+                'Average income ($75K): CPP benefits calculated'
+            );
+            
+            TestRunner.assertRange(
+                avgIncome.govBenefits.cppTotal,
+                10000,
+                18000,
+                'Average income: CPP should be $10K-$18K/year'
+            );
+            
+            TestRunner.assert(
+                avgIncome.govBenefits.oasMax > 0,
+                'OAS benefits calculated'
+            );
+            
+            TestRunner.assertRange(
+                avgIncome.govBenefits.oasMax,
+                7000,
+                10000,
+                'OAS should be ~$7K-$10K/year'
+            );
+            
+            // Test 2: CPP starts at correct age in projection
+            const retirementYears = avgIncome.yearByYear.filter(y => y.phase === 'retirement');
+            const age64 = retirementYears.find(y => y.age === 64);
+            const age65 = retirementYears.find(y => y.age === 65);
+            
+            if (age64 && age65) {
+                TestRunner.assert(
+                    age65.governmentIncome > age64.governmentIncome,
+                    'Government income increases at age 65 (CPP + OAS start)'
+                );
+                
+                TestRunner.assertApprox(
+                    age65.governmentIncome,
+                    avgIncome.govBenefits.cppTotal + avgIncome.govBenefits.oasMax,
+                    1000,
+                    'Age 65 government income matches CPP + OAS total'
+                );
+            }
+            
+            // Test 3: CPP at 60 (early) is less than 65
+            const cpp60 = RetirementCalcV4.calculate({
+                currentAge: 60,
+                retirementAge: 60,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 75000,
+                income1: 75000,
+                income2: 0,
+                rrsp: 500000,
+                tfsa: 150000,
+                nonReg: 100000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 45000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 60,
+                cppStartAge: 60,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            const cpp65 = RetirementCalcV4.calculate({
+                currentAge: 60,
+                retirementAge: 60,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 75000,
+                income1: 75000,
+                income2: 0,
+                rrsp: 500000,
+                tfsa: 150000,
+                nonReg: 100000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 45000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 60,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                cpp60.govBenefits.cppTotal < cpp65.govBenefits.cppTotal,
+                'CPP at 60 is reduced vs CPP at 65 (early penalty)'
+            );
+            
+            const penalty = (cpp65.govBenefits.cppTotal - cpp60.govBenefits.cppTotal) / cpp65.govBenefits.cppTotal;
+            TestRunner.assertRange(
+                penalty,
+                0.30,
+                0.40,
+                'CPP at 60 should be ~36% less than CPP at 65'
+            );
+            
+            // Test 4: CPP at 70 (delayed) is more than 65
+            const cpp70 = RetirementCalcV4.calculate({
+                currentAge: 60,
+                retirementAge: 60,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 75000,
+                income1: 75000,
+                income2: 0,
+                rrsp: 500000,
+                tfsa: 150000,
+                nonReg: 100000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 45000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 60,
+                cppStartAge: 70,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                cpp70.govBenefits.cppTotal > cpp65.govBenefits.cppTotal,
+                'CPP at 70 is enhanced vs CPP at 65 (delayed bonus)'
+            );
+            
+            const bonus = (cpp70.govBenefits.cppTotal - cpp65.govBenefits.cppTotal) / cpp65.govBenefits.cppTotal;
+            TestRunner.assertRange(
+                bonus,
+                0.35,
+                0.45,
+                'CPP at 70 should be ~42% more than CPP at 65'
+            );
+            
+            // Test 5: Couple gets dual CPP
+            const couple = RetirementCalcV4.calculate({
+                currentAge: 35,
+                partnerAge: 33,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'couple',
+                income1: 80000,
+                income2: 60000,
+                rrsp: 200000,
+                tfsa: 100000,
+                nonReg: 50000,
+                other: 0,
+                monthlyContribution: 2500,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 70000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                couple.govBenefits.cpp1 > 0 && couple.govBenefits.cpp2 > 0,
+                'Couple: Both partners have CPP income'
+            );
+            
+            TestRunner.assert(
+                couple.govBenefits.cppTotal > avgIncome.govBenefits.cppTotal,
+                'Couple CPP total is greater than single person CPP'
+            );
+            
+            TestRunner.assertRange(
+                couple.govBenefits.cppTotal,
+                15000,
+                30000,
+                'Couple: Combined CPP should be $15K-$30K/year'
+            );
+            
+            // Test 6: Government benefits reduce portfolio stress
+            const withBenefits = cpp65;
+            const noBenefits = RetirementCalcV4.calculate({
+                currentAge: 60,
+                retirementAge: 60,
+                lifeExpectancy: 85,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 75000,
+                income1: 75000,
+                income2: 0,
+                rrsp: 500000,
+                tfsa: 150000,
+                nonReg: 100000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 45000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 60,
+                cppStartAge: 100, // Never get CPP
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            TestRunner.assert(
+                withBenefits.summary.legacyAmount > noBenefits.summary.legacyAmount,
+                'Government benefits preserve more portfolio wealth'
+            );
+            
+            TestRunner.render();
+        }
+
+        // ═══════════════════════════════════════
+        //  MONTE CARLO TESTS
+        // ═══════════════════════════════════════
+        
+        function runMonteCarloTests() {
+            TestRunner.reset();
+            TestRunner.setSection('🎲 Monte Carlo Simulation');
+            
+            const baseInputs = {
+                currentAge: 35,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 100000,
+                income1: 100000,
+                income2: 0,
+                rrsp: 100000,
+                tfsa: 50000,
+                nonReg: 30000,
+                other: 0,
+                monthlyContribution: 2000,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 60000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            };
+            
+            // Test 1: Monte Carlo runs successfully
+            let mcResults;
+            try {
+                mcResults = MonteCarloSimulator.simulate(baseInputs, { iterations: 100 });
+                TestRunner.assert(true, 'Monte Carlo simulation completes without error');
+            } catch (error) {
+                TestRunner.assert(false, 'Monte Carlo simulation completes without error', error.message);
+                TestRunner.render();
+                return;
+            }
+            
+            // Test 2: Returns expected structure
+            TestRunner.assert(
+                mcResults.successRate !== undefined,
+                'Monte Carlo returns success rate'
+            );
+            
+            TestRunner.assert(
+                mcResults.finalBalance && mcResults.finalBalance.p50 !== undefined,
+                'Monte Carlo returns final balance percentiles'
+            );
+            
+            TestRunner.assert(
+                mcResults.totalRuns === 100,
+                'Monte Carlo runs correct number of iterations'
+            );
+            
+            // Test 3: Success rate is reasonable
+            TestRunner.assertRange(
+                mcResults.successRate,
+                0,
+                100,
+                'Success rate is between 0-100%'
+            );
+            
+            // Test 4: Percentiles are ordered correctly
+            TestRunner.assert(
+                mcResults.finalBalance.p10 <= mcResults.finalBalance.p50,
+                'P10 ≤ P50 (10th percentile ≤ median)'
+            );
+            
+            TestRunner.assert(
+                mcResults.finalBalance.p50 <= mcResults.finalBalance.p90,
+                'P50 ≤ P90 (median ≤ 90th percentile)'
+            );
+            
+            // Test 5: Government benefits included in Monte Carlo
+            TestRunner.assert(
+                mcResults.percentiles && mcResults.percentiles.p50,
+                'Monte Carlo includes percentile projections'
+            );
+            
+            const p50Projection = mcResults.percentiles.p50.projection;
+            const retirementYears = p50Projection.filter(y => y.age >= 65);
+            
+            TestRunner.assert(
+                retirementYears.some(y => y.governmentIncome > 0),
+                'Monte Carlo projections include government income'
+            );
+            
+            // Test 6: With good portfolio, high success rate
+            const wellFunded = MonteCarloSimulator.simulate({
+                ...baseInputs,
+                rrsp: 800000,
+                tfsa: 200000,
+                nonReg: 200000,
+                monthlyContribution: 0,
+                currentAge: 65,
+                retirementAge: 65,
+                annualSpending: 50000
+            }, { iterations: 100 });
+            
+            TestRunner.assert(
+                wellFunded.successRate >= 80,
+                'Well-funded portfolio has high success rate (≥80%)'
+            );
+            
+            // Test 7: Underfunded portfolio has low success rate
+            const underfunded = MonteCarloSimulator.simulate({
+                ...baseInputs,
+                rrsp: 100000,
+                tfsa: 50000,
+                nonReg: 30000,
+                monthlyContribution: 0,
+                currentAge: 65,
+                retirementAge: 65,
+                annualSpending: 60000
+            }, { iterations: 100 });
+            
+            TestRunner.assert(
+                underfunded.successRate < wellFunded.successRate,
+                'Underfunded portfolio has lower success rate than well-funded'
+            );
+            
+            TestRunner.render();
+        }
+
+        // ═══════════════════════════════════════
+        //  TAX OPTIMIZATION TESTS
+        // ═══════════════════════════════════════
+        
+        function runTaxOptimizationTests() {
+            TestRunner.reset();
+            TestRunner.setSection('💰 Tax Optimization');
+            
+            // Test 1: Tax optimizer runs successfully
+            let taxResults;
+            try {
+                taxResults = TaxOptimizer.optimizeWithdrawals({
+                    rrsp: 800000,
+                    tfsa: 200000,
+                    nonReg: 200000,
+                    annualSpending: 60000,
+                    cppAnnual: 15000,
+                    oasAnnual: 8000,
+                    province: 'ON',
+                    retirementAge: 65,
+                    lifeExpectancy: 90
+                });
+                TestRunner.assert(true, 'Tax optimizer completes without error');
+            } catch (error) {
+                TestRunner.assert(false, 'Tax optimizer completes without error', error.message);
+                TestRunner.render();
+                return;
+            }
+            
+            // Test 2: Returns expected structure
+            TestRunner.assert(
+                taxResults.recommended !== undefined,
+                'Tax optimizer returns recommended strategy'
+            );
+            
+            TestRunner.assert(
+                taxResults.taxSavings !== undefined,
+                'Tax optimizer calculates tax savings'
+            );
+            
+            TestRunner.assert(
+                taxResults.comparison !== undefined,
+                'Tax optimizer provides strategy comparison'
+            );
+            
+            // Test 3: Optimal strategy saves tax
+            TestRunner.assert(
+                taxResults.taxSavings >= 0,
+                'Tax savings are non-negative'
+            );
+            
+            // Test 4: All strategies compared
+            TestRunner.assert(
+                taxResults.comparison.naive !== undefined,
+                'Naive strategy included in comparison'
+            );
+            
+            TestRunner.assert(
+                taxResults.comparison.frontLoad !== undefined,
+                'Front-load strategy included in comparison'
+            );
+            
+            TestRunner.assert(
+                taxResults.comparison.oasOptimal !== undefined,
+                'OAS-optimal strategy included in comparison'
+            );
+            
+            // Test 5: Optimal strategy has highest net income
+            const strategies = Object.values(taxResults.comparison);
+            const optimalStrategy = taxResults.comparison[taxResults.recommended];
+            
+            const allNetIncomes = strategies.map(s => s.netIncome);
+            const maxNetIncome = Math.max(...allNetIncomes);
+            
+            TestRunner.assert(
+                optimalStrategy.netIncome === maxNetIncome,
+                'Recommended strategy has highest net income'
+            );
+            
+            TestRunner.render();
+        }
+
+        // ═══════════════════════════════════════
+        //  INTEGRATION TESTS
+        // ═══════════════════════════════════════
+        
+        function runIntegrationTests() {
+            TestRunner.reset();
+            TestRunner.setSection('🔗 Integration Tests');
+            
+            const baseInputs = {
+                currentAge: 35,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 100000,
+                income1: 100000,
+                income2: 0,
+                rrsp: 100000,
+                tfsa: 50000,
+                nonReg: 30000,
+                other: 0,
+                monthlyContribution: 2000,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 60000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            };
+            
+            // Test 1: Base calculation includes government benefits
+            const baseCalc = RetirementCalcV4.calculate(baseInputs);
+            
+            TestRunner.assert(
+                baseCalc.govBenefits && baseCalc.govBenefits.cppTotal > 0,
+                'Base calculation includes CPP'
+            );
+            
+            TestRunner.assert(
+                baseCalc.govBenefits.oasMax > 0,
+                'Base calculation includes OAS'
+            );
+            
+            // Test 2: Monte Carlo uses same government benefits
+            const mcResults = MonteCarloSimulator.simulate(baseInputs, { iterations: 10 });
+            
+            const mcProjection = mcResults.percentiles.p50.projection;
+            const age65 = mcProjection.find(y => y.age === 65);
+            
+            TestRunner.assert(
+                age65 && age65.governmentIncome > 0,
+                'Monte Carlo includes government income at age 65'
+            );
+            
+            // Test 3: Government benefits are consistent across modules
+            const baseAge65Income = baseCalc.yearByYear.find(y => y.age === 65)?.governmentIncome || 0;
+            
+            TestRunner.assertApprox(
+                baseAge65Income,
+                baseCalc.govBenefits.cppTotal + baseCalc.govBenefits.oasMax,
+                1000,
+                'Base calculation government income matches CPP + OAS'
+            );
+            
+            // Test 4: What-if analyzer preserves government benefits
+            const whatIfResults = WhatIfAnalyzer.analyzeAll(baseInputs);
+            
+            TestRunner.assert(
+                whatIfResults.scenarios && whatIfResults.scenarios.base,
+                'What-if analyzer generates scenarios'
+            );
+            
+            const baseScenario = whatIfResults.scenarios.base.results;
+            TestRunner.assert(
+                baseScenario.govBenefits && baseScenario.govBenefits.cppTotal > 0,
+                'What-if scenarios include government benefits'
+            );
+            
+            // Test 5: All V5 modules load without errors
+            TestRunner.assert(
+                typeof MonteCarloSimulator !== 'undefined',
+                'MonteCarloSimulator module loaded'
+            );
+            
+            TestRunner.assert(
+                typeof TaxOptimizer !== 'undefined',
+                'TaxOptimizer module loaded'
+            );
+            
+            TestRunner.assert(
+                typeof WhatIfAnalyzer !== 'undefined',
+                'WhatIfAnalyzer module loaded'
+            );
+            
+            TestRunner.assert(
+                typeof SafeWithdrawalCalculator !== 'undefined',
+                'SafeWithdrawalCalculator module loaded'
+            );
+            
+            TestRunner.render();
+        }
+
+        // ═══════════════════════════════════════
+        //  RUN ALL
+        // ═══════════════════════════════════════
+        
+        function runAllTests() {
+            runCPPOASTests();
+            setTimeout(() => runMonteCarloTests(), 100);
+            setTimeout(() => runTaxOptimizationTests(), 200);
+            setTimeout(() => runIntegrationTests(), 300);
+        }
+    </script>
+</body>
+</html>
