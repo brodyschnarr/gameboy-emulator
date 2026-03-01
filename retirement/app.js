@@ -896,24 +896,30 @@ const AppV4 = {
             return;
         }
 
-        const maxBalance = Math.max(...retirementYears.map(y => y.totalBalance));
-
         const html = retirementYears.map(year => {
-            const rrspPct = (year.rrsp / maxBalance) * 100;
-            const tfsaPct = (year.tfsa / maxBalance) * 100;
-            const nonRegPct = (year.nonReg / maxBalance) * 100;
-            const otherPct = (year.other / maxBalance) * 100;
+            const total = year.totalBalance;
+            const rrspPct = total > 0 ? (year.rrsp / total) * 100 : 0;
+            const tfsaPct = total > 0 ? (year.tfsa / total) * 100 : 0;
+            const nonRegPct = total > 0 ? (year.nonReg / total) * 100 : 0;
+            const otherPct = total > 0 ? (year.other / total) * 100 : 0;
 
             return `
                 <div class="year-bar-row">
                     <div class="year-label">Age ${year.age}</div>
-                    <div class="year-bar">
-                        <div class="bar-segment rrsp" style="width: ${rrspPct}%"></div>
-                        <div class="bar-segment tfsa" style="width: ${tfsaPct}%"></div>
-                        <div class="bar-segment nonreg" style="width: ${nonRegPct}%"></div>
-                        ${otherPct > 0 ? `<div class="bar-segment other" style="width: ${otherPct}%"></div>` : ''}
+                    <div class="year-bar" title="Total: $${total.toLocaleString()}">
+                        ${year.rrsp > 0 ? `<div class="bar-segment rrsp" style="width: ${rrspPct}%" title="RRSP: $${year.rrsp.toLocaleString()} (${rrspPct.toFixed(1)}%)"></div>` : ''}
+                        ${year.tfsa > 0 ? `<div class="bar-segment tfsa" style="width: ${tfsaPct}%" title="TFSA: $${year.tfsa.toLocaleString()} (${tfsaPct.toFixed(1)}%)"></div>` : ''}
+                        ${year.nonReg > 0 ? `<div class="bar-segment nonreg" style="width: ${nonRegPct}%" title="Non-Reg: $${year.nonReg.toLocaleString()} (${nonRegPct.toFixed(1)}%)"></div>` : ''}
+                        ${year.other > 0 ? `<div class="bar-segment other" style="width: ${otherPct}%" title="Other: $${year.other.toLocaleString()} (${otherPct.toFixed(1)}%)"></div>` : ''}
                     </div>
-                    <div class="year-total">$${year.totalBalance.toLocaleString()}</div>
+                    <div class="year-breakdown-details">
+                        <div class="year-total">$${total.toLocaleString()}</div>
+                        <div class="year-percentages">
+                            ${year.rrsp > 0 ? `<span class="pct-label rrsp-color">${rrspPct.toFixed(0)}%</span>` : ''}
+                            ${year.tfsa > 0 ? `<span class="pct-label tfsa-color">${tfsaPct.toFixed(0)}%</span>` : ''}
+                            ${year.nonReg > 0 ? `<span class="pct-label nonreg-color">${nonRegPct.toFixed(0)}%</span>` : ''}
+                        </div>
+                    </div>
                 </div>
             `;
         }).join('');

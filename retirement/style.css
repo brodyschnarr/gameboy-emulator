@@ -1667,3 +1667,44 @@ input:focus {
         font-size: 14px;
     }
 }
+
+/* Year Breakdown Enhancements */
+.year-breakdown-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 140px;
+}
+
+.year-total {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.year-percentages {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 11px;
+}
+
+.pct-label {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.pct-label.rrsp-color {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.pct-label.tfsa-color {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.pct-label.nonreg-color {
+    background: #dbeafe;
+    color: #1e40af;
+}
