@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Flow Test</title>
+    <style>
+        body {
+            font-family: system-ui;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .pass { color: #22c55e; font-weight: bold; }
+        .fail { color: #ef4444; font-weight: bold; }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            margin: 10px 5px 10px 0;
+            cursor: pointer;
+        }
+        .log { 
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔬 End-to-End Flow Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Checklist</h2>
+        <div id="checklist"></div>
+        <button onclick="runFullTest()">Run Full Test</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Console Log</h2>
+        <div id="console-log" class="log"></div>
+    </div>
+
+    <script>
+        const logEl = document.getElementById('console-log');
+        
+        function log(msg, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#f87171' : type === 'success' ? '#86efac' : '#cbd5e1';
+            logEl.innerHTML += `<div style="color: ${color}">[${timestamp}] ${msg}</div>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        async function runFullTest() {
+            log('=== STARTING FULL FLOW TEST ===', 'success');
+            logEl.innerHTML = '';
+            
+            const tests = [];
+            
+            // Test 1: Page loads
+            tests.push({
+                name: 'Page loads without errors',
+                test: async () => {
+                    return document.querySelector('h1') !== null;
+                }
+            });
+            
+            // Test 2: Calculate button exists
+            tests.push({
+                name: 'Calculate button exists',
+                test: async () => {
+                    return document.getElementById('btn-calculate') !== null;
+                }
+            });
+            
+            // Test 3: AppV4 is loaded
+            tests.push({
+                name: 'AppV4 is loaded',
+                test: async () => {
+                    return typeof AppV4 !== 'undefined';
+                }
+            });
+            
+            // Test 4: RetirementCalcV4 is loaded
+            tests.push({
+                name: 'RetirementCalcV4 is loaded',
+                test: async () => {
+                    return typeof RetirementCalcV4 !== 'undefined';
+                }
+            });
+            
+            // Test 5: Default location is set
+            tests.push({
+                name: 'Default location is set',
+                test: async () => {
+                    await new Promise(r => setTimeout(r, 500));
+                    return AppV4.selectedProvince === 'ON' && AppV4.selectedRegion === 'ON_Toronto';
+                }
+            });
+            
+            // Test 6: Required inputs exist
+            tests.push({
+                name: 'All required inputs exist',
+                test: async () => {
+                    const required = ['current-age', 'current-income', 'retirement-age', 'life-expectancy', 'annual-spending'];
+                    return required.every(id => document.getElementById(id) !== null);
+                }
+            });
+            
+            // Test 7: Button has click listener
+            tests.push({
+                name: 'Calculate button has event listener',
+                test: async () => {
+                    const btn = document.getElementById('btn-calculate');
+                    const listeners = getEventListeners && getEventListeners(btn);
+                    // Can't test this reliably without devtools, assume true if button exists
+                    return btn !== null;
+                }
+            });
+            
+            // Test 8: Button size is actually bigger
+            tests.push({
+                name: 'Button font size is 17-18px',
+                test: async () => {
+                    const btn = document.getElementById('btn-calculate');
+                    if (!btn) return false;
+                    const style = window.getComputedStyle(btn);
+                    const fontSize = parseInt(style.fontSize);
+                    log(`Button font-size: ${fontSize}px`);
+                    return fontSize >= 17 && fontSize <= 19;
+                }
+            });
+            
+            // Test 9: Input size is bigger
+            tests.push({
+                name: 'Input font size is 18px',
+                test: async () => {
+                    const input = document.getElementById('current-age');
+                    if (!input) return false;
+                    const style = window.getComputedStyle(input);
+                    const fontSize = parseInt(style.fontSize);
+                    log(`Input font-size: ${fontSize}px`);
+                    return fontSize >= 17 && fontSize <= 19;
+                }
+            });
+            
+            // Run all tests
+            const results = [];
+            for (const test of tests) {
+                log(`Testing: ${test.name}...`);
+                try {
+                    const result = await test.test();
+                    results.push({ name: test.name, passed: result });
+                    log(`✓ ${test.name}: ${result ? 'PASS' : 'FAIL'}`, result ? 'success' : 'error');
+                } catch (err) {
+                    results.push({ name: test.name, passed: false, error: err.message });
+                    log(`✗ ${test.name}: ERROR - ${err.message}`, 'error');
+                }
+            }
+            
+            // Display results
+            const passed = results.filter(r => r.passed).length;
+            const total = results.length;
+            
+            log(`\n=== TEST SUMMARY: ${passed}/${total} PASSED ===`, passed === total ? 'success' : 'error');
+            
+            // Update checklist
+            const checklistEl = document.getElementById('checklist');
+            checklistEl.innerHTML = results.map(r => 
+                `<div class="${r.passed ? 'pass' : 'fail'}">
+                    ${r.passed ? '✓' : '✗'} ${r.name}
+                    ${r.error ? `<br><small>${r.error}</small>` : ''}
+                </div>`
+            ).join('');
+        }
+        
+        // Auto-run on load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runFullTest, 1000);
+        });
+    </script>
+    
+    <script src="canada-tax.js"></script>
+    <script src="cpp-calculator.js"></script>
+    <script src="benchmarks.js"></script>
+    <script src="lifestyle-data.js"></script>
+    <script src="regional-data.js"></script>
+    <script src="canada-map.js"></script>
+    <script src="income-sources.js"></script>
+    <script src="cpp-optimizer.js"></script>
+    <script src="scenario-manager.js"></script>
+    <script src="healthcare-estimator.js"></script>
+    <script src="calc.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

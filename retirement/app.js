@@ -203,6 +203,7 @@ const AppV4 = {
     _setupMap() {
         CanadaMap.render('map-container');
         CanadaMap.onSelect = (province, region) => {
+            console.log('[AppV4] Map selection:', province, region);
             this.selectedProvince = province;
             this.selectedRegion = region;
             
@@ -213,8 +214,14 @@ const AppV4 = {
             this._updateRegionalBenchmarks();
         };
         
-        // Set default
+        // Set default location
+        console.log('[AppV4] Setting default location: ON, ON_Toronto');
         CanadaMap.setSelection('ON', 'ON_Toronto');
+        
+        // Manually trigger the callback to ensure state is set
+        this.selectedProvince = 'ON';
+        this.selectedRegion = 'ON_Toronto';
+        console.log('[AppV4] Default location set:', this.selectedProvince, this.selectedRegion);
     },
 
     _setupIncome() {
@@ -345,13 +352,26 @@ const AppV4 = {
 
     _setupCalculate() {
         const calculateBtn = document.getElementById('btn-calculate');
+        console.log('[AppV4] Calculate button:', calculateBtn);
         if (calculateBtn) {
             calculateBtn.addEventListener('click', () => {
+                console.log('[AppV4] Calculate button clicked!');
+                console.log('[AppV4] Selected province:', this.selectedProvince);
+                console.log('[AppV4] Selected region:', this.selectedRegion);
+                console.log('[AppV4] Family status:', this.familyStatus);
+                
                 if (this._validateAllInputs()) {
+                    console.log('[AppV4] Validation passed, running calculation...');
                     this._runCalculation();
+                } else {
+                    console.error('[AppV4] Validation failed');
                 }
             });
+            console.log('[AppV4] Calculate button listener attached');
+        } else {
+            console.error('[AppV4] Calculate button NOT FOUND in DOM!');
         }
+    }
 
         const editBtn = document.getElementById('btn-edit');
         if (editBtn) {
