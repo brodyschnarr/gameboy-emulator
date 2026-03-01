@@ -1,5 +1,68 @@
 # Retirement Calculator Changelog
 
+## V5.2.0 - Windfall Modeling (2026-03-02)
+
+### 💰 Major Feature: Windfall Modeling
+
+#### What It Is
+Model one-time financial events (home sales, inheritances, business sales) with **probability-based outcomes**. Each windfall has a likelihood (0-100%) and the Monte Carlo simulation randomizes whether it occurs in each scenario.
+
+#### Features Added
+- **Windfall Manager** (`windfalls.js` - 500 lines)
+  - Add/edit/delete windfalls
+  - Name, amount, year, probability, tax treatment, destination
+  - Validation and error checking
+  - Expected value calculation
+  - Summary statistics
+  
+- **UI Integration**
+  - Windfall section in Step 1 (after income sources)
+  - Form to add/edit windfalls
+  - List view with edit/delete actions
+  - Summary cards showing totals and expected value
+  
+- **Monte Carlo Integration**
+  - Each simulation randomizes windfalls by probability
+  - Tracks which scenarios had windfalls
+  - Success rate reflects average across with/without scenarios
+  
+- **Results Display**
+  - Windfall summary card in Overview tab
+  - Shows total amount, expected value, probabilities
+  - List of all windfalls with key details
+  - Note explaining probability-weighted analysis
+
+#### Use Cases
+- **Home sale:** Downsizing in retirement (90-95% probability)
+- **Inheritance:** From parents (30-60% probability depending on timing)
+- **Business sale:** Selling company at retirement (20-40% probability)
+- **Stock options:** Vesting at exit (70-90% probability)
+
+#### Technical Implementation
+- Windfalls stored in `AppV4.windfalls` array
+- Passed to Monte Carlo as part of inputs
+- Randomized in `_runSingleSimulation` loop
+- Applied to appropriate accounts (RRSP/TFSA/Non-Reg)
+- Simplified tax calculation (~30% for taxable windfalls)
+
+#### Files Modified/Created
+- **Created:**
+  - `windfalls.js` (500 lines) - Core windfall manager
+  - `WINDFALL-FEATURE.md` (350 lines) - Complete user guide
+  
+- **Modified:**
+  - `app.js` - Added windfall setup and UI management
+  - `monte-carlo.js` - Added windfall randomization logic
+  - `app-v5-enhanced.js` - Added windfall summary display
+  - `style-v5.css` - Added windfall UI styling
+  - `index.html` - Added windfall section and script tag
+
+#### Statistics
+- **Code Added:** ~700 lines (windfall logic + UI)
+- **Documentation:** 350 lines (comprehensive guide)
+- **UI Components:** 5 (form, list, summary, cards, actions)
+- **Integration Points:** 3 (app, Monte Carlo, results)
+
 ## V5.1.0 - Deep Dive Improvements (2026-03-02)
 
 ### 🎯 Major Features Added
