@@ -10,29 +10,16 @@ const CanadaMap = {
 
     render(containerId) {
         try {
-            console.log('🗺️ [CanadaMap] render() called with container:', containerId);
-            
             const container = document.getElementById(containerId);
             if (!container) {
-                console.error(`❌ [CanadaMap] Container #${containerId} not found`);
-                alert(`ERROR: Map container #${containerId} not found!`);
+                console.error(`[CanadaMap] Container #${containerId} not found`);
                 return;
             }
 
-            console.log('✅ [CanadaMap] Container found, rendering map...');
             container.innerHTML = this._getMapSVG();
             this._attachListeners();
-            console.log('✅ [CanadaMap] Render complete, map should be visible');
-            
-            // Check if region-display exists
-            const regionDisplay = document.getElementById('region-display');
-            console.log('🔍 [CanadaMap] Region display element exists:', !!regionDisplay);
-            if (!regionDisplay) {
-                console.error('❌ [CanadaMap] WARNING: region-display element not found in DOM!');
-            }
         } catch (error) {
-            console.error('❌ [CanadaMap] Render failed:', error);
-            alert('Map render error: ' + error.message);
+            console.error('[CanadaMap] Render failed:', error);
         }
     },
 
@@ -136,8 +123,6 @@ const CanadaMap = {
     },
 
     _handleProvinceClick(province) {
-        console.log('[CanadaMap] Province clicked:', province);
-        
         // Update visual selection
         document.querySelectorAll('.province-path').forEach(p => {
             p.classList.remove('selected');
@@ -147,9 +132,7 @@ const CanadaMap = {
         this.selectedProvince = province;
         
         // Show region picker if province has regions
-        console.log('[CanadaMap] Getting regions for province:', province);
         const regions = RegionalDataV2.getRegionsByProvince(province);
-        console.log('[CanadaMap] Found regions:', regions);
         
         if (regions && regions.length > 0) {
             this._showRegionPicker(province, regions);
@@ -171,16 +154,9 @@ const CanadaMap = {
     },
 
     _showRegionPicker(province, regions) {
-        console.log('[CanadaMap] _showRegionPicker called for:', province);
-        console.log('[CanadaMap] Regions to display:', regions);
-        
         const container = document.getElementById('region-picker-container');
-        if (!container) {
-            console.error('[CanadaMap] region-picker-container not found!');
-            return;
-        }
+        if (!container) return;
         
-        console.log('[CanadaMap] Container found, removing hidden class');
         container.classList.remove('hidden');
         
         let html = `
@@ -203,25 +179,18 @@ const CanadaMap = {
             </div>
         `;
         
-        console.log('[CanadaMap] Generated HTML, injecting into container');
         container.innerHTML = html;
         
         // Attach listeners to region buttons
-        const buttons = container.querySelectorAll('.region-btn');
-        console.log('[CanadaMap] Attaching listeners to', buttons.length, 'buttons');
-        buttons.forEach(btn => {
+        container.querySelectorAll('.region-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const regionId = e.target.getAttribute('data-region');
                 this._handleRegionClick(province, regionId);
             });
         });
-        
-        console.log('[CanadaMap] ✅ Region picker should now be visible');
     },
 
     _handleRegionClick(province, regionId) {
-        console.log('[CanadaMap] Region clicked:', regionId);
-        
         // Update button states
         document.querySelectorAll('.region-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -231,9 +200,7 @@ const CanadaMap = {
         this.selectedRegion = regionId;
         
         // Show selected region
-        console.log('[CanadaMap] About to call _showLocationDisplay...');
         this._showLocationDisplay(province, regionId);
-        console.log('[CanadaMap] _showLocationDisplay returned');
         
         // Call callback
         if (this.onSelect) {
@@ -242,33 +209,19 @@ const CanadaMap = {
     },
 
     _showLocationDisplay(province, regionId) {
-        console.log('[CanadaMap] _showLocationDisplay called:', province, regionId);
-        
         const displayEl = document.getElementById('region-display');
         const nameEl = document.getElementById('region-name');
         
-        console.log('[CanadaMap] displayEl:', displayEl);
-        console.log('[CanadaMap] nameEl:', nameEl);
-        
         if (!displayEl || !nameEl) {
-            console.error('[CanadaMap] CRITICAL: Location display elements not found!');
-            console.error('[CanadaMap] displayEl exists:', !!displayEl);
-            console.error('[CanadaMap] nameEl exists:', !!nameEl);
-            alert('ERROR: Location display elements missing from page. Check console.');
+            console.error('[CanadaMap] Location display elements not found');
             return;
         }
         
         const region = RegionalDataV2.getRegion(province, regionId);
         const displayName = region ? region.name : regionId;
         
-        console.log('[CanadaMap] Setting region name to:', displayName);
         nameEl.textContent = displayName;
-        
-        console.log('[CanadaMap] Removing hidden class...');
         displayEl.classList.remove('hidden');
-        
-        console.log('[CanadaMap] Display element classes:', displayEl.className);
-        console.log('[CanadaMap] ✅ Location display should now be visible:', displayName);
     },
 
     setSelection(province, region) {
