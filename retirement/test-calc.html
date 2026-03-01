@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retirement Calculator Tests</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #ddd;
+        }
+        .test-case.pass {
+            border-left-color: #22c55e;
+            background: #f0fdf4;
+        }
+        .test-case.fail {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        .test-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .test-error {
+            color: #dc2626;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .summary {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .summary.pass { color: #22c55e; }
+        .summary.fail { color: #ef4444; }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Retirement Calculator Test Suite</h1>
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="runUITests()">Run UI Tests</button>
+    <button onclick="runCalcTests()">Run Calculation Tests</button>
+    
+    <div id="results"></div>
+
+    <script src="canada-tax.js"></script>
+    <script src="cpp-calculator.js"></script>
+    <script src="benchmarks.js"></script>
+    <script src="lifestyle-data.js"></script>
+    <script src="regional-data.js"></script>
+    <script src="canada-map.js"></script>
+    <script src="income-sources.js"></script>
+    <script src="cpp-optimizer.js"></script>
+    <script src="scenario-manager.js"></script>
+    <script src="healthcare-estimator.js"></script>
+    <script src="calc.js"></script>
+    
+    <script>
+        const TestRunner = {
+            results: [],
+            
+            assert(condition, testName, errorMsg = '') {
+                const result = {
+                    name: testName,
+                    pass: !!condition,
+                    error: condition ? null : errorMsg
+                };
+                this.results.push(result);
+                return condition;
+            },
+            
+            assertEqual(actual, expected, testName) {
+                const pass = actual === expected;
+                this.assert(
+                    pass,
+                    testName,
+                    `Expected ${expected}, got ${actual}`
+                );
+            },
+            
+            assertApprox(actual, expected, tolerance, testName) {
+                const diff = Math.abs(actual - expected);
+                const pass = diff <= tolerance;
+                this.assert(
+                    pass,
+                    testName,
+                    `Expected ~${expected} (±${tolerance}), got ${actual} (diff: ${diff})`
+                );
+            },
+            
+            assertRange(value, min, max, testName) {
+                const pass = value >= min && value <= max;
+                this.assert(
+                    pass,
+                    testName,
+                    `Expected ${min} ≤ value ≤ ${max}, got ${value}`
+                );
+            },
+            
+            render() {
+                const passed = this.results.filter(r => r.pass).length;
+                const failed = this.results.filter(r => !r.pass).length;
+                const total = this.results.length;
+                
+                let html = `
+                    <div class="summary ${failed === 0 ? 'pass' : 'fail'}">
+                        ${passed}/${total} tests passed
+                        ${failed > 0 ? `(${failed} failed)` : '✅'}
+                    </div>
+                `;
+                
+                this.results.forEach(result => {
+                    html += `
+                        <div class="test-case ${result.pass ? 'pass' : 'fail'}">
+                            <div class="test-name">
+                                ${result.pass ? '✅' : '❌'} ${result.name}
+                            </div>
+                            ${result.error ? `<div class="test-error">${result.error}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('results').innerHTML = html;
+            },
+            
+            reset() {
+                this.results = [];
+            }
+        };
+
+        // ═══════════════════════════════════════
+        //  CALCULATION TESTS
+        // ═══════════════════════════════════════
+        
+        function runCalcTests() {
+            TestRunner.reset();
+            
+            // Test 1: Simple growth scenario (no retirement yet)
+            const test1 = RetirementCalcV4.calculate({
+                currentAge: 30,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 100000,
+                income1: 100000,
+                income2: 0,
+                rrsp: 50000,
+                tfsa: 30000,
+                nonReg: 20000,
+                other: 0,
+                monthlyContribution: 1500,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 50000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            const workingYears = test1.yearByYear.filter(y => y.phase === 'accumulation');
+            const firstYear = workingYears[0];
+            const lastWorkingYear = workingYears[workingYears.length - 1];
+            
+            TestRunner.assert(
+                firstYear.totalBalance === 100000,
+                'Initial balance should be $100K (50+30+20)'
+            );
+            
+            TestRunner.assert(
+                lastWorkingYear.totalBalance > firstYear.totalBalance,
+                'Balance should grow during accumulation phase'
+            );
+            
+            // Test 2: Portfolio should sustain spending
+            const test2 = RetirementCalcV4.calculate({
+                currentAge: 65,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'single',
+                currentIncome: 100000,
+                income1: 100000,
+                income2: 0,
+                rrsp: 800000,
+                tfsa: 200000,
+                nonReg: 200000,
+                other: 0,
+                monthlyContribution: 0,
+                contributionSplit: { rrsp: 0, tfsa: 0, nonReg: 0 },
+                annualSpending: 60000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            const retYears = test2.yearByYear.filter(y => y.phase === 'retirement');
+            const ret5 = retYears[4]; // Age 69
+            const ret10 = retYears[9]; // Age 74
+            
+            TestRunner.assert(
+                ret5 && ret5.totalBalance > 0,
+                'Portfolio should have funds at age 69'
+            );
+            
+            TestRunner.assert(
+                ret10 && ret10.totalBalance > 0,
+                'Portfolio should have funds at age 74'
+            );
+            
+            // With 6% returns and 2% inflation (4% real return) on $1.2M
+            // Spending ~$60K + healthcare ~$4K = $64K
+            // Net earnings on $1.2M at 4% real = $48K
+            // Deficit: $16K/year
+            // After 10 years: $1.2M - (10 * $16K) = $1.04M (rough estimate)
+            TestRunner.assertRange(
+                ret10.totalBalance,
+                900000,  // Min (accounting for taxes, inflation complexity)
+                1200000, // Max
+                'Portfolio at age 74 should be in reasonable range (~$900K-$1.2M)'
+            );
+            
+            // Test 3: Government benefits reduce portfolio withdrawals
+            TestRunner.assert(
+                ret5.governmentIncome > 20000,
+                'Government benefits (CPP+OAS) should be substantial (>$20K)'
+            );
+            
+            TestRunner.assert(
+                ret5.withdrawal < ret5.targetSpending,
+                'Portfolio withdrawal should be less than target spending (gov benefits help)'
+            );
+            
+            // Test 4: Family mode (couple)
+            const test4 = RetirementCalcV4.calculate({
+                currentAge: 35,
+                partnerAge: 33,
+                retirementAge: 65,
+                lifeExpectancy: 90,
+                province: 'ON',
+                region: 'ON_Toronto',
+                familyStatus: 'couple',
+                income1: 100000,
+                income2: 80000,
+                rrsp: 100000,
+                tfsa: 50000,
+                nonReg: 30000,
+                other: 0,
+                monthlyContribution: 2000,
+                contributionSplit: { rrsp: 0.6, tfsa: 0.4, nonReg: 0 },
+                annualSpending: 75000,
+                healthStatus: 'average',
+                currentDebt: 0,
+                debtPayoffAge: 65,
+                cppStartAge: 65,
+                additionalIncomeSources: [],
+                returnRate: 6,
+                inflationRate: 2
+            });
+            
+            const coupleRetYears = test4.yearByYear.filter(y => y.phase === 'retirement');
+            const coupleRet5 = coupleRetYears[4];
+            
+            TestRunner.assert(
+                test4.govBenefits.cpp1 > 0 && test4.govBenefits.cpp2 > 0,
+                'Both partners should have CPP income'
+            );
+            
+            TestRunner.assert(
+                coupleRet5.governmentIncome > 30000,
+                'Couple should have higher government benefits (>$30K for two people)'
+            );
+            
+            // Test 5: Withdrawal order (TFSA → Non-Reg → RRSP)
+            const ret1 = retYears[0]; // First retirement year
+            if (ret1.withdrawalBreakdown) {
+                TestRunner.assert(
+                    ret1.withdrawalBreakdown.tfsa > 0,
+                    'Should withdraw from TFSA first (tax-optimal)'
+                );
+            }
+            
+            // Test 6: Tax calculation
+            TestRunner.assert(
+                ret5.taxPaid >= 0,
+                'Tax paid should be non-negative'
+            );
+            
+            TestRunner.assert(
+                ret5.afterTaxIncome <= ret5.grossIncome,
+                'After-tax income should be ≤ gross income'
+            );
+            
+            // Test 7: Healthcare costs
+            TestRunner.assert(
+                test2.healthcareCosts.total > 0,
+                'Healthcare costs should be calculated'
+            );
+            
+            TestRunner.assertRange(
+                test2.healthcareCosts.averageAnnual,
+                3000,
+                10000,
+                'Average annual healthcare should be reasonable ($3K-$10K)'
+            );
+            
+            // Test 8: Probability of success
+            TestRunner.assertRange(
+                test2.probabilityOfSuccess,
+                0,
+                100,
+                'Probability of success should be 0-100%'
+            );
+            
+            // Test 9: With healthy portfolio and reasonable spending, high success rate
+            TestRunner.assert(
+                test2.probabilityOfSuccess >= 70,
+                'Good portfolio ($1.2M) + moderate spending ($60K) should have high success (≥70%)'
+            );
+            
+            TestRunner.render();
+        }
+
+        // ═══════════════════════════════════════
+        //  UI/MODULE TESTS
+        // ═══════════════════════════════════════
+        
+        function runUITests() {
+            TestRunner.reset();
+            
+            // Test module loading
+            TestRunner.assert(typeof CanadaMap !== 'undefined', 'CanadaMap module loaded');
+            TestRunner.assert(typeof RegionalDataV2 !== 'undefined', 'RegionalDataV2 module loaded');
+            TestRunner.assert(typeof IncomeSources !== 'undefined', 'IncomeSources module loaded');
+            TestRunner.assert(typeof CPPOptimizer !== 'undefined', 'CPPOptimizer module loaded');
+            TestRunner.assert(typeof ScenarioManager !== 'undefined', 'ScenarioManager module loaded');
+            TestRunner.assert(typeof HealthcareEstimator !== 'undefined', 'HealthcareEstimator module loaded');
+            TestRunner.assert(typeof RetirementCalcV4 !== 'undefined', 'RetirementCalcV4 module loaded');
+            TestRunner.assert(typeof CanadianTax !== 'undefined', 'CanadianTax module loaded');
+            TestRunner.assert(typeof CPPCalculator !== 'undefined', 'CPPCalculator module loaded');
+            TestRunner.assert(typeof BenchmarkData !== 'undefined', 'BenchmarkData module loaded');
+            TestRunner.assert(typeof LifestyleData !== 'undefined', 'LifestyleData module loaded');
+            
+            // Test regional data
+            const toronto = RegionalDataV2.getRegion('ON', 'ON_Toronto');
+            TestRunner.assert(toronto !== null, 'Toronto region data exists');
+            TestRunner.assert(toronto.incomeMultiplier > 1, 'Toronto income multiplier > 1');
+            
+            const vancouver = RegionalDataV2.getRegion('BC', 'BC_Vancouver');
+            TestRunner.assert(vancouver !== null, 'Vancouver region data exists');
+            TestRunner.assert(vancouver.housingMultiplier > 1.5, 'Vancouver housing multiplier > 1.5');
+            
+            // Test CPP calculations
+            const cppEst = CPPCalculator.estimateCPP(75000, 35);
+            TestRunner.assert(cppEst.total > 0, 'CPP calculation returns value');
+            TestRunner.assertRange(cppEst.total, 5000, 20000, 'CPP estimate in reasonable range');
+            
+            // Test healthcare estimator
+            const health = HealthcareEstimator.estimateAnnual(70, 'ON', 'average');
+            TestRunner.assertRange(health, 3000, 8000, 'Healthcare cost at age 70 reasonable');
+            
+            // Test tax calculation
+            const tax = CanadianTax.calculateTax(75000, 'ON');
+            TestRunner.assert(tax.total > 0, 'Tax calculation returns value');
+            TestRunner.assert(tax.total < 75000, 'Tax is less than income');
+            TestRunner.assertRange(tax.marginalRate, 20, 45, 'Marginal rate reasonable for $75K income');
+            
+            // Test lifestyle data
+            TestRunner.assert(LifestyleData.modest, 'Modest lifestyle exists');
+            TestRunner.assert(LifestyleData.average, 'Average lifestyle exists');
+            TestRunner.assert(LifestyleData.comfortable, 'Comfortable lifestyle exists');
+            TestRunner.assert(LifestyleData.luxury, 'Luxury lifestyle exists');
+            TestRunner.assertEqual(LifestyleData.average.annual, 48000, 'Average lifestyle = $48K');
+            
+            // Test benchmark data
+            const age35 = BenchmarkData.byAge[35];
+            TestRunner.assert(age35, 'Benchmark data for age 35 exists');
+            TestRunner.assert(age35.savings.median > 0, 'Savings median > 0');
+            TestRunner.assert(age35.savings.average > age35.savings.median, 'Average > median (right-skewed)');
+            
+            TestRunner.render();
+        }
+
+        function runAllTests() {
+            runUITests();
+            setTimeout(() => {
+                runCalcTests();
+            }, 100);
+        }
+        
+        // Auto-run on load
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('[Tests] Page loaded');
+        });
+    </script>
+</body>
+</html>

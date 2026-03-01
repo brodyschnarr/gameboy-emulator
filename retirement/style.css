@@ -1190,17 +1190,40 @@ input:focus {
 
 /* Canada Map */
 #map-container {
-    min-height: 400px;
     width: 100%;
-    margin: 20px 0;
+    margin: 10px 0 5px 0;
 }
 
 .canada-map {
     width: 100%;
-    max-width: 600px;
+    max-width: 700px;
     height: auto;
-    margin: 20px auto;
+    margin: 0 auto;
     display: block;
+}
+
+/* Benchmark Display */
+.benchmark-display {
+    background: #f0f9ff;
+    border-left: 4px solid #3b82f6;
+    padding: 16px;
+    margin-top: 16px;
+    border-radius: 8px;
+}
+
+.benchmark-content p {
+    margin: 8px 0;
+    color: #1e293b;
+    line-height: 1.6;
+}
+
+.benchmark-highlight {
+    color: #2563eb;
+    font-size: 1.05em;
+}
+
+.benchmark-highlight strong {
+    color: #1e40af;
 }
 
 /* Region Display */

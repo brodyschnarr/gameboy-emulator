@@ -153,6 +153,51 @@ const AppV4 = {
         if (display) {
             display.textContent = `$${total.toLocaleString()}`;
         }
+        
+        // Show household income benchmarks
+        const benchmarkEl = document.getElementById('household-income-benchmark');
+        if (benchmarkEl && total > 0) {
+            const isFamilyMode = this.familyStatus === 'couple';
+            
+            // Canadian household income stats (2024 estimates)
+            const medianHousehold = 92000;
+            const averageHousehold = 106000;
+            
+            let percentile = '';
+            let comparison = '';
+            
+            if (total < 50000) {
+                percentile = 'bottom 25%';
+                comparison = 'below average';
+            } else if (total < medianHousehold) {
+                percentile = 'bottom 50%';
+                comparison = 'below median';
+            } else if (total < 110000) {
+                percentile = 'top 50%';
+                comparison = 'above median';
+            } else if (total < 150000) {
+                percentile = 'top 25%';
+                comparison = 'well above average';
+            } else {
+                percentile = 'top 10%';
+                comparison = 'high income';
+            }
+            
+            benchmarkEl.innerHTML = `
+                <div class="benchmark-content">
+                    <p>
+                        <strong>Canadian ${isFamilyMode ? 'couples' : 'households'}:</strong>
+                        Median $${medianHousehold.toLocaleString()}, Average $${averageHousehold.toLocaleString()}
+                    </p>
+                    <p class="benchmark-highlight">
+                        You're in the <strong>${percentile}</strong> (${comparison})
+                    </p>
+                </div>
+            `;
+            benchmarkEl.classList.remove('hidden');
+        } else if (benchmarkEl) {
+            benchmarkEl.classList.add('hidden');
+        }
     },
 
     _setupMap() {

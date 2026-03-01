@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Canadian retirement calculator with regional data and tax-aware projections">
     <title>Retirement Planner V4 | Visual Canadian Calculator</title>
-    <link rel="stylesheet" href="style.css?v=9">
+    <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
     
@@ -128,6 +128,18 @@
                 <div class="total-display">
                     <strong>Total Household Income:</strong> <span id="household-income-display">$0</span>
                 </div>
+                
+                <div id="household-income-benchmark" class="benchmark-display hidden">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Additional Income Sources -->
+            <div class="input-group">
+                <h3>Additional Income Sources</h3>
+                <p class="section-intro">Pension, annuity, rental income, etc.</p>
+                <div id="income-sources-list"></div>
+                <button type="button" class="btn-secondary" id="btn-add-income-source">+ Add Income Source</button>
             </div>
 
             <button type="button" class="btn-primary" id="btn-next-savings">
@@ -312,16 +324,6 @@
                     <input type="number" id="annual-spending" placeholder="60000" min="0" step="1000">
                 </div>
                 <small id="spending-recommendation" class="benchmark-text"></small>
-            </div>
-
-            <!-- Additional Income Sources -->
-            <div class="input-group">
-                <label>Additional Income Sources</label>
-                <p class="section-intro">Pension, annuity, rental income, etc.</p>
-                <div id="income-sources-list"></div>
-                <button type="button" class="btn-secondary" id="btn-add-income-source">
-                    + Add Income Source
-                </button>
             </div>
 
             <button type="button" class="btn-secondary" id="btn-back-contributions">← Back</button>
@@ -539,18 +541,18 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=9"></script>
-    <script src="cpp-calculator.js?v=9"></script>
-    <script src="benchmarks.js?v=9"></script>
-    <script src="lifestyle-data.js?v=9"></script>
-    <script src="regional-data.js?v=9"></script>
-    <script src="canada-map.js?v=9"></script>
-    <script src="income-sources.js?v=9"></script>
-    <script src="cpp-optimizer.js?v=9"></script>
-    <script src="scenario-manager.js?v=9"></script>
-    <script src="healthcare-estimator.js?v=9"></script>
-    <script src="calc.js?v=9"></script>
-    <script src="app.js?v=9"></script>
+    <script src="canada-tax.js?v=10"></script>
+    <script src="cpp-calculator.js?v=10"></script>
+    <script src="benchmarks.js?v=10"></script>
+    <script src="lifestyle-data.js?v=10"></script>
+    <script src="regional-data.js?v=10"></script>
+    <script src="canada-map.js?v=10"></script>
+    <script src="income-sources.js?v=10"></script>
+    <script src="cpp-optimizer.js?v=10"></script>
+    <script src="scenario-manager.js?v=10"></script>
+    <script src="healthcare-estimator.js?v=10"></script>
+    <script src="calc.js?v=10"></script>
+    <script src="app.js?v=10"></script>
 
 </body>
 </html>
