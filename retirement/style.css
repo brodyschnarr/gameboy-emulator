@@ -1257,13 +1257,23 @@ input:focus {
     font-size: 1.2em;
 }
 
+/* Region Picker Container */
+#region-picker-container {
+    display: block !important;
+    min-height: 50px;
+}
+
+#region-picker-container.hidden {
+    opacity: 0.2;
+}
+
 /* Region Picker */
 .region-picker {
-    background: var(--bg);
+    background: #fff3cd;
     padding: 20px;
     border-radius: 8px;
     margin-top: 16px;
-    border: 2px solid var(--primary);
+    border: 3px solid #ffc107;
 }
 
 .region-picker h4 {

@@ -147,13 +147,18 @@ const CanadaMap = {
         this.selectedProvince = province;
         
         // Show region picker if province has regions
+        console.log('[CanadaMap] Getting regions for province:', province);
         const regions = RegionalDataV2.getRegionsByProvince(province);
+        console.log('[CanadaMap] Found regions:', regions);
+        
         if (regions && regions.length > 0) {
             this._showRegionPicker(province, regions);
-            // Don't show location display yet - wait for region selection
+            // Show province name while waiting for region selection
             const displayEl = document.getElementById('region-display');
-            if (displayEl) {
-                displayEl.classList.add('hidden');
+            const nameEl = document.getElementById('region-name');
+            if (displayEl && nameEl) {
+                nameEl.textContent = `${province} - Select a region below`;
+                displayEl.classList.remove('hidden');
             }
         } else {
             // Province has no sub-regions, select it directly
@@ -166,9 +171,16 @@ const CanadaMap = {
     },
 
     _showRegionPicker(province, regions) {
-        const container = document.getElementById('region-picker-container');
-        if (!container) return;
+        console.log('[CanadaMap] _showRegionPicker called for:', province);
+        console.log('[CanadaMap] Regions to display:', regions);
         
+        const container = document.getElementById('region-picker-container');
+        if (!container) {
+            console.error('[CanadaMap] region-picker-container not found!');
+            return;
+        }
+        
+        console.log('[CanadaMap] Container found, removing hidden class');
         container.classList.remove('hidden');
         
         let html = `
@@ -191,15 +203,20 @@ const CanadaMap = {
             </div>
         `;
         
+        console.log('[CanadaMap] Generated HTML, injecting into container');
         container.innerHTML = html;
         
         // Attach listeners to region buttons
-        container.querySelectorAll('.region-btn').forEach(btn => {
+        const buttons = container.querySelectorAll('.region-btn');
+        console.log('[CanadaMap] Attaching listeners to', buttons.length, 'buttons');
+        buttons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const regionId = e.target.getAttribute('data-region');
                 this._handleRegionClick(province, regionId);
             });
         });
+        
+        console.log('[CanadaMap] ✅ Region picker should now be visible');
     },
 
     _handleRegionClick(province, regionId) {

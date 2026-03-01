@@ -420,6 +420,7 @@ const RegionalDataV2 = {
             const region = this[key];
             if (typeof region === 'object' && region.province === province) {
                 regions.push({
+                    id: key,              // Add id field for canada-map.js compatibility
                     code: key,
                     name: region.name,
                     medianIncome: region.medianIncome,
@@ -431,6 +432,7 @@ const RegionalDataV2 = {
         // If no regions, return province-level
         if (regions.length === 0 && this[province]) {
             return [{
+                id: province,
                 code: province,
                 name: this[province].name,
                 medianIncome: this[province].medianIncome,
@@ -440,5 +442,23 @@ const RegionalDataV2 = {
         
         // Sort by median income (descending)
         return regions.sort((a, b) => b.medianIncome - a.medianIncome);
+    },
+
+    /**
+     * Alias for getProvincialRegions (used by canada-map.js)
+     */
+    getRegionsByProvince(province) {
+        return this.getProvincialRegions(province);
+    },
+
+    /**
+     * Get region by province and region code
+     */
+    getRegion(province, regionCode) {
+        // If only one argument, assume it's a region code
+        if (regionCode === undefined) {
+            regionCode = province;
+        }
+        return this[regionCode] || this.ON_Toronto;
     }
 };
