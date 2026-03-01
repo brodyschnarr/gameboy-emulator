@@ -1226,29 +1226,32 @@ input:focus {
     color: #1e40af;
 }
 
-/* Region Display */
-.region-display {
-    background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
-    border: 4px solid #3b82f6;
+/* Region Display - MUST BE VISIBLE */
+#region-display {
+    background: #fbbf24;
+    border: 5px solid #dc2626;
     padding: 20px;
     border-radius: 12px;
     margin-bottom: 16px;
     text-align: center;
-    font-size: 1.2em;
+    font-size: 1.3em;
     display: block !important;
     min-height: 60px;
+    position: relative;
+    z-index: 999;
 }
 
-.region-display.hidden {
-    opacity: 0.3;
+#region-display.hidden {
+    background: #dbeafe;
+    opacity: 0.5;
 }
 
-.region-display strong {
+#region-display strong {
     color: #1e40af;
     font-size: 1.1em;
 }
 
-.region-display #region-name {
+#region-display #region-name {
     color: #2563eb;
     font-weight: 700;
     font-size: 1.2em;

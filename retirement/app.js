@@ -201,29 +201,25 @@ const AppV4 = {
     },
 
     _setupMap() {
+        console.log('[AppV4] Setting up map...');
         CanadaMap.render('map-container');
         CanadaMap.onSelect = (province, region) => {
+            console.log('[AppV4] Map selection callback:', province, region);
             this.selectedProvince = province;
             this.selectedRegion = region;
             
             document.getElementById('province').value = province;
             document.getElementById('region').value = region;
             
-            // Update display
-            const regionData = RegionalData.getRegion(region);
-            const displayEl = document.getElementById('region-display');
-            const nameEl = document.getElementById('region-name');
+            console.log('[AppV4] Province/region values set in hidden inputs');
             
-            if (displayEl && nameEl) {
-                displayEl.classList.remove('hidden');
-                nameEl.textContent = regionData.name;
-            }
-            
-            // Update benchmarks
+            // NOTE: canada-map.js already handles showing the location display
+            // We just need to update benchmarks
             this._updateRegionalBenchmarks();
         };
         
         // Set default
+        console.log('[AppV4] Setting default location: ON, ON_Toronto');
         CanadaMap.setSelection('ON', 'ON_Toronto');
     },
 
