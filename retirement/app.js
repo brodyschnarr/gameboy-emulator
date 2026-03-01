@@ -11,7 +11,7 @@ if (typeof IncomeSources === 'undefined') console.error('[AppV4] IncomeSources n
 if (typeof CPPOptimizer === 'undefined') console.error('[AppV4] CPPOptimizer not loaded!');
 if (typeof ScenarioManager === 'undefined') console.error('[AppV4] ScenarioManager not loaded!');
 if (typeof HealthcareEstimator === 'undefined') console.error('[AppV4] HealthcareEstimator not loaded!');
-if (typeof RetirementCalc === 'undefined') console.error('[AppV4] RetirementCalc not loaded!');
+if (typeof RetirementCalcV4 === 'undefined') console.error('[AppV4] RetirementCalcV4 not loaded!');
 
 const AppV4 = {
     currentStep: 'basic',
@@ -779,34 +779,46 @@ const AppV4 = {
     },
 
     _runCalculation() {
-        const inputs = this._gatherInputs();
-        console.log('[AppV4] Inputs:', inputs);
+        try {
+            const inputs = this._gatherInputs();
+            console.log('[AppV4] Inputs:', inputs);
 
-        // Calculate base scenario
-        const baseResults = RetirementCalcV4.calculate(inputs);
-        console.log('[AppV4] Base Results:', baseResults);
+            // Check if RetirementCalcV4 exists
+            if (typeof RetirementCalcV4 === 'undefined') {
+                alert('❌ Calculation engine not loaded. Please refresh the page.');
+                console.error('[AppV4] RetirementCalcV4 is undefined!');
+                return;
+            }
 
-        // Store base scenario
-        this.scenarioResults = {
-            base: { inputs, results: baseResults }
-        };
+            // Calculate base scenario
+            const baseResults = RetirementCalcV4.calculate(inputs);
+            console.log('[AppV4] Base Results:', baseResults);
 
-        // Auto-calculate common scenarios
-        this._autoCalculateScenarios(inputs);
+            // Store base scenario
+            this.scenarioResults = {
+                base: { inputs, results: baseResults }
+            };
 
-        // Display base results
-        this.currentScenario = 'base';
-        this._displayResults(baseResults, inputs);
-        
-        // Setup scenario tab switching
-        this._setupScenarioTabs();
-        
-        // Show results
-        ['basic', 'savings', 'contributions', 'retirement', 'healthcare'].forEach(s => {
-            document.getElementById(`step-${s}`)?.classList.add('hidden');
-        });
-        document.getElementById('results')?.classList.remove('hidden');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Auto-calculate common scenarios
+            this._autoCalculateScenarios(inputs);
+
+            // Display base results
+            this.currentScenario = 'base';
+            this._displayResults(baseResults, inputs);
+            
+            // Setup scenario tab switching
+            this._setupScenarioTabs();
+            
+            // Show results
+            ['basic', 'savings', 'contributions', 'retirement', 'healthcare'].forEach(s => {
+                document.getElementById(`step-${s}`)?.classList.add('hidden');
+            });
+            document.getElementById('results')?.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (error) {
+            console.error('[AppV4] Calculation error:', error);
+            alert(`❌ Calculation failed: ${error.message}\n\nPlease check the console for details.`);
+        }
     },
 
     _autoCalculateScenarios(baseInputs) {
