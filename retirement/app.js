@@ -1342,6 +1342,26 @@ const AppV4 = {
         const maxAge = yearByYear[yearByYear.length - 1].age;
         console.log('[AppV4] Age range:', minAge, '-', maxAge);
 
+        // DRAW BACKGROUND FIRST (so canvas is visible even if chart fails)
+        ctx.fillStyle = '#f9fafb';
+        ctx.fillRect(0, 0, w, h);
+        console.log('[AppV4] ✅ Drew background');
+        
+        // Draw VISIBLE border and test text so we can see if canvas is rendering AT ALL
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(2, 2, w-4, h-4);
+        
+        ctx.fillStyle = '#2563eb';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('CHART RENDERING TEST', w/2, 30);
+        ctx.font = '16px sans-serif';
+        ctx.fillText(`Canvas: ${w}x${h}`, w/2, 55);
+        ctx.fillText(`Data points: ${yearByYear.length}`, w/2, 75);
+        ctx.textAlign = 'left'; // Reset
+        console.log('[AppV4] ✅ Drew test markers (if you see blue border + text, canvas works!)');
+
         // Axes
         ctx.strokeStyle = '#e5e7eb';
         ctx.lineWidth = 1;
