@@ -371,7 +371,6 @@ const AppV4 = {
         } else {
             console.error('[AppV4] Calculate button NOT FOUND in DOM!');
         }
-    }
 
         const editBtn = document.getElementById('btn-edit');
         if (editBtn) {
