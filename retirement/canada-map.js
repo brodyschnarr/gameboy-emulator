@@ -12,11 +12,20 @@ const CanadaMap = {
      * Render the map into a container
      */
     render(containerId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
+        try {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error(`CanadaMap: Container #${containerId} not found`);
+                return;
+            }
 
-        container.innerHTML = this._getMapSVG();
-        this._attachListeners();
+            console.log('CanadaMap: Rendering map...');
+            container.innerHTML = this._getMapSVG();
+            this._attachListeners();
+            console.log('CanadaMap: Render complete');
+        } catch (error) {
+            console.error('CanadaMap: Render failed:', error);
+        }
     },
 
     /**

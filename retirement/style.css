@@ -1189,6 +1189,12 @@ input:focus {
    ═══════════════════════════════════════════ */
 
 /* Canada Map */
+#map-container {
+    min-height: 400px;
+    width: 100%;
+    margin: 20px 0;
+}
+
 .canada-map {
     width: 100%;
     max-width: 600px;
