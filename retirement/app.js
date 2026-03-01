@@ -964,7 +964,9 @@ const AppV4 = {
                 }
                 
                 // Update total (include ALL accounts)
-                year.totalPortfolio = (year.rrsp || 0) + (year.tfsa || 0) + (year.nonReg || 0) + (year.other || 0);
+                const newTotal = (year.rrsp || 0) + (year.tfsa || 0) + (year.nonReg || 0) + (year.other || 0);
+                year.totalPortfolio = newTotal;
+                year.totalBalance = newTotal; // CRITICAL: Also update totalBalance for chart display!
             }
             
             // Mark windfall in the year it occurs
@@ -989,7 +991,23 @@ const AppV4 = {
         const runOutYear = results.yearByYear.find(y => (y.totalPortfolio || 0) <= 0);
         results.summary.moneyLastsAge = runOutYear ? runOutYear.age : inputs.lifeExpectancy;
         
+        // Recalculate probability based on updated projection
+        const yearsShort = runOutYear ? (inputs.lifeExpectancy - runOutYear.age) : 0;
+        if (yearsShort === 0) {
+            // Money lasts through life expectancy
+            results.probability = Math.min(95, 75 + Math.floor(results.summary.legacyAmount / 50000));
+            results.onTrack = true;
+        } else {
+            // Money runs out early
+            const retirementYears = inputs.lifeExpectancy - inputs.retirementAge;
+            const successRatio = (retirementYears - yearsShort) / retirementYears;
+            results.probability = Math.round(successRatio * 100);
+            results.onTrack = results.probability >= 70;
+        }
+        
         console.log('[AppV4] Updated portfolio at retirement:', results.summary.portfolioAtRetirement);
+        console.log('[AppV4] Updated money lasts age:', results.summary.moneyLastsAge);
+        console.log('[AppV4] Updated probability:', results.probability + '%');
     },
 
     _autoCalculateScenarios(baseInputs) {
