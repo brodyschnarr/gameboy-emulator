@@ -1257,26 +1257,41 @@ const AppV4 = {
         document.getElementById('legacy-description').textContent = 
             results.legacy.description;
 
-        // Charts
-        this._drawChart(results.yearByYear, inputs.retirementAge);
-        this._drawYearBreakdown(results.yearByYear, inputs.retirementAge);
+        // Charts - use requestAnimationFrame to ensure parent is fully rendered
+        console.log('[AppV4] Preparing to draw charts...');
+        console.log('[AppV4] yearByYear length:', results.yearByYear.length);
+        
+        // Give browser time to render visible parent, then draw
+        requestAnimationFrame(() => {
+            console.log('[AppV4] requestAnimationFrame: Drawing charts now');
+            this._drawChart(results.yearByYear, inputs.retirementAge);
+            this._drawYearBreakdown(results.yearByYear, inputs.retirementAge);
+        });
+        
         this._displayBreakdown(results, inputs);
     },
 
     _drawChart(yearByYear, retirementAge) {
+        console.log('[AppV4] _drawChart called with', yearByYear.length, 'years of data');
+        
         const canvas = document.getElementById('projection-chart');
         if (!canvas) {
-            console.error('[AppV4] Portfolio chart canvas not found!');
+            console.error('[AppV4] ❌ Portfolio chart canvas not found!');
             return;
         }
+        console.log('[AppV4] ✅ Canvas element found');
 
         const ctx = canvas.getContext('2d');
         if (!ctx) {
-            console.error('[AppV4] Cannot get 2D context from canvas!');
+            console.error('[AppV4] ❌ Cannot get 2D context from canvas!');
             return;
         }
+        console.log('[AppV4] ✅ 2D context obtained');
         
         const container = canvas.parentElement;
+        console.log('[AppV4] Container offsetWidth:', container.offsetWidth);
+        console.log('[AppV4] Container display:', window.getComputedStyle(container).display);
+        console.log('[AppV4] Container visibility:', window.getComputedStyle(container).visibility);
         
         // FIX: Ensure minimum width (container might be hidden or have 0 width)
         const containerWidth = Math.max(container.offsetWidth - 40, 300);
@@ -1287,7 +1302,7 @@ const AppV4 = {
         const h = canvas.height;
         const padding = 60;
 
-        console.log('[AppV4] Chart canvas dimensions:', w, 'x', h, '(parent width:', container.offsetWidth, ')');
+        console.log('[AppV4] ✅ Chart canvas dimensions:', w, 'x', h);
 
         ctx.clearRect(0, 0, w, h);
 
@@ -1307,18 +1322,25 @@ const AppV4 = {
         }
 
         // FIX: Use fallback for totalBalance (might be undefined in some years)
-        const maxBalance = Math.max(...yearByYear.map(y => y.totalBalance || y.totalPortfolio || 0));
+        const balances = yearByYear.map(y => y.totalBalance || y.totalPortfolio || 0);
+        const maxBalance = Math.max(...balances);
+        
+        console.log('[AppV4] maxBalance:', maxBalance, '(from', balances.length, 'years)');
+        console.log('[AppV4] First 3 balances:', balances.slice(0, 3));
+        console.log('[AppV4] Last 3 balances:', balances.slice(-3));
         
         if (maxBalance === 0 || isNaN(maxBalance)) {
-            console.error('[AppV4] Invalid maxBalance:', maxBalance);
+            console.error('[AppV4] ❌ Invalid maxBalance:', maxBalance);
             ctx.fillStyle = '#ef4444';
             ctx.font = '16px sans-serif';
             ctx.fillText('Error: No valid balance data', w / 2 - 100, h / 2);
             return;
         }
+        console.log('[AppV4] ✅ maxBalance is valid');
         
         const minAge = yearByYear[0].age;
         const maxAge = yearByYear[yearByYear.length - 1].age;
+        console.log('[AppV4] Age range:', minAge, '-', maxAge);
 
         // Axes
         ctx.strokeStyle = '#e5e7eb';
@@ -1367,6 +1389,8 @@ const AppV4 = {
         
         ctx.fillStyle = '#f59e0b';
         ctx.fillText('Retirement', retireX - 35, padding - 10);
+        
+        console.log('[AppV4] ✅ Chart drawing complete!');
     },
 
     _drawYearBreakdown(yearByYear, retirementAge) {
