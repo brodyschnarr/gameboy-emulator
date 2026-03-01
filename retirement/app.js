@@ -876,6 +876,10 @@ const AppV4 = {
 
             // Display base results
             this.currentScenario = 'base';
+            console.log('[AppV4] ========== DISPLAYING RESULTS ==========');
+            console.log('[AppV4] Portfolio at retirement:', baseResults.summary.portfolioAtRetirement);
+            console.log('[AppV4] Money lasts age:', baseResults.summary.moneyLastsAge);
+            console.log('[AppV4] Full summary:', baseResults.summary);
             this._displayResults(baseResults, inputs);
             
             // Setup scenario tab switching
@@ -900,9 +904,14 @@ const AppV4 = {
     },
 
     _applyWindfallsToResults(results, inputs) {
-        if (!inputs.windfalls || inputs.windfalls.length === 0) return;
+        if (!inputs.windfalls || inputs.windfalls.length === 0) {
+            console.log('[AppV4] No windfalls to apply');
+            return;
+        }
         
-        console.log('[AppV4] Applying', inputs.windfalls.length, 'windfalls...');
+        console.log('[AppV4] ========== APPLYING WINDFALLS ==========');
+        console.log('[AppV4] Number of windfalls:', inputs.windfalls.length);
+        console.log('[AppV4] Windfalls:', inputs.windfalls);
         
         inputs.windfalls.forEach(windfall => {
             // Handle both calendar year (e.g., 2030) and age (e.g., 65)
@@ -980,21 +989,27 @@ const AppV4 = {
     },
 
     _autoCalculateScenarios(baseInputs) {
+        console.log('[AppV4] Auto-calculating scenarios with', (baseInputs.windfalls || []).length, 'windfalls');
+        
         const scenarios = {
             retire5early: {
                 ...baseInputs,
+                windfalls: [...(baseInputs.windfalls || [])], // Deep clone windfalls
                 retirementAge: baseInputs.retirementAge - 5
             },
             retire5late: {
                 ...baseInputs,
+                windfalls: [...(baseInputs.windfalls || [])], // Deep clone windfalls
                 retirementAge: baseInputs.retirementAge + 5
             },
             spend20less: {
                 ...baseInputs,
+                windfalls: [...(baseInputs.windfalls || [])], // Deep clone windfalls
                 annualSpending: Math.round(baseInputs.annualSpending * 0.8)
             },
             spend20more: {
                 ...baseInputs,
+                windfalls: [...(baseInputs.windfalls || [])], // Deep clone windfalls
                 annualSpending: Math.round(baseInputs.annualSpending * 1.2)
             }
         };
@@ -1017,9 +1032,19 @@ const AppV4 = {
     },
 
     _setupScenarioTabs() {
-        document.querySelectorAll('.scenario-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const scenario = e.target.dataset.scenario;
+        const tabs = document.querySelectorAll('.scenario-tab');
+        console.log('[AppV4] Setting up', tabs.length, 'scenario tabs');
+        
+        tabs.forEach(tab => {
+            // Remove old listeners
+            const newTab = tab.cloneNode(true);
+            tab.parentNode.replaceChild(newTab, tab);
+            
+            // Add fresh listener
+            newTab.addEventListener('click', (e) => {
+                e.preventDefault();
+                const scenario = e.currentTarget.dataset.scenario;
+                console.log('[AppV4] Scenario tab clicked:', scenario);
                 this._switchScenario(scenario);
             });
         });
@@ -1090,7 +1115,7 @@ const AppV4 = {
             
             cppStartAge: this.cppStartAge,
             additionalIncomeSources: IncomeSources.getAll(),
-            windfalls: (typeof WindfallManager !== 'undefined') ? (this.windfalls || []) : [],
+            windfalls: this.windfalls || [],
             
             returnRate: parseFloat(document.getElementById('return-rate')?.value) || 6,
             inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2.5
@@ -1111,14 +1136,21 @@ const AppV4 = {
         }
 
         // Stats
+        const portfolio = results.summary.portfolioAtRetirement || 0;
+        const income = results.summary.annualIncomeAtRetirement || 0;
+        const lastsAge = results.summary.moneyLastsAge || inputs.lifeExpectancy;
+        const probability = results.probability || 0;
+        
+        console.log('[AppV4] Displaying stats - Portfolio:', portfolio, 'Income:', income, 'Lasts:', lastsAge, 'Probability:', probability);
+        
         document.getElementById('stat-portfolio').textContent = 
-            `$${results.summary.portfolioAtRetirement.toLocaleString()}`;
+            `$${portfolio.toLocaleString()}`;
         document.getElementById('stat-income').textContent = 
-            `$${results.summary.annualIncomeAtRetirement.toLocaleString()}`;
+            `$${income.toLocaleString()}`;
         document.getElementById('stat-lasts').textContent = 
-            `Age ${results.summary.moneyLastsAge}`;
+            `Age ${lastsAge}`;
         document.getElementById('stat-probability').textContent = 
-            `${results.probability}%`;
+            `${probability}%`;
 
         const lastsNote = document.getElementById('stat-lasts-note');
         if (lastsNote) {
