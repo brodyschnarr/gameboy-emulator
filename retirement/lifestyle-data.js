@@ -94,8 +94,7 @@ const LifestyleData = {
             'Private golf club, sailing, photography (Leica), wine tastings',
             'Help kids buy homes, lavish gifts for family'
         ]
-    }
-};
+    },
 
     ultrawealthy: {
         name: 'Ultra-Wealthy',

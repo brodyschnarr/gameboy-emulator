@@ -2,6 +2,17 @@
 //  Retirement Planner V4 - Complete Controller
 // ═══════════════════════════════════════════
 
+console.log('[AppV4] Loading app.js...');
+
+// Check dependencies
+if (typeof CanadaMap === 'undefined') console.error('[AppV4] CanadaMap not loaded!');
+if (typeof RegionalDataV2 === 'undefined') console.error('[AppV4] RegionalDataV2 not loaded!');
+if (typeof IncomeSources === 'undefined') console.error('[AppV4] IncomeSources not loaded!');
+if (typeof CPPOptimizer === 'undefined') console.error('[AppV4] CPPOptimizer not loaded!');
+if (typeof ScenarioManager === 'undefined') console.error('[AppV4] ScenarioManager not loaded!');
+if (typeof HealthcareEstimator === 'undefined') console.error('[AppV4] HealthcareEstimator not loaded!');
+if (typeof RetirementCalc === 'undefined') console.error('[AppV4] RetirementCalc not loaded!');
+
 const AppV4 = {
     currentStep: 'basic',
     familyStatus: 'single',
@@ -1097,10 +1108,6 @@ const AppV4 = {
         `;
 
         document.getElementById('breakdown-content').innerHTML = html;
-    },
-
-
-        document.getElementById('scenario-comparison').innerHTML = html;
     },
 
     _saveScenario() {
