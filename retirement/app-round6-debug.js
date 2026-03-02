@@ -59,6 +59,7 @@ const AppV4 = {
             this._showStep('retirement');
             this._updateSpendingRecommendation();
             this._updateCPPPreview();
+            if (this.familyStatus === 'couple') this._updateCPPPreviewCouple();
         });
 
         document.getElementById('btn-next-healthcare')?.addEventListener('click', () => {
@@ -527,7 +528,14 @@ const AppV4 = {
         // Show target step
         document.getElementById(`step-${step}`)?.classList.remove('hidden');
         this.currentStep = step;
-
+        
+        // Auto-update previews when entering certain steps
+        if (step === 'retirement') {
+            this._updateSpendingRecommendation();
+            this._updateCPPPreview();
+            if (this.familyStatus === 'couple') this._updateCPPPreviewCouple();
+        }
+        
         // Update progress indicator
         const currentIndex = steps.indexOf(step);
         document.querySelectorAll('.progress-step').forEach((el, index) => {
@@ -1067,7 +1075,7 @@ const AppV4 = {
         const yearsShort = runOutYear ? (inputs.lifeExpectancy - runOutYear.age) : 0;
         if (yearsShort === 0) {
             // Money lasts through life expectancy
-            results.probability = Math.min(95, 75 + Math.floor(results.summary.legacyAmount / 50000));
+            results.probability = Math.min(100, 75 + Math.floor(results.summary.legacyAmount / 50000));
             results.onTrack = true;
         } else {
             // Money runs out early
