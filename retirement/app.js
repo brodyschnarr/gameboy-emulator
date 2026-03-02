@@ -1257,12 +1257,41 @@ const AppV4 = {
         document.getElementById('legacy-description').textContent = 
             results.legacy.description;
 
-        // Charts
+        // Charts - EXTREME VERBOSE LOGGING
+        console.log('[AppV4] ========== ABOUT TO DRAW CHARTS ==========');
+        console.log('[AppV4] results.yearByYear exists?', !!results.yearByYear);
+        console.log('[AppV4] results.yearByYear.length:', results.yearByYear ? results.yearByYear.length : 'N/A');
+        console.log('[AppV4] retirementAge:', inputs.retirementAge);
+        console.log('[AppV4] this._drawChart exists?', typeof this._drawChart);
+        
+        // Log to mobile overlay if available
+        if (typeof MobileChartDebug !== 'undefined') {
+            MobileChartDebug.init();
+            MobileChartDebug.log('[CHART] About to draw portfolio chart');
+            MobileChartDebug.log(`[CHART] Data points: ${results.yearByYear ? results.yearByYear.length : 0}`);
+        }
+        
         try {
+            console.log('[AppV4] >> CALLING _drawChart NOW <<');
             this._drawChart(results.yearByYear, inputs.retirementAge);
+            console.log('[AppV4] >> _drawChart COMPLETED <<');
+            
+            console.log('[AppV4] >> CALLING _drawYearBreakdown NOW <<');
             this._drawYearBreakdown(results.yearByYear, inputs.retirementAge);
+            console.log('[AppV4] >> _drawYearBreakdown COMPLETED <<');
+            
+            if (typeof MobileChartDebug !== 'undefined') {
+                MobileChartDebug.log('[CHART] ✅ Charts drawn successfully');
+            }
         } catch (chartError) {
-            console.error('[Chart Error]', chartError);
+            console.error('[AppV4] ❌ CHART ERROR CAUGHT:', chartError);
+            console.error('[AppV4] Error stack:', chartError.stack);
+            
+            if (typeof MobileChartDebug !== 'undefined') {
+                MobileChartDebug.log(`[CHART] ❌ ERROR: ${chartError.message}`, true);
+                MobileChartDebug.log(`[CHART] Stack: ${chartError.stack}`, true);
+            }
+            
             const status = document.getElementById('chart-status');
             if (status) {
                 status.style.display = 'block';
@@ -1271,42 +1300,71 @@ const AppV4 = {
             }
         }
         
+        console.log('[AppV4] ========== CHARTS SECTION COMPLETE ==========');
         this._displayBreakdown(results, inputs);
     },
 
     _drawChart(yearByYear, retirementAge) {
+        console.log('[AppV4 _drawChart] ========== FUNCTION ENTRY ==========');
+        console.log('[AppV4 _drawChart] yearByYear received:', yearByYear ? yearByYear.length + ' data points' : 'NULL/UNDEFINED');
+        console.log('[AppV4 _drawChart] retirementAge received:', retirementAge);
+        
+        if (typeof MobileChartDebug !== 'undefined') {
+            MobileChartDebug.log('[_drawChart] Function called!');
+            MobileChartDebug.log(`[_drawChart] Data: ${yearByYear ? yearByYear.length : 0} points`);
+        }
+        
         const status = document.getElementById('chart-status');
         if (status) {
             status.style.display = 'block';
             status.textContent = '⏳ Drawing chart...';
+            console.log('[AppV4 _drawChart] Status indicator updated');
+        } else {
+            console.warn('[AppV4 _drawChart] Status element not found');
         }
         
+        console.log('[AppV4 _drawChart] Looking for canvas element...');
         const canvas = document.getElementById('projection-chart');
         if (!canvas) {
+            console.error('[AppV4 _drawChart] ❌ Canvas element NOT FOUND');
             throw new Error('Canvas element not found');
         }
+        console.log('[AppV4 _drawChart] ✅ Canvas element found');
 
+        console.log('[AppV4 _drawChart] Getting 2D context...');
         const ctx = canvas.getContext('2d');
         if (!ctx) {
+            console.error('[AppV4 _drawChart] ❌ Cannot get 2D context');
             throw new Error('Cannot get 2D context');
         }
+        console.log('[AppV4 _drawChart] ✅ Got 2D context');
         
         // Set dimensions
         const parent = canvas.parentElement;
+        console.log('[AppV4 _drawChart] Parent element:', parent ? 'found' : 'NULL');
+        console.log('[AppV4 _drawChart] Parent offsetWidth:', parent ? parent.offsetWidth : 'N/A');
+        
         const width = Math.max((parent ? parent.offsetWidth : 300) - 40, 300);
         canvas.width = width;
         canvas.height = 400;
+        
+        console.log('[AppV4 _drawChart] Canvas dimensions set:', width, 'x', 400);
 
         const w = canvas.width;
         const h = canvas.height;
         const padding = 60;
 
+        console.log('[AppV4 _drawChart] Drawing area:', w, 'x', h, 'with padding:', padding);
+
         // Clear and set background
+        console.log('[AppV4 _drawChart] Clearing canvas...');
         ctx.clearRect(0, 0, w, h);
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, w, h);
+        console.log('[AppV4 _drawChart] ✅ Canvas cleared with white background');
 
         if (!yearByYear || yearByYear.length === 0) {
+            console.warn('[AppV4 _drawChart] ⚠️ No data to display');
             ctx.fillStyle = '#6b7280';
             ctx.font = '14px sans-serif';
             ctx.textAlign = 'center';
@@ -1314,9 +1372,11 @@ const AppV4 = {
             return;
         }
 
+        console.log('[AppV4 _drawChart] Data validation passed, extracting balances...');
         // Get data range
         const balances = yearByYear.map(y => y.totalBalance || y.totalPortfolio || 0);
         const maxBalance = Math.max(...balances);
+        console.log('[AppV4 _drawChart] Max balance:', maxBalance);
         
         if (maxBalance === 0 || isNaN(maxBalance)) {
             ctx.fillStyle = '#ef4444';
@@ -1377,13 +1437,23 @@ const AppV4 = {
         ctx.fillStyle = '#f59e0b';
         ctx.fillText('Retirement', retireX - 35, padding - 10);
         
+        console.log('[AppV4 _drawChart] ✅ All drawing operations complete');
+        console.log('[AppV4 _drawChart] Chart rendered with', yearByYear.length, 'data points');
+        
         // Success
         if (status) {
             status.style.display = 'block';
             status.style.background = '#d1fae5';
             status.innerHTML = `✅ Chart drawn: ${yearByYear.length} years, max $${(maxBalance/1000).toFixed(0)}K`;
+            console.log('[AppV4 _drawChart] Status message set to:', status.innerHTML);
             setTimeout(() => status.style.display = 'none', 3000);
         }
+        
+        if (typeof MobileChartDebug !== 'undefined') {
+            MobileChartDebug.log(`[_drawChart] ✅ SUCCESS: ${yearByYear.length} years, max $${(maxBalance/1000).toFixed(0)}K`);
+        }
+        
+        console.log('[AppV4 _drawChart] ========== FUNCTION EXIT ==========');
     },
 
     _drawYearBreakdown(yearByYear, retirementAge) {
