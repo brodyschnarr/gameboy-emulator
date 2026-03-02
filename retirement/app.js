@@ -1257,54 +1257,69 @@ const AppV4 = {
         document.getElementById('legacy-description').textContent = 
             results.legacy.description;
 
-        // Charts - use requestAnimationFrame to ensure parent is fully rendered
-        console.log('[AppV4] Preparing to draw charts...');
-        console.log('[AppV4] yearByYear length:', results.yearByYear.length);
+        // Charts - Draw IMMEDIATELY (no more RAF - just draw now!)
+        console.log('[AppV4] ========== ABOUT TO DRAW CHARTS ==========');
+        console.log('[AppV4] yearByYear length:', results.yearByYear ? results.yearByYear.length : 'UNDEFINED!');
+        console.log('[AppV4] retirementAge:', inputs.retirementAge);
         
-        // Give browser time to render visible parent, then draw
-        requestAnimationFrame(() => {
-            console.log('[AppV4] requestAnimationFrame: Drawing charts now');
+        try {
             this._drawChart(results.yearByYear, inputs.retirementAge);
+            console.log('[AppV4] ✅ _drawChart completed');
+        } catch (chartError) {
+            console.error('[AppV4] ❌ CHART ERROR:', chartError);
+            console.error('[AppV4] Stack:', chartError.stack);
+        }
+        
+        try {
             this._drawYearBreakdown(results.yearByYear, inputs.retirementAge);
-        });
+            console.log('[AppV4] ✅ _drawYearBreakdown completed');
+        } catch (breakdownError) {
+            console.error('[AppV4] ❌ BREAKDOWN ERROR:', breakdownError);
+        }
         
         this._displayBreakdown(results, inputs);
+        console.log('[AppV4] ========== CHART SECTION COMPLETE ==========');
     },
 
     _drawChart(yearByYear, retirementAge) {
-        console.log('[AppV4] _drawChart called with', yearByYear.length, 'years of data');
+        console.log('[AppV4] ==================== _drawChart START ====================');
+        console.log('[AppV4] yearByYear is:', yearByYear ? `array of ${yearByYear.length}` : 'NULL/UNDEFINED');
+        console.log('[AppV4] retirementAge:', retirementAge);
         
         const canvas = document.getElementById('projection-chart');
+        console.log('[AppV4] Canvas lookup result:', canvas ? 'FOUND' : 'NOT FOUND');
         if (!canvas) {
-            console.error('[AppV4] ❌ Portfolio chart canvas not found!');
+            console.error('[AppV4] ❌ FATAL: Canvas element #projection-chart not found in DOM!');
             return;
         }
-        console.log('[AppV4] ✅ Canvas element found');
 
         const ctx = canvas.getContext('2d');
+        console.log('[AppV4] Context result:', ctx ? 'GOT 2D CONTEXT' : 'FAILED TO GET CONTEXT');
         if (!ctx) {
-            console.error('[AppV4] ❌ Cannot get 2D context from canvas!');
+            console.error('[AppV4] ❌ FATAL: Cannot get 2D rendering context!');
             return;
         }
-        console.log('[AppV4] ✅ 2D context obtained');
         
         const container = canvas.parentElement;
-        console.log('[AppV4] Container offsetWidth:', container.offsetWidth);
-        console.log('[AppV4] Container display:', window.getComputedStyle(container).display);
-        console.log('[AppV4] Container visibility:', window.getComputedStyle(container).visibility);
+        console.log('[AppV4] Container:', container ? 'FOUND' : 'NOT FOUND');
+        console.log('[AppV4] Container offsetWidth:', container ? container.offsetWidth : 'N/A');
         
-        // FIX: Ensure minimum width (container might be hidden or have 0 width)
-        const containerWidth = Math.max(container.offsetWidth - 40, 300);
+        // Set canvas to FULL width of container, minimum 300px
+        const containerWidth = Math.max((container ? container.offsetWidth : 300) - 40, 300);
         canvas.width = containerWidth;
         canvas.height = 400;
 
         const w = canvas.width;
         const h = canvas.height;
+
+        console.log('[AppV4] ✅ Canvas dimensions SET TO:', w, 'x', h);
+
+        // DRAW GIANT RED RECTANGLE FIRST (most visible thing possible)
+        ctx.fillStyle = '#ef4444'; // Bright red
+        ctx.fillRect(0, 0, w, h);
+        console.log('[AppV4] ✅ Drew GIANT RED RECTANGLE (if you see red, canvas works!)');
+        
         const padding = 60;
-
-        console.log('[AppV4] ✅ Chart canvas dimensions:', w, 'x', h);
-
-        ctx.clearRect(0, 0, w, h);
 
         if (yearByYear.length === 0) {
             console.warn('[AppV4] No data for portfolio chart');
