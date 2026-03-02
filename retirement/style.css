@@ -1101,8 +1101,9 @@ input:focus {
     width: 100% !important;
     height: 400px !important;
     display: block !important;
-    background: #f9fafb !important;
-    border: 2px solid #2563eb !important;
+    background: #f9fafb;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     min-height: 400px !important;
     max-width: 100% !important;
 }
@@ -2070,4 +2071,19 @@ input:focus {
     text-align: center;
     font-size: 16px;
     margin-top: 8px;
+}
+
+/* Compact stats grid */
+.stats-grid.compact {
+    gap: 8px;
+}
+.stats-grid.compact .stat-card {
+    padding: 12px 8px;
+}
+.stats-grid.compact .stat-label {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+}
+.stats-grid.compact .stat-value {
+    font-size: 20px;
 }

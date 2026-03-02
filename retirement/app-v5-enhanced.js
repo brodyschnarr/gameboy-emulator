@@ -3,6 +3,11 @@
 //  Extends V4 with probabilistic analysis and optimization
 // ═══════════════════════════════════════════
 
+// Format money helper (if not already defined)
+if (typeof fmtMoney === 'undefined') {
+    var fmtMoney = (amount) => '$' + Math.round(amount).toLocaleString();
+}
+
 console.log('[AppV5] Loading enhanced features...');
 
 const AppV5Enhanced = {
@@ -292,17 +297,17 @@ const AppV5Enhanced = {
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-label">CPP (Annual)</div>
-                    <div class="stat-value">$${(baseResults.govBenefits.cppTotal || 0).toLocaleString()}</div>
+                    <div class="stat-value">${fmtMoney(baseResults.govBenefits.cppTotal || 0)}</div>
                     <div class="stat-note">Starting at age ${baseResults.govBenefits.cppStartAge || 65}</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">OAS (Annual)</div>
-                    <div class="stat-value">$${(baseResults.govBenefits.oasMax || 0).toLocaleString()}</div>
+                    <div class="stat-value">${fmtMoney(baseResults.govBenefits.oasMax || 0)}</div>
                     <div class="stat-note">Starting at age 65</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Total Gov Benefits</div>
-                    <div class="stat-value">$${(baseResults.govBenefits.total || 0).toLocaleString()}/year</div>
+                    <div class="stat-value">${fmtMoney(baseResults.govBenefits.total || 0)}/year</div>
                     <div class="stat-note">Reduces portfolio withdrawals</div>
                 </div>
             </div>
@@ -318,7 +323,7 @@ const AppV5Enhanced = {
                 <ul>
                     <li><strong>Probability:</strong> ${mc.successRate}% chance your money lasts until age ${baseResults.summary.moneyLastsAge || 90}</li>
                     <li><strong>Range:</strong> In 80% of scenarios, you'll have between $${(mc.finalBalance.p10 / 1000).toFixed(0)}K and $${(mc.finalBalance.p90 / 1000).toFixed(0)}K at the end</li>
-                    <li><strong>Government Support:</strong> CPP ($${(baseResults.govBenefits.cppTotal || 0).toLocaleString()}) + OAS ($${(baseResults.govBenefits.oasMax || 0).toLocaleString()}) = $${(baseResults.govBenefits.total || 0).toLocaleString()}/year reduces portfolio stress</li>
+                    <li><strong>Government Support:</strong> CPP (${fmtMoney(baseResults.govBenefits.cppTotal || 0)}) + OAS (${fmtMoney(baseResults.govBenefits.oasMax || 0)}) = ${fmtMoney(baseResults.govBenefits.total || 0)}/year reduces portfolio stress</li>
                     <li><strong>Tax Efficiency:</strong> Optimized withdrawal strategy saves $${(tax.taxSavings / 1000).toFixed(0)}K over your lifetime</li>
                 </ul>
             </div>
@@ -341,19 +346,19 @@ const AppV5Enhanced = {
                 
                 <div class="stat-card">
                     <div class="stat-label">Best Case (90th %ile)</div>
-                    <div class="stat-value">$${mc.finalBalance.p90.toLocaleString()}</div>
+                    <div class="stat-value">${fmtMoney(mc.finalBalance.p90)}</div>
                     <div class="stat-note">Top 10% of outcomes</div>
                 </div>
                 
                 <div class="stat-card">
                     <div class="stat-label">Median Outcome (50th)</div>
-                    <div class="stat-value">$${mc.finalBalance.p50.toLocaleString()}</div>
+                    <div class="stat-value">${fmtMoney(mc.finalBalance.p50)}</div>
                     <div class="stat-note">Middle of the distribution</div>
                 </div>
                 
                 <div class="stat-card warning">
                     <div class="stat-label">Worst Case (10th %ile)</div>
-                    <div class="stat-value">$${mc.finalBalance.p10.toLocaleString()}</div>
+                    <div class="stat-value">${fmtMoney(mc.finalBalance.p10)}</div>
                     <div class="stat-note">Bottom 10% of outcomes</div>
                 </div>
             </div>
@@ -362,15 +367,15 @@ const AppV5Enhanced = {
             <div class="range-display">
                 <div class="range-item">
                     <span class="range-label">10th percentile:</span>
-                    <span class="range-value">$${mc.portfolioAtRetirement.p10.toLocaleString()}</span>
+                    <span class="range-value">${fmtMoney(mc.portfolioAtRetirement.p10)}</span>
                 </div>
                 <div class="range-item">
                     <span class="range-label">Median (50th):</span>
-                    <span class="range-value">$${mc.portfolioAtRetirement.p50.toLocaleString()}</span>
+                    <span class="range-value">${fmtMoney(mc.portfolioAtRetirement.p50)}</span>
                 </div>
                 <div class="range-item">
                     <span class="range-label">90th percentile:</span>
-                    <span class="range-value">$${mc.portfolioAtRetirement.p90.toLocaleString()}</span>
+                    <span class="range-value">${fmtMoney(mc.portfolioAtRetirement.p90)}</span>
                 </div>
             </div>
             
@@ -396,7 +401,7 @@ const AppV5Enhanced = {
             <div class="insight-box">
                 <h4>What This Means</h4>
                 <p><strong>Success rate of ${mc.successRate}%</strong> means that in ${mc.successRate} out of 100 simulations with realistic market conditions, your money lasted through your entire retirement.</p>
-                <p>The wide range between worst case ($${mc.finalBalance.p10.toLocaleString()}) and best case ($${mc.finalBalance.p90.toLocaleString()}) shows the impact of market timing and sequence of returns.</p>
+                <p>The wide range between worst case (${fmtMoney(mc.finalBalance.p10)}) and best case (${fmtMoney(mc.finalBalance.p90)}) shows the impact of market timing and sequence of returns.</p>
             </div>
         `;
     },
@@ -423,9 +428,9 @@ const AppV5Enhanced = {
                         ${Object.entries(tax.comparison).map(([key, strat]) => `
                             <tr class="${key === tax.recommended ? 'highlight' : ''}">
                                 <td>${strat.strategy}</td>
-                                <td>$${strat.totalTax.toLocaleString()}</td>
-                                <td>$${strat.oasClawback.toLocaleString()}</td>
-                                <td><strong>$${strat.netIncome.toLocaleString()}</strong></td>
+                                <td>${fmtMoney(strat.totalTax)}</td>
+                                <td>${fmtMoney(strat.oasClawback)}</td>
+                                <td><strong>${fmtMoney(strat.netIncome)}</strong></td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -435,7 +440,7 @@ const AppV5Enhanced = {
             <div class="stat-card success">
                 <h4>✅ Recommended Strategy: ${tax.optimalStrategy.name}</h4>
                 <p>${tax.optimalStrategy.description}</p>
-                <p><strong>Tax Savings: $${tax.taxSavings.toLocaleString()}</strong> over naive approach</p>
+                <p><strong>Tax Savings: ${fmtMoney(tax.taxSavings)}</strong> over naive approach</p>
             </div>
             
             <h4>Withdrawal Pattern Over Time</h4>
@@ -525,7 +530,7 @@ const AppV5Enhanced = {
                 <p>${swr.recommended.description}</p>
                 <div class="withdrawal-amount">
                     <div class="amount-label">Safe to withdraw:</div>
-                    <div class="amount-value">$${swr.recommended.firstYearAmount.toLocaleString()}/year</div>
+                    <div class="amount-value">${fmtMoney(swr.recommended.firstYearAmount)}/year</div>
                     <div class="amount-note">(${(swr.recommended.withdrawalRate * 100).toFixed(1)}% of portfolio)</div>
                 </div>
             </div>

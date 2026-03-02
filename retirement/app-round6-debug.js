@@ -2,6 +2,10 @@
 //  Retirement Planner V4 - Complete Controller
 // ═══════════════════════════════════════════
 
+// Format money: $1,234,567 (no decimals, rounds large numbers)
+function fmtMoney(amount) {
+    return '$' + Math.round(amount).toLocaleString();
+}
 
 // Check dependencies
 
@@ -95,19 +99,19 @@ const AppV4 = {
     _setupFamilyMode() {
         const singleBtn = document.getElementById('family-single');
         const coupleBtn = document.getElementById('family-couple');
-        
+
         if (!singleBtn || !coupleBtn) {
             return;
         }
-        
-        
+
+
         singleBtn.addEventListener('click', () => {
             singleBtn.classList.add('active');
             coupleBtn.classList.remove('active');
             this.familyStatus = 'single';
             this._toggleFamilyUI();
         });
-        
+
         coupleBtn.addEventListener('click', () => {
             coupleBtn.classList.add('active');
             singleBtn.classList.remove('active');
@@ -118,24 +122,24 @@ const AppV4 = {
 
     _toggleFamilyUI() {
         const isCouple = this.familyStatus === 'couple';
-        
+
         // Show/hide partner age
         const partnerAgeGroup = document.getElementById('partner-age-group');
         if (partnerAgeGroup) {
             partnerAgeGroup.classList.toggle('hidden', !isCouple);
         }
-        
+
         // Show/hide income sections
         const singleSection = document.getElementById('income-section-single');
         const coupleSection = document.getElementById('income-section-couple');
-        
+
         if (singleSection) {
             singleSection.classList.toggle('hidden', isCouple);
         }
         if (coupleSection) {
             coupleSection.classList.toggle('hidden', !isCouple);
         }
-        
+
                 // Toggle CPP sections
         const cppSingle = document.getElementById('cpp-section-single');
         const cppCouple = document.getElementById('cpp-section-couple');
@@ -146,31 +150,31 @@ const AppV4 = {
         if (isCouple) {
             this._updateHouseholdIncome();
         }
-        
+
     },
 
     _updateHouseholdIncome() {
         const income1 = parseFloat(document.getElementById('income-person1')?.value) || 0;
         const income2 = parseFloat(document.getElementById('income-person2')?.value) || 0;
         const total = income1 + income2;
-        
+
         const display = document.getElementById('household-income-display');
         if (display) {
             display.textContent = `$${total.toLocaleString()}`;
         }
-        
+
         // Show household income benchmarks
         const benchmarkEl = document.getElementById('household-income-benchmark');
         if (benchmarkEl && total > 0) {
             const isFamilyMode = this.familyStatus === 'couple';
-            
+
             // Canadian household income stats (2024 estimates)
             const medianHousehold = 92000;
             const averageHousehold = 106000;
-            
+
             let percentile = '';
             let comparison = '';
-            
+
             if (total < 50000) {
                 percentile = 'bottom 25%';
                 comparison = 'below average';
@@ -187,7 +191,7 @@ const AppV4 = {
                 percentile = 'top 10%';
                 comparison = 'high income';
             }
-            
+
             benchmarkEl.innerHTML = `
                 <div class="benchmark-content">
                     <p>
@@ -210,17 +214,17 @@ const AppV4 = {
         CanadaMap.onSelect = (province, region) => {
             this.selectedProvince = province;
             this.selectedRegion = region;
-            
+
             document.getElementById('province').value = province;
             document.getElementById('region').value = region;
-            
+
             // Update benchmarks based on new selection
             this._updateRegionalBenchmarks();
         };
-        
+
         // Set default location
         CanadaMap.setSelection('ON', 'ON_Toronto');
-        
+
         // Manually trigger the callback to ensure state is set
         this.selectedProvince = 'ON';
         this.selectedRegion = 'ON_Toronto';
@@ -234,17 +238,17 @@ const AppV4 = {
                 this._updateIncomeBenchmark();
             });
         }
-        
+
         // Couple mode incomes
         const income1 = document.getElementById('income-person1');
         const income2 = document.getElementById('income-person2');
-        
+
         if (income1) {
             income1.addEventListener('input', () => {
                 this._updateHouseholdIncome();
             });
         }
-        
+
         if (income2) {
             income2.addEventListener('input', () => {
                 this._updateHouseholdIncome();
@@ -279,20 +283,20 @@ const AppV4 = {
             btn.addEventListener('click', () => {
                 const lifestyle = btn.dataset.lifestyle;
                 const amount = parseInt(btn.dataset.amount);
-                
+
                 // Show detail modal
                 this._showLifestyleDetail(lifestyle);
-                
+
                 // Set active
                 document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
+
                 // Update input
                 const spendingInput = document.getElementById('annual-spending');
                 if (spendingInput) {
                     spendingInput.value = amount;
                 }
-                
+
                 this._updateSpendingRecommendation();
             });
         });
@@ -328,7 +332,7 @@ const AppV4 = {
         // Couple CPP sliders
         const sliderP1 = document.getElementById('cpp-start-age-p1');
         const sliderP2 = document.getElementById('cpp-start-age-p2');
-        
+
         if (sliderP1) {
             sliderP1.addEventListener('input', (e) => {
                 this.cppStartAgeP1 = parseInt(e.target.value);
@@ -389,23 +393,23 @@ const AppV4 = {
         if (typeof WindfallManager === 'undefined') {
             return;
         }
-        
+
         const addBtn = document.getElementById('btn-add-windfall');
         if (addBtn) {
             addBtn.addEventListener('click', () => {
                 this._showWindfallForm();
             });
         }
-        
+
         this._updateWindfallsList();
     },
 
     _showWindfallForm(editIndex = null) {
         const container = document.getElementById('windfall-form-container');
         if (!container) return;
-        
+
         const windfall = editIndex !== null ? this.windfalls[editIndex] : null;
-        
+
         WindfallManager.renderForm(
             'windfall-form-container',
             windfall,
@@ -426,7 +430,7 @@ const AppV4 = {
 
     _updateWindfallsList() {
         WindfallManager.renderList(this.windfalls, 'windfalls-list');
-        
+
         // Attach edit/delete listeners
         WindfallManager._attachListeners = () => {
             document.querySelectorAll('.btn-edit-windfall').forEach(btn => {
@@ -435,7 +439,7 @@ const AppV4 = {
                     this._showWindfallForm(index);
                 });
             });
-            
+
             document.querySelectorAll('.btn-delete-windfall').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const index = parseInt(e.target.dataset.index);
@@ -446,7 +450,7 @@ const AppV4 = {
                 });
             });
         };
-        
+
         WindfallManager._attachListeners();
     },
 
@@ -454,7 +458,7 @@ const AppV4 = {
         const calculateBtn = document.getElementById('btn-calculate');
         if (calculateBtn) {
             calculateBtn.addEventListener('click', () => {
-                
+
                 if (this._validateAllInputs()) {
                     this._runCalculation();
                 } else {
@@ -511,19 +515,19 @@ const AppV4 = {
 
     _showStep(step) {
         const steps = ['basic', 'savings', 'contributions', 'retirement', 'healthcare'];
-        
+
         // Track visited steps
         this.visitedSteps.add(step);
-        
+
         // Hide all steps
         steps.forEach(s => {
             document.getElementById(`step-${s}`)?.classList.add('hidden');
         });
-        
+
         // Show target step
         document.getElementById(`step-${step}`)?.classList.remove('hidden');
         this.currentStep = step;
-        
+
         // Update progress indicator
         const currentIndex = steps.indexOf(step);
         document.querySelectorAll('.progress-step').forEach((el, index) => {
@@ -534,13 +538,13 @@ const AppV4 = {
                 el.classList.add('completed');
             }
         });
-        
+
         window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     _validateBasic() {
         const age = parseInt(document.getElementById('current-age')?.value);
-        
+
         if (!age || age < 18 || age > 100) {
             alert('Please enter a valid age (18-100)');
             return false;
@@ -600,7 +604,7 @@ const AppV4 = {
     _updateIncomeBenchmark() {
         const income = parseFloat(document.getElementById('current-income')?.value) || 0;
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
-        
+
         if (income > 0) {
             const comparison = BenchmarksV2.compareIncome(income, age);
             const el = document.getElementById('income-benchmark');
@@ -608,7 +612,7 @@ const AppV4 = {
                 el.innerHTML = `
                     ${comparison.message}<br>
                     <small style="opacity: 0.8;">
-                        Age ${age} avg: $${comparison.ageAverage.toLocaleString()} | 
+                        Age ${age} avg: $${comparison.ageAverage.toLocaleString()} |
                         Canadian median: $${comparison.median.toLocaleString()}
                     </small>
                 `;
@@ -618,13 +622,13 @@ const AppV4 = {
 
     _updateRegionalBenchmarks() {
         if (!this.selectedRegion) return;
-        
+
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
         const benchmarks = RegionalDataV2.getRegionalBenchmarks(this.selectedRegion, age);
-        
+
         // Update income benchmark
         this._updateIncomeBenchmark();
-        
+
         // Update savings benchmark (if on that step)
         if (this.currentStep === 'savings') {
             this._updateSavingsBenchmark();
@@ -633,22 +637,22 @@ const AppV4 = {
 
     _updateSavingsBenchmark() {
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
-        const benchmarks = this.selectedRegion 
+        const benchmarks = this.selectedRegion
             ? RegionalDataV2.getRegionalBenchmarks(this.selectedRegion, age)
             : BenchmarksV2.getSavingsBenchmark(age);
-        
+
         const html = `
             <strong>Typical ${benchmarks.name || 'Canadian'} at age ${age}:</strong><br>
             <div style="margin-top: 8px; font-size: 14px;">
-                📊 Median: $${benchmarks.median.toLocaleString()} | 
+                📊 Median: $${benchmarks.median.toLocaleString()} |
                 📈 Average: $${benchmarks.average.toLocaleString()}
             </div>
             <div style="margin-top: 4px; font-size: 13px; opacity: 0.8;">
-                25th percentile: $${(benchmarks.p25 || 0).toLocaleString()} | 
+                25th percentile: $${(benchmarks.p25 || 0).toLocaleString()} |
                 75th percentile: $${(benchmarks.p75 || 0).toLocaleString()}
             </div>
         `;
-        
+
         const el = document.getElementById('savings-benchmark');
         if (el) el.innerHTML = html;
     },
@@ -658,9 +662,9 @@ const AppV4 = {
         const tfsa = parseFloat(document.getElementById('tfsa')?.value) || 0;
         const nonreg = parseFloat(document.getElementById('nonreg')?.value) || 0;
         const other = parseFloat(document.getElementById('other')?.value) || 0;
-        
+
         const total = rrsp + tfsa + nonreg + other;
-        
+
         const display = document.getElementById('total-savings-display');
         if (display) {
             display.textContent = `$${total.toLocaleString()}`;
@@ -668,13 +672,13 @@ const AppV4 = {
 
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
         const comparison = BenchmarksV2.compareSavings(age, total);
-        
+
         const benchmark = document.getElementById('total-savings-benchmark');
         if (benchmark) {
             benchmark.innerHTML = `
                 <div>${comparison.message}</div>
                 <div style="font-size: 12px; margin-top: 4px; opacity: 0.8;">
-                    Median: $${comparison.median.toLocaleString()} | 
+                    Median: $${comparison.median.toLocaleString()} |
                     Average: $${comparison.average.toLocaleString()}
                 </div>
             `;
@@ -683,7 +687,7 @@ const AppV4 = {
 
     _updateContributionBenchmark() {
         const monthly = parseFloat(document.getElementById('monthly-contribution')?.value) || 0;
-        
+
         let income = 0;
         if (this.familyStatus === 'single') {
             income = parseFloat(document.getElementById('current-income')?.value) || 60000;
@@ -692,7 +696,7 @@ const AppV4 = {
             const income2 = parseFloat(document.getElementById('income-person2')?.value) || 0;
             income = income1 + income2;
         }
-        
+
         if (monthly > 0) {
             const comparison = BenchmarksV2.compareContribution(monthly, income);
             const el = document.getElementById('contribution-benchmark');
@@ -700,8 +704,8 @@ const AppV4 = {
                 el.innerHTML = `
                     <div>${comparison.message}</div>
                     <div style="font-size: 12px; margin-top: 4px; opacity: 0.8;">
-                        Recommended (15% of income): $${comparison.recommended}/month | 
-                        Canadian median: $${BenchmarksV2.monthlyContribution.median}/month | 
+                        Recommended (15% of income): $${comparison.recommended}/month |
+                        Canadian median: $${BenchmarksV2.monthlyContribution.median}/month |
                         Avg at your income: $${comparison.incomePeerMedian}/month
                     </div>
                 `;
@@ -713,12 +717,12 @@ const AppV4 = {
         const rrsp = parseFloat(document.getElementById('split-rrsp')?.value) || 0;
         const tfsa = parseFloat(document.getElementById('split-tfsa')?.value) || 0;
         const nonreg = parseFloat(document.getElementById('split-nonreg')?.value) || 0;
-        
+
         const total = rrsp + tfsa + nonreg;
         const el = document.getElementById('split-total');
-        
+
         if (!el) return;
-        
+
         if (Math.abs(total - 100) < 0.1) {
             el.textContent = '✅ Total: 100%';
             el.style.color = 'var(--success, green)';
@@ -737,32 +741,32 @@ const AppV4 = {
             const income2 = parseFloat(document.getElementById('income-person2')?.value) || 0;
             income = income1 + income2;
         }
-        
+
         const spending = parseFloat(document.getElementById('annual-spending')?.value) || 0;
         const recommended = BenchmarksV2.getRecommendedSpending(income);
-        
+
         // Get regional spending averages
         const isSingle = this.familyStatus === 'single';
         const baseMedian = isSingle ? BenchmarksV2.retirementSpending.average.median : BenchmarksV2.retirementSpending.average.coupleMedian;
         const baseAverage = isSingle ? BenchmarksV2.retirementSpending.average.annual : BenchmarksV2.retirementSpending.average.coupleAnnual;
-        
+
         const regionalMedian = BenchmarksV2.getRegionalSpending(baseMedian, this.selectedRegion);
         const regionalAverage = BenchmarksV2.getRegionalSpending(baseAverage, this.selectedRegion);
-        
+
         const el = document.getElementById('spending-recommendation');
         if (el) {
             let html = `Recommended (70% of income): $${recommended.toLocaleString()}/year`;
-            
+
             if (spending > 0) {
                 const comparison = BenchmarksV2.compareSpending(spending, isSingle);
                 html += `<br><small style="opacity: 0.8;">${comparison.message}</small>`;
             }
-            
+
             const regionData = this.selectedRegion ? RegionalDataV2.getRegion(this.selectedRegion) : null;
             const regionName = regionData ? regionData.name : 'Canada';
-            
+
             html += `<br><small style="opacity: 0.8;">${regionName} retiree ${isSingle ? '' : 'couple '}median: $${regionalMedian.toLocaleString()}/year | Average: $${regionalAverage.toLocaleString()}/year</small>`;
-            
+
             el.innerHTML = html;
         }
     },
@@ -841,7 +845,7 @@ const AppV4 = {
         const data = LifestyleData[lifestyle];
         if (!data) return;
 
-        document.getElementById('lifestyle-detail-title').textContent = 
+        document.getElementById('lifestyle-detail-title').textContent =
             `${data.name} Lifestyle - $${data.annual.toLocaleString()}/year`;
         document.getElementById('lifestyle-detail-tagline').textContent = data.tagline;
 
@@ -917,7 +921,7 @@ const AppV4 = {
 
             // Calculate base scenario
             const baseResults = RetirementCalcV4.calculate(inputs);
-            
+
             // Apply windfalls to base calculation (deterministic - 100% probability)
             this._applyWindfallsToResults(baseResults, inputs);
 
@@ -934,31 +938,31 @@ const AppV4 = {
                 document.getElementById(`step-${s}`)?.classList.add('hidden');
             });
             document.getElementById('results')?.classList.remove('hidden');
-            
+
             // NOW display results (charts will draw to visible parent)
             this.currentScenario = 'base';
             this._displayResults(baseResults, inputs);
-            
+
             // Setup scenario tab switching (after results are visible)
             this._setupScenarioTabs();
-            
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            
+
             // Run V5 Enhanced Analysis (Monte Carlo, Tax Optimization, What-If)
             if (typeof AppV5Enhanced !== 'undefined') {
                 AppV5Enhanced.runEnhancedAnalysis(inputs, baseResults);
-                
+
                 // Use Monte Carlo success rate as the authoritative probability
                 if (AppV5Enhanced.monteCarloResults) {
                     this.monteCarloResults = AppV5Enhanced.monteCarloResults;
-                    
+
                     // Update the main results display with Monte Carlo probability
                     const mcRate = AppV5Enhanced.monteCarloResults.successRate;
                     const probEl = document.getElementById('success-probability');
                     const probNote = document.getElementById('probability-note');
                     if (probEl) probEl.textContent = `${mcRate}%`;
                     if (probNote) {
-                        probNote.textContent = `${mcRate >= 80 ? 'Strong' : mcRate >= 60 ? 'Moderate' : 'Needs work'} — based on 1,000 market simulations`;
+                        probNote.textContent = `${mcRate >= 80 ? 'Strong' : mcRate >= 60 ? 'Moderate' : 'Needs work'} - based on 1,000 market simulations`;
                         probNote.style.color = mcRate >= 80 ? 'var(--success)' : mcRate >= 60 ? 'var(--warning)' : 'var(--danger)';
                     }
                 }
@@ -972,8 +976,8 @@ const AppV4 = {
         if (!inputs.windfalls || inputs.windfalls.length === 0) {
             return;
         }
-        
-        
+
+
         inputs.windfalls.forEach(windfall => {
             // Handle both calendar year (e.g., 2030) and age (e.g., 65)
             let targetAge;
@@ -986,29 +990,29 @@ const AppV4 = {
                 // Already an age or yearsFromNow offset
                 targetAge = windfall.year || (inputs.currentAge + (windfall.yearsFromNow || 0));
             }
-            
+
             const yearIndex = results.yearByYear.findIndex(y => y.age === targetAge);
-            
+
             if (yearIndex === -1) {
                 if (typeof MobileDebug !== 'undefined') {
                     MobileDebug.addLog(`❌ Windfall age ${targetAge} out of range!`, true);
                 }
                 return; // Year not in projection
             }
-            
+
             // Calculate after-tax amount (simplified)
-            const afterTaxAmount = windfall.taxable 
+            const afterTaxAmount = windfall.taxable
                 ? windfall.amount * 0.7 // 30% tax rate (simplified)
                 : windfall.amount;
-            
-            
+
+
             // Add windfall to appropriate account(s) for THIS year and all future years
             for (let i = yearIndex; i < results.yearByYear.length; i++) {
                 const year = results.yearByYear[i];
                 const returnRate = inputs.returnRate / 100;
                 const yearsFromWindfall = i - yearIndex;
                 const grownAmount = afterTaxAmount * Math.pow(1 + returnRate, yearsFromWindfall);
-                
+
                 if (windfall.destination === 'rrsp') {
                     year.rrsp = (year.rrsp || 0) + grownAmount;
                 } else if (windfall.destination === 'tfsa') {
@@ -1019,13 +1023,13 @@ const AppV4 = {
                     year.tfsa = (year.tfsa || 0) + (grownAmount * 0.5);
                     year.nonReg = (year.nonReg || 0) + (grownAmount * 0.5);
                 }
-                
+
                 // Update total (include ALL accounts)
                 const newTotal = (year.rrsp || 0) + (year.tfsa || 0) + (year.nonReg || 0) + (year.other || 0);
                 year.totalPortfolio = newTotal;
                 year.totalBalance = newTotal; // CRITICAL: Also update totalBalance for chart display!
             }
-            
+
             // Mark windfall in the year it occurs
             results.yearByYear[yearIndex].windfall = {
                 name: windfall.name,
@@ -1033,32 +1037,32 @@ const AppV4 = {
                 afterTaxAmount
             };
         });
-        
+
         // Recalculate summary based on updated projection
         const lastYear = results.yearByYear[results.yearByYear.length - 1];
         const retirementYear = results.yearByYear.find(y => y.age === inputs.retirementAge);
-        
+
         if (retirementYear) {
             // Use totalBalance (that's what the base calculation creates)
             results.summary.portfolioAtRetirement = retirementYear.totalBalance || retirementYear.totalPortfolio || 0;
         }
-        
-        results.summary.legacyAmount = lastYear.totalBalance || lastYear.totalPortfolio || 0;
-        
+
+        results.summary.legacyAmount = Math.round(lastYear.totalBalance || lastYear.totalPortfolio || 0);
+
         // FIX: Also update results.legacy object (display uses this, not summary.legacyAmount!)
         results.legacy.amount = results.summary.legacyAmount;
-        results.legacy.description = results.summary.legacyAmount > 0 
-            ? `You'll leave an estate of $${results.summary.legacyAmount.toLocaleString()} for your beneficiaries.`
+        results.legacy.description = results.summary.legacyAmount > 0
+            ? `You'll leave an estate of ${fmtMoney(results.summary.legacyAmount)} for your beneficiaries.`
             : 'No legacy remaining - money runs out before end of life.';
-        
-        
+
+
         // Find when money runs out (check totalBalance first, then totalPortfolio)
         const runOutYear = results.yearByYear.find(y => {
             const balance = y.totalBalance !== undefined ? y.totalBalance : y.totalPortfolio;
             return (balance || 0) <= 0;
         });
         results.summary.moneyLastsAge = runOutYear ? runOutYear.age : inputs.lifeExpectancy;
-        
+
         // Recalculate probability based on updated projection
         const yearsShort = runOutYear ? (inputs.lifeExpectancy - runOutYear.age) : 0;
         if (yearsShort === 0) {
@@ -1072,11 +1076,11 @@ const AppV4 = {
             results.probability = Math.round(successRatio * 100);
             results.onTrack = results.probability >= 70;
         }
-        
+
     },
 
     _autoCalculateScenarios(baseInputs) {
-        
+
         const scenarios = {
             retire5early: {
                 ...baseInputs,
@@ -1099,15 +1103,15 @@ const AppV4 = {
                 annualSpending: Math.round(baseInputs.annualSpending * 1.2)
             }
         };
-        
+
         // Calculate each scenario and apply windfalls
         Object.keys(scenarios).forEach(key => {
             const scenarioInputs = scenarios[key];
             const results = RetirementCalcV4.calculate(scenarioInputs);
-            
+
             // Apply windfalls to this scenario too
             this._applyWindfallsToResults(results, scenarioInputs);
-            
+
             this.scenarioResults[key] = {
                 inputs: scenarioInputs,
                 results
@@ -1122,36 +1126,36 @@ const AppV4 = {
         if (!tabContainer) {
             return;
         }
-        
+
         const tabs = tabContainer.querySelectorAll('.scenario-tab');
-        
+
         // Remove old listener if it exists
         if (tabContainer._scenarioClickHandler) {
             tabContainer.removeEventListener('click', tabContainer._scenarioClickHandler);
         }
-        
+
         // Add delegated listener to parent container
         const handler = (e) => {
             const tab = e.target.closest('.scenario-tab');
             if (!tab) {
                 return; // Click wasn't on a tab
             }
-            
+
             e.preventDefault();
             const scenario = tab.dataset.scenario;
-            
+
             // Update active state
             tabContainer.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            
+
             // Switch scenario
             this._switchScenario(scenario);
         };
-        
+
         // Store handler reference for cleanup
         tabContainer._scenarioClickHandler = handler;
         tabContainer.addEventListener('click', handler);
-        
+
     },
 
     _switchScenario(scenarioKey) {
@@ -1168,7 +1172,7 @@ const AppV4 = {
     _gatherInputs() {
         const currentAge = parseInt(document.getElementById('current-age')?.value);
         const partnerAge = parseInt(document.getElementById('partner-age')?.value) || currentAge;
-        
+
         let currentIncome, income1, income2;
         if (this.familyStatus === 'single') {
             currentIncome = parseFloat(document.getElementById('current-income')?.value);
@@ -1188,34 +1192,34 @@ const AppV4 = {
             province: this.selectedProvince || 'ON',
             region: this.selectedRegion || 'ON_Toronto',
             familyStatus: this.familyStatus,
-            
+
             currentIncome,
             income1,
             income2,
-            
+
             rrsp: parseFloat(document.getElementById('rrsp')?.value) || 0,
             tfsa: parseFloat(document.getElementById('tfsa')?.value) || 0,
             nonReg: parseFloat(document.getElementById('nonreg')?.value) || 0,
             other: parseFloat(document.getElementById('other')?.value) || 0,
-            
+
             monthlyContribution: parseFloat(document.getElementById('monthly-contribution')?.value) || 0,
             contributionSplit: {
                 rrsp: (parseFloat(document.getElementById('split-rrsp')?.value) || 0) / 100,
                 tfsa: (parseFloat(document.getElementById('split-tfsa')?.value) || 0) / 100,
                 nonReg: (parseFloat(document.getElementById('split-nonreg')?.value) || 0) / 100
             },
-            
+
             annualSpending: parseFloat(document.getElementById('annual-spending')?.value),
             healthStatus: this.healthStatus,
-            
+
             currentDebt: parseFloat(document.getElementById('current-debt')?.value) || 0,
             debtPayoffAge: parseInt(document.getElementById('debt-payoff-age')?.value) || 65,
-            
+
             cppStartAge: this.familyStatus === 'couple' ? (this.cppStartAgeP1 || 65) : this.cppStartAge,
             cppStartAgeP2: this.familyStatus === 'couple' ? (this.cppStartAgeP2 || 65) : null,
             additionalIncomeSources: IncomeSources.getAll(),
             windfalls: this.windfalls || [],
-            
+
             returnRate: parseFloat(document.getElementById('return-rate')?.value) || 6,
             inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2.5
         };
@@ -1238,22 +1242,20 @@ const AppV4 = {
         const portfolio = results.summary.portfolioAtRetirement || 0;
         const income = results.summary.annualIncomeAtRetirement || 0;
         const lastsAge = results.summary.moneyLastsAge || inputs.lifeExpectancy;
-        
+
         // FIX: Use Monte Carlo probability if available (more accurate than deterministic)
         let probability = results.probability || 0;
         if (this.monteCarloResults && this.monteCarloResults.successRate !== undefined) {
             probability = this.monteCarloResults.successRate;
         } else {
         }
-        
-        
-        document.getElementById('stat-portfolio').textContent = 
-            `$${portfolio.toLocaleString()}`;
-        document.getElementById('stat-income').textContent = 
-            `$${income.toLocaleString()}`;
-        document.getElementById('stat-lasts').textContent = 
+
+
+        document.getElementById('stat-portfolio').textContent = fmtMoney(portfolio);
+        document.getElementById('stat-income').textContent = fmtMoney(income);
+        document.getElementById('stat-lasts').textContent =
             `Age ${lastsAge}`;
-        document.getElementById('stat-probability').textContent = 
+        document.getElementById('stat-probability').textContent =
             `${probability}%`;
 
         const lastsNote = document.getElementById('stat-lasts-note');
@@ -1286,9 +1288,8 @@ const AppV4 = {
         }
 
         // Legacy
-        document.getElementById('legacy-amount').textContent = 
-            `$${results.legacy.amount.toLocaleString()}`;
-        document.getElementById('legacy-description').textContent = 
+        document.getElementById('legacy-amount').textContent = fmtMoney(results.legacy.amount);
+        document.getElementById('legacy-description').textContent =
             results.legacy.description;
 
         // Charts
@@ -1303,7 +1304,7 @@ const AppV4 = {
                 status.innerHTML = `❌ Chart error: ${chartError.message}`;
             }
         }
-        
+
         this._displayBreakdown(results, inputs);
     },
 
@@ -1419,14 +1420,14 @@ const AppV4 = {
             return `
                 <div class="year-bar-row">
                     <div class="year-label">Age ${year.age}</div>
-                    <div class="year-bar" title="Total: $${total.toLocaleString()}">
-                        ${year.rrsp > 0 ? `<div class="bar-segment rrsp" style="width: ${rrspPct}%" title="RRSP: $${year.rrsp.toLocaleString()} (${rrspPct.toFixed(1)}%)"></div>` : ''}
-                        ${year.tfsa > 0 ? `<div class="bar-segment tfsa" style="width: ${tfsaPct}%" title="TFSA: $${year.tfsa.toLocaleString()} (${tfsaPct.toFixed(1)}%)"></div>` : ''}
-                        ${year.nonReg > 0 ? `<div class="bar-segment nonreg" style="width: ${nonRegPct}%" title="Non-Reg: $${year.nonReg.toLocaleString()} (${nonRegPct.toFixed(1)}%)"></div>` : ''}
-                        ${year.other > 0 ? `<div class="bar-segment other" style="width: ${otherPct}%" title="Other: $${year.other.toLocaleString()} (${otherPct.toFixed(1)}%)"></div>` : ''}
+                    <div class="year-bar" title="Total: ${fmtMoney(total)}">
+                        ${year.rrsp > 0 ? `<div class="bar-segment rrsp" style="width: ${rrspPct}%" title="RRSP: ${fmtMoney(year.rrsp)} (${rrspPct.toFixed(0)}%)"></div>` : ''}
+                        ${year.tfsa > 0 ? `<div class="bar-segment tfsa" style="width: ${tfsaPct}%" title="TFSA: ${fmtMoney(year.tfsa)} (${tfsaPct.toFixed(0)}%)"></div>` : ''}
+                        ${year.nonReg > 0 ? `<div class="bar-segment nonreg" style="width: ${nonRegPct}%" title="Non-Reg: ${fmtMoney(year.nonReg)} (${nonRegPct.toFixed(0)}%)"></div>` : ''}
+                        ${year.other > 0 ? `<div class="bar-segment other" style="width: ${otherPct}%" title="Other: ${fmtMoney(year.other)} (${otherPct.toFixed(0)}%)"></div>` : ''}
                     </div>
                     <div class="year-breakdown-details">
-                        <div class="year-total">$${total.toLocaleString()}</div>
+                        <div class="year-total">${fmtMoney(total)}</div>
                         <div class="year-percentages">
                             ${year.rrsp > 0 ? `<span class="pct-label rrsp-color">${rrspPct.toFixed(0)}%</span>` : ''}
                             ${year.tfsa > 0 ? `<span class="pct-label tfsa-color">${tfsaPct.toFixed(0)}%</span>` : ''}
@@ -1450,7 +1451,7 @@ const AppV4 = {
 
     _displayBreakdown(results, inputs) {
         const retirementYears = results.yearByYear.filter(y => y.phase === 'retirement');
-        
+
         if (retirementYears.length === 0) {
             document.getElementById('breakdown-content').innerHTML = '<p>No retirement years</p>';
             return;
