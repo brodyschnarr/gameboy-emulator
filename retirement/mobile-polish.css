@@ -63,8 +63,13 @@
     
     canvas {
         max-width: 100% !important;
-        height: auto !important;
+        /* height: auto removed - was collapsing portfolio chart to 0px */
         touch-action: pan-y; /* Allow vertical scroll over charts */
+    }
+    
+    /* Portfolio projection needs fixed height */
+    #projection-chart {
+        height: 400px !important;
     }
     
     /* Chart containers */
