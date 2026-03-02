@@ -1846,7 +1846,7 @@ input:focus {
 .progress-indicator {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     max-width: 800px;
     margin: 18px auto 22px;
     padding: 0 16px;
@@ -1904,6 +1904,10 @@ input:focus {
     color: var(--text-muted);
     text-align: center;
     transition: all 0.3s;
+    min-height: 30px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
 }
 
 .progress-step.active .step-number {
@@ -1963,8 +1967,9 @@ input:focus {
 }
 
 .year-total {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .year-percentages {

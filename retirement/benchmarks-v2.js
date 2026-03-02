@@ -165,7 +165,7 @@ const BenchmarksV2 = {
     compareSavings(age, savings) {
         const benchmark = this.getSavingsBenchmark(age);
         
-        const vsMedian = ((savings / benchmark.median) - 1) * 100;
+        const vsMedian = Math.round(((savings / benchmark.median) - 1) * 100);
         const vsAverage = ((savings / benchmark.average) - 1) * 100;
         
         // Determine percentile bracket
@@ -199,7 +199,7 @@ const BenchmarksV2 = {
         const recommended = income * this.monthlyContribution.recommended;
         const vsRecommended = ((annual / recommended) - 1) * 100;
         
-        const vsMedian = ((monthly / this.monthlyContribution.median) - 1) * 100;
+        const vsMedian = Math.round(((monthly / this.monthlyContribution.median) - 1) * 100);
         const vsAverage = ((monthly / this.monthlyContribution.average) - 1) * 100;
         
         // Get income bracket benchmark
@@ -229,7 +229,7 @@ const BenchmarksV2 = {
     compareIncome(income, age) {
         const ageIncome = this.incomeByAge[Math.min(Math.max(age, 25), 65)] || this.incomePercentiles.median;
         const vsAge = ((income / ageIncome) - 1) * 100;
-        const vsMedian = ((income / this.incomePercentiles.median) - 1) * 100;
+        const vsMedian = Math.round(((income / this.incomePercentiles.median) - 1) * 100);
         
         let percentileBracket = '';
         if (income >= this.incomePercentiles.p90) percentileBracket = 'top 10%';
@@ -259,7 +259,7 @@ const BenchmarksV2 = {
      * Compare retirement spending to actual Canadian retiree spending
      */
     compareSpending(spending) {
-        const vsMedian = ((spending / this.retirementSpending.average.median) - 1) * 100;
+        const vsMedian = Math.round(((spending / this.retirementSpending.average.median) - 1) * 100);
         
         let category = '';
         if (spending <= this.retirementSpending.modest.annual) {
