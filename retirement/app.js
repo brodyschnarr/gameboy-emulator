@@ -296,6 +296,7 @@ const AppV4 = {
                 const spendingInput = document.getElementById('annual-spending');
                 if (spendingInput) {
                     spendingInput.value = amount;
+                    if (window.syncSlider) window.syncSlider('annual-spending');
                 }
 
                 this._updateSpendingRecommendation();
