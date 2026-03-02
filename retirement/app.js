@@ -932,9 +932,19 @@ const AppV4 = {
             if (typeof AppV5Enhanced !== 'undefined') {
                 AppV5Enhanced.runEnhancedAnalysis(inputs, baseResults);
                 
-                // Store Monte Carlo results for use in main stats display
+                // Use Monte Carlo success rate as the authoritative probability
                 if (AppV5Enhanced.monteCarloResults) {
                     this.monteCarloResults = AppV5Enhanced.monteCarloResults;
+                    
+                    // Update the main results display with Monte Carlo probability
+                    const mcRate = AppV5Enhanced.monteCarloResults.successRate;
+                    const probEl = document.getElementById('success-probability');
+                    const probNote = document.getElementById('probability-note');
+                    if (probEl) probEl.textContent = `${mcRate}%`;
+                    if (probNote) {
+                        probNote.textContent = `${mcRate >= 80 ? 'Strong' : mcRate >= 60 ? 'Moderate' : 'Needs work'} — based on 1,000 market simulations`;
+                        probNote.style.color = mcRate >= 80 ? 'var(--success)' : mcRate >= 60 ? 'var(--warning)' : 'var(--danger)';
+                    }
                 }
             }
         } catch (error) {
