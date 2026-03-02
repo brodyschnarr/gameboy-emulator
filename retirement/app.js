@@ -2,16 +2,8 @@
 //  Retirement Planner V4 - Complete Controller
 // ═══════════════════════════════════════════
 
-console.log('[AppV4] Loading app.js...');
 
 // Check dependencies
-if (typeof CanadaMap === 'undefined') console.error('[AppV4] CanadaMap not loaded!');
-if (typeof RegionalDataV2 === 'undefined') console.error('[AppV4] RegionalDataV2 not loaded!');
-if (typeof IncomeSources === 'undefined') console.error('[AppV4] IncomeSources not loaded!');
-if (typeof CPPOptimizer === 'undefined') console.error('[AppV4] CPPOptimizer not loaded!');
-if (typeof ScenarioManager === 'undefined') console.error('[AppV4] ScenarioManager not loaded!');
-if (typeof HealthcareEstimator === 'undefined') console.error('[AppV4] HealthcareEstimator not loaded!');
-if (typeof RetirementCalcV4 === 'undefined') console.error('[AppV4] RetirementCalcV4 not loaded!');
 
 const AppV4 = {
     currentStep: 'basic',
@@ -27,7 +19,6 @@ const AppV4 = {
     windfalls: [],
 
     init() {
-        console.log('[AppV4] Initializing...');
         this._setupNavigation();
         this._setupFamilyMode();
         this._setupMap();
@@ -43,7 +34,6 @@ const AppV4 = {
         this._setupScenarios();
         this._setupModals();
         this._setupAdvancedToggle();
-        console.log('[AppV4] Init complete');
     },
 
     _setupNavigation() {
@@ -94,14 +84,11 @@ const AppV4 = {
         const coupleBtn = document.getElementById('family-couple');
         
         if (!singleBtn || !coupleBtn) {
-            console.error('[AppV4] Family toggle buttons not found!');
             return;
         }
         
-        console.log('[AppV4] Family mode setup, buttons found');
         
         singleBtn.addEventListener('click', () => {
-            console.log('[AppV4] Single clicked');
             singleBtn.classList.add('active');
             coupleBtn.classList.remove('active');
             this.familyStatus = 'single';
@@ -109,7 +96,6 @@ const AppV4 = {
         });
         
         coupleBtn.addEventListener('click', () => {
-            console.log('[AppV4] Couple clicked');
             coupleBtn.classList.add('active');
             singleBtn.classList.remove('active');
             this.familyStatus = 'couple';
@@ -119,11 +105,9 @@ const AppV4 = {
 
     _toggleFamilyUI() {
         const isCouple = this.familyStatus === 'couple';
-        console.log('[AppV4] Toggling family UI, isCouple:', isCouple);
         
         // Show/hide partner age
         const partnerAgeGroup = document.getElementById('partner-age-group');
-        console.log('[AppV4] Partner age group element:', partnerAgeGroup);
         if (partnerAgeGroup) {
             partnerAgeGroup.classList.toggle('hidden', !isCouple);
         }
@@ -131,7 +115,6 @@ const AppV4 = {
         // Show/hide income sections
         const singleSection = document.getElementById('income-section-single');
         const coupleSection = document.getElementById('income-section-couple');
-        console.log('[AppV4] Single section:', singleSection, 'Couple section:', coupleSection);
         
         if (singleSection) {
             singleSection.classList.toggle('hidden', isCouple);
@@ -151,7 +134,6 @@ const AppV4 = {
             this._updateHouseholdIncome();
         }
         
-        console.log('[AppV4] Family UI toggled successfully');
     },
 
     _updateHouseholdIncome() {
@@ -213,7 +195,6 @@ const AppV4 = {
     _setupMap() {
         CanadaMap.render('map-container');
         CanadaMap.onSelect = (province, region) => {
-            console.log('[AppV4] Map selection:', province, region);
             this.selectedProvince = province;
             this.selectedRegion = region;
             
@@ -225,13 +206,11 @@ const AppV4 = {
         };
         
         // Set default location
-        console.log('[AppV4] Setting default location: ON, ON_Toronto');
         CanadaMap.setSelection('ON', 'ON_Toronto');
         
         // Manually trigger the callback to ensure state is set
         this.selectedProvince = 'ON';
         this.selectedRegion = 'ON_Toronto';
-        console.log('[AppV4] Default location set:', this.selectedProvince, this.selectedRegion);
     },
 
     _setupIncome() {
@@ -395,7 +374,6 @@ const AppV4 = {
 
     _setupWindfalls() {
         if (typeof WindfallManager === 'undefined') {
-            console.warn('[AppV4] WindfallManager not loaded, skipping windfall setup');
             return;
         }
         
@@ -461,24 +439,15 @@ const AppV4 = {
 
     _setupCalculate() {
         const calculateBtn = document.getElementById('btn-calculate');
-        console.log('[AppV4] Calculate button:', calculateBtn);
         if (calculateBtn) {
             calculateBtn.addEventListener('click', () => {
-                console.log('[AppV4] Calculate button clicked!');
-                console.log('[AppV4] Selected province:', this.selectedProvince);
-                console.log('[AppV4] Selected region:', this.selectedRegion);
-                console.log('[AppV4] Family status:', this.familyStatus);
                 
                 if (this._validateAllInputs()) {
-                    console.log('[AppV4] Validation passed, running calculation...');
                     this._runCalculation();
                 } else {
-                    console.error('[AppV4] Validation failed');
                 }
             });
-            console.log('[AppV4] Calculate button listener attached');
         } else {
-            console.error('[AppV4] Calculate button NOT FOUND in DOM!');
         }
 
         const editBtn = document.getElementById('btn-edit');
@@ -923,19 +892,15 @@ const AppV4 = {
     _runCalculation() {
         try {
             const inputs = this._gatherInputs();
-            console.log('[AppV4] Inputs:', inputs);
 
             // Check if RetirementCalcV4 exists
             if (typeof RetirementCalcV4 === 'undefined') {
                 alert('❌ Calculation engine not loaded. Please refresh the page.');
-                console.error('[AppV4] RetirementCalcV4 is undefined!');
                 return;
             }
 
             // Calculate base scenario
             const baseResults = RetirementCalcV4.calculate(inputs);
-            console.log('[AppV4] Base Results:', baseResults);
-            console.log('[AppV4] Portfolio BEFORE windfalls:', baseResults.summary.portfolioAtRetirement);
             
             // Apply windfalls to base calculation (deterministic - 100% probability)
             this._applyWindfallsToResults(baseResults, inputs);
@@ -956,10 +921,6 @@ const AppV4 = {
             
             // NOW display results (charts will draw to visible parent)
             this.currentScenario = 'base';
-            console.log('[AppV4] ========== DISPLAYING RESULTS ==========');
-            console.log('[AppV4] Portfolio at retirement:', baseResults.summary.portfolioAtRetirement);
-            console.log('[AppV4] Money lasts age:', baseResults.summary.moneyLastsAge);
-            console.log('[AppV4] Full summary:', baseResults.summary);
             this._displayResults(baseResults, inputs);
             
             // Setup scenario tab switching (after results are visible)
@@ -969,30 +930,23 @@ const AppV4 = {
             
             // Run V5 Enhanced Analysis (Monte Carlo, Tax Optimization, What-If)
             if (typeof AppV5Enhanced !== 'undefined') {
-                console.log('[AppV4] Launching V5 enhanced analysis...');
                 AppV5Enhanced.runEnhancedAnalysis(inputs, baseResults);
                 
                 // Store Monte Carlo results for use in main stats display
                 if (AppV5Enhanced.monteCarloResults) {
                     this.monteCarloResults = AppV5Enhanced.monteCarloResults;
-                    console.log('[AppV4] Stored Monte Carlo results, success rate:', this.monteCarloResults.successRate + '%');
                 }
             }
         } catch (error) {
-            console.error('[AppV4] Calculation error:', error);
             alert(`❌ Calculation failed: ${error.message}\n\nPlease check the console for details.`);
         }
     },
 
     _applyWindfallsToResults(results, inputs) {
         if (!inputs.windfalls || inputs.windfalls.length === 0) {
-            console.log('[AppV4] No windfalls to apply');
             return;
         }
         
-        console.log('[AppV4] ========== APPLYING WINDFALLS ==========');
-        console.log('[AppV4] Number of windfalls:', inputs.windfalls.length);
-        console.log('[AppV4] Windfalls:', inputs.windfalls);
         
         inputs.windfalls.forEach(windfall => {
             // Handle both calendar year (e.g., 2030) and age (e.g., 65)
@@ -1002,7 +956,6 @@ const AppV4 = {
                 const currentYear = new Date().getFullYear();
                 const yearsFromNow = windfall.year - currentYear;
                 targetAge = inputs.currentAge + yearsFromNow;
-                console.log(`[AppV4] Converted year ${windfall.year} to age ${targetAge}`);
             } else {
                 // Already an age or yearsFromNow offset
                 targetAge = windfall.year || (inputs.currentAge + (windfall.yearsFromNow || 0));
@@ -1011,8 +964,6 @@ const AppV4 = {
             const yearIndex = results.yearByYear.findIndex(y => y.age === targetAge);
             
             if (yearIndex === -1) {
-                console.error(`[AppV4] ❌ WINDFALL SKIPPED: Age ${targetAge} not in projection (age range: ${inputs.currentAge}-${inputs.lifeExpectancy})`);
-                console.error(`[AppV4] Windfall "${windfall.name}" for $${windfall.amount.toLocaleString()} will NOT be applied!`);
                 if (typeof MobileDebug !== 'undefined') {
                     MobileDebug.addLog(`❌ Windfall age ${targetAge} out of range!`, true);
                 }
@@ -1024,7 +975,6 @@ const AppV4 = {
                 ? windfall.amount * 0.7 // 30% tax rate (simplified)
                 : windfall.amount;
             
-            console.log(`[AppV4] Adding $${afterTaxAmount.toLocaleString()} windfall "${windfall.name}" at age ${targetAge}`);
             
             // Add windfall to appropriate account(s) for THIS year and all future years
             for (let i = yearIndex; i < results.yearByYear.length; i++) {
@@ -1075,7 +1025,6 @@ const AppV4 = {
             ? `You'll leave an estate of $${results.summary.legacyAmount.toLocaleString()} for your beneficiaries.`
             : 'No legacy remaining - money runs out before end of life.';
         
-        console.log('[AppV4] Updated legacy.amount:', results.legacy.amount);
         
         // Find when money runs out (check totalBalance first, then totalPortfolio)
         const runOutYear = results.yearByYear.find(y => {
@@ -1098,13 +1047,9 @@ const AppV4 = {
             results.onTrack = results.probability >= 70;
         }
         
-        console.log('[AppV4] Updated portfolio at retirement:', results.summary.portfolioAtRetirement);
-        console.log('[AppV4] Updated money lasts age:', results.summary.moneyLastsAge);
-        console.log('[AppV4] Updated probability:', results.probability + '%');
     },
 
     _autoCalculateScenarios(baseInputs) {
-        console.log('[AppV4] Auto-calculating scenarios with', (baseInputs.windfalls || []).length, 'windfalls');
         
         const scenarios = {
             retire5early: {
@@ -1143,23 +1088,19 @@ const AppV4 = {
             };
         });
 
-        console.log('[AppV4] Auto-calculated scenarios:', Object.keys(this.scenarioResults));
     },
 
     _setupScenarioTabs() {
         // FIX: Use event delegation instead of cloning (more robust)
         const tabContainer = document.getElementById('scenario-tabs');
         if (!tabContainer) {
-            console.error('[AppV4] ❌ Scenario tabs container not found! DOM not ready?');
             return;
         }
         
         const tabs = tabContainer.querySelectorAll('.scenario-tab');
-        console.log('[AppV4] ✅ Found scenario tabs container with', tabs.length, 'tabs');
         
         // Remove old listener if it exists
         if (tabContainer._scenarioClickHandler) {
-            console.log('[AppV4] Removing old event handler');
             tabContainer.removeEventListener('click', tabContainer._scenarioClickHandler);
         }
         
@@ -1167,13 +1108,11 @@ const AppV4 = {
         const handler = (e) => {
             const tab = e.target.closest('.scenario-tab');
             if (!tab) {
-                console.log('[AppV4] Click on tab container but not on a tab');
                 return; // Click wasn't on a tab
             }
             
             e.preventDefault();
             const scenario = tab.dataset.scenario;
-            console.log('[AppV4] ✅ Scenario tab clicked:', scenario);
             
             // Update active state
             tabContainer.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
@@ -1187,13 +1126,10 @@ const AppV4 = {
         tabContainer._scenarioClickHandler = handler;
         tabContainer.addEventListener('click', handler);
         
-        console.log('[AppV4] ✅ Scenario tabs setup complete (event delegation)');
-        console.log('[AppV4] Handler attached:', !!tabContainer._scenarioClickHandler);
     },
 
     _switchScenario(scenarioKey) {
         if (!this.scenarioResults[scenarioKey]) {
-            console.warn('[AppV4] Scenario not found:', scenarioKey);
             return;
         }
 
@@ -1281,12 +1217,9 @@ const AppV4 = {
         let probability = results.probability || 0;
         if (this.monteCarloResults && this.monteCarloResults.successRate !== undefined) {
             probability = this.monteCarloResults.successRate;
-            console.log('[AppV4] Using Monte Carlo probability:', probability + '%');
         } else {
-            console.log('[AppV4] Using deterministic probability:', probability + '%');
         }
         
-        console.log('[AppV4] Displaying stats - Portfolio:', portfolio, 'Income:', income, 'Lasts:', lastsAge, 'Probability:', probability);
         
         document.getElementById('stat-portfolio').textContent = 
             `$${portfolio.toLocaleString()}`;
@@ -1332,41 +1265,11 @@ const AppV4 = {
         document.getElementById('legacy-description').textContent = 
             results.legacy.description;
 
-        // Charts - EXTREME VERBOSE LOGGING
-        console.log('[AppV4] ========== ABOUT TO DRAW CHARTS ==========');
-        console.log('[AppV4] results.yearByYear exists?', !!results.yearByYear);
-        console.log('[AppV4] results.yearByYear.length:', results.yearByYear ? results.yearByYear.length : 'N/A');
-        console.log('[AppV4] retirementAge:', inputs.retirementAge);
-        console.log('[AppV4] this._drawChart exists?', typeof this._drawChart);
-        
-        // Log to mobile overlay if available
-        if (typeof MobileChartDebug !== 'undefined') {
-            MobileChartDebug.init();
-            MobileChartDebug.log('[CHART] About to draw portfolio chart');
-            MobileChartDebug.log(`[CHART] Data points: ${results.yearByYear ? results.yearByYear.length : 0}`);
-        }
-        
+        // Charts
         try {
-            console.log('[AppV4] >> CALLING _drawChart NOW <<');
             this._drawChart(results.yearByYear, inputs.retirementAge);
-            console.log('[AppV4] >> _drawChart COMPLETED <<');
-            
-            console.log('[AppV4] >> CALLING _drawYearBreakdown NOW <<');
             this._drawYearBreakdown(results.yearByYear, inputs.retirementAge);
-            console.log('[AppV4] >> _drawYearBreakdown COMPLETED <<');
-            
-            if (typeof MobileChartDebug !== 'undefined') {
-                MobileChartDebug.log('[CHART] ✅ Charts drawn successfully');
-            }
         } catch (chartError) {
-            console.error('[AppV4] ❌ CHART ERROR CAUGHT:', chartError);
-            console.error('[AppV4] Error stack:', chartError.stack);
-            
-            if (typeof MobileChartDebug !== 'undefined') {
-                MobileChartDebug.log(`[CHART] ❌ ERROR: ${chartError.message}`, true);
-                MobileChartDebug.log(`[CHART] Stack: ${chartError.stack}`, true);
-            }
-            
             const status = document.getElementById('chart-status');
             if (status) {
                 status.style.display = 'block';
@@ -1375,71 +1278,32 @@ const AppV4 = {
             }
         }
         
-        console.log('[AppV4] ========== CHARTS SECTION COMPLETE ==========');
         this._displayBreakdown(results, inputs);
     },
 
     _drawChart(yearByYear, retirementAge) {
-        console.log('[AppV4 _drawChart] ========== FUNCTION ENTRY ==========');
-        console.log('[AppV4 _drawChart] yearByYear received:', yearByYear ? yearByYear.length + ' data points' : 'NULL/UNDEFINED');
-        console.log('[AppV4 _drawChart] retirementAge received:', retirementAge);
-        
-        if (typeof MobileChartDebug !== 'undefined') {
-            MobileChartDebug.log('[_drawChart] Function called!');
-            MobileChartDebug.log(`[_drawChart] Data: ${yearByYear ? yearByYear.length : 0} points`);
-        }
-        
-        const status = document.getElementById('chart-status');
-        if (status) {
-            status.style.display = 'block';
-            status.textContent = '⏳ Drawing chart...';
-            console.log('[AppV4 _drawChart] Status indicator updated');
-        } else {
-            console.warn('[AppV4 _drawChart] Status element not found');
-        }
-        
-        console.log('[AppV4 _drawChart] Looking for canvas element...');
         const canvas = document.getElementById('projection-chart');
-        if (!canvas) {
-            console.error('[AppV4 _drawChart] ❌ Canvas element NOT FOUND');
-            throw new Error('Canvas element not found');
-        }
-        console.log('[AppV4 _drawChart] ✅ Canvas element found');
+        if (!canvas) throw new Error('Canvas element not found');
 
-        console.log('[AppV4 _drawChart] Getting 2D context...');
         const ctx = canvas.getContext('2d');
-        if (!ctx) {
-            console.error('[AppV4 _drawChart] ❌ Cannot get 2D context');
-            throw new Error('Cannot get 2D context');
-        }
-        console.log('[AppV4 _drawChart] ✅ Got 2D context');
-        
+        if (!ctx) throw new Error('Cannot get 2D context');
+
         // Set dimensions
         const parent = canvas.parentElement;
-        console.log('[AppV4 _drawChart] Parent element:', parent ? 'found' : 'NULL');
-        console.log('[AppV4 _drawChart] Parent offsetWidth:', parent ? parent.offsetWidth : 'N/A');
-        
         const width = Math.max((parent ? parent.offsetWidth : 300) - 40, 300);
         canvas.width = width;
         canvas.height = 400;
-        
-        console.log('[AppV4 _drawChart] Canvas dimensions set:', width, 'x', 400);
 
         const w = canvas.width;
         const h = canvas.height;
         const padding = 60;
 
-        console.log('[AppV4 _drawChart] Drawing area:', w, 'x', h, 'with padding:', padding);
-
         // Clear and set background
-        console.log('[AppV4 _drawChart] Clearing canvas...');
         ctx.clearRect(0, 0, w, h);
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, w, h);
-        console.log('[AppV4 _drawChart] ✅ Canvas cleared with white background');
 
         if (!yearByYear || yearByYear.length === 0) {
-            console.warn('[AppV4 _drawChart] ⚠️ No data to display');
             ctx.fillStyle = '#6b7280';
             ctx.font = '14px sans-serif';
             ctx.textAlign = 'center';
@@ -1447,12 +1311,9 @@ const AppV4 = {
             return;
         }
 
-        console.log('[AppV4 _drawChart] Data validation passed, extracting balances...');
-        // Get data range
         const balances = yearByYear.map(y => y.totalBalance || y.totalPortfolio || 0);
         const maxBalance = Math.max(...balances);
-        console.log('[AppV4 _drawChart] Max balance:', maxBalance);
-        
+
         if (maxBalance === 0 || isNaN(maxBalance)) {
             ctx.fillStyle = '#ef4444';
             ctx.font = '14px sans-serif';
@@ -1460,7 +1321,7 @@ const AppV4 = {
             ctx.fillText('No valid balance data', w / 2, h / 2);
             return;
         }
-        
+
         const minAge = yearByYear[0].age;
         const maxAge = yearByYear[yearByYear.length - 1].age;
 
@@ -1491,11 +1352,8 @@ const AppV4 = {
 
         yearByYear.forEach((point, i) => {
             const x = padding + ((point.age - minAge) / (maxAge - minAge)) * (w - 2 * padding);
-            
-            // FIX: Use fallback for balance value
             const balance = point.totalBalance || point.totalPortfolio || 0;
             const y = h - padding - (balance / maxBalance) * (h - 2 * padding);
-            
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         });
@@ -1508,27 +1366,9 @@ const AppV4 = {
         ctx.fillText(`Age ${minAge}`, padding - 10, h - padding + 25);
         ctx.fillText(`Age ${maxAge}`, w - padding - 35, h - padding + 25);
         ctx.fillText(`$${(maxBalance / 1000).toFixed(0)}K`, 5, padding + 5);
-        
+
         ctx.fillStyle = '#f59e0b';
         ctx.fillText('Retirement', retireX - 35, padding - 10);
-        
-        console.log('[AppV4 _drawChart] ✅ All drawing operations complete');
-        console.log('[AppV4 _drawChart] Chart rendered with', yearByYear.length, 'data points');
-        
-        // Success
-        if (status) {
-            status.style.display = 'block';
-            status.style.background = '#d1fae5';
-            status.innerHTML = `✅ Chart drawn: ${yearByYear.length} years, max $${(maxBalance/1000).toFixed(0)}K`;
-            console.log('[AppV4 _drawChart] Status message set to:', status.innerHTML);
-            setTimeout(() => status.style.display = 'none', 3000);
-        }
-        
-        if (typeof MobileChartDebug !== 'undefined') {
-            MobileChartDebug.log(`[_drawChart] ✅ SUCCESS: ${yearByYear.length} years, max $${(maxBalance/1000).toFixed(0)}K`);
-        }
-        
-        console.log('[AppV4 _drawChart] ========== FUNCTION EXIT ==========');
     },
 
     _drawYearBreakdown(yearByYear, retirementAge) {
