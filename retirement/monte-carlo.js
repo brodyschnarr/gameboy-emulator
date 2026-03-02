@@ -14,8 +14,8 @@ const MonteCarloSimulator = {
     simulate(baseInputs, options = {}) {
         const {
             iterations = 1000,
-            volatility = 0.15, // 15% standard deviation (typical for 60/40 portfolio)
-            marketCrashProbability = 0.10, // 10% chance of -20%+ year
+            volatility = 0.11, // 11% standard deviation (realistic for balanced portfolio)
+            marketCrashProbability = 0.04, // 4% chance of severe crash (beyond normal volatility)
             sequenceOfReturnsRisk = true
         } = options;
         
@@ -117,10 +117,11 @@ const MonteCarloSimulator = {
         // 1. Calculate government benefits (same as before)
         const isSingle = familyStatus === 'single';
         const govBenefits = RetirementCalcV4._calculateGovernmentBenefits({
-            income1,
-            income2,
+            income1: isSingle ? currentIncome : income1,
+            income2: isSingle ? 0 : income2,
             retirementAge,
             cppStartAge,
+            cppStartAgeP2: inputs.cppStartAgeP2 || cppStartAge,
             isSingle
         });
         
