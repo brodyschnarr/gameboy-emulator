@@ -31,6 +31,8 @@ const AppV4 = {
         this._setupBenchmarks();
         this._setupPresets();
         this._setupCPPOptimizer();
+        this._setupOASOptimizer();
+        this._setupSplitValidation();
         this._setupHealthcare();
         this._setupDebt();
         this._setupIncomeSources();
@@ -361,6 +363,52 @@ const AppV4 = {
                 this._showCPPComparison();
             });
         }
+    },
+
+    _setupOASOptimizer() {
+        const slider = document.getElementById('oas-start-age');
+        if (slider) {
+            this.oasStartAge = 65;
+            slider.addEventListener('input', (e) => {
+                this.oasStartAge = parseInt(e.target.value);
+                this._updateOASPreview();
+            });
+            this._updateOASPreview();
+        }
+    },
+
+    _updateOASPreview() {
+        const age = this.oasStartAge || 65;
+        const oasBase = 8479; // CPPCalculator.oas.maxAnnual
+        const monthsDeferred = Math.max(0, (age - 65)) * 12;
+        const bonus = monthsDeferred * 0.006;
+        const annualAmount = Math.round(oasBase * (1 + bonus));
+        
+        const ageEl = document.getElementById('oas-age-value');
+        const amountEl = document.getElementById('oas-amount-value');
+        const bonusEl = document.getElementById('oas-bonus-value');
+        
+        if (ageEl) ageEl.textContent = age;
+        if (amountEl) amountEl.textContent = '$' + annualAmount.toLocaleString() + '/year';
+        if (bonusEl) bonusEl.textContent = bonus > 0 ? `+${Math.round(bonus * 100)}%` : 'No bonus';
+    },
+
+    _setupSplitValidation() {
+        const rrspEl = document.getElementById('split-rrsp');
+        const tfsaEl = document.getElementById('split-tfsa');
+        const nonRegEl = document.getElementById('split-nonreg');
+        const warning = document.getElementById('split-warning');
+        
+        const validate = () => {
+            const total = (parseFloat(rrspEl?.value) || 0) + (parseFloat(tfsaEl?.value) || 0) + (parseFloat(nonRegEl?.value) || 0);
+            if (warning) {
+                warning.style.display = (Math.abs(total - 100) > 0.5 && total > 0) ? '' : 'none';
+            }
+        };
+        
+        [rrspEl, tfsaEl, nonRegEl].forEach(el => {
+            if (el) el.addEventListener('input', validate);
+        });
     },
 
     _setupHealthcare() {
@@ -1226,11 +1274,13 @@ const AppV4 = {
 
             cppStartAge: this.familyStatus === 'couple' ? (this.cppStartAgeP1 || 65) : this.cppStartAge,
             cppStartAgeP2: this.familyStatus === 'couple' ? (this.cppStartAgeP2 || 65) : null,
+            oasStartAge: this.oasStartAge || 65,
             additionalIncomeSources: IncomeSources.getAll(),
             windfalls: this.windfalls || [],
 
             returnRate: parseFloat(document.getElementById('return-rate')?.value) || 6,
-            inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2.5
+            inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2.5,
+            contributionGrowthRate: parseFloat(document.getElementById('contribution-growth')?.value) || 0
         };
     },
 

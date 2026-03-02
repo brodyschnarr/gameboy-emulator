@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════
-//  Retirement Calculation Engine V4 - FIXED
-//  Tax-aware + Family + Healthcare + Debt + Probability
+//  Retirement Calculation Engine V4.1
+//  Tax-aware + OAS clawback + Smart withdrawal + CPP inflation indexing
+//  + Contribution growth + Split normalization + Partner age
 // ═══════════════════════════════════════════
 
 const RetirementCalcV4 = {
@@ -44,25 +45,43 @@ const RetirementCalcV4 = {
             cppStartAge,
             cppStartAgeP2,
             
+            // OAS
+            oasStartAge = 65,
+            
             // Additional income sources
             additionalIncomeSources,
             
             // Assumptions
             returnRate,
-            inflationRate
+            inflationRate,
+            
+            // New: contribution growth
+            contributionGrowthRate = 0
         } = inputs;
 
         const yearsToRetirement = retirementAge - currentAge;
         const isFamilyMode = familyStatus === 'couple';
 
-        // 1. Calculate government benefits
+        // FIX #8: Normalize contribution split to sum to 1.0
+        const normalizedSplit = this._normalizeSplit(contributionSplit);
+
+        // FIX #1: Use partner age for person 2's CPP contribution years
+        const p1ContribYears = Math.min(retirementAge - 18, 39);
+        const p2ContribYears = isFamilyMode && partnerAge
+            ? Math.min(retirementAge - (18 + (currentAge - partnerAge)), 39)
+            : p1ContribYears;
+
+        // 1. Calculate government benefits (base amounts at age 65)
         const govBenefits = this._calculateGovernmentBenefits({
             income1: isFamilyMode ? income1 : currentIncome,
             income2: isFamilyMode ? income2 : 0,
             retirementAge,
             cppStartAge: cppStartAge || 65,
             cppStartAgeP2: cppStartAgeP2 || cppStartAge || 65,
-            isSingle: !isFamilyMode
+            isSingle: !isFamilyMode,
+            p1ContribYears,
+            p2ContribYears,
+            oasStartAge: oasStartAge || 65
         });
 
         // 2. Calculate healthcare costs
@@ -84,7 +103,8 @@ const RetirementCalcV4 = {
             lifeExpectancy,
             accounts: { rrsp, tfsa, nonReg, other },
             annualContribution: monthlyContribution * 12,
-            contributionSplit,
+            contributionSplit: normalizedSplit,
+            contributionGrowthRate: (contributionGrowthRate || 0) / 100,
             baseAnnualSpending: futureAnnualSpending,
             healthcareByAge: healthcareCosts.byYear,
             govBenefits,
@@ -96,6 +116,7 @@ const RetirementCalcV4 = {
             province,
             cppStartAge: cppStartAge || 65,
             cppStartAgeP2: cppStartAgeP2 || cppStartAge || 65,
+            oasStartAge: oasStartAge || 65,
             isSingle: !isFamilyMode
         });
 
@@ -111,35 +132,23 @@ const RetirementCalcV4 = {
         const finalYear = projection[projection.length - 1];
         const legacyAmount = finalYear ? finalYear.totalBalance : 0;
         
-        // Find when money runs out (balance drops to 0 or below)
         const runsOutYear = projection.find(p => p.totalBalance <= 0);
         const moneyLastsAge = runsOutYear ? runsOutYear.age : lifeExpectancy;
         
-        // First retirement year income
         const firstRetirementYear = projection.find(p => p.age === retirementAge);
         const annualIncomeAtRetirement = firstRetirementYear 
             ? (firstRetirementYear.governmentIncome || 0) + (firstRetirementYear.withdrawal || 0)
             : 0;
         
-        // Portfolio at retirement
         const portfolioAtRetirement = firstRetirementYear ? firstRetirementYear.totalBalance : 0;
-        
-        // On track = money lasts until life expectancy
         const onTrack = moneyLastsAge >= lifeExpectancy;
         
-        // Legacy description
         let legacyDescription = '';
-        if (legacyAmount > 1000000) {
-            legacyDescription = 'Significant legacy for heirs';
-        } else if (legacyAmount > 500000) {
-            legacyDescription = 'Comfortable legacy';
-        } else if (legacyAmount > 100000) {
-            legacyDescription = 'Modest legacy';
-        } else if (legacyAmount > 0) {
-            legacyDescription = 'Small legacy';
-        } else {
-            legacyDescription = 'No legacy remaining';
-        }
+        if (legacyAmount > 1000000) legacyDescription = 'Significant legacy for heirs';
+        else if (legacyAmount > 500000) legacyDescription = 'Comfortable legacy';
+        else if (legacyAmount > 100000) legacyDescription = 'Modest legacy';
+        else if (legacyAmount > 0) legacyDescription = 'Small legacy';
+        else legacyDescription = 'No legacy remaining';
 
         return {
             yearByYear: projection,
@@ -161,36 +170,62 @@ const RetirementCalcV4 = {
             govBenefits,
             healthcareCosts: {
                 total: healthcareCosts.total,
-                averageAnnual: Math.round(healthcareCosts.total / (lifeExpectancy - retirementAge))
+                averageAnnual: Math.round(healthcareCosts.total / Math.max(1, lifeExpectancy - retirementAge))
             }
         };
     },
 
-    _calculateGovernmentBenefits({ income1, income2, retirementAge, cppStartAge, cppStartAgeP2, isSingle }) {
-        const yearsContributing = Math.min(retirementAge - 18, 39);
+    // ═══════════════════════════════════════
+    // FIX #8: Normalize contribution split
+    // ═══════════════════════════════════════
+    _normalizeSplit(split) {
+        const total = (split.rrsp || 0) + (split.tfsa || 0) + (split.nonReg || 0);
+        if (total === 0) return { rrsp: 0, tfsa: 0, nonReg: 0 };
+        if (Math.abs(total - 1.0) < 0.001) return split; // Already normalized
+        return {
+            rrsp: (split.rrsp || 0) / total,
+            tfsa: (split.tfsa || 0) / total,
+            nonReg: (split.nonReg || 0) / total
+        };
+    },
+
+    _calculateGovernmentBenefits({ income1, income2, retirementAge, cppStartAge, cppStartAgeP2, isSingle, p1ContribYears, p2ContribYears, oasStartAge }) {
+        // FIX #1: Use per-person contribution years
+        const years1 = p1ContribYears || Math.min(retirementAge - 18, 39);
+        const years2 = p2ContribYears || years1;
 
         // Person 1 CPP
-        const cpp1Base = CPPCalculator.estimateCPP(income1, yearsContributing);
+        const cpp1Base = CPPCalculator.estimateCPP(income1, years1);
         const cpp1 = CPPOptimizer.calculateByAge(cpp1Base.total, cppStartAge);
 
-        // Person 2 CPP (if couple) — uses their own start age
+        // Person 2 CPP (if couple)
         let cpp2 = 0;
         if (!isSingle && income2 > 0) {
-            const cpp2Base = CPPCalculator.estimateCPP(income2, yearsContributing);
+            const cpp2Base = CPPCalculator.estimateCPP(income2, years2);
             cpp2 = CPPOptimizer.calculateByAge(cpp2Base.total, cppStartAgeP2 || cppStartAge);
         }
 
         const cppTotal = cpp1 + cpp2;
 
-        // OAS (full amount, clawback calculated during projection)
-        const oasMax = CPPCalculator.oas.maxAnnual;
-        const oasTotal = isSingle ? oasMax : oasMax * 2;
+        // FIX #3: OAS with deferral bonus (0.6%/month after 65, max 36% at 70)
+        const oasBase = CPPCalculator.oas.maxAnnual;
+        let oasDeferralBonus = 1.0;
+        if (oasStartAge > 65) {
+            const monthsDeferred = Math.min((oasStartAge - 65) * 12, 60);
+            oasDeferralBonus = 1 + (monthsDeferred * 0.006);
+        }
+        const oasPerPerson = Math.round(oasBase * oasDeferralBonus);
+        const oasTotal = isSingle ? oasPerPerson : oasPerPerson * 2;
 
         return {
             cpp1: Math.round(cpp1),
             cpp2: Math.round(cpp2),
             cppTotal: Math.round(cppTotal),
-            oasMax: Math.round(oasTotal),
+            oasPerPerson,
+            oasTotal,
+            oasMax: oasTotal, // backward compat with v5-enhanced
+            oasStartAge: oasStartAge || 65,
+            oasDeferralBonus,
             total: Math.round(cppTotal + oasTotal),
             breakdown: {
                 'CPP': Math.round(cppTotal),
@@ -207,6 +242,7 @@ const RetirementCalcV4 = {
             accounts,
             annualContribution,
             contributionSplit,
+            contributionGrowthRate,
             baseAnnualSpending,
             healthcareByAge,
             govBenefits,
@@ -218,6 +254,7 @@ const RetirementCalcV4 = {
             province,
             cppStartAge,
             cppStartAgeP2,
+            oasStartAge,
             isSingle
         } = params;
 
@@ -240,16 +277,19 @@ const RetirementCalcV4 = {
             //  WORKING PHASE
             // ═══════════════════════════════════════
             if (isWorking) {
-                // Add contributions FIRST (beginning of year)
-                const rrspContrib = annualContribution * (contributionSplit.rrsp || 0);
-                const tfsaContrib = annualContribution * (contributionSplit.tfsa || 0);
-                const nonRegContrib = annualContribution * (contributionSplit.nonReg || 0);
+                // FIX #6: Grow contributions over time
+                const yearsFromStart = age - startAge;
+                const growthFactor = Math.pow(1 + contributionGrowthRate, yearsFromStart);
+                const thisYearContribution = annualContribution * growthFactor;
+
+                const rrspContrib = thisYearContribution * (contributionSplit.rrsp || 0);
+                const tfsaContrib = thisYearContribution * (contributionSplit.tfsa || 0);
+                const nonRegContrib = thisYearContribution * (contributionSplit.nonReg || 0);
                 
                 balances.rrsp += rrspContrib;
                 balances.tfsa += tfsaContrib;
                 balances.nonReg += nonRegContrib;
 
-                // Then grow accounts (end of year)
                 balances.rrsp *= (1 + r);
                 balances.tfsa *= (1 + r);
                 balances.nonReg *= (1 + r);
@@ -273,7 +313,7 @@ const RetirementCalcV4 = {
                     other: Math.round(balances.other),
                     totalBalance: Math.round(balances.rrsp + balances.tfsa + balances.nonReg + balances.other),
                     debt: Math.round(debt),
-                    contribution: Math.round(annualContribution)
+                    contribution: Math.round(thisYearContribution)
                 });
             }
 
@@ -281,33 +321,40 @@ const RetirementCalcV4 = {
             //  RETIREMENT PHASE
             // ═══════════════════════════════════════
             if (isRetired) {
-                // 1. Grow accounts FIRST (investment returns for the year)
+                // 1. Grow accounts
                 balances.rrsp *= (1 + r);
                 balances.tfsa *= (1 + r);
                 balances.nonReg *= (1 + r);
                 balances.other *= (1 + r);
 
-                // 2. Calculate this year's spending (inflation-adjusted)
+                // 2. Inflation-adjusted spending
                 const yearsIntoRetirement = age - retirementAge;
                 const inflationFactor = Math.pow(1 + inf, yearsIntoRetirement);
                 const thisYearSpending = baseAnnualSpending * inflationFactor;
                 
-                // 3. Add healthcare costs
+                // 3. Healthcare costs
                 const healthcareCost = healthcareByAge.find(h => h.age === age)?.cost || 0;
                 const totalNeed = thisYearSpending + healthcareCost;
 
-                // 4. Calculate government income
-                let govIncome = 0;
-                // CPP: each person may start at different ages
+                // FIX #2: CPP inflation-indexed from retirement start
+                // CPP and OAS are indexed to CPI in Canada
+                const cpiFromRetirement = Math.pow(1 + inf, yearsIntoRetirement);
+                
+                // 4. Government income (inflation-indexed)
+                let cppIncome = 0;
                 if (age >= cppStartAge) {
-                    govIncome += govBenefits.cpp1;
+                    cppIncome += govBenefits.cpp1 * cpiFromRetirement;
                 }
                 if (!isSingle && age >= (cppStartAgeP2 || cppStartAge)) {
-                    govIncome += govBenefits.cpp2;
+                    cppIncome += govBenefits.cpp2 * cpiFromRetirement;
                 }
-                if (age >= 65) {
-                    // OAS starts at 65 (clawback TODO)
-                    govIncome += govBenefits.oasMax;
+                
+                // FIX #3 & #4: OAS with deferral and clawback
+                let oasIncome = 0;
+                const effectiveOASAge = oasStartAge || 65;
+                if (age >= effectiveOASAge) {
+                    // Base OAS (already includes deferral bonus from govBenefits)
+                    oasIncome = govBenefits.oasPerPerson * (isSingle ? 1 : 2) * cpiFromRetirement;
                 }
 
                 // 5. Additional income sources
@@ -315,26 +362,33 @@ const RetirementCalcV4 = {
                     .filter(s => age >= s.startAge && (s.endAge === null || age <= s.endAge))
                     .reduce((sum, s) => sum + s.annualAmount, 0);
 
-                const totalOtherIncome = govIncome + additionalIncome;
+                // Total non-portfolio income BEFORE clawback
+                const totalOtherIncomePreClawback = cppIncome + oasIncome + additionalIncome;
 
-                // 6. How much do we need from portfolio (after-tax)?
-                const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncome);
+                // FIX #9: Smart withdrawal — OAS-clawback-aware
+                // We pass OAS amount so withdrawal can optimize around clawback threshold
+                const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncomePreClawback);
 
-                // 7. Tax-aware withdrawal
-                const withdrawal = this._withdrawTaxOptimal(
+                const withdrawal = this._withdrawSmartOptimal(
                     balances,
                     neededFromPortfolio,
                     province,
-                    totalOtherIncome
+                    cppIncome + additionalIncome, // non-OAS taxable income
+                    oasIncome,                    // OAS amount (may be clawed back)
+                    age >= effectiveOASAge         // is OAS active?
                 );
 
-                // 8. Update balances
+                // Update balances
                 balances.tfsa = Math.max(0, balances.tfsa - withdrawal.fromTFSA);
                 balances.nonReg = Math.max(0, balances.nonReg - withdrawal.fromNonReg);
                 balances.rrsp = Math.max(0, balances.rrsp - withdrawal.fromRRSP);
                 balances.other = Math.max(0, balances.other - withdrawal.fromOther);
 
                 const totalBalance = balances.rrsp + balances.tfsa + balances.nonReg + balances.other;
+
+                // Actual OAS after clawback (based on actual taxable income)
+                const actualOAS = withdrawal.actualOAS !== undefined ? withdrawal.actualOAS : oasIncome;
+                const govIncome = cppIncome + actualOAS;
 
                 projection.push({
                     age,
@@ -353,15 +407,16 @@ const RetirementCalcV4 = {
                     },
                     governmentIncome: Math.round(govIncome),
                     additionalIncome: Math.round(additionalIncome),
+                    oasReceived: Math.round(actualOAS),
+                    cppReceived: Math.round(cppIncome),
                     taxableIncome: withdrawal.taxableIncome,
                     taxPaid: withdrawal.taxPaid,
-                    grossIncome: withdrawal.total + totalOtherIncome,
-                    afterTaxIncome: withdrawal.afterTax + totalOtherIncome,
+                    grossIncome: withdrawal.total + govIncome + additionalIncome,
+                    afterTaxIncome: withdrawal.afterTax + govIncome + additionalIncome,
                     targetSpending: Math.round(totalNeed),
                     healthcareCost: Math.round(healthcareCost)
                 });
 
-                // Stop if portfolio is depleted
                 if (totalBalance <= 0) break;
             }
         }
@@ -369,46 +424,88 @@ const RetirementCalcV4 = {
         return projection;
     },
 
-    _withdrawTaxOptimal(balances, neededAfterTax, province, otherIncome) {
-        // This function figures out HOW MUCH to withdraw (gross) from each account
-        // to get neededAfterTax dollars after paying taxes
-        
+    // ═══════════════════════════════════════
+    // FIX #9: Smart OAS-clawback-aware withdrawal
+    // Strategy: Keep taxable income below OAS clawback threshold when possible
+    // by using TFSA to fill the gap
+    // ═══════════════════════════════════════
+    _withdrawSmartOptimal(balances, neededAfterTax, province, nonOASTaxableIncome, oasAmount, oasActive) {
+        const OAS_CLAWBACK_START = 90997;
+        const OAS_CLAWBACK_RATE = 0.15;
+        const OAS_MAX = CPPCalculator.oas.maxAnnual;
+
         let stillNeed = neededAfterTax;
         let fromTFSA = 0;
         let fromNonReg = 0;
         let fromRRSP = 0;
         let fromOther = 0;
-        let cumulativeTaxableIncome = otherIncome;
+        let cumulativeTaxableIncome = nonOASTaxableIncome;
 
         // ═══════════════════════════════════════
-        //  STEP 1: TFSA (tax-free)
+        // SMART STRATEGY when OAS is active:
+        // Figure out how much RRSP room we have before triggering clawback,
+        // then use TFSA for the rest
         // ═══════════════════════════════════════
+        
+        // Calculate available RRSP room before OAS clawback
+        let rrspRoomBeforeClawback = Infinity;
+        if (oasActive && oasAmount > 0) {
+            // Taxable income budget: OAS_CLAWBACK_START - existing taxable income - OAS itself
+            // (OAS counts as taxable income too)
+            const taxableOAS = oasAmount;
+            rrspRoomBeforeClawback = Math.max(0, 
+                OAS_CLAWBACK_START - nonOASTaxableIncome - taxableOAS
+            );
+        }
+
+        // STEP 1: RRSP up to clawback threshold (fully taxable but within budget)
+        if (stillNeed > 0 && balances.rrsp > 0 && rrspRoomBeforeClawback > 0) {
+            // Binary search: find gross RRSP withdrawal that yields after-tax amount
+            // but capped at clawback room
+            const maxRRSPGross = Math.min(rrspRoomBeforeClawback, balances.rrsp);
+            
+            // How much after-tax would this RRSP withdrawal yield?
+            const taxIfMaxRRSP = CanadianTax.calculateTax(
+                cumulativeTaxableIncome + maxRRSPGross + (oasActive ? oasAmount : 0), province
+            ).total - CanadianTax.calculateTax(
+                cumulativeTaxableIncome + (oasActive ? oasAmount : 0), province
+            ).total;
+            const maxAfterTax = maxRRSPGross - taxIfMaxRRSP;
+
+            if (maxAfterTax >= stillNeed) {
+                // We can fill the entire need from RRSP within clawback budget
+                fromRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome + (oasActive ? oasAmount : 0), province, balances.rrsp);
+                cumulativeTaxableIncome += fromRRSP;
+                stillNeed = 0;
+            } else {
+                // Take the max RRSP we can without clawback
+                fromRRSP = maxRRSPGross;
+                cumulativeTaxableIncome += fromRRSP;
+                stillNeed -= maxAfterTax;
+            }
+        }
+
+        // STEP 2: TFSA (tax-free, doesn't affect clawback)
         if (stillNeed > 0 && balances.tfsa > 0) {
             fromTFSA = Math.min(stillNeed, balances.tfsa);
             stillNeed -= fromTFSA;
-            // No tax implications
         }
 
-        // ═══════════════════════════════════════
-        //  STEP 2: Non-Registered (capital gains)
-        // ═══════════════════════════════════════
+        // STEP 3: Non-Registered (capital gains — only 50% taxable)
         if (stillNeed > 0 && balances.nonReg > 0) {
-            // Assume 50% of withdrawal is capital gain (taxable)
-            // We need to withdraw enough gross to get stillNeed after tax on the gain
+            const totalTaxableWithOAS = cumulativeTaxableIncome + (oasActive ? oasAmount : 0);
             
-            // Binary search for the right amount
             let low = 0;
             let high = Math.min(stillNeed * 2, balances.nonReg);
             let bestAmount = 0;
             
             for (let iter = 0; iter < 20; iter++) {
                 const testAmount = (low + high) / 2;
-                const capitalGain = testAmount * 0.5; // 50% inclusion rate
+                const capitalGain = testAmount * 0.5;
                 
                 const taxOnGain = CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + capitalGain,
-                    province
-                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province).total;
+                    totalTaxableWithOAS + capitalGain, province
+                ).total - CanadianTax.calculateTax(totalTaxableWithOAS, province).total;
                 
                 const afterTax = testAmount - taxOnGain;
                 
@@ -416,12 +513,8 @@ const RetirementCalcV4 = {
                     bestAmount = testAmount;
                     break;
                 }
-                
-                if (afterTax < stillNeed) {
-                    low = testAmount;
-                } else {
-                    high = testAmount;
-                }
+                if (afterTax < stillNeed) low = testAmount;
+                else high = testAmount;
                 bestAmount = testAmount;
             }
             
@@ -429,63 +522,50 @@ const RetirementCalcV4 = {
             const capitalGain = fromNonReg * 0.5;
             cumulativeTaxableIncome += capitalGain;
             
-            const taxOnNonReg = CanadianTax.calculateTax(cumulativeTaxableIncome, province).total -
-                               CanadianTax.calculateTax(cumulativeTaxableIncome - capitalGain, province).total;
+            const taxOnNonReg = CanadianTax.calculateTax(
+                cumulativeTaxableIncome + (oasActive ? oasAmount : 0), province
+            ).total - CanadianTax.calculateTax(
+                (cumulativeTaxableIncome - capitalGain) + (oasActive ? oasAmount : 0), province
+            ).total;
             
             stillNeed -= (fromNonReg - taxOnNonReg);
         }
 
-        // ═══════════════════════════════════════
-        //  STEP 3: RRSP (fully taxable)
-        // ═══════════════════════════════════════
-        if (stillNeed > 0 && balances.rrsp > 0) {
-            // Need to withdraw enough gross to get stillNeed after tax
-            // Binary search
-            let low = stillNeed;
-            let high = Math.min(stillNeed * 2.5, balances.rrsp);
-            let bestAmount = stillNeed * 1.4;
-            
-            for (let iter = 0; iter < 20; iter++) {
-                const testAmount = (low + high) / 2;
-                
-                const taxOnRRSP = CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + testAmount,
-                    province
-                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province).total;
-                
-                const afterTax = testAmount - taxOnRRSP;
-                
-                if (Math.abs(afterTax - stillNeed) < 10) {
-                    bestAmount = testAmount;
-                    break;
-                }
-                
-                if (afterTax < stillNeed) {
-                    low = testAmount;
-                } else {
-                    high = testAmount;
-                }
-                bestAmount = testAmount;
-            }
-            
-            fromRRSP = Math.min(bestAmount, balances.rrsp);
-            cumulativeTaxableIncome += fromRRSP;
-            stillNeed = 0; // Assume we got what we needed (or ran out)
+        // STEP 4: More RRSP if still needed (even if it triggers clawback — can't avoid it)
+        if (stillNeed > 0 && balances.rrsp > fromRRSP) {
+            const remainingRRSP = balances.rrsp - fromRRSP;
+            const additionalRRSP = this._binarySearchGross(
+                stillNeed,
+                cumulativeTaxableIncome + (oasActive ? oasAmount : 0),
+                province,
+                remainingRRSP
+            );
+            fromRRSP += additionalRRSP;
+            cumulativeTaxableIncome += additionalRRSP;
+            stillNeed = 0;
         }
 
-        // ═══════════════════════════════════════
-        //  STEP 4: Other (assume fully taxable like RRSP)
-        // ═══════════════════════════════════════
+        // STEP 5: Other accounts (last resort)
         if (stillNeed > 0 && balances.other > 0) {
             fromOther = Math.min(stillNeed * 1.5, balances.other);
             cumulativeTaxableIncome += fromOther;
         }
 
-        // ═══════════════════════════════════════
-        //  FINAL TAX CALCULATION
-        // ═══════════════════════════════════════
-        const totalTax = CanadianTax.calculateTax(cumulativeTaxableIncome, province).total -
-                        CanadianTax.calculateTax(otherIncome, province).total;
+        // FIX #4: Calculate actual OAS after clawback
+        let actualOAS = oasAmount;
+        if (oasActive && oasAmount > 0) {
+            const totalTaxableIncome = cumulativeTaxableIncome + oasAmount;
+            if (totalTaxableIncome > OAS_CLAWBACK_START) {
+                const excessIncome = totalTaxableIncome - OAS_CLAWBACK_START;
+                const clawback = excessIncome * OAS_CLAWBACK_RATE;
+                actualOAS = Math.max(0, oasAmount - clawback);
+            }
+        }
+
+        // Final tax calculation
+        const totalTaxableForCalc = cumulativeTaxableIncome + actualOAS;
+        const totalTax = CanadianTax.calculateTax(totalTaxableForCalc, province).total -
+                        CanadianTax.calculateTax(nonOASTaxableIncome, province).total;
         
         const totalWithdrawn = fromTFSA + fromNonReg + fromRRSP + fromOther;
 
@@ -495,33 +575,55 @@ const RetirementCalcV4 = {
             fromNonReg: Math.round(fromNonReg),
             fromRRSP: Math.round(fromRRSP),
             fromOther: Math.round(fromOther),
-            taxableIncome: Math.round(cumulativeTaxableIncome),
+            taxableIncome: Math.round(totalTaxableForCalc),
             taxPaid: Math.round(totalTax),
-            afterTax: Math.round(totalWithdrawn - totalTax)
+            afterTax: Math.round(totalWithdrawn - totalTax),
+            actualOAS: Math.round(actualOAS)
         };
+    },
+
+    // Binary search for gross RRSP amount that yields targetAfterTax
+    _binarySearchGross(targetAfterTax, existingTaxable, province, maxAvailable) {
+        let low = targetAfterTax;
+        let high = Math.min(targetAfterTax * 2.5, maxAvailable);
+        let best = targetAfterTax * 1.4;
+        
+        for (let iter = 0; iter < 20; iter++) {
+            const testAmount = (low + high) / 2;
+            const taxOnAmount = CanadianTax.calculateTax(
+                existingTaxable + testAmount, province
+            ).total - CanadianTax.calculateTax(existingTaxable, province).total;
+            
+            const afterTax = testAmount - taxOnAmount;
+            
+            if (Math.abs(afterTax - targetAfterTax) < 10) {
+                best = testAmount;
+                break;
+            }
+            if (afterTax < targetAfterTax) low = testAmount;
+            else high = testAmount;
+            best = testAmount;
+        }
+        
+        return Math.min(best, maxAvailable);
     },
 
     _calculateProbability(projection, retirementAge, lifeExpectancy) {
         const retirementYears = projection.filter(p => p.age >= retirementAge && p.age <= lifeExpectancy);
         if (retirementYears.length === 0) return 0;
 
-        // Count years where portfolio lasted AND spending needs were met
         const successYears = retirementYears.filter(p => 
             p.totalBalance > 0 && 
-            p.afterTaxIncome >= p.targetSpending * 0.95 // Allow 5% shortfall
+            p.afterTaxIncome >= p.targetSpending * 0.95
         ).length;
         
         const baseProb = (successYears / retirementYears.length) * 100;
 
-        // Adjust for portfolio health (4% rule: need 25x spending)
         const avgYear = retirementYears[Math.floor(retirementYears.length / 2)];
         if (avgYear && avgYear.targetSpending > 0) {
             const portfolioMultiple = avgYear.totalBalance / avgYear.targetSpending;
-            if (portfolioMultiple < 15) {
-                return Math.max(0, baseProb - 20); // Risky
-            } else if (portfolioMultiple > 30) {
-                return Math.min(100, baseProb + 10); // Very safe
-            }
+            if (portfolioMultiple < 15) return Math.max(0, baseProb - 20);
+            else if (portfolioMultiple > 30) return Math.min(100, baseProb + 10);
         }
 
         return Math.max(0, Math.min(100, baseProb));

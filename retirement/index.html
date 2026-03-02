@@ -248,6 +248,19 @@
                     </div>
                 </div>
                 <small id="split-total" class="input-hint"></small>
+                <small id="split-warning" class="input-hint" style="color: var(--warning, #f59e0b); display: none;">⚠️ Split doesn't add to 100% — will be normalized automatically</small>
+            </div>
+
+            <div class="input-group">
+                <label for="contribution-growth">
+                    Annual Contribution Growth
+                    <button type="button" class="info-btn" data-tooltip="Increase contributions each year to keep pace with raises. 0% = flat contributions forever.">?</button>
+                </label>
+                <div class="input-with-prefix">
+                    <span class="prefix">%</span>
+                    <input type="number" id="contribution-growth" value="0" min="0" max="10" step="0.5">
+                </div>
+                <small class="input-hint">Match to expected raise rate (e.g., 2% with inflation)</small>
             </div>
 
             <button type="button" class="btn-secondary" id="btn-back-savings">← Back</button>
@@ -344,6 +357,30 @@
                 </div>
                 
                 <button type="button" class="btn-link" id="btn-cpp-details-couple">See detailed comparison →</button>
+            </div>
+
+            <!-- OAS Start Age -->
+            <div class="input-group" id="oas-section">
+                <label>
+                    When to start OAS?
+                    <button type="button" class="info-btn" data-tooltip="OAS starts at 65 by default. Deferring to 70 increases payments by 36% (0.6%/month). Higher income may trigger OAS clawback.">?</button>
+                </label>
+                <div class="cpp-optimizer">
+                    <div class="slider-container">
+                        <input type="range" id="oas-start-age" min="65" max="70" value="65" step="1">
+                        <div class="slider-labels">
+                            <span>65</span>
+                            <span>67</span>
+                            <span>70</span>
+                        </div>
+                    </div>
+                    <div class="cpp-preview">
+                        <div class="cpp-age-display">Age: <strong id="oas-age-value">65</strong></div>
+                        <div class="cpp-amount-display">Annual: <strong id="oas-amount-value">$8,479</strong></div>
+                        <div class="cpp-lifetime-display">Bonus: <strong id="oas-bonus-value">+0%</strong></div>
+                    </div>
+                    <small class="input-hint">💡 Smart withdrawals will minimize OAS clawback automatically</small>
+                </div>
             </div>
 
             <!-- Lifestyle -->
