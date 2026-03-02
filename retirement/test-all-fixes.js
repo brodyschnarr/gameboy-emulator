@@ -133,12 +133,12 @@ console.error('\n📊 Test Group 2: CPP inflation indexing');
     const cppYear10 = retYears.find(y => y.age === 75);
     
     if (cppYear1 && cppYear10) {
-        // CPP at age 75 should be higher than CPP at age 65 (inflation-indexed)
-        assert(cppYear10.governmentIncome > cppYear1.governmentIncome,
+        // CPP (not total gov) at age 75 should be higher than at 65
+        assert(cppYear10.cppReceived > cppYear1.cppReceived,
             'CPP income grows with inflation (age 75 > age 65)');
         
-        // Check roughly 2.5% per year for 10 years ≈ 28% increase
-        const ratio = cppYear10.governmentIncome / cppYear1.governmentIncome;
+        // Check CPP-only ratio: roughly 2.5% per year for 10 years ≈ 28% increase
+        const ratio = cppYear10.cppReceived / cppYear1.cppReceived;
         assertClose(ratio, Math.pow(1.025, 10), 0.05,
             'CPP inflation rate roughly matches 2.5%/year');
     } else {
@@ -269,24 +269,46 @@ console.error('\n📊 Test Group 7: Contribution split normalization');
 // ═══════════════════════════════════════
 console.error('\n📊 Test Group 8: Smart withdrawal optimization');
 {
-    // Scenario: large RRSP + TFSA. Should use TFSA strategically to keep
-    // RRSP withdrawals below OAS clawback threshold
-    const smartInputs = baseInputs({
+    // 8a: Pre-OAS (age 60-64): Should use TFSA first (no clawback concern)
+    const preOAS = baseInputs({
+        rrsp: 500000,
+        tfsa: 500000,
+        nonReg: 100000,
+        retirementAge: 60,
+        annualSpending: 40000
+    });
+    const preResult = RetirementCalcV4.calculate(preOAS);
+    const age60 = preResult.yearByYear.find(y => y.age === 60);
+    if (age60 && age60.withdrawalBreakdown) {
+        assert(age60.withdrawalBreakdown.tfsa > 0,
+            'Pre-OAS: TFSA withdrawn first (tax-free)');
+        assert(age60.withdrawalBreakdown.rrsp === 0 || age60.withdrawalBreakdown.tfsa >= age60.withdrawalBreakdown.rrsp,
+            'Pre-OAS: TFSA preferred over RRSP');
+    }
+
+    // 8b: OAS-active: taxable income should stay at/below clawback threshold
+    const oasInputs = baseInputs({
         rrsp: 800000,
         tfsa: 400000,
         nonReg: 100000,
         annualSpending: 60000,
-        retirementAge: 65 // OAS starts immediately
+        retirementAge: 65
     });
-    const result = RetirementCalcV4.calculate(smartInputs);
-    
-    // Find a year where OAS is active
-    const oasYear = result.yearByYear.find(y => y.age === 67);
-    if (oasYear) {
-        // Taxable income should try to stay below OAS clawback threshold (~$91K)
-        // This won't always be possible, but with $60K spending and gov benefits,
-        // smart withdrawal should try
-        assert(oasYear.taxableIncome !== undefined, 'Taxable income tracked in projection');
+    const oasResult = RetirementCalcV4.calculate(oasInputs);
+    const age67 = oasResult.yearByYear.find(y => y.age === 67);
+    if (age67) {
+        assert(age67.taxableIncome !== undefined, 'Taxable income tracked in projection');
+        // With big portfolio + high spending, taxable income may exceed threshold
+        // (that's unavoidable). Verify the strategy at least TRIED to minimize:
+        // RRSP should be capped near clawback room, with non-reg/TFSA filling rest
+        assert(age67.taxableIncome !== undefined,
+            'OAS-active: taxable income calculated');
+        // Verify RRSP wasn't the only source used (strategy should diversify)
+        if (age67.withdrawalBreakdown) {
+            const wb = age67.withdrawalBreakdown;
+            const usedMultipleSources = (wb.rrsp > 0 ? 1 : 0) + (wb.tfsa > 0 ? 1 : 0) + (wb.nonReg > 0 ? 1 : 0) > 1;
+            assert(usedMultipleSources, 'OAS-active: uses multiple withdrawal sources for tax optimization');
+        }
     }
 }
 

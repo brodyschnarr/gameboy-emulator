@@ -426,13 +426,18 @@ const RetirementCalcV4 = {
 
     // ═══════════════════════════════════════
     // FIX #9: Smart OAS-clawback-aware withdrawal
-    // Strategy: Keep taxable income below OAS clawback threshold when possible
-    // by using TFSA to fill the gap
+    // 
+    // WHEN OAS IS NOT ACTIVE (pre-65):
+    //   TFSA (free) → Non-Reg (50% inclusion) → RRSP (100% taxable) → Other
+    //   Minimize taxes, no clawback to worry about.
+    //
+    // WHEN OAS IS ACTIVE (65+):
+    //   RRSP up to clawback threshold → Non-Reg (cheaper than RRSP) → TFSA → overflow RRSP → Other
+    //   Fill cheap taxable room first, preserve TFSA, avoid clawback.
     // ═══════════════════════════════════════
     _withdrawSmartOptimal(balances, neededAfterTax, province, nonOASTaxableIncome, oasAmount, oasActive) {
         const OAS_CLAWBACK_START = 90997;
         const OAS_CLAWBACK_RATE = 0.15;
-        const OAS_MAX = CPPCalculator.oas.maxAnnual;
 
         let stillNeed = neededAfterTax;
         let fromTFSA = 0;
@@ -440,118 +445,113 @@ const RetirementCalcV4 = {
         let fromRRSP = 0;
         let fromOther = 0;
         let cumulativeTaxableIncome = nonOASTaxableIncome;
+        const oasForTax = oasActive ? oasAmount : 0;
 
-        // ═══════════════════════════════════════
-        // SMART STRATEGY when OAS is active:
-        // Figure out how much RRSP room we have before triggering clawback,
-        // then use TFSA for the rest
-        // ═══════════════════════════════════════
-        
-        // Calculate available RRSP room before OAS clawback
-        let rrspRoomBeforeClawback = Infinity;
-        if (oasActive && oasAmount > 0) {
-            // Taxable income budget: OAS_CLAWBACK_START - existing taxable income - OAS itself
-            // (OAS counts as taxable income too)
-            const taxableOAS = oasAmount;
-            rrspRoomBeforeClawback = Math.max(0, 
-                OAS_CLAWBACK_START - nonOASTaxableIncome - taxableOAS
-            );
-        }
+        if (!oasActive) {
+            // ═══════════════════════════════════════
+            // PRE-OAS: Pure tax minimization
+            // TFSA → Non-Reg → RRSP → Other
+            // ═══════════════════════════════════════
 
-        // STEP 1: RRSP up to clawback threshold (fully taxable but within budget)
-        if (stillNeed > 0 && balances.rrsp > 0 && rrspRoomBeforeClawback > 0) {
-            // Binary search: find gross RRSP withdrawal that yields after-tax amount
-            // but capped at clawback room
-            const maxRRSPGross = Math.min(rrspRoomBeforeClawback, balances.rrsp);
-            
-            // How much after-tax would this RRSP withdrawal yield?
-            const taxIfMaxRRSP = CanadianTax.calculateTax(
-                cumulativeTaxableIncome + maxRRSPGross + (oasActive ? oasAmount : 0), province
-            ).total - CanadianTax.calculateTax(
-                cumulativeTaxableIncome + (oasActive ? oasAmount : 0), province
-            ).total;
-            const maxAfterTax = maxRRSPGross - taxIfMaxRRSP;
+            // 1. TFSA (tax-free)
+            if (stillNeed > 0 && balances.tfsa > 0) {
+                fromTFSA = Math.min(stillNeed, balances.tfsa);
+                stillNeed -= fromTFSA;
+            }
 
-            if (maxAfterTax >= stillNeed) {
-                // We can fill the entire need from RRSP within clawback budget
-                fromRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome + (oasActive ? oasAmount : 0), province, balances.rrsp);
+            // 2. Non-Reg (50% capital gains inclusion — cheaper than RRSP)
+            if (stillNeed > 0 && balances.nonReg > 0) {
+                fromNonReg = this._withdrawNonReg(stillNeed, cumulativeTaxableIncome, province, balances.nonReg);
+                const capitalGain = fromNonReg * 0.5;
+                const taxOnNonReg = CanadianTax.calculateTax(
+                    cumulativeTaxableIncome + capitalGain, province
+                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province).total;
+                cumulativeTaxableIncome += capitalGain;
+                stillNeed -= (fromNonReg - taxOnNonReg);
+            }
+
+            // 3. RRSP (fully taxable)
+            if (stillNeed > 0 && balances.rrsp > 0) {
+                fromRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, balances.rrsp);
                 cumulativeTaxableIncome += fromRRSP;
                 stillNeed = 0;
-            } else {
-                // Take the max RRSP we can without clawback
-                fromRRSP = maxRRSPGross;
-                cumulativeTaxableIncome += fromRRSP;
-                stillNeed -= maxAfterTax;
             }
-        }
 
-        // STEP 2: TFSA (tax-free, doesn't affect clawback)
-        if (stillNeed > 0 && balances.tfsa > 0) {
-            fromTFSA = Math.min(stillNeed, balances.tfsa);
-            stillNeed -= fromTFSA;
-        }
-
-        // STEP 3: Non-Registered (capital gains — only 50% taxable)
-        if (stillNeed > 0 && balances.nonReg > 0) {
-            const totalTaxableWithOAS = cumulativeTaxableIncome + (oasActive ? oasAmount : 0);
-            
-            let low = 0;
-            let high = Math.min(stillNeed * 2, balances.nonReg);
-            let bestAmount = 0;
-            
-            for (let iter = 0; iter < 20; iter++) {
-                const testAmount = (low + high) / 2;
-                const capitalGain = testAmount * 0.5;
-                
-                const taxOnGain = CanadianTax.calculateTax(
-                    totalTaxableWithOAS + capitalGain, province
-                ).total - CanadianTax.calculateTax(totalTaxableWithOAS, province).total;
-                
-                const afterTax = testAmount - taxOnGain;
-                
-                if (Math.abs(afterTax - stillNeed) < 10) {
-                    bestAmount = testAmount;
-                    break;
-                }
-                if (afterTax < stillNeed) low = testAmount;
-                else high = testAmount;
-                bestAmount = testAmount;
+            // 4. Other (last resort, fully taxable)
+            if (stillNeed > 0 && balances.other > 0) {
+                fromOther = Math.min(stillNeed * 1.5, balances.other);
+                cumulativeTaxableIncome += fromOther;
             }
-            
-            fromNonReg = Math.min(bestAmount, balances.nonReg);
-            const capitalGain = fromNonReg * 0.5;
-            cumulativeTaxableIncome += capitalGain;
-            
-            const taxOnNonReg = CanadianTax.calculateTax(
-                cumulativeTaxableIncome + (oasActive ? oasAmount : 0), province
-            ).total - CanadianTax.calculateTax(
-                (cumulativeTaxableIncome - capitalGain) + (oasActive ? oasAmount : 0), province
-            ).total;
-            
-            stillNeed -= (fromNonReg - taxOnNonReg);
-        }
+        } else {
+            // ═══════════════════════════════════════
+            // OAS-ACTIVE: Clawback-aware strategy
+            // RRSP (up to threshold) → Non-Reg → TFSA → overflow RRSP → Other
+            // ═══════════════════════════════════════
 
-        // STEP 4: More RRSP if still needed (even if it triggers clawback — can't avoid it)
-        if (stillNeed > 0 && balances.rrsp > fromRRSP) {
-            const remainingRRSP = balances.rrsp - fromRRSP;
-            const additionalRRSP = this._binarySearchGross(
-                stillNeed,
-                cumulativeTaxableIncome + (oasActive ? oasAmount : 0),
-                province,
-                remainingRRSP
+            // Budget: how much taxable room before clawback?
+            const rrspRoomBeforeClawback = Math.max(0,
+                OAS_CLAWBACK_START - nonOASTaxableIncome - oasAmount
             );
-            fromRRSP += additionalRRSP;
-            cumulativeTaxableIncome += additionalRRSP;
-            stillNeed = 0;
+
+            // 1. RRSP up to clawback threshold
+            if (stillNeed > 0 && balances.rrsp > 0 && rrspRoomBeforeClawback > 0) {
+                const maxRRSPGross = Math.min(rrspRoomBeforeClawback, balances.rrsp);
+                const taxIfMaxRRSP = CanadianTax.calculateTax(
+                    cumulativeTaxableIncome + maxRRSPGross + oasForTax, province
+                ).total - CanadianTax.calculateTax(
+                    cumulativeTaxableIncome + oasForTax, province
+                ).total;
+                const maxAfterTax = maxRRSPGross - taxIfMaxRRSP;
+
+                if (maxAfterTax >= stillNeed) {
+                    fromRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome + oasForTax, province, balances.rrsp);
+                    cumulativeTaxableIncome += fromRRSP;
+                    stillNeed = 0;
+                } else {
+                    fromRRSP = maxRRSPGross;
+                    cumulativeTaxableIncome += fromRRSP;
+                    stillNeed -= maxAfterTax;
+                }
+            }
+
+            // 2. Non-Reg (50% inclusion — cheaper than more RRSP, and cheaper than burning TFSA)
+            if (stillNeed > 0 && balances.nonReg > 0) {
+                fromNonReg = this._withdrawNonReg(stillNeed, cumulativeTaxableIncome + oasForTax, province, balances.nonReg);
+                const capitalGain = fromNonReg * 0.5;
+                const taxOnNonReg = CanadianTax.calculateTax(
+                    cumulativeTaxableIncome + capitalGain + oasForTax, province
+                ).total - CanadianTax.calculateTax(
+                    cumulativeTaxableIncome + oasForTax, province
+                ).total;
+                cumulativeTaxableIncome += capitalGain;
+                stillNeed -= (fromNonReg - taxOnNonReg);
+            }
+
+            // 3. TFSA (tax-free, preserved as long as possible)
+            if (stillNeed > 0 && balances.tfsa > 0) {
+                fromTFSA = Math.min(stillNeed, balances.tfsa);
+                stillNeed -= fromTFSA;
+            }
+
+            // 4. More RRSP if still needed (triggers clawback, unavoidable)
+            if (stillNeed > 0 && balances.rrsp > fromRRSP) {
+                const remainingRRSP = balances.rrsp - fromRRSP;
+                const additionalRRSP = this._binarySearchGross(
+                    stillNeed, cumulativeTaxableIncome + oasForTax, province, remainingRRSP
+                );
+                fromRRSP += additionalRRSP;
+                cumulativeTaxableIncome += additionalRRSP;
+                stillNeed = 0;
+            }
+
+            // 5. Other (last resort)
+            if (stillNeed > 0 && balances.other > 0) {
+                fromOther = Math.min(stillNeed * 1.5, balances.other);
+                cumulativeTaxableIncome += fromOther;
+            }
         }
 
-        // STEP 5: Other accounts (last resort)
-        if (stillNeed > 0 && balances.other > 0) {
-            fromOther = Math.min(stillNeed * 1.5, balances.other);
-            cumulativeTaxableIncome += fromOther;
-        }
-
-        // FIX #4: Calculate actual OAS after clawback
+        // Calculate actual OAS after clawback
         let actualOAS = oasAmount;
         if (oasActive && oasAmount > 0) {
             const totalTaxableIncome = cumulativeTaxableIncome + oasAmount;
@@ -562,8 +562,8 @@ const RetirementCalcV4 = {
             }
         }
 
-        // Final tax calculation
-        const totalTaxableForCalc = cumulativeTaxableIncome + actualOAS;
+        // Final tax
+        const totalTaxableForCalc = cumulativeTaxableIncome + (oasActive ? actualOAS : 0);
         const totalTax = CanadianTax.calculateTax(totalTaxableForCalc, province).total -
                         CanadianTax.calculateTax(nonOASTaxableIncome, province).total;
         
@@ -580,6 +580,29 @@ const RetirementCalcV4 = {
             afterTax: Math.round(totalWithdrawn - totalTax),
             actualOAS: Math.round(actualOAS)
         };
+    },
+
+    // Helper: Binary search Non-Reg withdrawal for target after-tax amount
+    _withdrawNonReg(targetAfterTax, existingTaxable, province, maxAvailable) {
+        let low = 0;
+        let high = Math.min(targetAfterTax * 2, maxAvailable);
+        let best = 0;
+        
+        for (let iter = 0; iter < 20; iter++) {
+            const testAmount = (low + high) / 2;
+            const capitalGain = testAmount * 0.5;
+            const taxOnGain = CanadianTax.calculateTax(
+                existingTaxable + capitalGain, province
+            ).total - CanadianTax.calculateTax(existingTaxable, province).total;
+            const afterTax = testAmount - taxOnGain;
+            
+            if (Math.abs(afterTax - targetAfterTax) < 10) { best = testAmount; break; }
+            if (afterTax < targetAfterTax) low = testAmount;
+            else high = testAmount;
+            best = testAmount;
+        }
+        
+        return Math.min(best, maxAvailable);
     },
 
     // Binary search for gross RRSP amount that yields targetAfterTax
