@@ -241,7 +241,10 @@ const AppV5Enhanced = {
             </div>
         `;
         
-        resultsDiv.innerHTML += html;
+        // CRITICAL: Do NOT use innerHTML += here!
+        // innerHTML += serializes the entire DOM, destroying canvas bitmap data.
+        // Use insertAdjacentHTML to append without touching existing nodes.
+        resultsDiv.insertAdjacentHTML('beforeend', html);
         
         // Setup tab switching
         this._setupTabs();
