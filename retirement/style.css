@@ -2039,3 +2039,26 @@ input:focus {
         padding: 10px 16px;
     }
 }
+
+/* Couple CPP blocks */
+.cpp-couple-block {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+.cpp-couple-block h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #475569;
+}
+.cpp-combined-total {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    font-size: 16px;
+    margin-top: 8px;
+}

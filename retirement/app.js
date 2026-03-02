@@ -20,6 +20,8 @@ const AppV4 = {
     selectedRegion: null,
     healthStatus: 'average',
     cppStartAge: 65,
+    cppStartAgeP1: 65,
+    cppStartAgeP2: 65,
     scenarioResults: {},
     currentScenario: 'base',
     windfalls: [],
@@ -138,6 +140,12 @@ const AppV4 = {
             coupleSection.classList.toggle('hidden', !isCouple);
         }
         
+                // Toggle CPP sections
+        const cppSingle = document.getElementById('cpp-section-single');
+        const cppCouple = document.getElementById('cpp-section-couple');
+        if (cppSingle) cppSingle.classList.toggle('hidden', isCouple);
+        if (cppCouple) cppCouple.classList.toggle('hidden', !isCouple);
+
         // Update household income if couple
         if (isCouple) {
             this._updateHouseholdIncome();
@@ -297,6 +305,15 @@ const AppV4 = {
             });
         });
 
+        // When user manually edits spending, clear active preset
+        const spendingInput = document.getElementById('annual-spending');
+        if (spendingInput) {
+            spendingInput.addEventListener('input', () => {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                this._updateSpendingRecommendation();
+            });
+        }
+
         // Close detail
         const closeBtn = document.getElementById('close-detail');
         if (closeBtn) {
@@ -307,18 +324,42 @@ const AppV4 = {
     },
 
     _setupCPPOptimizer() {
+        // Single CPP slider
         const slider = document.getElementById('cpp-start-age');
-        if (!slider) return;
+        if (slider) {
+            slider.addEventListener('input', (e) => {
+                this.cppStartAge = parseInt(e.target.value);
+                this._updateCPPPreview();
+            });
+        }
 
-        slider.addEventListener('input', (e) => {
-            this.cppStartAge = parseInt(e.target.value);
-            this._updateCPPPreview();
-        });
+        // Couple CPP sliders
+        const sliderP1 = document.getElementById('cpp-start-age-p1');
+        const sliderP2 = document.getElementById('cpp-start-age-p2');
+        
+        if (sliderP1) {
+            sliderP1.addEventListener('input', (e) => {
+                this.cppStartAgeP1 = parseInt(e.target.value);
+                this._updateCPPPreviewCouple();
+            });
+        }
+        if (sliderP2) {
+            sliderP2.addEventListener('input', (e) => {
+                this.cppStartAgeP2 = parseInt(e.target.value);
+                this._updateCPPPreviewCouple();
+            });
+        }
 
-        // CPP details button
+        // CPP details buttons
         const detailsBtn = document.getElementById('btn-cpp-details');
         if (detailsBtn) {
             detailsBtn.addEventListener('click', () => {
+                this._showCPPComparison();
+            });
+        }
+        const detailsBtnCouple = document.getElementById('btn-cpp-details-couple');
+        if (detailsBtnCouple) {
+            detailsBtnCouple.addEventListener('click', () => {
                 this._showCPPComparison();
             });
         }
@@ -762,6 +803,39 @@ const AppV4 = {
         document.getElementById('cpp-lifetime-value').textContent = `$${lifetime.totalLifetime.toLocaleString()}`;
     },
 
+    _updateCPPPreviewCouple() {
+        const income1 = parseFloat(document.getElementById('income-person1')?.value) || 60000;
+        const income2 = parseFloat(document.getElementById('income-person2')?.value) || 60000;
+        const retirementAge = parseInt(document.getElementById('retirement-age')?.value) || 65;
+        const yearsContributing = Math.min(retirementAge - 18, 39);
+
+        const ageP1 = this.cppStartAgeP1 || 65;
+        const ageP2 = this.cppStartAgeP2 || 65;
+
+        const base1 = CPPCalculator.estimateCPP(income1, yearsContributing);
+        const base2 = CPPCalculator.estimateCPP(income2, yearsContributing);
+        const adjusted1 = CPPOptimizer.calculateByAge(base1.total, ageP1);
+        const adjusted2 = CPPOptimizer.calculateByAge(base2.total, ageP2);
+
+        // Person 1
+        const ageEl1 = document.getElementById('cpp-age-value-p1');
+        const amtEl1 = document.getElementById('cpp-amount-value-p1');
+        if (ageEl1) ageEl1.textContent = ageP1;
+        if (amtEl1) amtEl1.textContent = `$${Math.round(adjusted1).toLocaleString()}/year`;
+
+        // Person 2
+        const ageEl2 = document.getElementById('cpp-age-value-p2');
+        const amtEl2 = document.getElementById('cpp-amount-value-p2');
+        if (ageEl2) ageEl2.textContent = ageP2;
+        if (amtEl2) amtEl2.textContent = `$${Math.round(adjusted2).toLocaleString()}/year`;
+
+        // Combined total
+        const combinedEl = document.getElementById('cpp-combined-value');
+        if (combinedEl) {
+            combinedEl.textContent = `$${Math.round(adjusted1 + adjusted2).toLocaleString()}/year`;
+        }
+    },
+
     _updateHealthcarePreview() {
         const retirementAge = parseInt(document.getElementById('retirement-age')?.value) || 65;
         const lifeExpectancy = parseInt(document.getElementById('life-expectancy')?.value) || 90;
@@ -1175,7 +1249,8 @@ const AppV4 = {
             currentDebt: parseFloat(document.getElementById('current-debt')?.value) || 0,
             debtPayoffAge: parseInt(document.getElementById('debt-payoff-age')?.value) || 65,
             
-            cppStartAge: this.cppStartAge,
+            cppStartAge: this.familyStatus === 'couple' ? (this.cppStartAgeP1 || 65) : this.cppStartAge,
+            cppStartAgeP2: this.familyStatus === 'couple' ? (this.cppStartAgeP2 || 65) : null,
             additionalIncomeSources: IncomeSources.getAll(),
             windfalls: this.windfalls || [],
             

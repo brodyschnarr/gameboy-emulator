@@ -42,6 +42,7 @@ const RetirementCalcV4 = {
             
             // CPP
             cppStartAge,
+            cppStartAgeP2,
             
             // Additional income sources
             additionalIncomeSources,
@@ -60,6 +61,7 @@ const RetirementCalcV4 = {
             income2: isFamilyMode ? income2 : 0,
             retirementAge,
             cppStartAge: cppStartAge || 65,
+            cppStartAgeP2: cppStartAgeP2 || cppStartAge || 65,
             isSingle: !isFamilyMode
         });
 
@@ -92,7 +94,9 @@ const RetirementCalcV4 = {
             returnRate,
             inflationRate,
             province,
-            cppStartAge: cppStartAge || 65
+            cppStartAge: cppStartAge || 65,
+            cppStartAgeP2: cppStartAgeP2 || cppStartAge || 65,
+            isSingle: !isFamilyMode
         });
 
         // 5. Calculate probability of success
@@ -162,18 +166,18 @@ const RetirementCalcV4 = {
         };
     },
 
-    _calculateGovernmentBenefits({ income1, income2, retirementAge, cppStartAge, isSingle }) {
+    _calculateGovernmentBenefits({ income1, income2, retirementAge, cppStartAge, cppStartAgeP2, isSingle }) {
         const yearsContributing = Math.min(retirementAge - 18, 39);
 
         // Person 1 CPP
         const cpp1Base = CPPCalculator.estimateCPP(income1, yearsContributing);
         const cpp1 = CPPOptimizer.calculateByAge(cpp1Base.total, cppStartAge);
 
-        // Person 2 CPP (if couple)
+        // Person 2 CPP (if couple) — uses their own start age
         let cpp2 = 0;
         if (!isSingle && income2 > 0) {
             const cpp2Base = CPPCalculator.estimateCPP(income2, yearsContributing);
-            cpp2 = CPPOptimizer.calculateByAge(cpp2Base.total, cppStartAge);
+            cpp2 = CPPOptimizer.calculateByAge(cpp2Base.total, cppStartAgeP2 || cppStartAge);
         }
 
         const cppTotal = cpp1 + cpp2;
@@ -212,7 +216,9 @@ const RetirementCalcV4 = {
             returnRate,
             inflationRate,
             province,
-            cppStartAge
+            cppStartAge,
+            cppStartAgeP2,
+            isSingle
         } = params;
 
         const projection = [];
@@ -292,8 +298,12 @@ const RetirementCalcV4 = {
 
                 // 4. Calculate government income
                 let govIncome = 0;
+                // CPP: each person may start at different ages
                 if (age >= cppStartAge) {
-                    govIncome += govBenefits.cppTotal;
+                    govIncome += govBenefits.cpp1;
+                }
+                if (!isSingle && age >= (cppStartAgeP2 || cppStartAge)) {
+                    govIncome += govBenefits.cpp2;
                 }
                 if (age >= 65) {
                     // OAS starts at 65 (clawback TODO)

@@ -274,8 +274,8 @@
                 <input type="number" id="life-expectancy" placeholder="90" min="65" max="110" value="90">
             </div>
 
-            <!-- CPP Start Age Optimizer -->
-            <div class="input-group">
+            <!-- CPP Start Age Optimizer (Single) -->
+            <div class="input-group" id="cpp-section-single">
                 <label>
                     When to start CPP?
                     <button type="button" class="info-btn" data-tooltip="Starting CPP early means lower payments for life. Starting late means higher payments.">?</button>
@@ -298,6 +298,58 @@
                 </div>
             </div>
 
+            <!-- CPP Start Age Optimizer (Couple - two separate sliders) -->
+            <div class="input-group hidden" id="cpp-section-couple">
+                <label>
+                    When to start CPP?
+                    <button type="button" class="info-btn" data-tooltip="Each person can start CPP at a different age. Starting early means lower payments for life.">?</button>
+                </label>
+                
+                <!-- Person 1 CPP -->
+                <div class="cpp-couple-block">
+                    <h4>👤 Person 1</h4>
+                    <div class="cpp-optimizer">
+                        <div class="slider-container">
+                            <input type="range" id="cpp-start-age-p1" min="60" max="70" value="65" step="1">
+                            <div class="slider-labels">
+                                <span>60</span>
+                                <span>65</span>
+                                <span>70</span>
+                            </div>
+                        </div>
+                        <div class="cpp-preview">
+                            <div class="cpp-age-display">Age: <strong id="cpp-age-value-p1">65</strong></div>
+                            <div class="cpp-amount-display">Estimated: <strong id="cpp-amount-value-p1">$0/year</strong></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Person 2 CPP -->
+                <div class="cpp-couple-block">
+                    <h4>👤 Person 2</h4>
+                    <div class="cpp-optimizer">
+                        <div class="slider-container">
+                            <input type="range" id="cpp-start-age-p2" min="60" max="70" value="65" step="1">
+                            <div class="slider-labels">
+                                <span>60</span>
+                                <span>65</span>
+                                <span>70</span>
+                            </div>
+                        </div>
+                        <div class="cpp-preview">
+                            <div class="cpp-age-display">Age: <strong id="cpp-age-value-p2">65</strong></div>
+                            <div class="cpp-amount-display">Estimated: <strong id="cpp-amount-value-p2">$0/year</strong></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="cpp-combined-total">
+                    <strong>Combined CPP:</strong> <span id="cpp-combined-value">$0/year</span>
+                </div>
+                
+                <button type="button" class="btn-link" id="btn-cpp-details-couple">See detailed comparison →</button>
+            </div>
+
             <!-- Lifestyle -->
             <div class="input-group">
                 <label>Annual Spending</label>
@@ -310,13 +362,13 @@
                         <div class="preset-name">Avg</div>
                         <div class="preset-amount">$48K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount="62000">
+                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount="60000">
                         <div class="preset-name">Comfortable</div>
-                        <div class="preset-amount">$62K</div>
+                        <div class="preset-amount">$60K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="affluent" data-amount="95000">
-                        <div class="preset-name">Affluent</div>
-                        <div class="preset-amount">$95K</div>
+                    <button type="button" class="preset-btn" data-lifestyle="luxury" data-amount="90000">
+                        <div class="preset-name">Luxury</div>
+                        <div class="preset-amount">$90K</div>
                     </button>
                     <button type="button" class="preset-btn" data-lifestyle="ultrawealthy" data-amount="150000">
                         <div class="preset-name">Ultra-Wealthy</div>
@@ -339,11 +391,12 @@
             </div>
 
             <div class="input-group">
-                <label for="annual-spending">Or Custom Amount</label>
+                <label for="annual-spending">Your Annual Spending (edit anytime)</label>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="annual-spending" placeholder="60000" min="0" step="1000">
                 </div>
+                <small class="input-hint">Pick a preset above or type your own number</small>
                 <small id="spending-recommendation" class="benchmark-text"></small>
             </div>
 
