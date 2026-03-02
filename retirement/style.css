@@ -1877,6 +1877,8 @@ input:focus {
     position: relative;
     z-index: 1;
     flex: 1;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .step-number {
@@ -1917,6 +1919,12 @@ input:focus {
     background: var(--success);
     border-color: var(--success);
     color: white;
+    font-size: 0;
+}
+
+.progress-step.completed .step-number::after {
+    content: '✓';
+    font-size: 16px;
 }
 
 .progress-step.completed .step-label {
@@ -1929,6 +1937,7 @@ input:focus {
     }
     
     .progress-indicator::before {
+        top: 18px;
         left: 40px;
         right: 40px;
     }
@@ -1938,9 +1947,9 @@ input:focus {
     }
     
     .step-number {
-        width: 32px;
-        height: 32px;
-        font-size: 14px;
+        width: 36px;
+        height: 36px;
+        font-size: 13px;
     }
 }
 

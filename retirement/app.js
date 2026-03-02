@@ -14,6 +14,7 @@ const AppV4 = {
     cppStartAge: 65,
     cppStartAgeP1: 65,
     cppStartAgeP2: 65,
+    visitedSteps: new Set(['basic']),
     scenarioResults: {},
     currentScenario: 'base',
     windfalls: [],
@@ -76,6 +77,18 @@ const AppV4 = {
 
         document.getElementById('btn-back-retirement')?.addEventListener('click', () => {
             this._showStep('retirement');
+        });
+
+        // Make progress steps clickable for navigation
+        const steps = ['basic', 'savings', 'contributions', 'retirement', 'healthcare'];
+        document.querySelectorAll('.progress-step').forEach((el, index) => {
+            el.addEventListener('click', () => {
+                const targetStep = steps[index];
+                // Allow clicking completed or active steps
+                if (el.classList.contains('completed') || el.classList.contains('active')) {
+                    this._showStep(targetStep);
+                }
+            });
         });
     },
 
@@ -499,6 +512,9 @@ const AppV4 = {
     _showStep(step) {
         const steps = ['basic', 'savings', 'contributions', 'retirement', 'healthcare'];
         
+        // Track visited steps
+        this.visitedSteps.add(step);
+        
         // Hide all steps
         steps.forEach(s => {
             document.getElementById(`step-${s}`)?.classList.add('hidden');
@@ -512,10 +528,10 @@ const AppV4 = {
         const currentIndex = steps.indexOf(step);
         document.querySelectorAll('.progress-step').forEach((el, index) => {
             el.classList.remove('active', 'completed');
-            if (index < currentIndex) {
-                el.classList.add('completed');
-            } else if (index === currentIndex) {
+            if (index === currentIndex) {
                 el.classList.add('active');
+            } else if (this.visitedSteps.has(steps[index])) {
+                el.classList.add('completed');
             }
         });
         
