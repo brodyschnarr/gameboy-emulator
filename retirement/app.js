@@ -1368,17 +1368,25 @@ const AppV4 = {
     },
 
     _drawChart(yearByYear, retirementAge) {
+        this._renderChartBase(yearByYear, retirementAge);
+        this._setupChartTooltip(yearByYear, retirementAge);
+    },
+
+    _renderChartBase(yearByYear, retirementAge) {
         const canvas = document.getElementById('projection-chart');
         if (!canvas) throw new Error('Canvas element not found');
 
         const ctx = canvas.getContext('2d');
         if (!ctx) throw new Error('Cannot get 2D context');
 
-        // Set dimensions
-        const parent = canvas.parentElement;
-        const width = Math.max((parent ? parent.offsetWidth : 300) - 40, 300);
-        canvas.width = width;
-        canvas.height = 400;
+        // Set dimensions (only on first draw, preserve on redraws)
+        if (!canvas._sized) {
+            const parent = canvas.parentElement;
+            const width = Math.max((parent ? parent.offsetWidth : 300) - 40, 300);
+            canvas.width = width;
+            canvas.height = 400;
+            canvas._sized = true;
+        }
 
         const w = canvas.width;
         const h = canvas.height;
@@ -1455,6 +1463,128 @@ const AppV4 = {
 
         ctx.fillStyle = '#f59e0b';
         ctx.fillText('Retirement', retireX - 35, padding - 10);
+    },
+
+    _setupChartTooltip(yearByYear, retirementAge) {
+        const canvas = document.getElementById('projection-chart');
+        if (!canvas) return;
+
+        const w = canvas.width;
+        const h = canvas.height;
+        const padding = 60;
+        const balances = yearByYear.map(y => y.totalBalance || 0);
+        const maxBalance = Math.max(...balances);
+        const minAge = yearByYear[0].age;
+        const maxAge = yearByYear[yearByYear.length - 1].age;
+
+        // Remove old listeners (avoid stacking)
+        if (canvas._tooltipHandler) {
+            canvas.removeEventListener('mousemove', canvas._tooltipHandler);
+            canvas.removeEventListener('touchmove', canvas._tooltipHandler);
+            canvas.removeEventListener('touchstart', canvas._tooltipHandler);
+            canvas.removeEventListener('mouseleave', canvas._tooltipLeave);
+        }
+
+        // Get or create tooltip element
+        let tooltip = document.getElementById('chart-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'chart-tooltip';
+            tooltip.className = 'chart-tooltip';
+            canvas.parentElement.style.position = 'relative';
+            canvas.parentElement.appendChild(tooltip);
+        }
+
+        const getAgeFromX = (clientX) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const canvasX = (clientX - rect.left) * scaleX;
+            const chartX = canvasX - padding;
+            const chartWidth = w - 2 * padding;
+            const ratio = Math.max(0, Math.min(1, chartX / chartWidth));
+            return Math.round(minAge + ratio * (maxAge - minAge));
+        };
+
+        const showTooltip = (clientX, clientY) => {
+            const age = getAgeFromX(clientX);
+            const point = yearByYear.find(y => y.age === age);
+            if (!point) { tooltip.style.display = 'none'; return; }
+
+            const bal = point.totalBalance || 0;
+            const phase = point.phase === 'retirement' ? '🏖️' : '📈';
+            let html = `<strong>${phase} Age ${age}</strong><br>`;
+            html += `Portfolio: <strong>$${Math.round(bal).toLocaleString()}</strong>`;
+            
+            if (point.phase === 'retirement') {
+                if (point.cppReceived) html += `<br>CPP: $${Math.round(point.cppReceived).toLocaleString()}`;
+                if (point.oasReceived) html += `<br>OAS: $${Math.round(point.oasReceived).toLocaleString()}`;
+                if (point.withdrawal) html += `<br>Withdrawal: $${Math.round(point.withdrawal).toLocaleString()}`;
+                if (point.taxPaid) html += `<br>Tax: $${Math.round(point.taxPaid).toLocaleString()}`;
+                if (point.targetSpending) html += `<br>Spending: $${Math.round(point.targetSpending).toLocaleString()}`;
+            } else {
+                if (point.contribution) html += `<br>Contribution: $${Math.round(point.contribution).toLocaleString()}`;
+            }
+
+            tooltip.innerHTML = html;
+            tooltip.style.display = 'block';
+
+            // Position tooltip
+            const rect = canvas.getBoundingClientRect();
+            const parentRect = canvas.parentElement.getBoundingClientRect();
+            let left = clientX - parentRect.left;
+            let top = clientY - parentRect.top - tooltip.offsetHeight - 12;
+            
+            // Keep tooltip in bounds
+            const tooltipWidth = tooltip.offsetWidth || 180;
+            if (left + tooltipWidth > parentRect.width) left = parentRect.width - tooltipWidth - 8;
+            if (left < 8) left = 8;
+            if (top < 0) top = clientY - parentRect.top + 20;
+            
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+
+            // Draw crosshair on canvas (redraw base without re-attaching tooltip)
+            this._renderChartBase(yearByYear, retirementAge);
+            const x = padding + ((age - minAge) / (maxAge - minAge)) * (w - 2 * padding);
+            const balance = point.totalBalance || 0;
+            const y2 = h - padding - (balance / maxBalance) * (h - 2 * padding);
+            
+            const ctx2 = canvas.getContext('2d');
+            // Vertical line
+            ctx2.strokeStyle = 'rgba(37, 99, 235, 0.3)';
+            ctx2.lineWidth = 1;
+            ctx2.setLineDash([3, 3]);
+            ctx2.beginPath();
+            ctx2.moveTo(x, padding);
+            ctx2.lineTo(x, h - padding);
+            ctx2.stroke();
+            ctx2.setLineDash([]);
+            
+            // Dot on curve
+            ctx2.fillStyle = '#2563eb';
+            ctx2.beginPath();
+            ctx2.arc(x, y2, 6, 0, Math.PI * 2);
+            ctx2.fill();
+            ctx2.strokeStyle = '#fff';
+            ctx2.lineWidth = 2;
+            ctx2.stroke();
+        };
+
+        canvas._tooltipHandler = (e) => {
+            e.preventDefault();
+            const touch = e.touches ? e.touches[0] : e;
+            showTooltip(touch.clientX, touch.clientY);
+        };
+        canvas._tooltipLeave = () => {
+            tooltip.style.display = 'none';
+            // Redraw without crosshair
+            this._renderChartBase(yearByYear, retirementAge);
+        };
+
+        canvas.addEventListener('mousemove', canvas._tooltipHandler);
+        canvas.addEventListener('touchmove', canvas._tooltipHandler, { passive: false });
+        canvas.addEventListener('touchstart', canvas._tooltipHandler, { passive: false });
+        canvas.addEventListener('mouseleave', canvas._tooltipLeave);
     },
 
     _drawYearBreakdown(yearByYear, retirementAge) {

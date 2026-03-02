@@ -1524,6 +1524,28 @@ input:focus {
     margin-top: 12px;
 }
 
+/* Chart tooltip */
+.chart-tooltip {
+    display: none;
+    position: absolute;
+    background: rgba(15, 23, 42, 0.95);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    max-width: 220px;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+.chart-tooltip strong {
+    color: #60a5fa;
+}
+
 .slider-container {
     margin-bottom: 16px;
 }
