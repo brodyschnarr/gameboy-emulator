@@ -12,9 +12,12 @@
     <link rel="stylesheet" href="style-v5.css?v=99">
     <link rel="stylesheet" href="mobile-polish.css?v=99">
     
-    <!-- Mobile Debug Overlay (loads first to catch all logs) -->
-    <script src="mobile-debug.js?v=1"></script>
-    <script src="mobile-chart-debug.js?v=1"></script>
+    <!-- Mobile Error Display (loads FIRST to catch all errors) -->
+    <script src="mobile-error-display.js?v=99"></script>
+    
+    <!-- Mobile Debug Overlay -->
+    <script src="mobile-debug.js?v=99"></script>
+    <script src="mobile-chart-debug.js?v=99"></script>
 </head>
 <body>
     
@@ -438,6 +441,9 @@
             <!-- Charts -->
             <section class="card">
                 <h2>📈 Portfolio Projection</h2>
+                <div id="chart-status" style="padding: 10px; margin-bottom: 10px; background: #fef3c7; border-radius: 4px; font-size: 13px; display: none;">
+                    ⏳ Initializing chart...
+                </div>
                 <canvas id="projection-chart"></canvas>
             </section>
 

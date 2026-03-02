@@ -1257,127 +1257,79 @@ const AppV4 = {
         document.getElementById('legacy-description').textContent = 
             results.legacy.description;
 
-        // Charts - Draw IMMEDIATELY (no more RAF - just draw now!)
-        console.log('[AppV4] ========== ABOUT TO DRAW CHARTS ==========');
-        console.log('[AppV4] yearByYear length:', results.yearByYear ? results.yearByYear.length : 'UNDEFINED!');
-        console.log('[AppV4] retirementAge:', inputs.retirementAge);
-        
+        // Charts
         try {
             this._drawChart(results.yearByYear, inputs.retirementAge);
-            console.log('[AppV4] ✅ _drawChart completed');
-        } catch (chartError) {
-            console.error('[AppV4] ❌ CHART ERROR:', chartError);
-            console.error('[AppV4] Stack:', chartError.stack);
-        }
-        
-        try {
             this._drawYearBreakdown(results.yearByYear, inputs.retirementAge);
-            console.log('[AppV4] ✅ _drawYearBreakdown completed');
-        } catch (breakdownError) {
-            console.error('[AppV4] ❌ BREAKDOWN ERROR:', breakdownError);
+        } catch (chartError) {
+            console.error('[Chart Error]', chartError);
+            const status = document.getElementById('chart-status');
+            if (status) {
+                status.style.display = 'block';
+                status.style.background = '#fee2e2';
+                status.innerHTML = `❌ Chart error: ${chartError.message}`;
+            }
         }
         
         this._displayBreakdown(results, inputs);
-        console.log('[AppV4] ========== CHART SECTION COMPLETE ==========');
     },
 
     _drawChart(yearByYear, retirementAge) {
-        console.log('[AppV4] ==================== _drawChart START ====================');
-        console.log('[AppV4] yearByYear is:', yearByYear ? `array of ${yearByYear.length}` : 'NULL/UNDEFINED');
-        console.log('[AppV4] retirementAge:', retirementAge);
+        const status = document.getElementById('chart-status');
+        if (status) {
+            status.style.display = 'block';
+            status.textContent = '⏳ Drawing chart...';
+        }
         
         const canvas = document.getElementById('projection-chart');
-        console.log('[AppV4] Canvas lookup result:', canvas ? 'FOUND' : 'NOT FOUND');
         if (!canvas) {
-            console.error('[AppV4] ❌ FATAL: Canvas element #projection-chart not found in DOM!');
-            return;
+            throw new Error('Canvas element not found');
         }
 
         const ctx = canvas.getContext('2d');
-        console.log('[AppV4] Context result:', ctx ? 'GOT 2D CONTEXT' : 'FAILED TO GET CONTEXT');
         if (!ctx) {
-            console.error('[AppV4] ❌ FATAL: Cannot get 2D rendering context!');
-            return;
+            throw new Error('Cannot get 2D context');
         }
         
-        const container = canvas.parentElement;
-        console.log('[AppV4] Container:', container ? 'FOUND' : 'NOT FOUND');
-        console.log('[AppV4] Container offsetWidth:', container ? container.offsetWidth : 'N/A');
-        
-        // Set canvas to FULL width of container, minimum 300px
-        const containerWidth = Math.max((container ? container.offsetWidth : 300) - 40, 300);
-        canvas.width = containerWidth;
+        // Set dimensions
+        const parent = canvas.parentElement;
+        const width = Math.max((parent ? parent.offsetWidth : 300) - 40, 300);
+        canvas.width = width;
         canvas.height = 400;
 
         const w = canvas.width;
         const h = canvas.height;
-
-        console.log('[AppV4] ✅ Canvas dimensions SET TO:', w, 'x', h);
-
-        // DRAW GIANT RED RECTANGLE FIRST (most visible thing possible)
-        ctx.fillStyle = '#ef4444'; // Bright red
-        ctx.fillRect(0, 0, w, h);
-        console.log('[AppV4] ✅ Drew GIANT RED RECTANGLE (if you see red, canvas works!)');
-        
         const padding = 60;
 
-        if (yearByYear.length === 0) {
-            console.warn('[AppV4] No data for portfolio chart');
-            return;
-        }
-        
-        // FIX: Check if canvas is too small to render
-        if (w < 100) {
-            console.error('[AppV4] Canvas too narrow to render chart:', w);
-            ctx.fillStyle = '#ef4444';
+        // Clear and set background
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        if (!yearByYear || yearByYear.length === 0) {
+            ctx.fillStyle = '#6b7280';
             ctx.font = '14px sans-serif';
-            ctx.fillText('Error: Container too narrow', 10, h / 2);
-            ctx.fillText(`Width: ${w}px (need 300+)`, 10, h / 2 + 20);
+            ctx.textAlign = 'center';
+            ctx.fillText('No data to display', w / 2, h / 2);
             return;
         }
 
-        // FIX: Use fallback for totalBalance (might be undefined in some years)
+        // Get data range
         const balances = yearByYear.map(y => y.totalBalance || y.totalPortfolio || 0);
         const maxBalance = Math.max(...balances);
         
-        console.log('[AppV4] maxBalance:', maxBalance, '(from', balances.length, 'years)');
-        console.log('[AppV4] First 3 balances:', balances.slice(0, 3));
-        console.log('[AppV4] Last 3 balances:', balances.slice(-3));
-        
         if (maxBalance === 0 || isNaN(maxBalance)) {
-            console.error('[AppV4] ❌ Invalid maxBalance:', maxBalance);
             ctx.fillStyle = '#ef4444';
-            ctx.font = '16px sans-serif';
-            ctx.fillText('Error: No valid balance data', w / 2 - 100, h / 2);
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('No valid balance data', w / 2, h / 2);
             return;
         }
-        console.log('[AppV4] ✅ maxBalance is valid');
         
         const minAge = yearByYear[0].age;
         const maxAge = yearByYear[yearByYear.length - 1].age;
-        console.log('[AppV4] Age range:', minAge, '-', maxAge);
 
-        // DRAW BACKGROUND FIRST (so canvas is visible even if chart fails)
-        ctx.fillStyle = '#f9fafb';
-        ctx.fillRect(0, 0, w, h);
-        console.log('[AppV4] ✅ Drew background');
-        
-        // Draw VISIBLE border and test text so we can see if canvas is rendering AT ALL
-        ctx.strokeStyle = '#2563eb';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(2, 2, w-4, h-4);
-        
-        ctx.fillStyle = '#2563eb';
-        ctx.font = 'bold 24px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('CHART RENDERING TEST', w/2, 30);
-        ctx.font = '16px sans-serif';
-        ctx.fillText(`Canvas: ${w}x${h}`, w/2, 55);
-        ctx.fillText(`Data points: ${yearByYear.length}`, w/2, 75);
-        ctx.textAlign = 'left'; // Reset
-        console.log('[AppV4] ✅ Drew test markers (if you see blue border + text, canvas works!)');
-
-        // Axes
+        // Draw axes
         ctx.strokeStyle = '#e5e7eb';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -1425,7 +1377,13 @@ const AppV4 = {
         ctx.fillStyle = '#f59e0b';
         ctx.fillText('Retirement', retireX - 35, padding - 10);
         
-        console.log('[AppV4] ✅ Chart drawing complete!');
+        // Success
+        if (status) {
+            status.style.display = 'block';
+            status.style.background = '#d1fae5';
+            status.innerHTML = `✅ Chart drawn: ${yearByYear.length} years, max $${(maxBalance/1000).toFixed(0)}K`;
+            setTimeout(() => status.style.display = 'none', 3000);
+        }
     },
 
     _drawYearBreakdown(yearByYear, retirementAge) {
