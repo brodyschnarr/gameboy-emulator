@@ -2183,6 +2183,14 @@ input:focus {
     .cpp-preview {
         grid-template-columns: 1fr;
     }
+    .cpp-preview.cpp-preview-row {
+        grid-template-columns: repeat(3, 1fr);
+        padding: 8px 0;
+        gap: 4px;
+    }
+    .cpp-preview-row strong {
+        font-size: 15px !important;
+    }
     
     .health-status-selector {
         grid-template-columns: 1fr;

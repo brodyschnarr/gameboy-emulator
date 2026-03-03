@@ -1972,6 +1972,7 @@ const AppV4 = {
         this.currentScenario = scenarioKey;
         const scenario = this.scenarioResults[scenarioKey];
         this._displayResults(scenario.results, scenario.inputs);
+        this._runSpendingOptimizer(scenario.inputs, scenario.results);
 
         // Update success rate with scenario-specific MC rate if available
         if (scenario.mcRate !== undefined && scenario.mcRate !== null) {
@@ -2042,10 +2043,13 @@ const AppV4 = {
     },
 
     _displayResults(results, inputs) {
-        // Status banner
+        // Status banner — use spending optimizer result for consistency
+        // If money runs out before life expectancy, it needs work
         const banner = document.getElementById('status-banner');
         if (banner) {
-            if (results.onTrack) {
+            const lastsAge = results.summary.moneyLastsAge || inputs.lifeExpectancy;
+            const isOnTrack = lastsAge >= inputs.lifeExpectancy;
+            if (isOnTrack) {
                 banner.className = 'card status-banner on-track';
                 banner.textContent = '✅ You are on track for retirement!';
             } else {
