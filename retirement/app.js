@@ -460,7 +460,10 @@ const AppV4 = {
         
         // Listen for changes on all custom inputs
         document.querySelectorAll('.custom-spend-input').forEach(input => {
-            input.addEventListener('input', () => this._updateCustomSpendingTotal());
+            input.addEventListener('input', () => {
+                this._updateCustomSpendingTotal();
+                this._updateSpendingHints();
+            });
         });
     },
 
@@ -486,6 +489,82 @@ const AppV4 = {
             });
         }
         this._updateCustomSpendingTotal();
+        this._updateSpendingHints();
+    },
+
+    // Spending hints: describe what a dollar amount means for each category
+    _spendingHintData: {
+        housing: [
+            [0, 500, 'Living with family or very low-cost shared housing'],
+            [500, 900, 'Paid-off home — just property tax, utilities, basic maintenance'],
+            [900, 1500, 'Modest home with property tax $3-4K/yr, utilities, upkeep'],
+            [1500, 2200, 'Nice home or condo, $4-5K tax, regular maintenance, some upgrades'],
+            [2200, 3500, 'Upscale home, condo fees, $6K+ tax, renovations, maybe a cleaner'],
+            [3500, Infinity, 'Luxury home or two properties, premium condo, high-end maintenance']
+        ],
+        food: [
+            [0, 300, 'Very frugal — basic groceries, cooking everything at home'],
+            [300, 500, 'Home cooking + occasional takeout, grocery deals'],
+            [500, 800, 'Quality groceries + eating out 1-2x/week'],
+            [800, 1200, 'Organic produce, dining out 2-3x/week, nice wine'],
+            [1200, 2000, 'Premium groceries, fine dining weekly, wine collection'],
+            [2000, Infinity, 'Gourmet everything, frequent fine dining, private chef occasionally']
+        ],
+        transportation: [
+            [0, 150, 'Public transit or cycling, no car'],
+            [150, 350, 'One older paid-off car, basic insurance, gas'],
+            [350, 600, 'Reliable car (5-8 yrs old), full coverage, regular maintenance'],
+            [600, 1000, 'Newer vehicle or two cars, premium insurance'],
+            [1000, 1500, 'Luxury vehicle (lease), premium insurance, detailing'],
+            [1500, Infinity, 'Multiple vehicles, luxury brands, all premium services']
+        ],
+        healthcare: [
+            [0, 150, 'Provincial coverage only, minimal out-of-pocket'],
+            [150, 300, 'Basic prescriptions, annual dental & eye exams, some supplements'],
+            [300, 500, 'Good extended health, dental, vision, massage, preventive care'],
+            [500, 800, 'Premium coverage, private clinic visits, wellness programs'],
+            [800, 1200, 'Concierge medicine, specialists, wellness retreats'],
+            [1200, Infinity, 'Top-tier private healthcare, concierge doctor, all premium services']
+        ],
+        travel: [
+            [0, 125, 'Visiting family, 1-2 road trips or camping trips a year'],
+            [125, 300, '1-2 domestic trips/year, maybe 1 international every few years'],
+            [300, 600, '2-3 trips/year, 1 international annually (Caribbean, Europe)'],
+            [600, 1250, '3-4 trips/year, business class occasionally, resorts'],
+            [1250, 2500, 'Frequent international travel, business class, luxury resorts, cruises'],
+            [2500, Infinity, 'First class, 5-star everywhere, exotic destinations, extended trips']
+        ],
+        entertainment: [
+            [0, 150, 'Streaming services, library, free community events, walking'],
+            [150, 350, 'Streaming + hobbies, occasional concerts, eating out'],
+            [350, 600, 'Golf occasionally, hobbies with gear, concerts, theatre, sports'],
+            [600, 1000, 'Club membership (golf/gym), expensive hobbies, season tickets'],
+            [1000, 1500, 'Multiple memberships, premium hobbies (sailing, photography)'],
+            [1500, Infinity, 'Exclusive clubs, art collecting, yacht/country club, luxury hobbies']
+        ],
+        misc: [
+            [0, 200, 'Bare essentials — minimal clothing, basic household, small gifts'],
+            [200, 450, 'Modest clothing, household items, birthday/holiday gifts'],
+            [450, 700, 'Regular wardrobe updates, home décor, gifts for grandkids, some tech'],
+            [700, 1200, 'Nice clothing, home improvements, generous gifts, gadgets'],
+            [1200, 1800, 'Designer items, regular upgrades, lavish gifts, latest tech'],
+            [1800, Infinity, 'Premium everything, philanthropy, concierge services']
+        ]
+    },
+
+    _updateSpendingHints() {
+        document.querySelectorAll('.custom-spend-input').forEach(input => {
+            const cat = input.dataset.category;
+            const val = parseFloat(input.value) || 0;
+            const hintEl = document.getElementById('hint-' + cat);
+            if (!hintEl) return;
+            
+            const ranges = this._spendingHintData[cat];
+            if (!ranges) { hintEl.textContent = ''; return; }
+            
+            const match = ranges.find(([min, max]) => val >= min && val < max);
+            hintEl.textContent = match ? match[2] : '';
+        });
     },
 
     _updateCustomSpendingTotal() {
