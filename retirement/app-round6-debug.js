@@ -1513,10 +1513,9 @@ const AppV4 = {
             }
 
             // Calculate base scenario
+            // NOTE: calc.js now handles windfalls internally in _generateProjection
+            // Do NOT call _applyWindfallsToResults — it double-counts windfalls
             const baseResults = RetirementCalcV4.calculate(inputs);
-
-            // Apply windfalls to base calculation (deterministic - 100% probability)
-            this._applyWindfallsToResults(baseResults, inputs);
 
             // Store base scenario
             this.scenarioResults = {
@@ -1703,13 +1702,10 @@ const AppV4 = {
             }
         };
 
-        // Calculate each scenario and apply windfalls
+        // Calculate each scenario (calc.js handles windfalls internally)
         Object.keys(scenarios).forEach(key => {
             const scenarioInputs = scenarios[key];
             const results = RetirementCalcV4.calculate(scenarioInputs);
-
-            // Apply windfalls to this scenario too
-            this._applyWindfallsToResults(results, scenarioInputs);
 
             this.scenarioResults[key] = {
                 inputs: scenarioInputs,
