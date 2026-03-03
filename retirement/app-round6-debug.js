@@ -127,15 +127,31 @@ const AppV4 = {
             this.familyStatus = 'couple';
             this._toggleFamilyUI();
         });
+
+        // Keep single/couple age inputs synced
+        const ageMain = document.getElementById('current-age');
+        const ageCouple1 = document.getElementById('current-age-couple');
+        if (ageMain && ageCouple1) {
+            ageCouple1.addEventListener('input', () => { ageMain.value = ageCouple1.value; });
+            ageMain.addEventListener('input', () => { ageCouple1.value = ageMain.value; });
+        }
     },
 
     _toggleFamilyUI() {
         const isCouple = this.familyStatus === 'couple';
 
-        // Show/hide partner age
-        const partnerAgeGroup = document.getElementById('partner-age-group');
-        if (partnerAgeGroup) {
-            partnerAgeGroup.classList.toggle('hidden', !isCouple);
+        // Show/hide age layout (single input vs side-by-side couple)
+        const ageSingle = document.getElementById('age-single');
+        const ageCouple = document.getElementById('age-couple');
+        if (ageSingle) ageSingle.classList.toggle('hidden', isCouple);
+        if (ageCouple) ageCouple.classList.toggle('hidden', !isCouple);
+        // Sync age values between single and couple inputs
+        const ageMain = document.getElementById('current-age');
+        const ageCouple1 = document.getElementById('current-age-couple');
+        if (isCouple && ageMain && ageCouple1) {
+            ageCouple1.value = ageMain.value || ageMain.placeholder;
+        } else if (!isCouple && ageMain && ageCouple1 && ageCouple1.value) {
+            ageMain.value = ageCouple1.value;
         }
 
         // Show/hide income sections
