@@ -1121,10 +1121,68 @@ input:focus {
     margin-bottom: 8px;
 }
 
+/* New income breakdown layout (stacked) */
+.year-bar-row.income-breakdown-row {
+    display: block;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: 8px;
+}
+
+.year-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.year-total-income {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.year-income-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-top: 6px;
+    font-size: 12px;
+}
+
+.income-detail-item {
+    white-space: nowrap;
+}
+
+.income-detail-item.cpp-color { color: #8b5cf6; }
+.income-detail-item.oas-color { color: #06b6d4; }
+.income-detail-item.additional-color { color: #f97316; }
+.income-detail-item.rrsp-color { color: #ef4444; }
+.income-detail-item.tfsa-color { color: #10b981; }
+.income-detail-item.nonreg-color { color: #3b82f6; }
+.income-detail-item.other-color { color: #f59e0b; }
+
+.year-tax-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.income-legend {
+    flex-wrap: wrap;
+    gap: 10px 16px;
+}
+
 .year-label {
     font-size: 14px;
     font-weight: 600;
     text-align: right;
+}
+
+.income-breakdown-row .year-label {
+    text-align: left;
+    font-size: 15px;
 }
 
 .year-bar {
@@ -1135,6 +1193,12 @@ input:focus {
     overflow: hidden;
 }
 
+.income-breakdown-row .year-bar {
+    height: 28px;
+    background: var(--card-bg, #f8fafc);
+    border-radius: 6px;
+}
+
 .bar-segment {
     height: 100%;
     transition: all 0.2s;
@@ -1143,6 +1207,18 @@ input:focus {
 
 .bar-segment:hover {
     opacity: 0.8;
+}
+
+.bar-segment.cpp {
+    background: #8b5cf6;
+}
+
+.bar-segment.oas {
+    background: #06b6d4;
+}
+
+.bar-segment.additional {
+    background: #f97316;
 }
 
 .bar-segment.rrsp {
@@ -1190,6 +1266,18 @@ input:focus {
     border-radius: 4px;
 }
 
+.legend-color.cpp {
+    background: #8b5cf6;
+}
+
+.legend-color.oas {
+    background: #06b6d4;
+}
+
+.legend-color.additional {
+    background: #f97316;
+}
+
 .legend-color.rrsp {
     background: #ef4444;
 }
@@ -1212,12 +1300,16 @@ input:focus {
         grid-template-columns: repeat(3, 1fr);
     }
     
-    .year-bar-row {
+    .year-bar-row:not(.income-breakdown-row) {
         grid-template-columns: 60px 1fr 100px;
     }
     
     .chart-legend {
         flex-wrap: wrap;
+    }
+    
+    .income-breakdown-row {
+        padding: 10px;
     }
 }
 

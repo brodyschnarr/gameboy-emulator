@@ -1591,47 +1591,73 @@ const AppV4 = {
         const container = document.getElementById('year-breakdown-chart');
         if (!container) return;
 
-        const retirementYears = yearByYear.filter(y => y.age >= retirementAge).slice(0, 25);
+        const retirementYears = yearByYear.filter(y => y.age >= retirementAge).slice(0, 30);
 
         if (retirementYears.length === 0) {
             container.innerHTML = '<p>No retirement data</p>';
             return;
         }
 
+        // Income sources for each year
         const html = retirementYears.map(year => {
-            // FIX: Use fallback for total balance
-            const total = year.totalBalance || year.totalPortfolio || 0;
-            const rrspPct = total > 0 ? ((year.rrsp || 0) / total) * 100 : 0;
-            const tfsaPct = total > 0 ? ((year.tfsa || 0) / total) * 100 : 0;
-            const nonRegPct = total > 0 ? ((year.nonReg || 0) / total) * 100 : 0;
-            const otherPct = total > 0 ? ((year.other || 0) / total) * 100 : 0;
+            const wb = year.withdrawalBreakdown || {};
+            const cpp = year.cppReceived || 0;
+            const oas = year.oasReceived || 0;
+            const additional = year.additionalIncome || 0;
+            const fromTFSA = wb.tfsa || 0;
+            const fromNonReg = wb.nonReg || 0;
+            const fromRRSP = wb.rrsp || 0;
+            const fromOther = wb.other || 0;
+            
+            const totalIncome = cpp + oas + additional + fromTFSA + fromNonReg + fromRRSP + fromOther;
+            if (totalIncome <= 0) return '';
+
+            const pct = (val) => ((val / totalIncome) * 100).toFixed(1);
+            const fmt = (val) => '$' + Math.round(val).toLocaleString();
+
+            // Build segments (only show non-zero)
+            const segments = [];
+            if (cpp > 0) segments.push({ cls: 'cpp', pct: pct(cpp), label: 'CPP', amount: fmt(cpp) });
+            if (oas > 0) segments.push({ cls: 'oas', pct: pct(oas), label: 'OAS', amount: fmt(oas) });
+            if (additional > 0) segments.push({ cls: 'additional', pct: pct(additional), label: 'Other Income', amount: fmt(additional) });
+            if (fromRRSP > 0) segments.push({ cls: 'rrsp', pct: pct(fromRRSP), label: 'RRSP', amount: fmt(fromRRSP) });
+            if (fromTFSA > 0) segments.push({ cls: 'tfsa', pct: pct(fromTFSA), label: 'TFSA', amount: fmt(fromTFSA) });
+            if (fromNonReg > 0) segments.push({ cls: 'nonreg', pct: pct(fromNonReg), label: 'Non-Reg', amount: fmt(fromNonReg) });
+            if (fromOther > 0) segments.push({ cls: 'other', pct: pct(fromOther), label: 'Other', amount: fmt(fromOther) });
+
+            const barSegments = segments.map(s => 
+                `<div class="bar-segment ${s.cls}" style="width: ${s.pct}%" title="${s.label}: ${s.amount} (${s.pct}%)"></div>`
+            ).join('');
+
+            const detailItems = segments.map(s =>
+                `<span class="income-detail-item ${s.cls}-color">${s.label} ${s.amount}</span>`
+            ).join('');
+
+            const taxLine = year.taxPaid > 0 
+                ? `<div class="year-tax-note">Tax: ${fmt(year.taxPaid)}</div>` 
+                : '';
 
             return `
-                <div class="year-bar-row">
-                    <div class="year-label">Age ${year.age}</div>
-                    <div class="year-bar" title="Total: ${fmtMoney(total)}">
-                        ${year.rrsp > 0 ? `<div class="bar-segment rrsp" style="width: ${rrspPct}%" title="RRSP: ${fmtMoney(year.rrsp)} (${rrspPct.toFixed(0)}%)"></div>` : ''}
-                        ${year.tfsa > 0 ? `<div class="bar-segment tfsa" style="width: ${tfsaPct}%" title="TFSA: ${fmtMoney(year.tfsa)} (${tfsaPct.toFixed(0)}%)"></div>` : ''}
-                        ${year.nonReg > 0 ? `<div class="bar-segment nonreg" style="width: ${nonRegPct}%" title="Non-Reg: ${fmtMoney(year.nonReg)} (${nonRegPct.toFixed(0)}%)"></div>` : ''}
-                        ${year.other > 0 ? `<div class="bar-segment other" style="width: ${otherPct}%" title="Other: ${fmtMoney(year.other)} (${otherPct.toFixed(0)}%)"></div>` : ''}
+                <div class="year-bar-row income-breakdown-row">
+                    <div class="year-bar-header">
+                        <span class="year-label">Age ${year.age}</span>
+                        <span class="year-total-income">${fmt(totalIncome)}</span>
                     </div>
-                    <div class="year-breakdown-details">
-                        <div class="year-total">${fmtMoney(total)}</div>
-                        <div class="year-percentages">
-                            ${year.rrsp > 0 ? `<span class="pct-label rrsp-color">${rrspPct.toFixed(0)}%</span>` : ''}
-                            ${year.tfsa > 0 ? `<span class="pct-label tfsa-color">${tfsaPct.toFixed(0)}%</span>` : ''}
-                            ${year.nonReg > 0 ? `<span class="pct-label nonreg-color">${nonRegPct.toFixed(0)}%</span>` : ''}
-                        </div>
-                    </div>
+                    <div class="year-bar">${barSegments}</div>
+                    <div class="year-income-details">${detailItems}</div>
+                    ${taxLine}
                 </div>
             `;
         }).join('');
 
         const legend = `
-            <div class="chart-legend">
+            <div class="chart-legend income-legend">
+                <div class="legend-item"><span class="legend-color cpp"></span> CPP</div>
+                <div class="legend-item"><span class="legend-color oas"></span> OAS</div>
                 <div class="legend-item"><span class="legend-color rrsp"></span> RRSP</div>
                 <div class="legend-item"><span class="legend-color tfsa"></span> TFSA</div>
                 <div class="legend-item"><span class="legend-color nonreg"></span> Non-Reg</div>
+                <div class="legend-item"><span class="legend-color other"></span> Other</div>
             </div>
         `;
 
