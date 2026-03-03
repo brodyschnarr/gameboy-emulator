@@ -93,9 +93,11 @@ const MonteCarloSimulator = {
             additionalIncomeSources,
             windfalls = [],
             returnSequence,
-            inflationRate
+            inflationRate,
+            merFee = 0
         } = inputs;
         
+        const merDecimal = (merFee || 0) / 100;
         const yearsToRetirement = retirementAge - currentAge;
         const isSingle = familyStatus === 'single';
         
@@ -149,7 +151,7 @@ const MonteCarloSimulator = {
         for (let age = currentAge; age <= lifeExpectancy; age++) {
             const yearIndex = age - currentAge;
             const isRetired = age >= retirementAge;
-            const returnRate = returnSequence[yearIndex] || 0;
+            const returnRate = (returnSequence[yearIndex] || 0) - merDecimal;
             
             const yearData = {
                 age,

@@ -61,7 +61,10 @@ const RetirementCalcV4 = {
             inflationRate,
             
             // New: contribution growth
-            contributionGrowthRate = 0
+            contributionGrowthRate = 0,
+            
+            // MER / fees
+            merFee = 0
         } = inputs;
 
         const yearsToRetirement = retirementAge - currentAge;
@@ -118,7 +121,7 @@ const RetirementCalcV4 = {
             additionalIncomeSources: additionalIncomeSources || [],
             currentDebt: currentDebt || 0,
             debtPayoffAge: debtPayoffAge || retirementAge,
-            returnRate,
+            returnRate: returnRate - (merFee || 0), // Net of fees
             inflationRate,
             province,
             cppStartAge: cppStartAge || 65,

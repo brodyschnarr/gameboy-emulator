@@ -1919,7 +1919,8 @@ const AppV4 = {
 
             returnRate: parseFloat(document.getElementById('return-rate')?.value) || 6,
             inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2.5,
-            contributionGrowthRate: parseFloat(document.getElementById('contribution-growth')?.value) || 0
+            contributionGrowthRate: parseFloat(document.getElementById('contribution-growth')?.value) || 0,
+            merFee: parseFloat(document.getElementById('mer-fee')?.value) || 0
         };
     },
 

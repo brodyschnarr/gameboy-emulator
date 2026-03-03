@@ -104,6 +104,7 @@
                         Annual Income
                         <button type="button" class="info-btn" data-tooltip="Used to estimate your CPP pension. Higher income = higher CPP up to the maximum ($17K/yr).">?</button>
                     </label>
+                    <span class="input-impact">Drives your CPP pension estimate</span>
                     <div class="input-with-prefix">
                         <span class="prefix">$</span>
                         <input type="number" id="current-income" placeholder="75000" min="0" step="1000" required>
@@ -118,6 +119,7 @@
                         Person 1 Income
                         <button type="button" class="info-btn" data-tooltip="Used for separate CPP calculation">?</button>
                     </label>
+                    <span class="input-impact">Drives Person 1's CPP estimate</span>
                     <div class="input-with-prefix">
                         <span class="prefix">$</span>
                         <input type="number" id="income-person1" placeholder="75000" min="0" step="1000">
@@ -129,6 +131,7 @@
                         Person 2 Income
                         <button type="button" class="info-btn" data-tooltip="Used for separate CPP calculation">?</button>
                     </label>
+                    <span class="input-impact">Drives Person 2's CPP estimate</span>
                     <div class="input-with-prefix">
                         <span class="prefix">$</span>
                         <input type="number" id="income-person2" placeholder="65000" min="0" step="1000">
@@ -171,7 +174,7 @@
                     <span class="prefix">$</span>
                     <input type="number" id="rrsp" placeholder="0" min="0" step="1000">
                 </div>
-                <small class="input-hint">Tax-deferred until retirement</small>
+                <span class="input-impact">Tax-deferred — you pay tax when you withdraw in retirement</span>
             </div>
 
             <div class="input-group">
@@ -180,7 +183,7 @@
                     <span class="prefix">$</span>
                     <input type="number" id="tfsa" placeholder="0" min="0" step="1000">
                 </div>
-                <small class="input-hint">Tax-free forever 🎉</small>
+                <span class="input-impact">Tax-free growth and withdrawals — your most flexible account</span>
             </div>
 
             <div class="input-group">
@@ -189,11 +192,12 @@
                     <span class="prefix">$</span>
                     <input type="number" id="nonreg" placeholder="0" min="0" step="1000">
                 </div>
-                <small class="input-hint">Capital gains taxed at 50%</small>
+                <span class="input-impact">Only 50% of gains are taxed — good for overflow savings</span>
             </div>
 
             <div class="input-group">
                 <label for="other">Other Investments</label>
+                <span class="input-impact">Treated as fully taxable withdrawals</span>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="other" placeholder="0" min="0" step="1000">
@@ -227,6 +231,7 @@
 
             <div class="input-group">
                 <label>Split</label>
+                <span class="input-impact">How new savings are divided across your accounts</span>
                 <div class="split-inputs">
                     <div>
                         <label for="split-rrsp">RRSP %</label>
@@ -243,18 +248,6 @@
                 </div>
                 <small id="split-total" class="input-hint"></small>
                 <small id="split-warning" class="input-hint" style="color: var(--warning, #f59e0b); display: none;">⚠️ Split doesn't add to 100% — will be normalized automatically</small>
-            </div>
-
-            <div class="input-group">
-                <label for="contribution-growth">
-                    Annual Contribution Growth
-                    <button type="button" class="info-btn" data-tooltip="Increase contributions each year to keep pace with raises. 0% = flat contributions forever.">?</button>
-                </label>
-                <div class="input-with-prefix">
-                    <span class="prefix">%</span>
-                    <input type="number" id="contribution-growth" value="0" min="0" max="10" step="0.5">
-                </div>
-                <small class="input-hint">Match to expected raise rate (e.g., 2% with inflation)</small>
             </div>
 
             <button type="button" class="btn-secondary" id="btn-back-savings">← Back</button>
@@ -583,7 +576,7 @@
             <!-- Healthcare -->
             <div class="input-group">
                 <label>Healthcare Costs</label>
-                <p class="section-intro">Often overlooked but important</p>
+                <span class="input-impact">Costs rise significantly after 75 — often underestimated</span>
                 <div class="health-status-selector">
                     <button type="button" class="health-btn active" data-health="average">Average Health</button>
                     <button type="button" class="health-btn" data-health="excellent">Excellent Health</button>
@@ -604,6 +597,7 @@
             <!-- Debt -->
             <div class="input-group">
                 <label>Current Debt</label>
+                <span class="input-impact">Reduces available cash until paid off</span>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="current-debt" placeholder="0" min="0" step="1000">
@@ -764,11 +758,7 @@
                 </div>
             </section>
 
-            <!-- Tax & Withdrawal -->
-            <section class="card">
-                <h2>🔍 Tax & Withdrawal Strategy</h2>
-                <div id="breakdown-content"></div>
-            </section>
+            <!-- Tax & Withdrawal: removed — info now in year-by-year tooltip -->
 
             <!-- Scenario Comparison (now handled by tabs above) -->
             <!-- Removed manual scenario section - use tabs instead -->
@@ -786,13 +776,33 @@
                 ⚙️ Advanced Assumptions <span class="toggle-icon">▼</span>
             </h2>
             <div class="collapsible-content hidden" id="assumptions-content">
-                <div class="input-group">
-                    <label for="return-rate">Investment Return (%)</label>
-                    <input type="number" id="return-rate" value="6" min="0" max="20" step="0.5">
-                </div>
-                <div class="input-group">
-                    <label for="inflation-rate">Inflation Rate (%)</label>
-                    <input type="number" id="inflation-rate" value="2.5" min="0" max="10" step="0.5">
+                <div class="assumptions-grid">
+                    <div class="input-group compact">
+                        <label for="return-rate">Return (%)</label>
+                        <input type="number" id="return-rate" value="6" min="0" max="20" step="0.5">
+                        <span class="input-impact">Before fees — balanced portfolio averages 6-7%</span>
+                    </div>
+                    <div class="input-group compact">
+                        <label for="inflation-rate">Inflation (%)</label>
+                        <input type="number" id="inflation-rate" value="2.5" min="0" max="10" step="0.5">
+                        <span class="input-impact">Bank of Canada target: 2%</span>
+                    </div>
+                    <div class="input-group compact">
+                        <label for="mer-fee">
+                            MER / Fees (%)
+                            <button type="button" class="info-btn" data-tooltip="Management Expense Ratio — mutual funds charge 1-2.5%, ETFs charge 0.1-0.5%. Subtracted from your return.">?</button>
+                        </label>
+                        <input type="number" id="mer-fee" value="0" min="0" max="5" step="0.1">
+                        <span class="input-impact">0 if your return above is already net of fees</span>
+                    </div>
+                    <div class="input-group compact">
+                        <label for="contribution-growth">
+                            Contrib Growth (%)
+                            <button type="button" class="info-btn" data-tooltip="Increase contributions each year to keep pace with raises. 0% = flat forever.">?</button>
+                        </label>
+                        <input type="number" id="contribution-growth" value="0" min="0" max="10" step="0.5">
+                        <span class="input-impact">Match to expected annual raise</span>
+                    </div>
                 </div>
             </div>
         </section>
