@@ -113,25 +113,23 @@
             </div>
 
             <div id="income-section-couple" class="hidden">
-                <label>
-                    Household Income
-                    <button type="button" class="info-btn" data-tooltip="Each person's income drives their own CPP estimate. Higher income = higher CPP up to the max ($17K/yr).">?</button>
-                </label>
-                <span class="input-impact">Each income drives that person's CPP pension estimate</span>
-                <div class="couple-row">
-                    <div class="input-group couple-half">
-                        <label for="income-person1" class="sub-label">Person 1</label>
-                        <div class="input-with-prefix">
-                            <span class="prefix">$</span>
-                            <input type="number" id="income-person1" placeholder="75000" min="0" step="1000">
-                        </div>
+                <div class="input-group">
+                    <label for="income-person1">
+                        Person 1 Income
+                        <button type="button" class="info-btn" data-tooltip="Each person's income drives their own CPP estimate. Higher income = higher CPP up to the max ($17K/yr).">?</button>
+                    </label>
+                    <span class="input-impact">Drives each person's CPP pension estimate</span>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="income-person1" placeholder="75000" min="0" step="1000">
                     </div>
-                    <div class="input-group couple-half">
-                        <label for="income-person2" class="sub-label">Person 2</label>
-                        <div class="input-with-prefix">
-                            <span class="prefix">$</span>
-                            <input type="number" id="income-person2" placeholder="65000" min="0" step="1000">
-                        </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="income-person2">Person 2 Income</label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="income-person2" placeholder="65000" min="0" step="1000">
                     </div>
                 </div>
 
@@ -312,30 +310,40 @@
                     <button type="button" class="info-btn" data-tooltip="Each person can start CPP at a different age. Starting early means lower payments for life.">?</button>
                 </label>
                 
-                <!-- CPP Start Age — side by side -->
-                <div class="couple-row">
-                    <div class="cpp-couple-block couple-half">
-                        <label class="sub-label">Person 1</label>
-                        <div class="cpp-optimizer">
-                            <div class="slider-container">
-                                <input type="range" id="cpp-start-age-p1" min="60" max="70" value="65" step="1">
-                                <div class="slider-labels"><span>60</span><span>65</span><span>70</span></div>
-                            </div>
-                            <div class="cpp-preview">
-                                <div class="cpp-amount-display"><strong id="cpp-amount-value-p1">$0/yr</strong></div>
+                <!-- Person 1 CPP -->
+                <div class="cpp-couple-block">
+                    <h4>👤 Person 1</h4>
+                    <div class="cpp-optimizer">
+                        <div class="slider-container">
+                            <input type="range" id="cpp-start-age-p1" min="60" max="70" value="65" step="1">
+                            <div class="slider-labels">
+                                <span>60</span>
+                                <span>65</span>
+                                <span>70</span>
                             </div>
                         </div>
+                        <div class="cpp-preview">
+                            <div class="cpp-age-display">Age: <strong id="cpp-age-value-p1">65</strong></div>
+                            <div class="cpp-amount-display">Estimated: <strong id="cpp-amount-value-p1">$0/year</strong></div>
+                        </div>
                     </div>
-                    <div class="cpp-couple-block couple-half">
-                        <label class="sub-label">Person 2</label>
-                        <div class="cpp-optimizer">
-                            <div class="slider-container">
-                                <input type="range" id="cpp-start-age-p2" min="60" max="70" value="65" step="1">
-                                <div class="slider-labels"><span>60</span><span>65</span><span>70</span></div>
+                </div>
+                
+                <!-- Person 2 CPP -->
+                <div class="cpp-couple-block">
+                    <h4>👤 Person 2</h4>
+                    <div class="cpp-optimizer">
+                        <div class="slider-container">
+                            <input type="range" id="cpp-start-age-p2" min="60" max="70" value="65" step="1">
+                            <div class="slider-labels">
+                                <span>60</span>
+                                <span>65</span>
+                                <span>70</span>
                             </div>
-                            <div class="cpp-preview">
-                                <div class="cpp-amount-display"><strong id="cpp-amount-value-p2">$0/yr</strong></div>
-                            </div>
+                        </div>
+                        <div class="cpp-preview">
+                            <div class="cpp-age-display">Age: <strong id="cpp-age-value-p2">65</strong></div>
+                            <div class="cpp-amount-display">Estimated: <strong id="cpp-amount-value-p2">$0/year</strong></div>
                         </div>
                     </div>
                 </div>
