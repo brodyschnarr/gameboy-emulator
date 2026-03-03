@@ -429,8 +429,65 @@
                     <span class="prefix">$</span>
                     <input type="number" id="annual-spending" placeholder="60000" min="0" step="1000">
                 </div>
-                <small class="input-hint">Pick a preset above or type your own number</small>
+                <small class="input-hint">Pick a preset above, customize below, or type your own number</small>
                 <small id="spending-recommendation" class="benchmark-text"></small>
+            </div>
+
+            <!-- Custom Spending Breakdown -->
+            <div class="input-group">
+                <button type="button" class="btn-link" id="btn-toggle-custom-spending">📝 Customize spending by category →</button>
+                <div id="custom-spending-form" class="hidden" style="margin-top: 12px;">
+                    <p class="section-intro">Edit each category — total auto-updates above</p>
+                    <div class="custom-spending-grid">
+                        <div class="spending-category-row">
+                            <label>🏠 Housing</label>
+                            <div class="input-with-prefix"><span class="prefix">$/mo</span>
+                                <input type="number" class="custom-spend-input" data-category="housing" placeholder="1200" min="0" step="50">
+                            </div>
+                        </div>
+                        <div class="spending-category-row">
+                            <label>🍽️ Food & Dining</label>
+                            <div class="input-with-prefix"><span class="prefix">$/mo</span>
+                                <input type="number" class="custom-spend-input" data-category="food" placeholder="600" min="0" step="50">
+                            </div>
+                        </div>
+                        <div class="spending-category-row">
+                            <label>🚗 Transportation</label>
+                            <div class="input-with-prefix"><span class="prefix">$/mo</span>
+                                <input type="number" class="custom-spend-input" data-category="transportation" placeholder="300" min="0" step="50">
+                            </div>
+                        </div>
+                        <div class="spending-category-row">
+                            <label>🏥 Healthcare</label>
+                            <div class="input-with-prefix"><span class="prefix">$/mo</span>
+                                <input type="number" class="custom-spend-input" data-category="healthcare" placeholder="200" min="0" step="50">
+                            </div>
+                        </div>
+                        <div class="spending-category-row">
+                            <label>✈️ Travel</label>
+                            <div class="input-with-prefix"><span class="prefix">$/mo</span>
+                                <input type="number" class="custom-spend-input" data-category="travel" placeholder="250" min="0" step="50">
+                            </div>
+                        </div>
+                        <div class="spending-category-row">
+                            <label>🎭 Entertainment</label>
+                            <div class="input-with-prefix"><span class="prefix">$/mo</span>
+                                <input type="number" class="custom-spend-input" data-category="entertainment" placeholder="300" min="0" step="50">
+                            </div>
+                        </div>
+                        <div class="spending-category-row">
+                            <label>🛍️ Other / Misc</label>
+                            <div class="input-with-prefix"><span class="prefix">$/mo</span>
+                                <input type="number" class="custom-spend-input" data-category="misc" placeholder="400" min="0" step="50">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="custom-spending-total">
+                        <strong>Monthly Total:</strong> <span id="custom-spending-monthly">$0</span>
+                        &nbsp;→&nbsp;
+                        <strong>Annual:</strong> <span id="custom-spending-annual">$0</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Part-Time Work After Retirement -->
@@ -601,6 +658,11 @@
             </div>
 
             <div id="status-banner" class="card status-banner"></div>
+
+            <!-- Spending Optimizer -->
+            <section class="card hidden" id="spending-optimizer">
+                <div id="spending-optimizer-content"></div>
+            </section>
 
             <!-- Quick Stats (compact row) -->
             <section class="card">

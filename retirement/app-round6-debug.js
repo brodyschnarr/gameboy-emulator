@@ -35,6 +35,7 @@ const AppV4 = {
         this._setupSplitValidation();
         this._setupHealthcare();
         this._setupDebt();
+        this._setupCustomSpending();
         this._setupIncomeSources();
         this._setupPostRetirementWork();
         this._setupHouseSale();
@@ -439,6 +440,165 @@ const AppV4 = {
 
     _setupIncomeSources() {
         IncomeSources.initModal();
+    },
+
+    _setupCustomSpending() {
+        const toggleBtn = document.getElementById('btn-toggle-custom-spending');
+        const form = document.getElementById('custom-spending-form');
+        
+        if (toggleBtn && form) {
+            toggleBtn.addEventListener('click', () => {
+                const isHidden = form.classList.toggle('hidden');
+                toggleBtn.textContent = isHidden 
+                    ? '📝 Customize spending by category →' 
+                    : '📝 Hide category breakdown ←';
+                    
+                // If opening, populate from current preset or spending amount
+                if (!isHidden) this._populateCustomSpending();
+            });
+        }
+        
+        // Listen for changes on all custom inputs
+        document.querySelectorAll('.custom-spend-input').forEach(input => {
+            input.addEventListener('input', () => this._updateCustomSpendingTotal());
+        });
+    },
+
+    _populateCustomSpending() {
+        // Try to use lifestyle preset data, or fall back to even split
+        const spending = parseFloat(document.getElementById('annual-spending')?.value) || 48000;
+        const activePreset = document.querySelector('.preset-btn.active');
+        const presetKey = activePreset?.dataset.lifestyle;
+        
+        if (presetKey && typeof LifestyleData !== 'undefined' && LifestyleData[presetKey]) {
+            const data = LifestyleData[presetKey];
+            document.querySelectorAll('.custom-spend-input').forEach(input => {
+                const cat = input.dataset.category;
+                if (data.breakdown[cat]) {
+                    input.value = data.breakdown[cat].monthly;
+                }
+            });
+        } else {
+            // Even split across 7 categories
+            const monthlyEach = Math.round(spending / 12 / 7);
+            document.querySelectorAll('.custom-spend-input').forEach(input => {
+                input.value = monthlyEach;
+            });
+        }
+        this._updateCustomSpendingTotal();
+    },
+
+    _updateCustomSpendingTotal() {
+        let monthlyTotal = 0;
+        document.querySelectorAll('.custom-spend-input').forEach(input => {
+            monthlyTotal += parseFloat(input.value) || 0;
+        });
+        
+        const annualTotal = monthlyTotal * 12;
+        
+        const monthlyEl = document.getElementById('custom-spending-monthly');
+        const annualEl = document.getElementById('custom-spending-annual');
+        if (monthlyEl) monthlyEl.textContent = '$' + Math.round(monthlyTotal).toLocaleString();
+        if (annualEl) annualEl.textContent = '$' + Math.round(annualTotal).toLocaleString();
+        
+        // Update the main spending input
+        const spendingInput = document.getElementById('annual-spending');
+        if (spendingInput) {
+            spendingInput.value = Math.round(annualTotal);
+            spendingInput.dispatchEvent(new Event('input', { bubbles: true }));
+            if (window.syncSlider) window.syncSlider('annual-spending');
+        }
+        
+        // Clear active preset (user customized)
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    },
+
+    _runSpendingOptimizer(inputs, results) {
+        const section = document.getElementById('spending-optimizer');
+        const content = document.getElementById('spending-optimizer-content');
+        if (!section || !content) return;
+        
+        section.classList.remove('hidden');
+        
+        const currentSpending = inputs.annualSpending;
+        const moneyLastsAge = results.summary.moneyLastsAge;
+        const lifeExpectancy = inputs.lifeExpectancy;
+        const legacy = results.summary.legacyAmount;
+        const fmt = (v) => '$' + Math.round(v).toLocaleString();
+        
+        // Binary search for max sustainable spending (money lasts to life expectancy)
+        let low = 10000;
+        let high = currentSpending * 3;
+        let maxSustainable = currentSpending;
+        
+        for (let iter = 0; iter < 20; iter++) {
+            const testSpending = Math.round((low + high) / 2);
+            const testResult = RetirementCalcV4.calculate({
+                ...inputs,
+                annualSpending: testSpending
+            });
+            
+            if (testResult.summary.moneyLastsAge >= lifeExpectancy) {
+                maxSustainable = testSpending;
+                low = testSpending;
+            } else {
+                high = testSpending;
+            }
+            
+            if (high - low < 1000) break;
+        }
+        
+        // Round to nearest $1K
+        maxSustainable = Math.floor(maxSustainable / 1000) * 1000;
+        
+        const diff = maxSustainable - currentSpending;
+        const pctOfMax = Math.min(100, (currentSpending / maxSustainable) * 100);
+        
+        let icon, amountClass, message, barClass;
+        
+        if (moneyLastsAge < lifeExpectancy) {
+            // Money runs out — need to cut
+            icon = '⚠️';
+            amountClass = 'need-to-cut';
+            message = `Your plan runs out at age ${moneyLastsAge}. Reduce spending to <strong>${fmt(maxSustainable)}/year</strong> to last until ${lifeExpectancy}.`;
+            barClass = 'danger';
+        } else if (diff > 10000) {
+            // Lots of room
+            icon = '🎉';
+            amountClass = 'can-spend-more';
+            message = `You're well-funded! You could spend up to <strong>${fmt(maxSustainable)}/year</strong> and still last to age ${lifeExpectancy}.`;
+            barClass = 'safe';
+        } else if (diff > 0) {
+            // Small room
+            icon = '✅';
+            amountClass = 'on-target';
+            message = `You're close to your max. Sustainable spending: <strong>${fmt(maxSustainable)}/year</strong>.`;
+            barClass = 'warning';
+        } else {
+            // Exactly at limit
+            icon = '✅';
+            amountClass = 'on-target';
+            message = `Your spending is right at the sustainable limit.`;
+            barClass = 'warning';
+        }
+        
+        content.innerHTML = `
+            <div class="spending-optimizer-card">
+                <h3>${icon} Spending Check</h3>
+                <div class="optimizer-detail">Your plan: ${fmt(currentSpending)}/year</div>
+                <div class="optimizer-amount ${amountClass}">
+                    ${diff > 0 ? '+' + fmt(diff) + ' room' : diff < 0 ? fmt(Math.abs(diff)) + ' over' : 'On target'}
+                </div>
+                <div class="optimizer-detail">${message}</div>
+                <div class="optimizer-bar">
+                    <div class="optimizer-bar-fill ${barClass}" style="width: ${Math.min(100, pctOfMax).toFixed(0)}%"></div>
+                </div>
+                <div class="optimizer-detail" style="display: flex; justify-content: space-between; font-size: 12px;">
+                    <span>$0</span>
+                    <span>Max sustainable: ${fmt(maxSustainable)}</span>
+                </div>
+            </div>
+        `;
     },
 
     _setupHouseSale() {
@@ -1287,6 +1447,9 @@ const AppV4 = {
 
             // House sale comparison (if enabled)
             this._runHouseSaleComparison(inputs, baseResults);
+
+            // Spending optimizer
+            this._runSpendingOptimizer(inputs, baseResults);
 
             // Setup scenario tab switching (after results are visible)
             this._setupScenarioTabs();
