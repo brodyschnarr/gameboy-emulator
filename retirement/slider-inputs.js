@@ -86,8 +86,8 @@
         const inputGroup = input.closest('.input-group');
         if (!inputGroup) return;
 
-        // Get initial value
-        const initialVal = parseFloat(input.value) || parseFloat(input.placeholder) || config.min;
+        // Get initial value — only use actual value, not placeholder (sliders should start at 0/min)
+        const initialVal = parseFloat(input.value) || config.min;
 
         // Create slider wrapper
         const wrapper = document.createElement('div');
@@ -107,7 +107,7 @@
         slider.min = config.min;
         slider.max = config.max;
         slider.step = config.step;
-        slider.value = input.value || input.placeholder || config.min;
+        slider.value = input.value || config.min;
 
         // Min/max labels
         const labels = document.createElement('div');

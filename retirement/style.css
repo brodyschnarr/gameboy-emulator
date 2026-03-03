@@ -250,6 +250,8 @@ input:focus {
 }
 
 .info-btn {
+    -webkit-appearance: none;
+    appearance: none;
     background: none;
     color: #9ca3af;
     border: none;
@@ -268,20 +270,40 @@ input:focus {
     text-decoration: underline dotted #ccc;
 }
 
-.info-btn:hover::after {
+.info-btn:hover::after,
+.info-btn:focus::after {
     content: attr(data-tooltip);
     position: absolute;
     bottom: 120%;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
     background: #1f2937;
     color: white;
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 12px;
-    white-space: nowrap;
+    white-space: normal;
+    max-width: 260px;
+    width: max-content;
     z-index: 10;
     font-weight: normal;
+    line-height: 1.4;
+}
+
+/* Couple side-by-side layout */
+.couple-row {
+    display: flex;
+    gap: 12px;
+}
+.couple-half {
+    flex: 1;
+    min-width: 0;
+}
+.sub-label {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 4px;
+    display: block;
 }
 
 .expand-btn {
