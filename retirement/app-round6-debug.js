@@ -602,19 +602,18 @@ const AppV4 = {
                 input.value = Math.round(monthly * pct / 50) * 50; // round to nearest $50
             });
         }
-        this._updateCustomSpendingTotal();
         this._updateSpendingHints();
         
-        // If a preset was active, restore its exact amount (rounding in categories may differ)
-        const activePresetRestore = document.querySelector('.preset-btn.active');
-        if (activePresetRestore) {
-            const presetAmount = parseInt(activePresetRestore.dataset.amount);
-            const spendingInput = document.getElementById('annual-spending');
-            if (spendingInput && presetAmount) {
-                spendingInput.value = presetAmount;
-                if (window.syncSlider) window.syncSlider('annual-spending');
-            }
-        }
+        // Update category total display WITHOUT overwriting the main spending input
+        // (category rounding causes drift — preserve user's exact amount)
+        let monthlyTotal = 0;
+        document.querySelectorAll('.custom-spend-input').forEach(input => {
+            monthlyTotal += parseFloat(input.value) || 0;
+        });
+        const monthlyEl = document.getElementById('custom-spending-monthly');
+        const annualEl = document.getElementById('custom-spending-annual');
+        if (monthlyEl) monthlyEl.textContent = '$' + Math.round(monthlyTotal).toLocaleString();
+        if (annualEl) annualEl.textContent = '$' + Math.round(monthlyTotal * 12).toLocaleString();
     },
 
     // Spending hints: concrete examples of what each amount gets you
@@ -688,7 +687,14 @@ const AppV4 = {
             if (!ranges) { hintEl.textContent = ''; return; }
             
             const match = ranges.find(([min, max]) => val >= min && val < max);
-            hintEl.textContent = match ? match[2] : '';
+            if (match) {
+                // Show actual yearly amount + description (strip any leading "= ~$X/yr — " pattern)
+                const yearly = Math.round(val * 12);
+                const desc = match[2].replace(/^= ~?\$[\d,]+\/yr\s*—?\s*/, '= ');
+                hintEl.textContent = `$${yearly.toLocaleString()}/yr — ${desc.replace(/^= /, '')}`;
+            } else {
+                hintEl.textContent = '';
+            }
         });
     },
 
@@ -1433,17 +1439,31 @@ const AppV4 = {
             + (parseFloat(document.getElementById('nonreg')?.value) || 0)
             + (parseFloat(document.getElementById('other')?.value) || 0);
         const monthly = parseFloat(document.getElementById('monthly-contribution')?.value) || 0;
-        // Quick FV projection to retirement at 60, 65
         const fv = (years) => {
+            if (years <= 0) return totalSavings;
             const r = 0.06 / 12;
             const n = years * 12;
             return totalSavings * Math.pow(1 + r, n) + monthly * ((Math.pow(1 + r, n) - 1) / r);
         };
-        const at60 = Math.round(fv(Math.max(0, 60 - age)));
-        const at65 = Math.round(fv(Math.max(0, 65 - age)));
+        // Pick two meaningful milestone ages based on current age
+        // If already 55+, show current + 5 years out
+        let age1, age2;
+        if (age >= 60) {
+            age1 = age + 1;
+            age2 = age + 5;
+        } else if (age >= 55) {
+            age1 = 60;
+            age2 = 65;
+        } else {
+            age1 = 60;
+            age2 = 65;
+        }
+        const at1 = Math.round(fv(age1 - age));
+        const at2 = Math.round(fv(age2 - age));
+        const fmtK = (v) => v >= 1000000 ? `$${(v/1000000).toFixed(1)}M` : `$${(v/1000).toFixed(0)}K`;
         el.innerHTML = `
             <strong>📊 Your projected portfolio:</strong><br>
-            At 60: ~<strong>$${(at60 / 1000).toFixed(0)}K</strong> | At 65: ~<strong>$${(at65 / 1000).toFixed(0)}K</strong>
+            At ${age1}: ~<strong>${fmtK(at1)}</strong> | At ${age2}: ~<strong>${fmtK(at2)}</strong>
             <br><small style="opacity: 0.8;">Based on current savings + contributions at 6% return</small>
         `;
     },
