@@ -156,6 +156,12 @@ const AppV4 = {
         if (cppSingle) cppSingle.classList.toggle('hidden', isCouple);
         if (cppCouple) cppCouple.classList.toggle('hidden', !isCouple);
 
+        // Toggle OAS sections
+        const oasSingle = document.getElementById('oas-section-single');
+        const oasCouple = document.getElementById('oas-section-couple');
+        if (oasSingle) oasSingle.classList.toggle('hidden', isCouple);
+        if (oasCouple) oasCouple.classList.toggle('hidden', !isCouple);
+
         // Update household income if couple
         if (isCouple) {
             this._updateHouseholdIncome();
@@ -423,6 +429,7 @@ const AppV4 = {
     },
 
     _setupOASOptimizer() {
+        // Single OAS
         const slider = document.getElementById('oas-start-age');
         if (slider) {
             this.oasStartAge = 65;
@@ -432,22 +439,63 @@ const AppV4 = {
             });
             this._updateOASPreview();
         }
+        // Couple OAS
+        const sliderP1 = document.getElementById('oas-start-age-p1');
+        const sliderP2 = document.getElementById('oas-start-age-p2');
+        this.oasStartAgeP1 = 65;
+        this.oasStartAgeP2 = 65;
+        if (sliderP1) {
+            sliderP1.addEventListener('input', (e) => {
+                this.oasStartAgeP1 = parseInt(e.target.value);
+                this._updateOASPreviewCouple();
+            });
+        }
+        if (sliderP2) {
+            sliderP2.addEventListener('input', (e) => {
+                this.oasStartAgeP2 = parseInt(e.target.value);
+                this._updateOASPreviewCouple();
+            });
+        }
+        this._updateOASPreviewCouple();
+    },
+
+    _calcOAS(age) {
+        const oasBase = 8479;
+        const monthsDeferred = Math.max(0, (age - 65)) * 12;
+        const bonus = monthsDeferred * 0.006;
+        return { amount: Math.round(oasBase * (1 + bonus)), bonus };
     },
 
     _updateOASPreview() {
         const age = this.oasStartAge || 65;
-        const oasBase = 8479; // CPPCalculator.oas.maxAnnual
-        const monthsDeferred = Math.max(0, (age - 65)) * 12;
-        const bonus = monthsDeferred * 0.006;
-        const annualAmount = Math.round(oasBase * (1 + bonus));
+        const { amount, bonus } = this._calcOAS(age);
         
         const ageEl = document.getElementById('oas-age-value');
         const amountEl = document.getElementById('oas-amount-value');
         const bonusEl = document.getElementById('oas-bonus-value');
         
         if (ageEl) ageEl.textContent = age;
-        if (amountEl) amountEl.textContent = '$' + annualAmount.toLocaleString() + '/year';
+        if (amountEl) amountEl.textContent = '$' + amount.toLocaleString() + '/year';
         if (bonusEl) bonusEl.textContent = bonus > 0 ? `+${Math.round(bonus * 100)}%` : 'No bonus';
+    },
+
+    _updateOASPreviewCouple() {
+        const age1 = this.oasStartAgeP1 || 65;
+        const age2 = this.oasStartAgeP2 || 65;
+        const oas1 = this._calcOAS(age1);
+        const oas2 = this._calcOAS(age2);
+
+        const amtEl1 = document.getElementById('oas-amount-value-p1');
+        const bonEl1 = document.getElementById('oas-bonus-value-p1');
+        const amtEl2 = document.getElementById('oas-amount-value-p2');
+        const bonEl2 = document.getElementById('oas-bonus-value-p2');
+        const combinedEl = document.getElementById('oas-combined-value');
+
+        if (amtEl1) amtEl1.textContent = '$' + oas1.amount.toLocaleString() + '/year';
+        if (bonEl1) bonEl1.textContent = oas1.bonus > 0 ? `+${Math.round(oas1.bonus * 100)}%` : 'No bonus';
+        if (amtEl2) amtEl2.textContent = '$' + oas2.amount.toLocaleString() + '/year';
+        if (bonEl2) bonEl2.textContent = oas2.bonus > 0 ? `+${Math.round(oas2.bonus * 100)}%` : 'No bonus';
+        if (combinedEl) combinedEl.textContent = '$' + (oas1.amount + oas2.amount).toLocaleString() + '/year';
     },
 
     _setupSplitValidation() {
@@ -556,6 +604,17 @@ const AppV4 = {
         }
         this._updateCustomSpendingTotal();
         this._updateSpendingHints();
+        
+        // If a preset was active, restore its exact amount (rounding in categories may differ)
+        const activePresetRestore = document.querySelector('.preset-btn.active');
+        if (activePresetRestore) {
+            const presetAmount = parseInt(activePresetRestore.dataset.amount);
+            const spendingInput = document.getElementById('annual-spending');
+            if (spendingInput && presetAmount) {
+                spendingInput.value = presetAmount;
+                if (window.syncSlider) window.syncSlider('annual-spending');
+            }
+        }
     },
 
     // Spending hints: concrete examples of what each amount gets you
@@ -1154,10 +1213,14 @@ const AppV4 = {
         this.currentStep = step;
         
         // Auto-update previews when entering certain steps
+        if (step === 'contributions') {
+            this._updateContributionGrounding();
+        }
         if (step === 'retirement') {
             this._updateSpendingRecommendation();
             this._updateCPPPreview();
             if (this.familyStatus === 'couple') this._updateCPPPreviewCouple();
+            this._updateRetirementGrounding();
         }
         
         // Update progress indicator
@@ -1345,6 +1408,46 @@ const AppV4 = {
         }
     },
 
+    _updateContributionGrounding() {
+        const el = document.getElementById('contribution-grounding');
+        if (!el) return;
+        const age = parseInt(document.getElementById('current-age')?.value) || 35;
+        const totalSavings = (parseFloat(document.getElementById('rrsp')?.value) || 0)
+            + (parseFloat(document.getElementById('tfsa')?.value) || 0)
+            + (parseFloat(document.getElementById('nonreg')?.value) || 0)
+            + (parseFloat(document.getElementById('other')?.value) || 0);
+        const yearsToRetire = Math.max(1, 65 - age);
+        const recommended = Math.round((500000 - totalSavings) / yearsToRetire / 12);
+        el.innerHTML = `
+            <strong>💡 Quick math:</strong> To reach $500K by 65 (${yearsToRetire} years), you'd need ~<strong>$${Math.max(0, recommended).toLocaleString()}/month</strong> at 6% return
+            <br><small style="opacity: 0.8;">Canadian median savings rate: 15% of income | Average monthly: $500-800</small>
+        `;
+    },
+
+    _updateRetirementGrounding() {
+        const el = document.getElementById('retirement-grounding');
+        if (!el) return;
+        const age = parseInt(document.getElementById('current-age')?.value) || 35;
+        const totalSavings = (parseFloat(document.getElementById('rrsp')?.value) || 0)
+            + (parseFloat(document.getElementById('tfsa')?.value) || 0)
+            + (parseFloat(document.getElementById('nonreg')?.value) || 0)
+            + (parseFloat(document.getElementById('other')?.value) || 0);
+        const monthly = parseFloat(document.getElementById('monthly-contribution')?.value) || 0;
+        // Quick FV projection to retirement at 60, 65
+        const fv = (years) => {
+            const r = 0.06 / 12;
+            const n = years * 12;
+            return totalSavings * Math.pow(1 + r, n) + monthly * ((Math.pow(1 + r, n) - 1) / r);
+        };
+        const at60 = Math.round(fv(Math.max(0, 60 - age)));
+        const at65 = Math.round(fv(Math.max(0, 65 - age)));
+        el.innerHTML = `
+            <strong>📊 Your projected portfolio:</strong><br>
+            At 60: ~<strong>$${(at60 / 1000).toFixed(0)}K</strong> | At 65: ~<strong>$${(at65 / 1000).toFixed(0)}K</strong>
+            <br><small style="opacity: 0.8;">Based on current savings + contributions at 6% return</small>
+        `;
+    },
+
     _validateSplit() {
         const rrsp = parseFloat(document.getElementById('split-rrsp')?.value) || 0;
         const tfsa = parseFloat(document.getElementById('split-tfsa')?.value) || 0;
@@ -1428,7 +1531,15 @@ const AppV4 = {
 
         document.getElementById('cpp-age-value').textContent = this.cppStartAge;
         document.getElementById('cpp-amount-value').textContent = `$${Math.round(adjusted).toLocaleString()}/year${this.cppOverride ? ' (override)' : ''}`;
-        document.getElementById('cpp-lifetime-value').textContent = `$${lifetime.totalLifetime.toLocaleString()}`;
+        const cppBonusEl = document.getElementById('cpp-bonus-value');
+        if (cppBonusEl) {
+            const cppPct = this.cppStartAge < 65
+                ? `-${((65 - this.cppStartAge) * 12 * 0.6).toFixed(0)}%`
+                : this.cppStartAge > 65
+                ? `+${((this.cppStartAge - 65) * 12 * 0.7).toFixed(0)}%`
+                : 'No adjustment';
+            cppBonusEl.textContent = cppPct;
+        }
     },
 
     _updateCPPPreviewCouple() {
@@ -1450,14 +1561,18 @@ const AppV4 = {
         // Person 1
         const ageEl1 = document.getElementById('cpp-age-value-p1');
         const amtEl1 = document.getElementById('cpp-amount-value-p1');
+        const bonusEl1 = document.getElementById('cpp-bonus-value-p1');
         if (ageEl1) ageEl1.textContent = ageP1;
         if (amtEl1) amtEl1.textContent = `$${Math.round(adjusted1).toLocaleString()}/year`;
+        if (bonusEl1) bonusEl1.textContent = ageP1 < 65 ? `-${((65 - ageP1) * 12 * 0.6).toFixed(0)}%` : ageP1 > 65 ? `+${((ageP1 - 65) * 12 * 0.7).toFixed(0)}%` : 'No adjustment';
 
         // Person 2
         const ageEl2 = document.getElementById('cpp-age-value-p2');
         const amtEl2 = document.getElementById('cpp-amount-value-p2');
+        const bonusEl2 = document.getElementById('cpp-bonus-value-p2');
         if (ageEl2) ageEl2.textContent = ageP2;
         if (amtEl2) amtEl2.textContent = `$${Math.round(adjusted2).toLocaleString()}/year`;
+        if (bonusEl2) bonusEl2.textContent = ageP2 < 65 ? `-${((65 - ageP2) * 12 * 0.6).toFixed(0)}%` : ageP2 > 65 ? `+${((ageP2 - 65) * 12 * 0.7).toFixed(0)}%` : 'No adjustment';
 
         // Combined total
         const combinedEl = document.getElementById('cpp-combined-value');
@@ -1914,7 +2029,8 @@ const AppV4 = {
             cppStartAgeP2: this.familyStatus === 'couple' ? (this.cppStartAgeP2 || 65) : null,
             cppOverride: this.familyStatus === 'couple' ? (this.cppOverrideP1 || null) : (this.cppOverride || null),
             cppOverrideP2: this.familyStatus === 'couple' ? (this.cppOverrideP2 || null) : null,
-            oasStartAge: this.oasStartAge || 65,
+            oasStartAge: this.familyStatus === 'couple' ? (this.oasStartAgeP1 || 65) : (this.oasStartAge || 65),
+            oasStartAgeP2: this.oasStartAgeP2 || 65,
             additionalIncomeSources: IncomeSources.getAll(),
             windfalls: this.windfalls || [],
 
@@ -2234,7 +2350,8 @@ const AppV4 = {
         const container = document.getElementById('year-breakdown-chart');
         if (!container) return;
 
-        const retirementYears = yearByYear.filter(y => y.age >= retirementAge).slice(0, 30);
+        const allRetirementYears = yearByYear.filter(y => y.age >= retirementAge).slice(0, 30);
+        const retirementYears = allRetirementYears;
 
         if (retirementYears.length === 0) {
             container.innerHTML = '<p>No retirement data</p>';
@@ -2304,7 +2421,31 @@ const AppV4 = {
             </div>
         `;
 
+        // Show first 5 years, rest hidden behind "Show all" button
+        const rows = html.split('</div>\n            ');
+        // Actually, use DOM approach after inserting
         container.innerHTML = legend + html;
+        
+        const allRows = container.querySelectorAll('.income-breakdown-row');
+        const INITIAL_SHOW = 5;
+        if (allRows.length > INITIAL_SHOW) {
+            allRows.forEach((row, i) => {
+                if (i >= INITIAL_SHOW) row.style.display = 'none';
+            });
+            const showBtn = document.createElement('button');
+            showBtn.className = 'btn-link';
+            showBtn.textContent = `Show all ${allRows.length} years ↓`;
+            showBtn.style.marginTop = '12px';
+            showBtn.addEventListener('click', () => {
+                const isExpanded = showBtn.dataset.expanded === 'true';
+                allRows.forEach((row, i) => {
+                    if (i >= INITIAL_SHOW) row.style.display = isExpanded ? 'none' : '';
+                });
+                showBtn.dataset.expanded = isExpanded ? 'false' : 'true';
+                showBtn.textContent = isExpanded ? `Show all ${allRows.length} years ↓` : 'Show less ↑';
+            });
+            container.appendChild(showBtn);
+        }
     },
 
     _displayBreakdown(results, inputs) {

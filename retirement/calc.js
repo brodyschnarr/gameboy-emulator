@@ -49,6 +49,7 @@ const RetirementCalcV4 = {
             
             // OAS
             oasStartAge = 65,
+            oasStartAgeP2,
             
             // Additional income sources
             additionalIncomeSources,
@@ -90,6 +91,7 @@ const RetirementCalcV4 = {
             p1ContribYears,
             p2ContribYears,
             oasStartAge: oasStartAge || 65,
+            oasStartAgeP2: oasStartAgeP2 || oasStartAge || 65,
             cppOverride: cppOverride || null,
             cppOverrideP2: cppOverrideP2 || null
         });
@@ -127,6 +129,7 @@ const RetirementCalcV4 = {
             cppStartAge: cppStartAge || 65,
             cppStartAgeP2: cppStartAgeP2 || cppStartAge || 65,
             oasStartAge: oasStartAge || 65,
+            oasStartAgeP2: oasStartAgeP2 || oasStartAge || 65,
             isSingle: !isFamilyMode,
             windfalls: windfalls || [],
             currentAge
@@ -201,7 +204,7 @@ const RetirementCalcV4 = {
         };
     },
 
-    _calculateGovernmentBenefits({ income1, income2, retirementAge, cppStartAge, cppStartAgeP2, isSingle, p1ContribYears, p2ContribYears, oasStartAge, cppOverride, cppOverrideP2 }) {
+    _calculateGovernmentBenefits({ income1, income2, retirementAge, cppStartAge, cppStartAgeP2, isSingle, p1ContribYears, p2ContribYears, oasStartAge, oasStartAgeP2, cppOverride, cppOverrideP2 }) {
         // FIX #1: Use per-person contribution years
         const years1 = p1ContribYears || Math.min(retirementAge - 18, 39);
         const years2 = p2ContribYears || years1;
@@ -230,22 +233,35 @@ const RetirementCalcV4 = {
 
         // FIX #3: OAS with deferral bonus (0.6%/month after 65, max 36% at 70)
         const oasBase = CPPCalculator.oas.maxAnnual;
-        let oasDeferralBonus = 1.0;
-        if (oasStartAge > 65) {
-            const monthsDeferred = Math.min((oasStartAge - 65) * 12, 60);
-            oasDeferralBonus = 1 + (monthsDeferred * 0.006);
-        }
-        const oasPerPerson = Math.round(oasBase * oasDeferralBonus);
-        const oasTotal = isSingle ? oasPerPerson : oasPerPerson * 2;
+        const effOAS1 = oasStartAge || 65;
+        const effOAS2 = oasStartAgeP2 || effOAS1;
+        
+        const calcOASBonus = (startAge) => {
+            if (startAge > 65) {
+                const months = Math.min((startAge - 65) * 12, 60);
+                return 1 + (months * 0.006);
+            }
+            return 1.0;
+        };
+        
+        const oasDeferralBonus = calcOASBonus(effOAS1);
+        const oasDeferralBonus2 = calcOASBonus(effOAS2);
+        const oasPerPerson1 = Math.round(oasBase * oasDeferralBonus);
+        const oasPerPerson2 = Math.round(oasBase * oasDeferralBonus2);
+        const oasPerPerson = oasPerPerson1; // backward compat
+        const oasTotal = isSingle ? oasPerPerson1 : oasPerPerson1 + oasPerPerson2;
 
         return {
             cpp1: Math.round(cpp1),
             cpp2: Math.round(cpp2),
             cppTotal: Math.round(cppTotal),
             oasPerPerson,
+            oasPerPerson1,
+            oasPerPerson2,
             oasTotal,
-            oasMax: oasTotal, // backward compat with v5-enhanced
-            oasStartAge: oasStartAge || 65,
+            oasMax: oasTotal,
+            oasStartAge: effOAS1,
+            oasStartAgeP2: effOAS2,
             oasDeferralBonus,
             total: Math.round(cppTotal + oasTotal),
             breakdown: {
@@ -390,12 +406,15 @@ const RetirementCalcV4 = {
                     cppIncome += govBenefits.cpp2 * cpiFromRetirement;
                 }
                 
-                // FIX #3 & #4: OAS with deferral and clawback
+                // FIX #3 & #4: OAS with deferral and clawback (per-person ages)
                 let oasIncome = 0;
-                const effectiveOASAge = oasStartAge || 65;
-                if (age >= effectiveOASAge) {
-                    // Base OAS (already includes deferral bonus from govBenefits)
-                    oasIncome = govBenefits.oasPerPerson * (isSingle ? 1 : 2) * cpiFromRetirement;
+                const effOAS1 = govBenefits.oasStartAge || 65;
+                const effOAS2 = govBenefits.oasStartAgeP2 || effOAS1;
+                if (age >= effOAS1) {
+                    oasIncome += (govBenefits.oasPerPerson1 || govBenefits.oasPerPerson) * cpiFromRetirement;
+                }
+                if (!isSingle && age >= effOAS2) {
+                    oasIncome += (govBenefits.oasPerPerson2 || govBenefits.oasPerPerson) * cpiFromRetirement;
                 }
 
                 // 5. Additional income sources
@@ -416,7 +435,7 @@ const RetirementCalcV4 = {
                     province,
                     cppIncome + additionalIncome, // non-OAS taxable income
                     oasIncome,                    // OAS amount (may be clawed back)
-                    age >= effectiveOASAge         // is OAS active?
+                    age >= effOAS1         // is OAS active? (uses person 1's OAS age)
                 );
 
                 // Update balances

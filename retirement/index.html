@@ -45,7 +45,7 @@
             </div>
             <div class="progress-step" data-step="healthcare">
                 <div class="step-number">5</div>
-                <div class="step-label">Healthcare</div>
+                <div class="step-label">Details</div>
             </div>
         </div>
 
@@ -213,6 +213,8 @@
         ═══════════════════════════════════════ -->
         <section class="card hidden" id="step-contributions">
             <h2>📈 Step 3 of 5: Monthly Contributions</h2>
+            <p class="section-intro">How much are you adding to your retirement accounts each month?</p>
+            <p id="contribution-grounding" class="benchmark-highlight"></p>
 
             <div class="input-group">
                 <label for="monthly-contribution">Monthly Contribution</label>
@@ -254,6 +256,8 @@
         ═══════════════════════════════════════ -->
         <section class="card hidden" id="step-retirement">
             <h2>🏖️ Step 4 of 5: Retirement Plan</h2>
+            <p class="section-intro">When do you want to stop working and how much will you spend?</p>
+            <p id="retirement-grounding" class="benchmark-highlight"></p>
 
             <div class="input-group">
                 <label for="retirement-age">Retirement Age</label>
@@ -285,7 +289,7 @@
                     <div class="cpp-preview">
                         <div class="cpp-age-display">Age: <strong id="cpp-age-value">65</strong></div>
                         <div class="cpp-amount-display">Estimated: <strong id="cpp-amount-value">$0/year</strong></div>
-                        <div class="cpp-lifetime-display">Lifetime total: <strong id="cpp-lifetime-value">$0</strong></div>
+                        <div class="cpp-lifetime-display">Bonus: <strong id="cpp-bonus-value">No adjustment</strong></div>
                     </div>
                     <button type="button" class="btn-link" id="btn-cpp-details">See detailed comparison →</button>
                     <div class="cpp-override">
@@ -325,6 +329,7 @@
                         <div class="cpp-preview">
                             <div class="cpp-age-display">Age: <strong id="cpp-age-value-p1">65</strong></div>
                             <div class="cpp-amount-display">Estimated: <strong id="cpp-amount-value-p1">$0/year</strong></div>
+                            <div class="cpp-lifetime-display">Bonus: <strong id="cpp-bonus-value-p1">No adjustment</strong></div>
                         </div>
                     </div>
                 </div>
@@ -344,6 +349,7 @@
                         <div class="cpp-preview">
                             <div class="cpp-age-display">Age: <strong id="cpp-age-value-p2">65</strong></div>
                             <div class="cpp-amount-display">Estimated: <strong id="cpp-amount-value-p2">$0/year</strong></div>
+                            <div class="cpp-lifetime-display">Bonus: <strong id="cpp-bonus-value-p2">No adjustment</strong></div>
                         </div>
                     </div>
                 </div>
@@ -374,8 +380,8 @@
                 </div>
             </div>
 
-            <!-- OAS Start Age -->
-            <div class="input-group" id="oas-section">
+            <!-- OAS Start Age (Single) -->
+            <div class="input-group" id="oas-section-single">
                 <label>
                     When to start OAS?
                     <button type="button" class="info-btn" data-tooltip="OAS starts at 65 by default. Deferring to 70 increases payments by 36% (0.6%/month). Higher income may trigger OAS clawback.">?</button>
@@ -391,11 +397,52 @@
                     </div>
                     <div class="cpp-preview">
                         <div class="cpp-age-display">Age: <strong id="oas-age-value">65</strong></div>
-                        <div class="cpp-amount-display">Annual: <strong id="oas-amount-value">$8,479</strong></div>
-                        <div class="cpp-lifetime-display">Bonus: <strong id="oas-bonus-value">+0%</strong></div>
+                        <div class="cpp-amount-display">Annual: <strong id="oas-amount-value">$8,479/year</strong></div>
+                        <div class="cpp-lifetime-display">Bonus: <strong id="oas-bonus-value">No bonus</strong></div>
                     </div>
                     <small class="input-hint">💡 Smart withdrawals will minimize OAS clawback automatically</small>
                 </div>
+            </div>
+
+            <!-- OAS Start Age (Couple) -->
+            <div class="input-group hidden" id="oas-section-couple">
+                <label>
+                    When to start OAS?
+                    <button type="button" class="info-btn" data-tooltip="Each person can defer OAS independently. Deferring to 70 increases payments by 36% (0.6%/month).">?</button>
+                </label>
+                
+                <div class="cpp-couple-block">
+                    <h4>👤 Person 1</h4>
+                    <div class="cpp-optimizer">
+                        <div class="slider-container">
+                            <input type="range" id="oas-start-age-p1" min="65" max="70" value="65" step="1">
+                            <div class="slider-labels"><span>65</span><span>67</span><span>70</span></div>
+                        </div>
+                        <div class="cpp-preview">
+                            <div class="cpp-amount-display">Annual: <strong id="oas-amount-value-p1">$8,479/year</strong></div>
+                            <div class="cpp-lifetime-display">Bonus: <strong id="oas-bonus-value-p1">No bonus</strong></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="cpp-couple-block">
+                    <h4>👤 Person 2</h4>
+                    <div class="cpp-optimizer">
+                        <div class="slider-container">
+                            <input type="range" id="oas-start-age-p2" min="65" max="70" value="65" step="1">
+                            <div class="slider-labels"><span>65</span><span>67</span><span>70</span></div>
+                        </div>
+                        <div class="cpp-preview">
+                            <div class="cpp-amount-display">Annual: <strong id="oas-amount-value-p2">$8,479/year</strong></div>
+                            <div class="cpp-lifetime-display">Bonus: <strong id="oas-bonus-value-p2">No bonus</strong></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="cpp-combined-total">
+                    <strong>Combined OAS:</strong> <span id="oas-combined-value">$16,958/year</span>
+                </div>
+                <small class="input-hint">💡 Smart withdrawals will minimize OAS clawback automatically</small>
             </div>
 
             <!-- Lifestyle -->
@@ -566,7 +613,7 @@
              STEP 5: Healthcare & Debt
         ═══════════════════════════════════════ -->
         <section class="card hidden" id="step-healthcare">
-            <h2>🏥 Step 5 of 5: Healthcare & Debt</h2>
+            <h2>⚙️ Step 5 of 5: Final Details</h2>
 
             <!-- Healthcare -->
             <div class="input-group">
