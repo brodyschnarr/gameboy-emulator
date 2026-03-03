@@ -2310,7 +2310,8 @@ const AppV4 = {
         const retirementYears = results.yearByYear.filter(y => y.phase === 'retirement');
 
         if (retirementYears.length === 0) {
-            document.getElementById('breakdown-content').innerHTML = '<p>No retirement years</p>';
+            const bc = document.getElementById('breakdown-content');
+            if (bc) bc.innerHTML = '<p>No retirement years</p>';
             return;
         }
 
@@ -2353,7 +2354,8 @@ const AppV4 = {
             </ul>
         `;
 
-        document.getElementById('breakdown-content').innerHTML = html;
+        const bc = document.getElementById('breakdown-content');
+        if (bc) bc.innerHTML = html;
     },
 
     _saveScenario() {
