@@ -252,18 +252,20 @@ input:focus {
 .info-btn {
     background: none;
     color: #9ca3af;
-    border: 1px solid #d1d5db;
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    font-size: 10px;
-    font-weight: 600;
+    border: none;
+    border-radius: 0;
+    width: auto;
+    height: auto;
+    font-size: 0.75em;
+    font-weight: 400;
     cursor: help;
-    margin-left: 4px;
+    margin-left: 2px;
     position: relative;
-    vertical-align: middle;
-    line-height: 14px;
+    vertical-align: baseline;
+    line-height: 1;
     padding: 0;
+    display: inline;
+    text-decoration: underline dotted #ccc;
 }
 
 .info-btn:hover::after {
