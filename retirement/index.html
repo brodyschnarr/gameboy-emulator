@@ -72,11 +72,13 @@
             <!-- Age(s) -->
             <div class="input-group">
                 <label for="current-age">Your Age</label>
+                <span class="input-impact">Determines how long your savings can grow</span>
                 <input type="number" id="current-age" placeholder="35" min="18" max="100" required>
             </div>
 
             <div class="input-group hidden" id="partner-age-group">
                 <label for="partner-age">Partner's Age</label>
+                <span class="input-impact">Used to calculate their CPP contribution years</span>
                 <input type="number" id="partner-age" placeholder="35" min="18" max="100">
             </div>
 
@@ -100,7 +102,7 @@
                 <div class="input-group">
                     <label for="current-income">
                         Annual Income
-                        <button type="button" class="info-btn" data-tooltip="Used to estimate CPP benefits">?</button>
+                        <button type="button" class="info-btn" data-tooltip="Used to estimate your CPP pension. Higher income = higher CPP up to the maximum ($17K/yr).">?</button>
                     </label>
                     <div class="input-with-prefix">
                         <span class="prefix">$</span>
@@ -148,15 +150,6 @@
                 <p class="section-intro">Pension, annuity, rental income, etc.</p>
                 <div id="income-sources-list"></div>
                 <button type="button" class="btn-secondary" id="btn-add-income-source">+ Add Income Source</button>
-            </div>
-
-            <!-- Windfalls (Optional) -->
-            <div class="input-group windfalls-container">
-                <h3>💰 One-Time Windfalls (Optional)</h3>
-                <p class="section-intro">Home sale, inheritance, business sale, etc. Each windfall has a probability (0-100%).</p>
-                <div id="windfalls-list"></div>
-                <div id="windfall-form-container"></div>
-                <button type="button" class="btn-add-windfall" id="btn-add-windfall">+ Add Windfall</button>
             </div>
 
             <button type="button" class="btn-primary" id="btn-next-savings">
@@ -224,6 +217,7 @@
 
             <div class="input-group">
                 <label for="monthly-contribution">Monthly Contribution</label>
+                <span class="input-impact">Your most powerful retirement lever — small increases compound dramatically</span>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="monthly-contribution" placeholder="500" min="0" step="50">
@@ -275,11 +269,13 @@
 
             <div class="input-group">
                 <label for="retirement-age">Retirement Age</label>
+                <span class="input-impact">Earlier = more savings needed, less time to grow</span>
                 <input type="number" id="retirement-age" placeholder="65" min="50" max="80" value="65">
             </div>
 
             <div class="input-group">
                 <label for="life-expectancy">Life Expectancy</label>
+                <span class="input-impact">Plan conservatively — Canadian average is 82, but plan for 90+</span>
                 <input type="number" id="life-expectancy" placeholder="90" min="65" max="110" value="90">
             </div>
 
@@ -456,6 +452,7 @@
 
             <div class="input-group">
                 <label for="annual-spending">Your Annual Spending (edit anytime)</label>
+                <span class="input-impact">Your target lifestyle in today's dollars — inflation is added automatically</span>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="annual-spending" placeholder="60000" min="0" step="1000">
@@ -675,6 +672,15 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Windfalls (Optional) -->
+            <div class="input-group windfalls-container">
+                <h3>💰 One-Time Windfalls (Optional)</h3>
+                <span class="input-impact">Inheritance, business sale, insurance payout, etc.</span>
+                <div id="windfalls-list"></div>
+                <div id="windfall-form-container"></div>
+                <button type="button" class="btn-add-windfall" id="btn-add-windfall">+ Add Windfall</button>
             </div>
 
             <button type="button" class="btn-secondary" id="btn-back-retirement">← Back</button>

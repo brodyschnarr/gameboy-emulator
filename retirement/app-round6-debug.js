@@ -1613,23 +1613,18 @@ const AppV4 = {
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             // Run V5 Enhanced Analysis (Monte Carlo, Tax Optimization, What-If)
+            // NOTE: MC runs async in setTimeout, so we set a callback to update when done
             if (typeof AppV5Enhanced !== 'undefined') {
-                AppV5Enhanced.runEnhancedAnalysis(inputs, baseResults);
-
-                // Use Monte Carlo success rate as the authoritative probability
-                if (AppV5Enhanced.monteCarloResults) {
-                    this.monteCarloResults = AppV5Enhanced.monteCarloResults;
-
-                    // Update the main results display with Monte Carlo probability
-                    const mcRate = AppV5Enhanced.monteCarloResults.successRate;
-                    const probEl = document.getElementById('success-probability');
-                    const probNote = document.getElementById('probability-note');
-                    if (probEl) probEl.textContent = `${mcRate}%`;
-                    if (probNote) {
-                        probNote.textContent = `${mcRate >= 80 ? 'Strong' : mcRate >= 60 ? 'Moderate' : 'Needs work'} - based on 1,000 market simulations`;
-                        probNote.style.color = mcRate >= 80 ? 'var(--success)' : mcRate >= 60 ? 'var(--warning)' : 'var(--danger)';
+                AppV5Enhanced.onMCComplete = (mcResults) => {
+                    this.monteCarloResults = mcResults;
+                    // Also pre-compute MC for each scenario (200 iterations for speed)
+                    this._precomputeScenarioMC();
+                    // Update stat card with MC rate
+                    if (this.currentScenario === 'base') {
+                        this._updateSuccessRateDisplay(mcResults.successRate);
                     }
-                }
+                };
+                AppV5Enhanced.runEnhancedAnalysis(inputs, baseResults);
             }
         } catch (error) {
             alert(`❌ Calculation failed: ${error.message}\n\nPlease check the console for details.`);
@@ -1819,15 +1814,53 @@ const AppV4 = {
 
     },
 
+    _updateSuccessRateDisplay(rate) {
+        const el = document.getElementById('stat-probability');
+        if (el) {
+            el.textContent = `${rate}%`;
+            el.style.color = rate >= 80 ? 'var(--success, green)' : rate >= 60 ? 'orange' : 'var(--danger, red)';
+        }
+        const note = document.getElementById('stat-probability-note');
+        if (note) {
+            if (rate >= 90) { note.textContent = 'Excellent'; note.style.color = 'var(--success)'; }
+            else if (rate >= 70) { note.textContent = 'Good'; note.style.color = 'green'; }
+            else if (rate >= 50) { note.textContent = 'Fair'; note.style.color = 'orange'; }
+            else { note.textContent = 'Needs work'; note.style.color = 'var(--danger)'; }
+        }
+    },
+
+    _precomputeScenarioMC() {
+        if (typeof MonteCarloSimulator === 'undefined') return;
+        // Quick MC for each scenario (200 iterations for speed)
+        Object.keys(this.scenarioResults).forEach(key => {
+            if (key === 'base') {
+                this.scenarioResults[key].mcRate = this.monteCarloResults?.successRate;
+                return;
+            }
+            try {
+                const mc = MonteCarloSimulator.simulate(this.scenarioResults[key].inputs, {
+                    iterations: 200, volatility: 0.11, marketCrashProbability: 0.04
+                });
+                this.scenarioResults[key].mcRate = mc.successRate;
+            } catch(e) {
+                this.scenarioResults[key].mcRate = null;
+            }
+        });
+    },
+
     _switchScenario(scenarioKey) {
         if (!this.scenarioResults[scenarioKey]) {
             return;
         }
 
-        // Display scenario results (active state handled by _setupScenarioTabs)
         this.currentScenario = scenarioKey;
         const scenario = this.scenarioResults[scenarioKey];
         this._displayResults(scenario.results, scenario.inputs);
+
+        // Update success rate with scenario-specific MC rate if available
+        if (scenario.mcRate !== undefined && scenario.mcRate !== null) {
+            this._updateSuccessRateDisplay(scenario.mcRate);
+        }
     },
 
     _gatherInputs() {
@@ -1908,11 +1941,13 @@ const AppV4 = {
         const income = results.summary.annualIncomeAtRetirement || 0;
         const lastsAge = results.summary.moneyLastsAge || inputs.lifeExpectancy;
 
-        // FIX: Use Monte Carlo probability if available (more accurate than deterministic)
+        // Use scenario-specific MC rate if available, otherwise deterministic
         let probability = results.probability || 0;
-        if (this.monteCarloResults && this.monteCarloResults.successRate !== undefined) {
+        const scenarioData = this.scenarioResults[this.currentScenario];
+        if (scenarioData?.mcRate !== undefined && scenarioData?.mcRate !== null) {
+            probability = scenarioData.mcRate;
+        } else if (this.currentScenario === 'base' && this.monteCarloResults?.successRate !== undefined) {
             probability = this.monteCarloResults.successRate;
-        } else {
         }
 
 

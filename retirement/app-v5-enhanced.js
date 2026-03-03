@@ -15,6 +15,7 @@ const AppV5Enhanced = {
     taxOptimizationResults: null,
     whatIfResults: null,
     safeWithdrawalResults: null,
+    onMCComplete: null, // Callback when MC finishes
     
     /**
      * Run comprehensive analysis (Monte Carlo + Tax Optimization + What-If)
@@ -112,6 +113,11 @@ const AppV5Enhanced = {
                 // Hide loading, show enhanced results
                 this._hideLoadingOverlay();
                 this._displayEnhancedResults(baseResults, baseInputs);
+                
+                // Fire callback so main app can update with MC results
+                if (this.onMCComplete && this.monteCarloResults) {
+                    this.onMCComplete(this.monteCarloResults);
+                }
                 
                 console.log('[AppV5] Enhanced analysis complete!');
             } catch (error) {

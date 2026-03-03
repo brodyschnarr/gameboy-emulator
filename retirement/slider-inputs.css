@@ -123,3 +123,9 @@
         height: 32px;
     }
 }
+
+/* Tighter slider spacing */
+.enhanced-slider-wrap { margin: 4px 0 2px; }
+.enhanced-slider-value { font-size: 1.3rem; padding: 4px 8px; margin-bottom: 4px; }
+.enhanced-slider-labels { margin-top: 2px; font-size: 0.75rem; }
+
