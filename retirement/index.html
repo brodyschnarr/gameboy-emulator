@@ -433,6 +433,51 @@
                 <small id="spending-recommendation" class="benchmark-text"></small>
             </div>
 
+            <!-- Part-Time Work After Retirement -->
+            <div class="input-group">
+                <label>
+                    💼 Work After Retirement?
+                    <button type="button" class="info-btn" data-tooltip="Optional: If you or your partner plan to do part-time work, consulting, etc. after your official retirement age.">?</button>
+                </label>
+                <p class="section-intro">Part-time work, consulting, or a second career</p>
+                
+                <div id="post-retirement-work-list"></div>
+                <button type="button" class="btn-secondary" id="btn-add-post-retirement-work">+ Add Post-Retirement Work</button>
+                
+                <div id="post-retirement-work-form" class="hidden" style="margin-top: 12px;">
+                    <div class="split-inputs" style="margin-bottom: 8px;">
+                        <div>
+                            <label for="prt-who">Who?</label>
+                            <select id="prt-who">
+                                <option value="me">Me</option>
+                                <option value="partner">Partner</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="prt-income">Annual Income</label>
+                            <div class="input-with-prefix">
+                                <span class="prefix">$</span>
+                                <input type="number" id="prt-income" placeholder="20000" min="0" step="1000">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="split-inputs" style="margin-bottom: 8px;">
+                        <div>
+                            <label for="prt-start">From Age</label>
+                            <input type="number" id="prt-start" placeholder="60" min="18" max="100">
+                        </div>
+                        <div>
+                            <label for="prt-end">To Age</label>
+                            <input type="number" id="prt-end" placeholder="65" min="18" max="100">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn-primary" id="btn-save-prt-work" style="flex: 1;">Add</button>
+                        <button type="button" class="btn-secondary" id="btn-cancel-prt-work">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
             <button type="button" class="btn-secondary" id="btn-back-contributions">← Back</button>
             <button type="button" class="btn-primary" id="btn-next-healthcare">Continue →</button>
         </section>

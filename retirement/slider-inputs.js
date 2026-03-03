@@ -36,6 +36,9 @@
         // Step 5: Debt
         { id: 'current-debt',     min: 0, max: 1000000, step: 5000, format: 'currency', label: null },
 
+        // Post-retirement work
+        { id: 'prt-income',          min: 0, max: 100000, step: 1000, format: 'currency', label: null },
+
         // Contribution growth
         { id: 'contribution-growth', min: 0, max: 10, step: 0.5, format: 'percent', label: null },
 

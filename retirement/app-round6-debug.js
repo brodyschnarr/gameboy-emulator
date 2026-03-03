@@ -36,6 +36,7 @@ const AppV4 = {
         this._setupHealthcare();
         this._setupDebt();
         this._setupIncomeSources();
+        this._setupPostRetirementWork();
         this._setupWindfalls();
         this._setupCalculate();
         this._setupScenarios();
@@ -437,6 +438,100 @@ const AppV4 = {
 
     _setupIncomeSources() {
         IncomeSources.initModal();
+    },
+
+    _setupPostRetirementWork() {
+        this.postRetirementWorkItems = [];
+        
+        const addBtn = document.getElementById('btn-add-post-retirement-work');
+        const form = document.getElementById('post-retirement-work-form');
+        const saveBtn = document.getElementById('btn-save-prt-work');
+        const cancelBtn = document.getElementById('btn-cancel-prt-work');
+        const whoSelect = document.getElementById('prt-who');
+        
+        // Hide partner option for singles
+        if (whoSelect && this.familyStatus !== 'couple') {
+            const partnerOpt = whoSelect.querySelector('option[value="partner"]');
+            if (partnerOpt) partnerOpt.style.display = 'none';
+        }
+        
+        if (addBtn && form) {
+            addBtn.addEventListener('click', () => {
+                form.classList.remove('hidden');
+                addBtn.classList.add('hidden');
+                // Default ages based on retirement age
+                const retAge = parseInt(document.getElementById('retirement-age')?.value) || 65;
+                document.getElementById('prt-start').value = retAge;
+                document.getElementById('prt-end').value = retAge + 5;
+            });
+        }
+        
+        if (cancelBtn && form && addBtn) {
+            cancelBtn.addEventListener('click', () => {
+                form.classList.add('hidden');
+                addBtn.classList.remove('hidden');
+            });
+        }
+        
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                const who = document.getElementById('prt-who')?.value || 'me';
+                const income = parseFloat(document.getElementById('prt-income')?.value) || 0;
+                const startAge = parseInt(document.getElementById('prt-start')?.value) || 0;
+                const endAge = parseInt(document.getElementById('prt-end')?.value) || 0;
+                
+                if (income <= 0 || startAge <= 0 || endAge <= 0 || endAge < startAge) return;
+                
+                const label = who === 'partner' ? 'Partner' : 'My';
+                const name = `${label} part-time work`;
+                
+                // Add to IncomeSources
+                const source = IncomeSources.add('partTime', income, startAge, endAge, name);
+                
+                this.postRetirementWorkItems.push({
+                    id: source.id,
+                    who, income, startAge, endAge, name
+                });
+                
+                // Reset form
+                form.classList.add('hidden');
+                document.getElementById('btn-add-post-retirement-work').classList.remove('hidden');
+                document.getElementById('prt-income').value = '';
+                
+                this._renderPostRetirementWork();
+            });
+        }
+    },
+
+    _renderPostRetirementWork() {
+        const container = document.getElementById('post-retirement-work-list');
+        if (!container) return;
+        
+        if (this.postRetirementWorkItems.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        const fmt = (v) => '$' + v.toLocaleString();
+        container.innerHTML = this.postRetirementWorkItems.map(item => `
+            <div class="income-source-item" style="margin-bottom: 8px;">
+                <div class="source-icon">💼</div>
+                <div class="source-details">
+                    <div class="source-name">${item.name}</div>
+                    <div class="source-meta">Ages ${item.startAge}-${item.endAge} • ${fmt(item.income)}/year</div>
+                </div>
+                <button type="button" class="btn-remove-source" data-prt-id="${item.id}">✕</button>
+            </div>
+        `).join('');
+        
+        container.querySelectorAll('.btn-remove-source').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(e.target.dataset.prtId);
+                IncomeSources.remove(id);
+                this.postRetirementWorkItems = this.postRetirementWorkItems.filter(i => i.id !== id);
+                this._renderPostRetirementWork();
+            });
+        });
     },
 
     _setupWindfalls() {
