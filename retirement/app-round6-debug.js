@@ -812,7 +812,8 @@ const AppV4 = {
         };
     },
 
-    _runHouseSaleComparison(baseInputs, baseResults) {
+    _runHouseSaleComparison(sellInputs, sellResults) {
+        // sellInputs/sellResults already include house sale (injected in _runCalculation)
         const houseSale = this._getHouseSaleInputs();
         if (!houseSale) {
             const section = document.getElementById('house-sale-comparison');
@@ -822,34 +823,18 @@ const AppV4 = {
         
         const { salePrice, saleAge, currentMonthlyCosts, rentAfter } = houseSale;
         
-        // Scenario: Sell house
-        // 1. Add sale proceeds as windfall (tax-free — primary residence exemption)
-        // 2. Reduce annual spending by current housing costs
-        // 3. Add rent costs to annual spending
-        const annualHousingCostsSaved = currentMonthlyCosts * 12;
-        const annualRentAdded = rentAfter * 12;
-        const netSpendingChange = annualRentAdded - annualHousingCostsSaved;
-        
-        const sellInputs = {
-            ...baseInputs,
-            annualSpending: baseInputs.annualSpending + netSpendingChange,
-            windfalls: [
-                ...(baseInputs.windfalls || []),
-                {
-                    name: 'House Sale',
-                    amount: salePrice,
-                    year: saleAge,
-                    probability: 100,
-                    taxable: false, // Primary residence exemption
-                    destination: 'nonReg'
-                }
-            ]
+        // Calculate the "keep house" scenario (remove house sale windfall, restore spending)
+        const netSpendingChange = (rentAfter * 12) - (currentMonthlyCosts * 12);
+        const keepInputs = {
+            ...sellInputs,
+            annualSpending: sellInputs.annualSpending - netSpendingChange,
+            windfalls: (sellInputs.windfalls || []).filter(w => w.name !== 'House Sale')
         };
         
-        const sellResults = RetirementCalcV4.calculate(sellInputs);
+        const keepResults = RetirementCalcV4.calculate(keepInputs);
         
-        // Display comparison
-        this._displayHouseSaleComparison(baseResults, sellResults, baseInputs, houseSale);
+        // Display comparison (keep vs sell)
+        this._displayHouseSaleComparison(keepResults, sellResults, keepInputs, houseSale);
     },
 
     _displayHouseSaleComparison(keepResults, sellResults, inputs, houseSale) {
@@ -1574,9 +1559,28 @@ const AppV4 = {
                 return;
             }
 
-            // Calculate base scenario
-            // NOTE: calc.js now handles windfalls internally in _generateProjection
-            // Do NOT call _applyWindfallsToResults — it double-counts windfalls
+            // If house sale is enabled, inject it as a windfall + adjust spending
+            // so the main projection/chart/MC all reflect the sale
+            const houseSale = this._getHouseSaleInputs();
+            if (houseSale) {
+                const { salePrice, saleAge, currentMonthlyCosts, rentAfter } = houseSale;
+                const netSpendingChange = (rentAfter * 12) - (currentMonthlyCosts * 12);
+                inputs.annualSpending = inputs.annualSpending + netSpendingChange;
+                inputs.windfalls = [
+                    ...(inputs.windfalls || []),
+                    {
+                        name: 'House Sale',
+                        amount: salePrice,
+                        year: saleAge,
+                        probability: 100,
+                        taxable: false,
+                        destination: 'nonReg'
+                    }
+                ];
+            }
+
+            // Calculate base scenario (now includes house sale if enabled)
+            // NOTE: calc.js handles windfalls internally in _generateProjection
             const baseResults = RetirementCalcV4.calculate(inputs);
 
             // Store base scenario
