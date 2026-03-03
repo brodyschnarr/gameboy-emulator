@@ -482,73 +482,85 @@ const AppV4 = {
                 }
             });
         } else {
-            // Even split across 7 categories
-            const monthlyEach = Math.round(spending / 12 / 7);
+            // Proportional split based on typical Canadian retiree spending
+            // Housing ~30%, Food ~15%, Transport ~10%, Healthcare ~6%, Travel ~10%, Entertainment ~12%, Misc ~17%
+            const proportions = {
+                housing: 0.30,
+                food: 0.15,
+                transportation: 0.10,
+                healthcare: 0.06,
+                travel: 0.10,
+                entertainment: 0.12,
+                misc: 0.17
+            };
+            const monthly = spending / 12;
             document.querySelectorAll('.custom-spend-input').forEach(input => {
-                input.value = monthlyEach;
+                const cat = input.dataset.category;
+                const pct = proportions[cat] || 0.14;
+                input.value = Math.round(monthly * pct / 50) * 50; // round to nearest $50
             });
         }
         this._updateCustomSpendingTotal();
         this._updateSpendingHints();
     },
 
-    // Spending hints: describe what a dollar amount means for each category
+    // Spending hints: concrete examples of what each amount gets you
     _spendingHintData: {
         housing: [
-            [0, 500, 'Living with family or very low-cost shared housing'],
-            [500, 900, 'Paid-off home — just property tax, utilities, basic maintenance'],
-            [900, 1500, 'Modest home with property tax $3-4K/yr, utilities, upkeep'],
-            [1500, 2200, 'Nice home or condo, $4-5K tax, regular maintenance, some upgrades'],
-            [2200, 3500, 'Upscale home, condo fees, $6K+ tax, renovations, maybe a cleaner'],
-            [3500, Infinity, 'Luxury home or two properties, premium condo, high-end maintenance']
+            [0, 500, '= Living with family or very low-cost shared housing'],
+            [500, 900, '= Paid-off home: ~$300/mo property tax + $200 utilities + basic repairs'],
+            [900, 1500, '= Mortgage-free home: $350/mo tax, $250 utilities, $400 maintenance fund'],
+            [1500, 2200, '= Nice home or condo: $400/mo tax, $300 utilities, $200 condo fees, upgrades'],
+            [2200, 3500, '= Upscale: $500/mo tax + $500 condo fees + $300 utilities + cleaner + renos'],
+            [3500, Infinity, '= Luxury property or two homes, premium condo fees, full-service maintenance']
         ],
         food: [
-            [0, 300, 'Very frugal — basic groceries, cooking everything at home'],
-            [300, 500, 'Home cooking + occasional takeout, grocery deals'],
-            [500, 800, 'Quality groceries + eating out 1-2x/week'],
-            [800, 1200, 'Organic produce, dining out 2-3x/week, nice wine'],
-            [1200, 2000, 'Premium groceries, fine dining weekly, wine collection'],
-            [2000, Infinity, 'Gourmet everything, frequent fine dining, private chef occasionally']
+            [0, 300, '= ~$10/day — rice, beans, basics, cooking every meal at home'],
+            [300, 500, '= ~$15/day — groceries at home + takeout/fast food 1-2x/week'],
+            [500, 800, '= ~$25/day — good groceries ($400) + restaurants 1-2x/week ($100-400)'],
+            [800, 1200, '= ~$35/day — organic produce, dining out 2-3x/week, wine with dinner'],
+            [1200, 2000, '= ~$55/day — Whole Foods groceries, fine dining weekly, wine collection'],
+            [2000, Infinity, '= Premium everything, restaurants 4-5x/week, private chef occasionally']
         ],
         transportation: [
-            [0, 150, 'Public transit or cycling, no car'],
-            [150, 350, 'One older paid-off car, basic insurance, gas'],
-            [350, 600, 'Reliable car (5-8 yrs old), full coverage, regular maintenance'],
-            [600, 1000, 'Newer vehicle or two cars, premium insurance'],
-            [1000, 1500, 'Luxury vehicle (lease), premium insurance, detailing'],
-            [1500, Infinity, 'Multiple vehicles, luxury brands, all premium services']
+            [0, 150, '= Bus pass ($100) or cycling, no car payment or insurance'],
+            [150, 350, '= 1 paid-off car: $150 insurance + $100 gas + $50 oil changes/tires'],
+            [350, 600, '= Reliable 5-8yr car: $200 insurance + $150 gas + $100 maintenance + parking'],
+            [600, 1000, '= Newer SUV or 2 cars: $350 insurance + $200 gas + $150 maintenance'],
+            [1000, 1500, '= Leased luxury car ($500) + insurance ($250) + gas + detailing'],
+            [1500, Infinity, '= 2 luxury vehicles, both leased/financed, premium everything']
         ],
         healthcare: [
-            [0, 150, 'Provincial coverage only, minimal out-of-pocket'],
-            [150, 300, 'Basic prescriptions, annual dental & eye exams, some supplements'],
-            [300, 500, 'Good extended health, dental, vision, massage, preventive care'],
-            [500, 800, 'Premium coverage, private clinic visits, wellness programs'],
-            [800, 1200, 'Concierge medicine, specialists, wellness retreats'],
-            [1200, Infinity, 'Top-tier private healthcare, concierge doctor, all premium services']
+            [0, 150, '= Provincial coverage only + maybe $50/mo in vitamins/Tylenol'],
+            [150, 300, '= Prescriptions ($80) + dental cleaning 2x/yr ($60) + glasses ($40) + supplements'],
+            [300, 500, '= Extended health plan ($150) + dental ($100) + massage 1x/mo ($80) + vision'],
+            [500, 800, '= Premium plan ($200) + dental ($150) + physio/massage ($150) + specialists'],
+            [800, 1200, '= Concierge doctor ($400) + full dental ($200) + wellness programs + naturopath'],
+            [1200, Infinity, '= Private clinic membership, all specialists, wellness retreats, premium dental']
         ],
         travel: [
-            [0, 125, 'Visiting family, 1-2 road trips or camping trips a year'],
-            [125, 300, '1-2 domestic trips/year, maybe 1 international every few years'],
-            [300, 600, '2-3 trips/year, 1 international annually (Caribbean, Europe)'],
-            [600, 1250, '3-4 trips/year, business class occasionally, resorts'],
-            [1250, 2500, 'Frequent international travel, business class, luxury resorts, cruises'],
-            [2500, Infinity, 'First class, 5-star everywhere, exotic destinations, extended trips']
+            [0, 125, '= ~$1,500/yr — visiting family by car, 1-2 weekend road trips or camping'],
+            [125, 300, '= ~$3,000/yr — 1-2 domestic flights + hotels, maybe Mexico every 2-3 years'],
+            [300, 600, '= ~$5,000/yr — 2-3 trips: e.g. Florida in winter + a week in Europe'],
+            [600, 1250, '= ~$10,000/yr — 3-4 trips, 1-2 international (Europe, Caribbean), nice hotels'],
+            [1250, 2500, '= ~$20,000/yr — frequent travel, business class, resorts, Alaska cruise + Europe'],
+            [2500, Infinity, '= $30K+/yr — first class, 5-star resorts, Africa safari, multiple international']
         ],
         entertainment: [
-            [0, 150, 'Streaming services, library, free community events, walking'],
-            [150, 350, 'Streaming + hobbies, occasional concerts, eating out'],
-            [350, 600, 'Golf occasionally, hobbies with gear, concerts, theatre, sports'],
-            [600, 1000, 'Club membership (golf/gym), expensive hobbies, season tickets'],
-            [1000, 1500, 'Multiple memberships, premium hobbies (sailing, photography)'],
-            [1500, Infinity, 'Exclusive clubs, art collecting, yacht/country club, luxury hobbies']
+            [0, 150, '= Netflix + Spotify ($30) + library + parks + free community events'],
+            [150, 350, '= Streaming ($40) + gym ($50) + 1 concert/mo ($80) + hobbies ($100)'],
+            [350, 600, '= Golf green fees ($150) + streaming ($40) + concerts/theatre ($150) + hobbies ($200)'],
+            [600, 1000, '= Golf membership ($300) + gym ($60) + season tickets ($200) + hobbies ($300)'],
+            [1000, 1500, '= Club membership ($500) + premium hobbies ($400) + events ($300) + sports ($200)'],
+            [1500, Infinity, '= Yacht/country club, art collecting, expensive hobbies, VIP experiences']
         ],
         misc: [
-            [0, 200, 'Bare essentials — minimal clothing, basic household, small gifts'],
-            [200, 450, 'Modest clothing, household items, birthday/holiday gifts'],
-            [450, 700, 'Regular wardrobe updates, home décor, gifts for grandkids, some tech'],
-            [700, 1200, 'Nice clothing, home improvements, generous gifts, gadgets'],
-            [1200, 1800, 'Designer items, regular upgrades, lavish gifts, latest tech'],
-            [1800, Infinity, 'Premium everything, philanthropy, concierge services']
+            [0, 200, '= Basic clothing ($50) + household supplies ($50) + small gifts ($50) + haircuts'],
+            [200, 450, '= Clothing ($100) + gifts for family ($100) + home supplies ($100) + phone/internet ($100)'],
+            [450, 700, '= Wardrobe updates ($150) + gifts/grandkids ($200) + tech ($100) + home décor ($100)'],
+            [700, 1200, '= Nice clothing ($250) + generous gifts ($300) + gadgets ($200) + home projects ($250)'],
+            [1200, 1800, '= Designer clothing ($400) + lavish gifts ($400) + latest tech ($300) + upgrades ($300)'],
+            [1800, Infinity, '= Premium wardrobe, philanthropy, concierge services, luxury goods']
         ]
     },
 
