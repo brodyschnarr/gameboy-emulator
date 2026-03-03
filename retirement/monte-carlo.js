@@ -87,6 +87,8 @@ const MonteCarloSimulator = {
             debtPayoffAge,
             cppStartAge,
             cppStartAgeP2,
+            cppOverride,
+            cppOverrideP2,
             oasStartAge = 65,
             additionalIncomeSources,
             windfalls = [],
@@ -115,7 +117,9 @@ const MonteCarloSimulator = {
             isSingle,
             p1ContribYears,
             p2ContribYears,
-            oasStartAge: oasStartAge || 65
+            oasStartAge: oasStartAge || 65,
+            cppOverride: cppOverride || null,
+            cppOverrideP2: cppOverrideP2 || null
         });
         
         // Healthcare costs

@@ -41,6 +41,9 @@
 
         // House sale
         { id: 'house-sale-price',    min: 0, max: 2000000, step: 25000, format: 'currency', label: null },
+        { id: 'cpp-override-amount', min: 0, max: 17000, step: 500, format: 'currency', label: null },
+        { id: 'cpp-override-amount-p1', min: 0, max: 17000, step: 500, format: 'currency', label: null },
+        { id: 'cpp-override-amount-p2', min: 0, max: 17000, step: 500, format: 'currency', label: null },
         { id: 'house-current-costs', min: 0, max: 10000,   step: 100,   format: 'currency', label: null },
         { id: 'house-rent-after',    min: 0, max: 10000,   step: 100,   format: 'currency', label: null },
 

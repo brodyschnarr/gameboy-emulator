@@ -44,6 +44,8 @@ const RetirementCalcV4 = {
             // CPP
             cppStartAge,
             cppStartAgeP2,
+            cppOverride,
+            cppOverrideP2,
             
             // OAS
             oasStartAge = 65,
@@ -84,7 +86,9 @@ const RetirementCalcV4 = {
             isSingle: !isFamilyMode,
             p1ContribYears,
             p2ContribYears,
-            oasStartAge: oasStartAge || 65
+            oasStartAge: oasStartAge || 65,
+            cppOverride: cppOverride || null,
+            cppOverrideP2: cppOverrideP2 || null
         });
 
         // 2. Calculate healthcare costs
@@ -194,20 +198,29 @@ const RetirementCalcV4 = {
         };
     },
 
-    _calculateGovernmentBenefits({ income1, income2, retirementAge, cppStartAge, cppStartAgeP2, isSingle, p1ContribYears, p2ContribYears, oasStartAge }) {
+    _calculateGovernmentBenefits({ income1, income2, retirementAge, cppStartAge, cppStartAgeP2, isSingle, p1ContribYears, p2ContribYears, oasStartAge, cppOverride, cppOverrideP2 }) {
         // FIX #1: Use per-person contribution years
         const years1 = p1ContribYears || Math.min(retirementAge - 18, 39);
         const years2 = p2ContribYears || years1;
 
-        // Person 1 CPP
-        const cpp1Base = CPPCalculator.estimateCPP(income1, years1);
-        const cpp1 = CPPOptimizer.calculateByAge(cpp1Base.total, cppStartAge);
+        // Person 1 CPP — use override if provided (annual amount at age 65)
+        let cpp1;
+        if (cppOverride) {
+            cpp1 = CPPOptimizer.calculateByAge(cppOverride, cppStartAge);
+        } else {
+            const cpp1Base = CPPCalculator.estimateCPP(income1, years1);
+            cpp1 = CPPOptimizer.calculateByAge(cpp1Base.total, cppStartAge);
+        }
 
         // Person 2 CPP (if couple)
         let cpp2 = 0;
-        if (!isSingle && income2 > 0) {
-            const cpp2Base = CPPCalculator.estimateCPP(income2, years2);
-            cpp2 = CPPOptimizer.calculateByAge(cpp2Base.total, cppStartAgeP2 || cppStartAge);
+        if (!isSingle && (income2 > 0 || cppOverrideP2)) {
+            if (cppOverrideP2) {
+                cpp2 = CPPOptimizer.calculateByAge(cppOverrideP2, cppStartAgeP2 || cppStartAge);
+            } else {
+                const cpp2Base = CPPCalculator.estimateCPP(income2, years2);
+                cpp2 = CPPOptimizer.calculateByAge(cpp2Base.total, cppStartAgeP2 || cppStartAge);
+            }
         }
 
         const cppTotal = cpp1 + cpp2;

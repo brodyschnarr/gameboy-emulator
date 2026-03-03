@@ -18,6 +18,9 @@ const AppV4 = {
     cppStartAge: 65,
     cppStartAgeP1: 65,
     cppStartAgeP2: 65,
+    cppOverride: null,       // Single mode: annual CPP at 65 (null = use estimate)
+    cppOverrideP1: null,     // Couple mode: person 1
+    cppOverrideP2: null,     // Couple mode: person 2
     visitedSteps: new Set(['basic']),
     scenarioResults: {},
     currentScenario: 'base',
@@ -350,6 +353,56 @@ const AppV4 = {
             sliderP2.addEventListener('input', (e) => {
                 this.cppStartAgeP2 = parseInt(e.target.value);
                 this._updateCPPPreviewCouple();
+            });
+        }
+
+        // CPP override toggles
+        const overrideToggle = document.getElementById('cpp-override-toggle');
+        if (overrideToggle) {
+            overrideToggle.addEventListener('change', () => {
+                const input = document.getElementById('cpp-override-input');
+                if (input) input.classList.toggle('hidden', !overrideToggle.checked);
+                this.cppOverride = overrideToggle.checked
+                    ? parseFloat(document.getElementById('cpp-override-amount')?.value) || null
+                    : null;
+                this._updateCPPPreview();
+            });
+            const overrideAmt = document.getElementById('cpp-override-amount');
+            if (overrideAmt) {
+                overrideAmt.addEventListener('input', () => {
+                    if (overrideToggle.checked) {
+                        this.cppOverride = parseFloat(overrideAmt.value) || null;
+                        this._updateCPPPreview();
+                    }
+                });
+            }
+        }
+
+        const overrideToggleCouple = document.getElementById('cpp-override-toggle-couple');
+        if (overrideToggleCouple) {
+            overrideToggleCouple.addEventListener('change', () => {
+                const input = document.getElementById('cpp-override-input-couple');
+                if (input) input.classList.toggle('hidden', !overrideToggleCouple.checked);
+                if (overrideToggleCouple.checked) {
+                    this.cppOverrideP1 = parseFloat(document.getElementById('cpp-override-amount-p1')?.value) || null;
+                    this.cppOverrideP2 = parseFloat(document.getElementById('cpp-override-amount-p2')?.value) || null;
+                } else {
+                    this.cppOverrideP1 = null;
+                    this.cppOverrideP2 = null;
+                }
+                this._updateCPPPreviewCouple();
+            });
+            ['cpp-override-amount-p1', 'cpp-override-amount-p2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', () => {
+                        if (overrideToggleCouple.checked) {
+                            this.cppOverrideP1 = parseFloat(document.getElementById('cpp-override-amount-p1')?.value) || null;
+                            this.cppOverrideP2 = parseFloat(document.getElementById('cpp-override-amount-p2')?.value) || null;
+                            this._updateCPPPreviewCouple();
+                        }
+                    });
+                }
             });
         }
 
@@ -1376,12 +1429,19 @@ const AppV4 = {
         const lifeExpectancy = parseInt(document.getElementById('life-expectancy')?.value) || 90;
         const yearsContributing = Math.min(retirementAge - 18, 39);
 
-        const baseCPP = CPPCalculator.estimateCPP(baseIncome, yearsContributing);
-        const adjusted = CPPOptimizer.calculateByAge(baseCPP.total, this.cppStartAge);
-        const lifetime = CPPOptimizer.calculateLifetimeValue(baseCPP.total, this.cppStartAge, lifeExpectancy);
+        let adjusted, lifetime;
+        if (this.cppOverride) {
+            // User provided their own CPP at 65 — apply start age adjustment
+            adjusted = CPPOptimizer.calculateByAge(this.cppOverride, this.cppStartAge);
+            lifetime = CPPOptimizer.calculateLifetimeValue(this.cppOverride, this.cppStartAge, lifeExpectancy);
+        } else {
+            const baseCPP = CPPCalculator.estimateCPP(baseIncome, yearsContributing);
+            adjusted = CPPOptimizer.calculateByAge(baseCPP.total, this.cppStartAge);
+            lifetime = CPPOptimizer.calculateLifetimeValue(baseCPP.total, this.cppStartAge, lifeExpectancy);
+        }
 
         document.getElementById('cpp-age-value').textContent = this.cppStartAge;
-        document.getElementById('cpp-amount-value').textContent = `$${Math.round(adjusted).toLocaleString()}/year`;
+        document.getElementById('cpp-amount-value').textContent = `$${Math.round(adjusted).toLocaleString()}/year${this.cppOverride ? ' (override)' : ''}`;
         document.getElementById('cpp-lifetime-value').textContent = `$${lifetime.totalLifetime.toLocaleString()}`;
     },
 
@@ -1394,10 +1454,12 @@ const AppV4 = {
         const ageP1 = this.cppStartAgeP1 || 65;
         const ageP2 = this.cppStartAgeP2 || 65;
 
-        const base1 = CPPCalculator.estimateCPP(income1, yearsContributing);
-        const base2 = CPPCalculator.estimateCPP(income2, yearsContributing);
-        const adjusted1 = CPPOptimizer.calculateByAge(base1.total, ageP1);
-        const adjusted2 = CPPOptimizer.calculateByAge(base2.total, ageP2);
+        const adjusted1 = this.cppOverrideP1
+            ? CPPOptimizer.calculateByAge(this.cppOverrideP1, ageP1)
+            : CPPOptimizer.calculateByAge(CPPCalculator.estimateCPP(income1, yearsContributing).total, ageP1);
+        const adjusted2 = this.cppOverrideP2
+            ? CPPOptimizer.calculateByAge(this.cppOverrideP2, ageP2)
+            : CPPOptimizer.calculateByAge(CPPCalculator.estimateCPP(income2, yearsContributing).total, ageP2);
 
         // Person 1
         const ageEl1 = document.getElementById('cpp-age-value-p1');
@@ -1812,6 +1874,8 @@ const AppV4 = {
 
             cppStartAge: this.familyStatus === 'couple' ? (this.cppStartAgeP1 || 65) : this.cppStartAge,
             cppStartAgeP2: this.familyStatus === 'couple' ? (this.cppStartAgeP2 || 65) : null,
+            cppOverride: this.familyStatus === 'couple' ? (this.cppOverrideP1 || null) : (this.cppOverride || null),
+            cppOverrideP2: this.familyStatus === 'couple' ? (this.cppOverrideP2 || null) : null,
             oasStartAge: this.oasStartAge || 65,
             additionalIncomeSources: IncomeSources.getAll(),
             windfalls: this.windfalls || [],

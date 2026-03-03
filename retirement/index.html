@@ -304,6 +304,18 @@
                         <div class="cpp-lifetime-display">Lifetime total: <strong id="cpp-lifetime-value">$0</strong></div>
                     </div>
                     <button type="button" class="btn-link" id="btn-cpp-details">See detailed comparison →</button>
+                    <div class="cpp-override">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="cpp-override-toggle">
+                            <span>I know my actual CPP amount</span>
+                        </label>
+                        <div id="cpp-override-input" class="hidden" style="margin-top: 8px;">
+                            <label>Your annual CPP at age 65 ($)
+                                <button type="button" class="info-btn" data-tooltip="Check My Service Canada Account for your actual CPP estimate. This overrides the income-based estimate.">?</button>
+                            </label>
+                            <input type="number" id="cpp-override-amount" min="0" max="20000" step="100" value="16000" placeholder="e.g. 16000">
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -357,6 +369,25 @@
                 </div>
                 
                 <button type="button" class="btn-link" id="btn-cpp-details-couple">See detailed comparison →</button>
+                
+                <div class="cpp-override">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="cpp-override-toggle-couple">
+                        <span>I know our actual CPP amounts</span>
+                    </label>
+                    <div id="cpp-override-input-couple" class="hidden" style="margin-top: 8px;">
+                        <div style="display: flex; gap: 12px;">
+                            <div style="flex: 1;">
+                                <label>Person 1 CPP at 65 ($)</label>
+                                <input type="number" id="cpp-override-amount-p1" min="0" max="20000" step="100" value="16000" placeholder="e.g. 16000">
+                            </div>
+                            <div style="flex: 1;">
+                                <label>Person 2 CPP at 65 ($)</label>
+                                <input type="number" id="cpp-override-amount-p2" min="0" max="20000" step="100" value="16000" placeholder="e.g. 16000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- OAS Start Age -->
