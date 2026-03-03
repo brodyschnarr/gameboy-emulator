@@ -232,7 +232,9 @@ const MonteCarloSimulator = {
                 let cppP1 = 0, cppP2 = 0;
                 if (age >= (cppStartAge || 65)) {
                     cppP1 = govBenefits.cpp1 * cpiFromRetirement;
-                    if (!isSingle) cppP2 = govBenefits.cpp2 * cpiFromRetirement;
+                }
+                if (!isSingle && age >= (cppStartAgeP2 || cppStartAge || 65)) {
+                    cppP2 = govBenefits.cpp2 * cpiFromRetirement;
                 }
                 const cppIncome = cppP1 + cppP2;
                 
