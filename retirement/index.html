@@ -72,7 +72,7 @@
             <!-- Age(s) -->
             <div class="input-group">
                 <label for="current-age">Your Age</label>
-                <span class="input-impact">Determines how long your savings can grow</span>
+                <span class="input-impact">More years to grow = more compounding</span>
                 <input type="number" id="current-age" placeholder="35" min="18" max="100" required>
             </div>
 
@@ -168,34 +168,34 @@
 
             <div class="input-group">
                 <label for="rrsp">RRSP</label>
+                <span class="input-impact">Taxed when you withdraw</span>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="rrsp" placeholder="0" min="0" step="1000">
                 </div>
-                <span class="input-impact">Tax-deferred — you pay tax when you withdraw in retirement</span>
             </div>
 
             <div class="input-group">
                 <label for="tfsa">TFSA</label>
+                <span class="input-impact">Tax-free withdrawals</span>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="tfsa" placeholder="0" min="0" step="1000">
                 </div>
-                <span class="input-impact">Tax-free growth and withdrawals — your most flexible account</span>
             </div>
 
             <div class="input-group">
                 <label for="nonreg">Non-Registered</label>
+                <span class="input-impact">50% of gains taxed</span>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="nonreg" placeholder="0" min="0" step="1000">
                 </div>
-                <span class="input-impact">Only 50% of gains are taxed — good for overflow savings</span>
             </div>
 
             <div class="input-group">
                 <label for="other">Other Investments</label>
-                <span class="input-impact">Treated as fully taxable withdrawals</span>
+                <span class="input-impact">Fully taxable withdrawals</span>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="other" placeholder="0" min="0" step="1000">
@@ -219,7 +219,7 @@
 
             <div class="input-group">
                 <label for="monthly-contribution">Monthly Contribution</label>
-                <span class="input-impact">Your most powerful retirement lever — small increases compound dramatically</span>
+                <span class="input-impact">Small increases here compound dramatically over time</span>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="monthly-contribution" placeholder="500" min="0" step="50">
@@ -266,7 +266,7 @@
 
             <div class="input-group">
                 <label for="life-expectancy">Life Expectancy</label>
-                <span class="input-impact">Plan conservatively — Canadian average is 82, but plan for 90+</span>
+                <span class="input-impact">Canadian avg is 82 — plan for 90+</span>
                 <input type="number" id="life-expectancy" placeholder="90" min="65" max="110" value="90">
             </div>
 
@@ -433,7 +433,7 @@
 
             <div class="input-group">
                 <label for="annual-spending">Your Annual Spending (edit anytime)</label>
-                <span class="input-impact">Your target lifestyle in today's dollars — inflation is added automatically</span>
+                <span class="input-impact">In today's dollars — inflation added automatically</span>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="annual-spending" placeholder="60000" min="0" step="1000">
@@ -564,7 +564,7 @@
             <!-- Healthcare -->
             <div class="input-group">
                 <label>Healthcare Costs</label>
-                <span class="input-impact">Costs rise significantly after 75 — often underestimated</span>
+                <span class="input-impact">Rises sharply after 75</span>
                 <div class="health-status-selector">
                     <button type="button" class="health-btn active" data-health="average">Average Health</button>
                     <button type="button" class="health-btn" data-health="excellent">Excellent Health</button>
@@ -585,7 +585,7 @@
             <!-- Debt -->
             <div class="input-group">
                 <label>Current Debt</label>
-                <span class="input-impact">Reduces available cash until paid off</span>
+                <span class="input-impact">Paid off before retirement from savings</span>
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="current-debt" placeholder="0" min="0" step="1000">
@@ -767,29 +767,29 @@
                 <div class="assumptions-grid">
                     <div class="input-group compact">
                         <label for="return-rate">Return (%)</label>
+                        <span class="input-impact">Balanced portfolio: 6-7%</span>
                         <input type="number" id="return-rate" value="6" min="0" max="20" step="0.5">
-                        <span class="input-impact">Before fees — balanced portfolio averages 6-7%</span>
                     </div>
                     <div class="input-group compact">
                         <label for="inflation-rate">Inflation (%)</label>
+                        <span class="input-impact">BoC target: 2%</span>
                         <input type="number" id="inflation-rate" value="2.5" min="0" max="10" step="0.5">
-                        <span class="input-impact">Bank of Canada target: 2%</span>
                     </div>
                     <div class="input-group compact">
                         <label for="mer-fee">
                             MER / Fees (%)
                             <button type="button" class="info-btn" data-tooltip="Management Expense Ratio — mutual funds charge 1-2.5%, ETFs charge 0.1-0.5%. Subtracted from your return.">?</button>
                         </label>
+                        <span class="input-impact">0 if return is already net of fees</span>
                         <input type="number" id="mer-fee" value="0" min="0" max="5" step="0.1">
-                        <span class="input-impact">0 if your return above is already net of fees</span>
                     </div>
                     <div class="input-group compact">
                         <label for="contribution-growth">
                             Contrib Growth (%)
                             <button type="button" class="info-btn" data-tooltip="Increase contributions each year to keep pace with raises. 0% = flat forever.">?</button>
                         </label>
+                        <span class="input-impact">Match to your expected raise</span>
                         <input type="number" id="contribution-growth" value="0" min="0" max="10" step="0.5">
-                        <span class="input-impact">Match to expected annual raise</span>
                     </div>
                 </div>
             </div>
