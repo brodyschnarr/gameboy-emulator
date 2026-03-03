@@ -397,25 +397,27 @@ const RetirementCalcV4 = {
                 // CPP and OAS are indexed to CPI in Canada
                 const cpiFromRetirement = Math.pow(1 + inf, yearsIntoRetirement);
                 
-                // 4. Government income (inflation-indexed)
-                let cppIncome = 0;
+                // 4. Government income (inflation-indexed, tracked per-person for clawback)
+                let cppP1 = 0, cppP2 = 0;
                 if (age >= cppStartAge) {
-                    cppIncome += govBenefits.cpp1 * cpiFromRetirement;
+                    cppP1 = govBenefits.cpp1 * cpiFromRetirement;
                 }
                 if (!isSingle && age >= (cppStartAgeP2 || cppStartAge)) {
-                    cppIncome += govBenefits.cpp2 * cpiFromRetirement;
+                    cppP2 = govBenefits.cpp2 * cpiFromRetirement;
                 }
+                const cppIncome = cppP1 + cppP2;
                 
                 // FIX #3 & #4: OAS with deferral and clawback (per-person ages)
-                let oasIncome = 0;
                 const effOAS1 = govBenefits.oasStartAge || 65;
                 const effOAS2 = govBenefits.oasStartAgeP2 || effOAS1;
+                let oasP1 = 0, oasP2 = 0;
                 if (age >= effOAS1) {
-                    oasIncome += (govBenefits.oasPerPerson1 || govBenefits.oasPerPerson) * cpiFromRetirement;
+                    oasP1 = (govBenefits.oasPerPerson1 || govBenefits.oasPerPerson) * cpiFromRetirement;
                 }
                 if (!isSingle && age >= effOAS2) {
-                    oasIncome += (govBenefits.oasPerPerson2 || govBenefits.oasPerPerson) * cpiFromRetirement;
+                    oasP2 = (govBenefits.oasPerPerson2 || govBenefits.oasPerPerson) * cpiFromRetirement;
                 }
+                const oasIncome = oasP1 + oasP2;
 
                 // 5. Additional income sources
                 const additionalIncome = additionalIncomeSources
@@ -434,8 +436,9 @@ const RetirementCalcV4 = {
                     neededFromPortfolio,
                     province,
                     cppIncome + additionalIncome, // non-OAS taxable income
-                    oasIncome,                    // OAS amount (may be clawed back)
-                    age >= effOAS1         // is OAS active? (uses person 1's OAS age)
+                    oasIncome,                    // OAS amount (combined, for withdrawal budget)
+                    age >= effOAS1,               // is OAS active?
+                    { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle } // per-person for clawback
                 );
 
                 // Update balances
@@ -495,7 +498,7 @@ const RetirementCalcV4 = {
     //   RRSP up to clawback threshold → Non-Reg (cheaper than RRSP) → TFSA → overflow RRSP → Other
     //   Fill cheap taxable room first, preserve TFSA, avoid clawback.
     // ═══════════════════════════════════════
-    _withdrawSmartOptimal(balances, neededAfterTax, province, nonOASTaxableIncome, oasAmount, oasActive) {
+    _withdrawSmartOptimal(balances, neededAfterTax, province, nonOASTaxableIncome, oasAmount, oasActive, perPerson) {
         const OAS_CLAWBACK_START = 90997;
         const OAS_CLAWBACK_RATE = 0.15;
 
@@ -549,9 +552,20 @@ const RetirementCalcV4 = {
             // ═══════════════════════════════════════
 
             // Budget: how much taxable room before clawback?
-            const rrspRoomBeforeClawback = Math.max(0,
-                OAS_CLAWBACK_START - nonOASTaxableIncome - oasAmount
-            );
+            // For couples: each person has their own $90,997 threshold, so combined room is ~2x
+            // (assuming withdrawals split 50/50)
+            const isCouple = perPerson && !perPerson.isSingle;
+            let rrspRoomBeforeClawback;
+            if (isCouple) {
+                // Each person gets their own threshold. Estimate combined room.
+                const p1Room = Math.max(0, OAS_CLAWBACK_START - (perPerson.cppP1 + (perPerson.oasP1 || 0) + (perPerson.additionalIncome || 0) / 2));
+                const p2Room = Math.max(0, OAS_CLAWBACK_START - (perPerson.cppP2 + (perPerson.oasP2 || 0) + (perPerson.additionalIncome || 0) / 2));
+                rrspRoomBeforeClawback = p1Room + p2Room;
+            } else {
+                rrspRoomBeforeClawback = Math.max(0,
+                    OAS_CLAWBACK_START - nonOASTaxableIncome - oasAmount
+                );
+            }
 
             // 1. RRSP up to clawback threshold
             if (stillNeed > 0 && balances.rrsp > 0 && rrspRoomBeforeClawback > 0) {
@@ -611,14 +625,40 @@ const RetirementCalcV4 = {
             }
         }
 
-        // Calculate actual OAS after clawback
+        // Calculate actual OAS after clawback — PER-PERSON (each files individually in Canada)
         let actualOAS = oasAmount;
-        if (oasActive && oasAmount > 0) {
+        let actualOASP1 = perPerson ? perPerson.oasP1 : oasAmount;
+        let actualOASP2 = perPerson ? perPerson.oasP2 : 0;
+        
+        if (oasActive && oasAmount > 0 && perPerson && !perPerson.isSingle) {
+            // COUPLES: Each person's OAS clawback is based on their individual net income
+            // Assume portfolio withdrawals split 50/50 between spouses
+            const portfolioTaxablePerPerson = (cumulativeTaxableIncome - nonOASTaxableIncome) / 2;
+            const addlPerPerson = (perPerson.additionalIncome || 0) / 2;
+            
+            // Person 1 individual income
+            const p1Income = perPerson.cppP1 + actualOASP1 + portfolioTaxablePerPerson + addlPerPerson;
+            if (p1Income > OAS_CLAWBACK_START) {
+                const clawback1 = (p1Income - OAS_CLAWBACK_START) * OAS_CLAWBACK_RATE;
+                actualOASP1 = Math.max(0, actualOASP1 - clawback1);
+            }
+            
+            // Person 2 individual income
+            const p2Income = perPerson.cppP2 + actualOASP2 + portfolioTaxablePerPerson + addlPerPerson;
+            if (p2Income > OAS_CLAWBACK_START) {
+                const clawback2 = (p2Income - OAS_CLAWBACK_START) * OAS_CLAWBACK_RATE;
+                actualOASP2 = Math.max(0, actualOASP2 - clawback2);
+            }
+            
+            actualOAS = actualOASP1 + actualOASP2;
+        } else if (oasActive && oasAmount > 0) {
+            // SINGLE: clawback on combined income (same as before)
             const totalTaxableIncome = cumulativeTaxableIncome + oasAmount;
             if (totalTaxableIncome > OAS_CLAWBACK_START) {
                 const excessIncome = totalTaxableIncome - OAS_CLAWBACK_START;
                 const clawback = excessIncome * OAS_CLAWBACK_RATE;
                 actualOAS = Math.max(0, oasAmount - clawback);
+                actualOASP1 = actualOAS;
             }
         }
 

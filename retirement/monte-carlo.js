@@ -229,20 +229,22 @@ const MonteCarloSimulator = {
                 // FIX #2: CPP inflation-indexed
                 const cpiFromRetirement = Math.pow(1 + inf, yearsIntoRetirement);
                 
-                let cppIncome = 0;
+                let cppP1 = 0, cppP2 = 0;
                 if (age >= (cppStartAge || 65)) {
-                    cppIncome += govBenefits.cpp1 * cpiFromRetirement;
-                    if (!isSingle) cppIncome += govBenefits.cpp2 * cpiFromRetirement;
+                    cppP1 = govBenefits.cpp1 * cpiFromRetirement;
+                    if (!isSingle) cppP2 = govBenefits.cpp2 * cpiFromRetirement;
                 }
+                const cppIncome = cppP1 + cppP2;
                 
-                // FIX #3: OAS with deferral
-                let oasIncome = 0;
+                // FIX #3: OAS with deferral (per-person for clawback)
+                let oasP1 = 0, oasP2 = 0;
                 if (age >= effOAS1) {
-                    oasIncome += (govBenefits.oasPerPerson1 || govBenefits.oasPerPerson) * cpiFromRetirement;
+                    oasP1 = (govBenefits.oasPerPerson1 || govBenefits.oasPerPerson) * cpiFromRetirement;
                 }
                 if (!isSingle && age >= effOAS2) {
-                    oasIncome += (govBenefits.oasPerPerson2 || govBenefits.oasPerPerson) * cpiFromRetirement;
+                    oasP2 = (govBenefits.oasPerPerson2 || govBenefits.oasPerPerson) * cpiFromRetirement;
                 }
+                const oasIncome = oasP1 + oasP2;
                 
                 const additionalIncome = (additionalIncomeSources || [])
                     .filter(s => age >= s.startAge && (s.endAge === null || age <= s.endAge))
@@ -258,7 +260,8 @@ const MonteCarloSimulator = {
                     province,
                     cppIncome + additionalIncome,
                     oasIncome,
-                    age >= effOAS1
+                    age >= effOAS1,
+                    { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle }
                 );
                 
                 balances.tfsa = Math.max(0, balances.tfsa - withdrawal.fromTFSA);
