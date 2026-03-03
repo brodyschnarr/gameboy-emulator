@@ -39,6 +39,11 @@
         // Post-retirement work
         { id: 'prt-income',          min: 0, max: 100000, step: 1000, format: 'currency', label: null },
 
+        // House sale
+        { id: 'house-sale-price',    min: 0, max: 2000000, step: 25000, format: 'currency', label: null },
+        { id: 'house-current-costs', min: 0, max: 10000,   step: 100,   format: 'currency', label: null },
+        { id: 'house-rent-after',    min: 0, max: 10000,   step: 100,   format: 'currency', label: null },
+
         // Contribution growth
         { id: 'contribution-growth', min: 0, max: 10, step: 0.5, format: 'percent', label: null },
 

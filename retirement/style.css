@@ -1616,6 +1616,126 @@ input:focus {
     margin-top: 12px;
 }
 
+/* Toggle switch */
+.toggle-switch-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e1;
+    border-radius: 28px;
+    transition: 0.3s;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary, #2563eb);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(22px);
+}
+
+/* House sale comparison */
+.comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.comparison-column {
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.comparison-column.keep-home {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 2px solid #f59e0b;
+}
+
+.comparison-column.sell-home {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    border: 2px solid #3b82f6;
+}
+
+.comparison-column h3 {
+    margin: 0 0 12px;
+    font-size: 16px;
+}
+
+.comparison-stat {
+    margin: 8px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.comparison-stat strong {
+    display: block;
+    font-size: 18px;
+    color: var(--text);
+}
+
+.comparison-verdict {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.comparison-verdict.sell-wins {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.comparison-verdict.keep-wins {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.comparison-verdict.close-call {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+@media (max-width: 480px) {
+    .comparison-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Chart tooltip */
 .chart-tooltip {
     display: none;

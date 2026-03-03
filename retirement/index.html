@@ -524,6 +524,64 @@
                 <input type="number" id="debt-payoff-age" placeholder="65" min="0" max="100">
             </div>
 
+            <!-- House Sale Scenario -->
+            <div class="input-group">
+                <label>
+                    🏠 House Sale Scenario
+                    <button type="button" class="info-btn" data-tooltip="Compare keeping your home vs selling it. See how each option affects your retirement.">?</button>
+                </label>
+                <p class="section-intro">What if you sell the house? Compare both paths.</p>
+                
+                <div class="toggle-switch-row">
+                    <span>Enable house sale comparison</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="house-sale-toggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div id="house-sale-form" class="hidden" style="margin-top: 12px;">
+                    <div class="input-group">
+                        <label for="house-sale-price">Expected Sale Price</label>
+                        <div class="input-with-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="house-sale-price" placeholder="500000" min="0" step="10000">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="house-sale-age">Sell at Age</label>
+                        <input type="number" id="house-sale-age" placeholder="65" min="30" max="100">
+                    </div>
+                    <div class="input-group">
+                        <label for="house-current-costs">Current Monthly Housing Costs</label>
+                        <div class="input-with-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="house-current-costs" placeholder="2000" min="0" step="100">
+                        </div>
+                        <small class="input-hint">Mortgage, property tax, insurance, maintenance</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="house-rent-after">Monthly Rent After Selling</label>
+                        <div class="input-with-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="house-rent-after" placeholder="1500" min="0" step="100">
+                        </div>
+                        <small class="input-hint">What you'd pay for rent/condo after selling</small>
+                    </div>
+                    
+                    <div id="house-sale-preview" class="healthcare-preview" style="margin-top: 8px;">
+                        <div class="preview-line">
+                            <span>Proceeds into portfolio:</span>
+                            <span id="house-proceeds-display">$0</span>
+                        </div>
+                        <div class="preview-line">
+                            <span>Monthly savings/cost:</span>
+                            <span id="house-monthly-diff">$0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <button type="button" class="btn-secondary" id="btn-back-retirement">← Back</button>
             <button type="button" class="btn-primary" id="btn-calculate">Calculate My Plan 🚀</button>
         </section>
@@ -566,6 +624,12 @@
                         <small id="stat-probability-note"></small>
                     </div>
                 </div>
+            </section>
+
+            <!-- House Sale Comparison (shown only when enabled) -->
+            <section class="card hidden" id="house-sale-comparison">
+                <h2>🏠 Keep vs. Sell Comparison</h2>
+                <div id="house-sale-comparison-content"></div>
             </section>
 
             <!-- Charts -->

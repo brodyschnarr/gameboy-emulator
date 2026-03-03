@@ -51,6 +51,9 @@ const RetirementCalcV4 = {
             // Additional income sources
             additionalIncomeSources,
             
+            // Windfalls
+            windfalls = [],
+            
             // Assumptions
             returnRate,
             inflationRate,
@@ -117,7 +120,9 @@ const RetirementCalcV4 = {
             cppStartAge: cppStartAge || 65,
             cppStartAgeP2: cppStartAgeP2 || cppStartAge || 65,
             oasStartAge: oasStartAge || 65,
-            isSingle: !isFamilyMode
+            isSingle: !isFamilyMode,
+            windfalls: windfalls || [],
+            currentAge
         });
 
         // 5. Calculate probability of success
@@ -255,7 +260,9 @@ const RetirementCalcV4 = {
             cppStartAge,
             cppStartAgeP2,
             oasStartAge,
-            isSingle
+            isSingle,
+            windfalls = [],
+            currentAge = startAge
         } = params;
 
         const projection = [];
@@ -272,6 +279,24 @@ const RetirementCalcV4 = {
         for (let age = startAge; age <= lifeExpectancy; age++) {
             const isRetired = age >= retirementAge;
             const isWorking = age < retirementAge;
+
+            // Process windfalls for this year
+            if (windfalls && windfalls.length > 0) {
+                windfalls.forEach(w => {
+                    const targetAge = w.year > 150 ? (w.year - (new Date().getFullYear() - currentAge)) : (w.year || (currentAge + (w.yearsFromNow || 0)));
+                    if (targetAge === age && (w.probability === undefined || w.probability >= 100)) {
+                        const amount = w.taxable ? w.amount * 0.7 : w.amount;
+                        if (w.destination === 'rrsp') balances.rrsp += amount;
+                        else if (w.destination === 'tfsa') balances.tfsa += amount;
+                        else if (w.destination === 'nonReg') balances.nonReg += amount;
+                        else {
+                            // Default: split between TFSA and non-reg
+                            balances.tfsa += amount * 0.5;
+                            balances.nonReg += amount * 0.5;
+                        }
+                    }
+                });
+            }
 
             // ═══════════════════════════════════════
             //  WORKING PHASE

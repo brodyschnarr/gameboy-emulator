@@ -37,6 +37,7 @@ const AppV4 = {
         this._setupDebt();
         this._setupIncomeSources();
         this._setupPostRetirementWork();
+        this._setupHouseSale();
         this._setupWindfalls();
         this._setupCalculate();
         this._setupScenarios();
@@ -438,6 +439,195 @@ const AppV4 = {
 
     _setupIncomeSources() {
         IncomeSources.initModal();
+    },
+
+    _setupHouseSale() {
+        const toggle = document.getElementById('house-sale-toggle');
+        const form = document.getElementById('house-sale-form');
+        
+        if (toggle && form) {
+            toggle.addEventListener('change', () => {
+                form.classList.toggle('hidden', !toggle.checked);
+                // Re-enhance sliders for newly visible inputs
+                if (toggle.checked && window.syncAllSliders) {
+                    setTimeout(() => {
+                        // Force slider init for house sale inputs
+                        if (window.syncSlider) {
+                            window.syncSlider('house-sale-price');
+                            window.syncSlider('house-current-costs');
+                            window.syncSlider('house-rent-after');
+                        }
+                    }, 50);
+                }
+            });
+        }
+        
+        // Live preview
+        const priceEl = document.getElementById('house-sale-price');
+        const costsEl = document.getElementById('house-current-costs');
+        const rentEl = document.getElementById('house-rent-after');
+        
+        const updatePreview = () => {
+            const price = parseFloat(priceEl?.value) || 0;
+            const costs = parseFloat(costsEl?.value) || 0;
+            const rent = parseFloat(rentEl?.value) || 0;
+            const diff = costs - rent;
+            
+            const proceedsEl = document.getElementById('house-proceeds-display');
+            const diffEl = document.getElementById('house-monthly-diff');
+            
+            if (proceedsEl) proceedsEl.textContent = '$' + price.toLocaleString();
+            if (diffEl) {
+                if (diff > 0) {
+                    diffEl.textContent = 'Save $' + diff.toLocaleString() + '/mo';
+                    diffEl.style.color = '#10b981';
+                } else if (diff < 0) {
+                    diffEl.textContent = 'Extra $' + Math.abs(diff).toLocaleString() + '/mo';
+                    diffEl.style.color = '#ef4444';
+                } else {
+                    diffEl.textContent = 'No change';
+                    diffEl.style.color = '';
+                }
+            }
+        };
+        
+        [priceEl, costsEl, rentEl].forEach(el => {
+            if (el) el.addEventListener('input', updatePreview);
+        });
+    },
+
+    _getHouseSaleInputs() {
+        const enabled = document.getElementById('house-sale-toggle')?.checked;
+        if (!enabled) return null;
+        
+        return {
+            salePrice: parseFloat(document.getElementById('house-sale-price')?.value) || 0,
+            saleAge: parseInt(document.getElementById('house-sale-age')?.value) || 65,
+            currentMonthlyCosts: parseFloat(document.getElementById('house-current-costs')?.value) || 0,
+            rentAfter: parseFloat(document.getElementById('house-rent-after')?.value) || 0
+        };
+    },
+
+    _runHouseSaleComparison(baseInputs, baseResults) {
+        const houseSale = this._getHouseSaleInputs();
+        if (!houseSale) {
+            const section = document.getElementById('house-sale-comparison');
+            if (section) section.classList.add('hidden');
+            return;
+        }
+        
+        const { salePrice, saleAge, currentMonthlyCosts, rentAfter } = houseSale;
+        
+        // Scenario: Sell house
+        // 1. Add sale proceeds as windfall (tax-free — primary residence exemption)
+        // 2. Reduce annual spending by current housing costs
+        // 3. Add rent costs to annual spending
+        const annualHousingCostsSaved = currentMonthlyCosts * 12;
+        const annualRentAdded = rentAfter * 12;
+        const netSpendingChange = annualRentAdded - annualHousingCostsSaved;
+        
+        const sellInputs = {
+            ...baseInputs,
+            annualSpending: baseInputs.annualSpending + netSpendingChange,
+            windfalls: [
+                ...(baseInputs.windfalls || []),
+                {
+                    name: 'House Sale',
+                    amount: salePrice,
+                    year: saleAge,
+                    probability: 100,
+                    taxable: false, // Primary residence exemption
+                    destination: 'nonReg'
+                }
+            ]
+        };
+        
+        const sellResults = RetirementCalcV4.calculate(sellInputs);
+        
+        // Display comparison
+        this._displayHouseSaleComparison(baseResults, sellResults, baseInputs, houseSale);
+    },
+
+    _displayHouseSaleComparison(keepResults, sellResults, inputs, houseSale) {
+        const section = document.getElementById('house-sale-comparison');
+        const content = document.getElementById('house-sale-comparison-content');
+        if (!section || !content) return;
+        
+        section.classList.remove('hidden');
+        
+        const fmt = (v) => '$' + Math.round(v).toLocaleString();
+        const keepLegacy = keepResults.summary.legacyAmount;
+        const sellLegacy = sellResults.summary.legacyAmount;
+        const diff = sellLegacy - keepLegacy;
+        const keepLasts = keepResults.summary.moneyLastsAge;
+        const sellLasts = sellResults.summary.moneyLastsAge;
+        
+        const monthlySaved = houseSale.currentMonthlyCosts - houseSale.rentAfter;
+        
+        let verdictClass, verdictText;
+        if (Math.abs(diff) < 50000) {
+            verdictClass = 'close-call';
+            verdictText = '🤝 It\'s roughly a wash — both paths are similar';
+        } else if (diff > 0) {
+            verdictClass = 'sell-wins';
+            verdictText = `📈 Selling adds ${fmt(diff)} to your legacy`;
+        } else {
+            verdictClass = 'keep-wins';
+            verdictText = `🏠 Keeping the home preserves ${fmt(Math.abs(diff))} more`;
+        }
+        
+        // If one scenario fails (money runs out) and other doesn't
+        if (sellLasts > keepLasts) {
+            verdictClass = 'sell-wins';
+            verdictText = `📈 Selling: money lasts ${sellLasts - keepLasts} years longer`;
+        } else if (keepLasts > sellLasts) {
+            verdictClass = 'keep-wins';
+            verdictText = `🏠 Keeping: money lasts ${keepLasts - sellLasts} years longer`;
+        }
+        
+        content.innerHTML = `
+            <div class="comparison-grid">
+                <div class="comparison-column keep-home">
+                    <h3>🏠 Keep Home</h3>
+                    <div class="comparison-stat">
+                        Portfolio at ${inputs.retirementAge}
+                        <strong>${fmt(keepResults.summary.portfolioAtRetirement)}</strong>
+                    </div>
+                    <div class="comparison-stat">
+                        Money lasts to
+                        <strong>Age ${keepLasts}</strong>
+                    </div>
+                    <div class="comparison-stat">
+                        Legacy at ${inputs.lifeExpectancy}
+                        <strong>${fmt(keepLegacy)}</strong>
+                    </div>
+                    <div class="comparison-stat">
+                        Housing: ${fmt(houseSale.currentMonthlyCosts)}/mo
+                    </div>
+                </div>
+                <div class="comparison-column sell-home">
+                    <h3>💰 Sell at ${houseSale.saleAge}</h3>
+                    <div class="comparison-stat">
+                        Sale proceeds
+                        <strong>${fmt(houseSale.salePrice)}</strong>
+                    </div>
+                    <div class="comparison-stat">
+                        Money lasts to
+                        <strong>Age ${sellLasts}</strong>
+                    </div>
+                    <div class="comparison-stat">
+                        Legacy at ${inputs.lifeExpectancy}
+                        <strong>${fmt(sellLegacy)}</strong>
+                    </div>
+                    <div class="comparison-stat">
+                        Rent: ${fmt(houseSale.rentAfter)}/mo
+                        ${monthlySaved > 0 ? '<br><span style="color:#10b981">Save ' + fmt(monthlySaved) + '/mo</span>' : ''}
+                        ${monthlySaved < 0 ? '<br><span style="color:#ef4444">Extra ' + fmt(Math.abs(monthlySaved)) + '/mo</span>' : ''}
+                    </div>
+                </div>
+            </div>
+            <div class="comparison-verdict ${verdictClass}">${verdictText}</div>
+        `;
     },
 
     _setupPostRetirementWork() {
@@ -1094,6 +1284,9 @@ const AppV4 = {
             // NOW display results (charts will draw to visible parent)
             this.currentScenario = 'base';
             this._displayResults(baseResults, inputs);
+
+            // House sale comparison (if enabled)
+            this._runHouseSaleComparison(inputs, baseResults);
 
             // Setup scenario tab switching (after results are visible)
             this._setupScenarioTabs();
