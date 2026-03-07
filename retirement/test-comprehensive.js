@@ -269,9 +269,9 @@ const preOAS = runCalc({
     rrsp: 200000, tfsa: 200000, nonReg: 200000, annualSpending: 40000
 });
 const preOASYear = preOAS.yearByYear.find(y => y.age === 55);
-assert('Pre-OAS: TFSA withdrawn first',
-    preOASYear && preOASYear.withdrawalBreakdown.tfsa > 0,
-    `TFSA: ${preOASYear?.withdrawalBreakdown?.tfsa}, RRSP: ${preOASYear?.withdrawalBreakdown?.rrsp}`);
+assert('Pre-OAS: RRSP meltdown (fill low brackets)',
+    preOASYear && preOASYear.withdrawalBreakdown.rrsp > 0,
+    `RRSP: ${preOASYear?.withdrawalBreakdown?.rrsp}, TFSA: ${preOASYear?.withdrawalBreakdown?.tfsa}`);
 
 // Post-OAS (at 65): should cap RRSP to avoid clawback
 const postOAS = runCalc({

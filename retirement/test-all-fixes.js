@@ -269,7 +269,7 @@ console.error('\n📊 Test Group 7: Contribution split normalization');
 // ═══════════════════════════════════════
 console.error('\n📊 Test Group 8: Smart withdrawal optimization');
 {
-    // 8a: Pre-OAS (age 60-64): Should use TFSA first (no clawback concern)
+    // 8a: Pre-OAS (age 60-64): RRSP meltdown — fill low brackets while no CPP/OAS
     const preOAS = baseInputs({
         rrsp: 500000,
         tfsa: 500000,
@@ -280,10 +280,10 @@ console.error('\n📊 Test Group 8: Smart withdrawal optimization');
     const preResult = RetirementCalcV4.calculate(preOAS);
     const age60 = preResult.yearByYear.find(y => y.age === 60);
     if (age60 && age60.withdrawalBreakdown) {
-        assert(age60.withdrawalBreakdown.tfsa > 0,
-            'Pre-OAS: TFSA withdrawn first (tax-free)');
-        assert(age60.withdrawalBreakdown.rrsp === 0 || age60.withdrawalBreakdown.tfsa >= age60.withdrawalBreakdown.rrsp,
-            'Pre-OAS: TFSA preferred over RRSP');
+        assert(age60.withdrawalBreakdown.rrsp > 0,
+            'Pre-OAS: RRSP meltdown (fill low brackets)');
+        assert(age60.withdrawalBreakdown.tfsa === 0 || age60.withdrawalBreakdown.rrsp >= age60.withdrawalBreakdown.tfsa,
+            'Pre-OAS: RRSP preferred over TFSA');
     }
 
     // 8b: OAS-active: taxable income should stay at/below clawback threshold

@@ -512,17 +512,47 @@ const RetirementCalcV4 = {
 
         if (!oasActive) {
             // ═══════════════════════════════════════
-            // PRE-OAS: Pure tax minimization
-            // TFSA → Non-Reg → RRSP → Other
+            // PRE-OAS: RRSP Meltdown Strategy
+            // 
+            // This is the GOLDEN WINDOW to withdraw RRSP at low tax rates.
+            // Once CPP/OAS kick in, those low brackets are consumed.
+            // Strategy: RRSP first (fill low brackets) → NonReg → TFSA (preserve tax-free growth)
+            //
+            // Cap RRSP withdrawal at a sensible bracket ceiling to avoid
+            // overpaying tax now. Target: fill up to ~$55K taxable income
+            // (covers basic personal amount + first federal bracket in most provinces).
+            // If spending need exceeds that, use NonReg then TFSA for the rest.
             // ═══════════════════════════════════════
 
-            // 1. TFSA (tax-free)
-            if (stillNeed > 0 && balances.tfsa > 0) {
-                fromTFSA = Math.min(stillNeed, balances.tfsa);
-                stillNeed -= fromTFSA;
+            // How much low-bracket room is available for RRSP?
+            // Use OAS clawback threshold: every dollar below this pre-OAS
+            // is cheaper than withdrawing it post-OAS (where CPP+OAS consume
+            // low brackets and additional income triggers clawback).
+            const MELTDOWN_CEILING = OAS_CLAWBACK_START; // $90,997
+            const rrspRoom = Math.max(0, MELTDOWN_CEILING - nonOASTaxableIncome);
+
+            // 1. RRSP up to the meltdown ceiling (fill low brackets)
+            if (stillNeed > 0 && balances.rrsp > 0 && rrspRoom > 0) {
+                const maxGross = Math.min(rrspRoom, balances.rrsp);
+                const taxIfMax = CanadianTax.calculateTax(
+                    cumulativeTaxableIncome + maxGross, province
+                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province).total;
+                const maxAfterTax = maxGross - taxIfMax;
+
+                if (maxAfterTax >= stillNeed) {
+                    // Can cover everything within the low-bracket cap
+                    fromRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, balances.rrsp);
+                    cumulativeTaxableIncome += fromRRSP;
+                    stillNeed = 0;
+                } else {
+                    // Use all room, still need more
+                    fromRRSP = maxGross;
+                    cumulativeTaxableIncome += fromRRSP;
+                    stillNeed -= maxAfterTax;
+                }
             }
 
-            // 2. Non-Reg (50% capital gains inclusion — cheaper than RRSP)
+            // 2. Non-Reg (50% capital gains inclusion — cheaper than more RRSP above ceiling)
             if (stillNeed > 0 && balances.nonReg > 0) {
                 fromNonReg = this._withdrawNonReg(stillNeed, cumulativeTaxableIncome, province, balances.nonReg);
                 const capitalGain = fromNonReg * 0.5;
@@ -533,14 +563,22 @@ const RetirementCalcV4 = {
                 stillNeed -= (fromNonReg - taxOnNonReg);
             }
 
-            // 3. RRSP (fully taxable)
-            if (stillNeed > 0 && balances.rrsp > 0) {
-                fromRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, balances.rrsp);
-                cumulativeTaxableIncome += fromRRSP;
+            // 3. More RRSP if still needed (above the ceiling, still better than burning TFSA)
+            if (stillNeed > 0 && balances.rrsp > fromRRSP) {
+                const remainingRRSP = balances.rrsp - fromRRSP;
+                const additionalRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, remainingRRSP);
+                fromRRSP += additionalRRSP;
+                cumulativeTaxableIncome += additionalRRSP;
                 stillNeed = 0;
             }
 
-            // 4. Other (last resort, fully taxable)
+            // 4. TFSA (last resort — preserve tax-free growth as long as possible)
+            if (stillNeed > 0 && balances.tfsa > 0) {
+                fromTFSA = Math.min(stillNeed, balances.tfsa);
+                stillNeed -= fromTFSA;
+            }
+
+            // 5. Other (truly last resort)
             if (stillNeed > 0 && balances.other > 0) {
                 fromOther = Math.min(stillNeed * 1.5, balances.other);
                 cumulativeTaxableIncome += fromOther;
