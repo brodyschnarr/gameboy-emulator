@@ -305,19 +305,21 @@ const BenchmarksV2 = {
     },
 
     // Internal: Generate savings comparison message
-    _getSavingsMessage(vsMedian, percentileBracket) {
-        if (vsMedian > 100) {
-            return `💪 Excellent! You're in the ${percentileBracket} (${vsMedian > 0 ? '+' : ''}${vsMedian}% vs median)`;
+    _getSavingsMessage(vsMedian, percentileBracket, age) {
+        if (vsMedian > 200) {
+            return `You're <strong>well ahead</strong> — on track for an early or very comfortable retirement`;
+        } else if (vsMedian > 100) {
+            return `<strong>Strong position</strong> — you have real flexibility in when and how you retire`;
         } else if (vsMedian > 50) {
-            return `📈 Well above median (${percentileBracket}, ${vsMedian > 0 ? '+' : ''}${vsMedian}%)`;
+            return `<strong>Above average</strong> — keep this up and retirement should be comfortable`;
         } else if (vsMedian > 15) {
-            return `✅ Above median (${percentileBracket}, ${vsMedian > 0 ? '+' : ''}${vsMedian}%)`;
+            return `<strong>Ahead of most</strong> Canadians your age — solid foundation`;
         } else if (vsMedian > -15) {
-            return `📊 Near median (${percentileBracket})`;
+            return `<strong>Right around typical</strong> — increasing contributions now has outsized impact`;
         } else if (vsMedian > -40) {
-            return `⚠️ Below median (${percentileBracket}, ${vsMedian}%)`;
+            return `<strong>Below typical</strong> — consider boosting savings rate to close the gap`;
         } else {
-            return `🚨 Well below median (${percentileBracket}, ${vsMedian}%)`;
+            return `<strong>Behind most peers</strong> — even small increases now compound significantly`;
         }
     },
 
@@ -335,40 +337,41 @@ const BenchmarksV2 = {
 
     _getContributionMessage(vsRecommended, vsIncomePeer) {
         if (vsRecommended > 20) {
-            return `💪 Exceeding recommended 15% (${vsRecommended > 0 ? '+' : ''}${vsRecommended}%)`;
+            return `<strong>Exceeding the 15% target</strong> — you're building wealth faster than most`;
         } else if (vsRecommended > -5) {
-            return `✅ Meeting recommended target`;
+            return `<strong>Meeting the recommended 15%</strong> — this is the savings sweet spot`;
         } else if (vsIncomePeer > 0) {
-            return `📊 Above peers at your income level (${vsIncomePeer > 0 ? '+' : ''}${vsIncomePeer}%)`;
+            return `<strong>Saving more than peers</strong> at your income level — good relative position`;
         } else if (vsRecommended > -25) {
-            return `⚠️ Below recommended 15% (${vsRecommended}%)`;
+            return `<strong>Below the 15% target</strong> — try to close the gap gradually`;
         } else {
-            return `🚨 Well below recommended (${vsRecommended}%)`;
+            return `<strong>Well below target</strong> — even $100/mo more makes a real difference over time`;
         }
     },
 
     _getIncomeMessage(vsAge, percentileBracket) {
         if (percentileBracket === 'top 10%') {
-            return `💪 Top 10% of Canadian earners`;
+            return `You're in the <strong>top 10%</strong> (high income)`;
         } else if (percentileBracket === 'top 25%') {
-            return `📈 Top 25% of Canadian earners`;
+            return `You're in the <strong>top 25%</strong> — strong earning position`;
         } else if (percentileBracket === 'above median') {
-            return `✅ Above median Canadian income`;
+            return `<strong>Above median</strong> Canadian income`;
         } else if (percentileBracket === 'below median') {
-            return `📊 Below median Canadian income`;
+            return `<strong>Below median</strong> — savings rate matters more than income`;
         } else {
-            return `⚠️ Bottom 25% of Canadian earners`;
+            return `<strong>Lower income bracket</strong> — GIS + OAS provide a solid safety net`;
         }
     },
 
     _getSpendingMessage(category, vsMedian) {
-        const categories = {
-            modest: '💰 Modest retirement lifestyle',
-            average: '📊 Typical Canadian retiree spending',
-            comfortable: '✨ Comfortable retirement lifestyle',
-            affluent: '🌟 Affluent retirement lifestyle'
-        };
-        
-        return `${categories[category]} (${vsMedian > 0 ? '+' : ''}${vsMedian}% vs median)`;
+        if (category === 'modest') {
+            return `<strong>Modest lifestyle</strong> — easier to fund, but consider if it covers healthcare costs`;
+        } else if (category === 'average') {
+            return `<strong>Typical retiree spending</strong> — realistic and sustainable for most portfolios`;
+        } else if (category === 'comfortable') {
+            return `<strong>Comfortable lifestyle</strong> — requires a well-funded portfolio to sustain`;
+        } else {
+            return `<strong>Affluent lifestyle</strong> — needs significant savings or income sources`;
+        }
     }
 };

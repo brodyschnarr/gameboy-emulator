@@ -108,7 +108,7 @@
                         <span class="prefix">$</span>
                         <input type="number" id="current-income" placeholder="75000" min="0" step="1000" required>
                     </div>
-                    <small id="income-benchmark" class="benchmark-text"></small>
+                    <div id="income-benchmark"></div>
                 </div>
             </div>
 
@@ -137,7 +137,7 @@
                     <strong>Total Household Income:</strong> <span id="household-income-display">$0</span>
                 </div>
                 
-                <div id="household-income-benchmark" class="benchmark-display hidden">
+                <div id="household-income-benchmark" class="hidden">
                     <!-- Populated by JS -->
                 </div>
             </div>
@@ -161,7 +161,7 @@
         <section class="card hidden" id="step-savings">
             <h2>💵 Step 2 of 5: Current Savings</h2>
             <p class="section-intro">How much have you saved for retirement so far?</p>
-            <p id="savings-benchmark" class="benchmark-highlight"></p>
+            <div id="savings-benchmark"></div>
 
             <div class="input-group">
                 <label for="rrsp">RRSP</label>
@@ -210,8 +210,8 @@
 
             <div class="total-display">
                 <strong>Total Savings:</strong> <span id="total-savings-display">$0</span>
-                <span id="total-savings-benchmark" class="benchmark-text"></span>
             </div>
+            <div id="total-savings-benchmark"></div>
 
             <button type="button" class="btn-secondary" id="btn-back-basic">← Back</button>
             <button type="button" class="btn-primary" id="btn-next-contributions">Continue →</button>
@@ -232,7 +232,7 @@
                     <span class="prefix">$</span>
                     <input type="number" id="monthly-contribution" placeholder="500" min="0" step="50">
                 </div>
-                <small id="contribution-benchmark" class="benchmark-text"></small>
+                <div id="contribution-benchmark"></div>
             </div>
 
             <div class="input-group">

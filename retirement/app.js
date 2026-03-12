@@ -188,35 +188,23 @@ const AppV4 = {
             const medianHousehold = 92000;
             const averageHousehold = 106000;
 
-            let percentile = '';
-            let comparison = '';
-
+            let statusMsg = '';
             if (total < 50000) {
-                percentile = 'bottom 25%';
-                comparison = 'below average';
+                statusMsg = '<strong>Lower income bracket</strong> — GIS + OAS provide a solid safety net';
             } else if (total < medianHousehold) {
-                percentile = 'bottom 50%';
-                comparison = 'below median';
+                statusMsg = '<strong>Below median</strong> — savings rate matters more than income';
             } else if (total < 110000) {
-                percentile = 'top 50%';
-                comparison = 'above median';
+                statusMsg = '<strong>Above median</strong> — solid earning position';
             } else if (total < 150000) {
-                percentile = 'top 25%';
-                comparison = 'well above average';
+                statusMsg = '<strong>Well above average</strong> — strong foundation for retirement savings';
             } else {
-                percentile = 'top 10%';
-                comparison = 'high income';
+                statusMsg = '<strong>High income</strong> — maximize tax-sheltered contributions';
             }
 
             benchmarkEl.innerHTML = `
-                <div class="benchmark-content">
-                    <p>
-                        <strong>Canadian ${isFamilyMode ? 'couples' : 'households'}:</strong>
-                        Median $${medianHousehold.toLocaleString()}, Average $${averageHousehold.toLocaleString()}
-                    </p>
-                    <p class="benchmark-highlight">
-                        You're in the <strong>${percentile}</strong> (${comparison})
-                    </p>
+                <div class="benchmark-card">
+                    <div class="benchmark-status">${statusMsg}</div>
+                    <div class="benchmark-context">Canadian ${isFamilyMode ? 'couples' : 'households'}: Median $${medianHousehold.toLocaleString()} · Average $${averageHousehold.toLocaleString()}</div>
                 </div>
             `;
             benchmarkEl.classList.remove('hidden');
@@ -1155,11 +1143,10 @@ const AppV4 = {
             const el = document.getElementById('income-benchmark');
             if (el) {
                 el.innerHTML = `
-                    ${comparison.message}<br>
-                    <small style="opacity: 0.8;">
-                        Age ${age} avg: $${comparison.ageAverage.toLocaleString()} |
-                        Canadian median: $${comparison.median.toLocaleString()}
-                    </small>
+                    <div class="benchmark-card">
+                        <div class="benchmark-status">${comparison.message}</div>
+                        <div class="benchmark-context">Median: $${comparison.median.toLocaleString()} · Average: $${comparison.ageAverage.toLocaleString()}</div>
+                    </div>
                 `;
             }
         }
@@ -1186,15 +1173,11 @@ const AppV4 = {
             ? RegionalDataV2.getRegionalBenchmarks(this.selectedRegion, age)
             : BenchmarksV2.getSavingsBenchmark(age);
 
+        const regionLabel = benchmarks.name || 'Canadian';
         const html = `
-            <strong>Typical ${benchmarks.name || 'Canadian'} at age ${age}:</strong><br>
-            <div style="margin-top: 8px; font-size: 14px;">
-                📊 Median: $${benchmarks.median.toLocaleString()} |
-                📈 Average: $${benchmarks.average.toLocaleString()}
-            </div>
-            <div style="margin-top: 4px; font-size: 13px; opacity: 0.8;">
-                25th percentile: $${(benchmarks.p25 || 0).toLocaleString()} |
-                75th percentile: $${(benchmarks.p75 || 0).toLocaleString()}
+            <div class="benchmark-card">
+                <div class="benchmark-status"><strong>${regionLabel} at age ${age}:</strong> Median $${benchmarks.median.toLocaleString()} · Average $${benchmarks.average.toLocaleString()}</div>
+                <div class="benchmark-context">25th: $${(benchmarks.p25 || 0).toLocaleString()} · 75th: $${(benchmarks.p75 || 0).toLocaleString()}</div>
             </div>
         `;
 
@@ -1222,10 +1205,9 @@ const AppV4 = {
         const benchmark = document.getElementById('total-savings-benchmark');
         if (benchmark) {
             benchmark.innerHTML = `
-                <div>${comparison.message}</div>
-                <div style="font-size: 12px; margin-top: 4px; opacity: 0.8;">
-                    Median: $${comparison.median.toLocaleString()} |
-                    Average: $${comparison.average.toLocaleString()}
+                <div class="benchmark-card">
+                    <div class="benchmark-status">${comparison.message}</div>
+                    <div class="benchmark-context">Median: $${comparison.median.toLocaleString()} · Average: $${comparison.average.toLocaleString()}</div>
                 </div>
             `;
         }
@@ -1248,11 +1230,9 @@ const AppV4 = {
             const el = document.getElementById('contribution-benchmark');
             if (el) {
                 el.innerHTML = `
-                    <div>${comparison.message}</div>
-                    <div style="font-size: 12px; margin-top: 4px; opacity: 0.8;">
-                        Recommended (15% of income): $${comparison.recommended}/month |
-                        Canadian median: $${BenchmarksV2.monthlyContribution.median}/month |
-                        Avg at your income: $${comparison.incomePeerMedian}/month
+                    <div class="benchmark-card">
+                        <div class="benchmark-status">${comparison.message}</div>
+                        <div class="benchmark-context">15% target: $${comparison.recommended}/mo · Median: $${BenchmarksV2.monthlyContribution.median}/mo · Your income peers: $${comparison.incomePeerMedian}/mo</div>
                     </div>
                 `;
             }
@@ -1357,19 +1337,21 @@ const AppV4 = {
 
         const el = document.getElementById('spending-recommendation');
         if (el) {
-            let html = `Recommended (70% of income): $${recommended.toLocaleString()}/year`;
-
-            if (spending > 0) {
-                const comparison = BenchmarksV2.compareSpending(spending, isSingle);
-                html += `<br><small style="opacity: 0.8;">${comparison.message}</small>`;
-            }
-
             const regionData = this.selectedRegion ? RegionalDataV2.getRegion(this.selectedRegion) : null;
             const regionName = regionData ? regionData.name : 'Canada';
 
-            html += `<br><small style="opacity: 0.8;">${regionName} retiree ${isSingle ? '' : 'couple '}median: $${regionalMedian.toLocaleString()}/year | Average: $${regionalAverage.toLocaleString()}/year</small>`;
+            let statusMsg = `Recommended: <strong>$${recommended.toLocaleString()}/year</strong> (70% of income)`;
+            if (spending > 0) {
+                const comparison = BenchmarksV2.compareSpending(spending, isSingle);
+                statusMsg = comparison.message;
+            }
 
-            el.innerHTML = html;
+            el.innerHTML = `
+                <div class="benchmark-card">
+                    <div class="benchmark-status">${statusMsg}</div>
+                    <div class="benchmark-context">${regionName} retiree ${isSingle ? '' : 'couple '}median: $${regionalMedian.toLocaleString()}/yr · Average: $${regionalAverage.toLocaleString()}/yr</div>
+                </div>
+            `;
         }
     },
 

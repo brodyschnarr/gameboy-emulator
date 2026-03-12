@@ -649,12 +649,34 @@ input:focus {
 }
 
 .benchmark-highlight {
-    background: #f3f4f6;
+    background: #f0f9ff;
     padding: 12px;
     border-radius: 8px;
-    border-left: 4px solid var(--primary);
+    border-left: 4px solid #3b82f6;
     font-size: 14px;
     margin-bottom: 20px;
+}
+
+/* Unified benchmark card */
+.benchmark-card {
+    background: #f0f9ff;
+    border-left: 4px solid #3b82f6;
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin: 8px 0;
+}
+.benchmark-card .benchmark-status {
+    font-size: 14px;
+    color: #1e293b;
+    line-height: 1.5;
+}
+.benchmark-card .benchmark-status strong {
+    color: #1e40af;
+}
+.benchmark-card .benchmark-context {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
 }
 
 /* ── Total Display ─── */
