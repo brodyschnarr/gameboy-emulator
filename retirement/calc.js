@@ -516,7 +516,8 @@ const RetirementCalcV4 = {
                     healthcareCost: Math.round(healthcareCost)
                 });
 
-                if (totalBalance <= 0) break;
+                // Continue projecting even after depletion if there's government income
+                if (totalBalance <= 0 && govIncome + additionalIncome <= 0) break;
             }
         }
 
