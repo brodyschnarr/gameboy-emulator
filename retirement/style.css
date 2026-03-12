@@ -1206,6 +1206,8 @@ input:focus {
 
 .income-detail-item.cpp-color { color: #8b5cf6; }
 .income-detail-item.oas-color { color: #06b6d4; }
+.income-detail-item.gis-color { color: #14b8a6; }
+.income-detail-item.cash-color { color: #94a3b8; }
 .income-detail-item.additional-color { color: #f97316; }
 .income-detail-item.rrsp-color { color: #ef4444; }
 .income-detail-item.tfsa-color { color: #10b981; }
@@ -1266,6 +1268,14 @@ input:focus {
     background: #06b6d4;
 }
 
+.bar-segment.gis {
+    background: #14b8a6;
+}
+
+.bar-segment.cash {
+    background: #94a3b8;
+}
+
 .bar-segment.additional {
     background: #f97316;
 }
@@ -1321,6 +1331,14 @@ input:focus {
 
 .legend-color.oas {
     background: #06b6d4;
+}
+
+.legend-color.gis {
+    background: #14b8a6;
+}
+
+.legend-color.cash {
+    background: #94a3b8;
 }
 
 .legend-color.additional {

@@ -430,8 +430,18 @@ const RetirementCalcV4 = {
                     .filter(s => age >= s.startAge && (s.endAge === null || age <= s.endAge))
                     .reduce((sum, s) => sum + s.annualAmount, 0);
 
+                // GIS pre-estimate (before withdrawal — conservative, assumes no taxable withdrawals)
+                let gisEstimate = 0;
+                if (age >= effOAS1) {
+                    const GIS_MAX_SINGLE = 12780;
+                    const GIS_MAX_COUPLE = 7692;
+                    const gisMax = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
+                    const gisTestPre = cppIncome + additionalIncome; // just known taxable income
+                    gisEstimate = Math.max(0, gisMax - gisTestPre * 0.5) * cpiFromRetirement;
+                }
+
                 // Total non-portfolio income BEFORE clawback
-                const totalOtherIncomePreClawback = cppIncome + oasIncome + additionalIncome;
+                const totalOtherIncomePreClawback = cppIncome + oasIncome + additionalIncome + gisEstimate;
 
                 // FIX #9: Smart withdrawal — OAS-clawback-aware
                 // We pass OAS amount so withdrawal can optimize around clawback threshold

@@ -256,7 +256,16 @@ const MonteCarloSimulator = {
                     .filter(s => age >= s.startAge && (s.endAge === null || age <= s.endAge))
                     .reduce((sum, s) => sum + s.annualAmount, 0);
                 
-                const totalOtherIncome = cppIncome + oasIncome + additionalIncome;
+                // GIS pre-estimate (conservative — before withdrawal)
+                let gisEstimateMC = 0;
+                if (age >= effOAS1) {
+                    const GIS_MAX_SINGLE_MC = 12780;
+                    const GIS_MAX_COUPLE_MC = 7692;
+                    const gisMaxMC = isSingle ? GIS_MAX_SINGLE_MC : GIS_MAX_COUPLE_MC * 2;
+                    gisEstimateMC = Math.max(0, gisMaxMC - (cppIncome + additionalIncome) * 0.5) * cpiFromRetirement;
+                }
+
+                const totalOtherIncome = cppIncome + oasIncome + additionalIncome + gisEstimateMC;
                 const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncome);
                 
                 // FIX #7 & #9: Use same smart tax-optimized withdrawal as deterministic
