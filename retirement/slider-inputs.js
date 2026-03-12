@@ -24,6 +24,7 @@
         { id: 'tfsa',             min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
         { id: 'nonreg',           min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
         { id: 'other',            min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
+        { id: 'cash',             min: 0, max: 500000,  step: 1000,  format: 'currency', label: null },
 
         // Step 3: Contributions
         { id: 'monthly-contribution', min: 0, max: 10000, step: 100, format: 'currency', label: null },
@@ -39,14 +40,10 @@
         // Post-retirement work
         { id: 'prt-income',          min: 0, max: 100000, step: 1000, format: 'currency', label: null },
 
-        // House sale
-        { id: 'house-sale-price',    min: 0, max: 2000000, step: 25000, format: 'currency', label: null },
         { id: 'mer-fee',              min: 0, max: 3, step: 0.1, format: 'percent', label: null },
         { id: 'cpp-override-amount', min: 0, max: 17000, step: 500, format: 'currency', label: null },
         { id: 'cpp-override-amount-p1', min: 0, max: 17000, step: 500, format: 'currency', label: null },
         { id: 'cpp-override-amount-p2', min: 0, max: 17000, step: 500, format: 'currency', label: null },
-        { id: 'house-current-costs', min: 0, max: 10000,   step: 100,   format: 'currency', label: null },
-        { id: 'house-rent-after',    min: 0, max: 10000,   step: 100,   format: 'currency', label: null },
 
         // Contribution growth
         { id: 'contribution-growth', min: 0, max: 10, step: 0.5, format: 'percent', label: null },

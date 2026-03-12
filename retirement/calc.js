@@ -26,6 +26,7 @@ const RetirementCalcV4 = {
             tfsa,
             nonReg,
             other,
+            cash = 0,
             
             // Contributions
             monthlyContribution,
@@ -113,7 +114,7 @@ const RetirementCalcV4 = {
             startAge: currentAge,
             retirementAge,
             lifeExpectancy,
-            accounts: { rrsp, tfsa, nonReg, other },
+            accounts: { rrsp, tfsa, nonReg, other, cash },
             annualContribution: monthlyContribution * 12,
             contributionSplit: normalizedSplit,
             contributionGrowthRate: (contributionGrowthRate || 0) / 100,
@@ -302,8 +303,10 @@ const RetirementCalcV4 = {
             rrsp: accounts.rrsp || 0,
             tfsa: accounts.tfsa || 0,
             nonReg: accounts.nonReg || 0,
-            other: accounts.other || 0
+            other: accounts.other || 0,
+            cash: accounts.cash || 0
         };
+        const CASH_RATE = 0.015; // 1.5% for HISA/GICs
         let debt = currentDebt;
         const r = returnRate / 100;
         const inf = inflationRate / 100;
@@ -351,6 +354,7 @@ const RetirementCalcV4 = {
                 balances.tfsa *= (1 + r);
                 balances.nonReg *= (1 + r);
                 balances.other *= (1 + r);
+                balances.cash *= (1 + CASH_RATE);
 
                 // Pay down debt
                 if (debt > 0 && age < debtPayoffAge) {
@@ -368,7 +372,8 @@ const RetirementCalcV4 = {
                     tfsa: Math.round(balances.tfsa),
                     nonReg: Math.round(balances.nonReg),
                     other: Math.round(balances.other),
-                    totalBalance: Math.round(balances.rrsp + balances.tfsa + balances.nonReg + balances.other),
+                    cash: Math.round(balances.cash),
+                    totalBalance: Math.round(balances.rrsp + balances.tfsa + balances.nonReg + balances.other + balances.cash),
                     debt: Math.round(debt),
                     contribution: Math.round(thisYearContribution)
                 });
@@ -383,6 +388,7 @@ const RetirementCalcV4 = {
                 balances.tfsa *= (1 + r);
                 balances.nonReg *= (1 + r);
                 balances.other *= (1 + r);
+                balances.cash *= (1 + CASH_RATE);
 
                 // 2. Inflation-adjusted spending
                 const yearsIntoRetirement = age - retirementAge;
@@ -446,12 +452,29 @@ const RetirementCalcV4 = {
                 balances.nonReg = Math.max(0, balances.nonReg - withdrawal.fromNonReg);
                 balances.rrsp = Math.max(0, balances.rrsp - withdrawal.fromRRSP);
                 balances.other = Math.max(0, balances.other - withdrawal.fromOther);
+                balances.cash = Math.max(0, balances.cash - (withdrawal.fromCash || 0));
 
-                const totalBalance = balances.rrsp + balances.tfsa + balances.nonReg + balances.other;
+                const totalBalance = balances.rrsp + balances.tfsa + balances.nonReg + balances.other + balances.cash;
 
                 // Actual OAS after clawback (based on actual taxable income)
                 const actualOAS = withdrawal.actualOAS !== undefined ? withdrawal.actualOAS : oasIncome;
-                const govIncome = cppIncome + actualOAS;
+                
+                // GIS (Guaranteed Income Supplement) — automatic for low-income OAS recipients
+                // Max ~$12,780/yr (single) or ~$7,692/yr each (couple), claws back at 50% of income
+                let gisIncome = 0;
+                if (age >= effOAS1) {
+                    const GIS_MAX_SINGLE = 12780;
+                    const GIS_MAX_COUPLE = 7692; // per person
+                    const GIS_CLAWBACK_RATE = 0.50;
+                    const gisMax = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
+                    // GIS income test excludes OAS but includes CPP, RRSP withdrawals, etc.
+                    const gisTestIncome = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0) + additionalIncome
+                        + ((withdrawal.fromNonReg || 0) * 0.5); // NonReg at 50% inclusion
+                    const gisClawback = gisTestIncome * GIS_CLAWBACK_RATE;
+                    gisIncome = Math.max(0, gisMax - gisClawback) * cpiFromRetirement;
+                }
+                
+                const govIncome = cppIncome + actualOAS + gisIncome;
 
                 projection.push({
                     age,
@@ -460,17 +483,20 @@ const RetirementCalcV4 = {
                     tfsa: Math.round(balances.tfsa),
                     nonReg: Math.round(balances.nonReg),
                     other: Math.round(balances.other),
+                    cash: Math.round(balances.cash),
                     totalBalance: Math.round(totalBalance),
                     withdrawal: withdrawal.total,
                     withdrawalBreakdown: {
                         tfsa: withdrawal.fromTFSA,
                         nonReg: withdrawal.fromNonReg,
                         rrsp: withdrawal.fromRRSP,
+                        cash: withdrawal.fromCash || 0,
                         other: withdrawal.fromOther
                     },
                     governmentIncome: Math.round(govIncome),
                     additionalIncome: Math.round(additionalIncome),
                     oasReceived: Math.round(actualOAS),
+                    gisReceived: Math.round(gisIncome),
                     cppReceived: Math.round(cppIncome),
                     taxableIncome: withdrawal.taxableIncome,
                     taxPaid: withdrawal.taxPaid,
@@ -507,6 +533,7 @@ const RetirementCalcV4 = {
         let fromNonReg = 0;
         let fromRRSP = 0;
         let fromOther = 0;
+        let fromCash = 0;
         let cumulativeTaxableIncome = nonOASTaxableIncome;
         const oasForTax = oasActive ? oasAmount : 0;
 
@@ -578,7 +605,13 @@ const RetirementCalcV4 = {
                 stillNeed -= fromTFSA;
             }
 
-            // 5. Other (truly last resort)
+            // 5. Cash (accessible savings, minimal growth anyway)
+            if (stillNeed > 0 && balances.cash > 0) {
+                fromCash = Math.min(stillNeed, balances.cash);
+                stillNeed -= fromCash;
+            }
+
+            // 6. Other (truly last resort)
             if (stillNeed > 0 && balances.other > 0) {
                 fromOther = Math.min(stillNeed * 1.5, balances.other);
                 cumulativeTaxableIncome += fromOther;
@@ -656,7 +689,13 @@ const RetirementCalcV4 = {
                 stillNeed = 0;
             }
 
-            // 5. Other (last resort)
+            // 5. Cash (accessible savings)
+            if (stillNeed > 0 && balances.cash > 0) {
+                fromCash = Math.min(stillNeed, balances.cash);
+                stillNeed -= fromCash;
+            }
+
+            // 6. Other (last resort)
             if (stillNeed > 0 && balances.other > 0) {
                 fromOther = Math.min(stillNeed * 1.5, balances.other);
                 cumulativeTaxableIncome += fromOther;
@@ -705,7 +744,7 @@ const RetirementCalcV4 = {
         const totalTax = CanadianTax.calculateTax(totalTaxableForCalc, province).total -
                         CanadianTax.calculateTax(nonOASTaxableIncome, province).total;
         
-        const totalWithdrawn = fromTFSA + fromNonReg + fromRRSP + fromOther;
+        const totalWithdrawn = fromTFSA + fromNonReg + fromRRSP + fromOther + fromCash;
 
         return {
             total: Math.round(totalWithdrawn),
@@ -713,6 +752,7 @@ const RetirementCalcV4 = {
             fromNonReg: Math.round(fromNonReg),
             fromRRSP: Math.round(fromRRSP),
             fromOther: Math.round(fromOther),
+            fromCash: Math.round(fromCash),
             taxableIncome: Math.round(totalTaxableForCalc),
             taxPaid: Math.round(totalTax),
             afterTax: Math.round(totalWithdrawn - totalTax),

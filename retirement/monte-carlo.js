@@ -143,8 +143,10 @@ const MonteCarloSimulator = {
             rrsp: rrsp || 0,
             tfsa: tfsa || 0,
             nonReg: nonReg || 0,
-            other: other || 0
+            other: other || 0,
+            cash: inputs.cash || 0
         };
+        const CASH_RATE = 0.015;
         let debt = currentDebt || 0;
         const inf = inflationRate / 100;
         const contribGrowth = (contributionGrowthRate || 0) / 100;
@@ -204,6 +206,7 @@ const MonteCarloSimulator = {
                 balances.tfsa *= (1 + returnRate);
                 balances.nonReg *= (1 + returnRate);
                 balances.other *= (1 + returnRate);
+                balances.cash *= (1 + CASH_RATE);
                 
                 if (debt > 0 && age < debtPayoffAge) {
                     const yearsLeft = debtPayoffAge - age;
@@ -218,6 +221,7 @@ const MonteCarloSimulator = {
                 balances.tfsa *= (1 + returnRate);
                 balances.nonReg *= (1 + returnRate);
                 balances.other *= (1 + returnRate);
+                balances.cash *= (1 + CASH_RATE);
                 
                 const yearsIntoRetirement = age - retirementAge;
                 const inflationFactor = Math.pow(1 + inf, yearsIntoRetirement);
@@ -270,25 +274,40 @@ const MonteCarloSimulator = {
                 balances.nonReg = Math.max(0, balances.nonReg - withdrawal.fromNonReg);
                 balances.rrsp = Math.max(0, balances.rrsp - withdrawal.fromRRSP);
                 balances.other = Math.max(0, balances.other - withdrawal.fromOther);
+                balances.cash = Math.max(0, balances.cash - (withdrawal.fromCash || 0));
                 
                 const actualOAS = withdrawal.actualOAS !== undefined ? withdrawal.actualOAS : oasIncome;
+                
+                // GIS for low-income OAS recipients (post-withdrawal estimate)
+                let gisIncome = 0;
+                if (age >= effOAS1) {
+                    const GIS_MAX_SINGLE = 12780;
+                    const GIS_MAX_COUPLE = 7692;
+                    const gisMax = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
+                    const gisTestIncome = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0)
+                        + ((withdrawal.fromNonReg || 0) * 0.5) + additionalIncome;
+                    const gisClawback = gisTestIncome * 0.50;
+                    gisIncome = Math.max(0, gisMax - gisClawback) * cpiFromRetirement;
+                }
                 
                 yearData.withdrawal = withdrawal.total;
                 yearData.withdrawalBreakdown = {
                     tfsa: withdrawal.fromTFSA,
                     nonReg: withdrawal.fromNonReg,
                     rrsp: withdrawal.fromRRSP,
-                    other: withdrawal.fromOther
+                    other: withdrawal.fromOther,
+                    cash: withdrawal.fromCash || 0
                 };
                 yearData.targetSpending = thisYearSpending;
                 yearData.healthcareCost = healthcareCost;
-                yearData.governmentIncome = Math.round(cppIncome + actualOAS);
+                yearData.governmentIncome = Math.round(cppIncome + actualOAS + gisIncome);
+                yearData.gisReceived = Math.round(gisIncome);
                 yearData.oasReceived = Math.round(actualOAS);
                 yearData.taxableIncome = withdrawal.taxableIncome;
                 yearData.taxPaid = withdrawal.taxPaid;
             }
             
-            yearData.totalBalance = balances.rrsp + balances.tfsa + balances.nonReg + balances.other;
+            yearData.totalBalance = balances.rrsp + balances.tfsa + balances.nonReg + balances.other + balances.cash;
             yearData.balances = { ...balances };
             
             projection.push(yearData);

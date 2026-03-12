@@ -80,6 +80,30 @@ const BenchmarksV2 = {
                 p25: 200000,
                 p75: 1300000
             }
+        },
+        70: { 
+            median: 390000,    // Drawing down in early retirement
+            average: 720000,   
+            percentiles: {
+                p25: 150000,
+                p75: 1100000
+            }
+        },
+        75: { 
+            median: 310000,    // Continued drawdown
+            average: 600000,   
+            percentiles: {
+                p25: 100000,
+                p75: 900000
+            }
+        },
+        80: { 
+            median: 230000,    // Later retirement
+            average: 480000,   
+            percentiles: {
+                p25: 60000,
+                p75: 700000
+            }
         }
     },
 
