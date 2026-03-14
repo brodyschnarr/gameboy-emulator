@@ -60,7 +60,10 @@
         const n = parseFloat(val) || 0;
         if (format === 'currency') {
             if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
-            if (n >= 1000) return '$' + Math.round(n / 1000) + 'K';
+            if (n >= 1000) {
+                const k = n / 1000;
+                return '$' + (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'K';
+            }
             return '$' + n;
         }
         if (format === 'percent') return n.toFixed(1) + '%';

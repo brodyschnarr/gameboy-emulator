@@ -622,7 +622,28 @@
              STEP 5: Healthcare & Debt
         ═══════════════════════════════════════ -->
         <section class="card hidden" id="step-healthcare">
-            <h2>⚙️ Step 5 of 5: Final Details</h2>
+            <h2>⚙️ Step 5 of 5: Adjust for Real Life</h2>
+            <p class="section-intro">No plan is perfectly predictable. Account for extra costs, windfalls, and health here.</p>
+
+            <!-- Additional Expenses -->
+            <h3 style="margin: 20px 0 8px;">📉 Additional Expenses</h3>
+            <p class="section-intro" style="margin-top:0;">Things that reduce your retirement savings</p>
+
+            <!-- Debt -->
+            <div class="input-group">
+                <label>Current Debt</label>
+                <span class="input-impact">Paid off before retirement from savings</span>
+                <div class="input-with-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="current-debt" placeholder="0" min="0" step="1000">
+                </div>
+                <small class="input-hint">Mortgage, loans, etc. (not credit cards)</small>
+            </div>
+
+            <div class="input-group hidden" id="debt-payoff-group">
+                <label for="debt-payoff-age">Plan to pay off by age:</label>
+                <input type="number" id="debt-payoff-age" placeholder="65" min="0" max="100">
+            </div>
 
             <!-- Healthcare -->
             <div class="input-group">
@@ -645,25 +666,12 @@
                 </div>
             </div>
 
-            <!-- Debt -->
-            <div class="input-group">
-                <label>Current Debt</label>
-                <span class="input-impact">Paid off before retirement from savings</span>
-                <div class="input-with-prefix">
-                    <span class="prefix">$</span>
-                    <input type="number" id="current-debt" placeholder="0" min="0" step="1000">
-                </div>
-                <small class="input-hint">Mortgage, loans, etc. (not credit cards)</small>
-            </div>
+            <!-- Additional Income / Windfalls -->
+            <h3 style="margin: 24px 0 8px;">📈 Additional Income</h3>
+            <p class="section-intro" style="margin-top:0;">Things that boost your retirement — windfalls, inheritance, etc.</p>
 
-            <div class="input-group hidden" id="debt-payoff-group">
-                <label for="debt-payoff-age">Plan to pay off by age:</label>
-                <input type="number" id="debt-payoff-age" placeholder="65" min="0" max="100">
-            </div>
-
-                        <!-- Windfalls (Optional) -->
             <div class="input-group windfalls-container">
-                <h3>💰 One-Time Windfalls (Optional)</h3>
+                <label>💰 One-Time Windfalls</label>
                 <span class="input-impact">Inheritance, business sale, insurance payout, etc.</span>
                 <div id="windfalls-list"></div>
                 <div id="windfall-form-container"></div>
@@ -864,17 +872,17 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000001"></script>
-    <script src="cpp-calculator.js?v=17&t=24000001"></script>
-    <script src="benchmarks.js?v=17&t=24000001"></script>
-    <script src="lifestyle-data.js?v=17&t=24000001"></script>
-    <script src="regional-data.js?v=17&t=24000001"></script>
-    <script src="canada-map.js?v=17&t=24000001"></script>
-    <script src="income-sources.js?v=17&t=24000001"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000001"></script>
-    <script src="scenario-manager.js?v=17&t=24000001"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000001"></script>
-    <script src="calc.js?v=17&t=24000001"></script>
+    <script src="canada-tax.js?v=17&t=24000002"></script>
+    <script src="cpp-calculator.js?v=17&t=24000002"></script>
+    <script src="benchmarks.js?v=17&t=24000002"></script>
+    <script src="lifestyle-data.js?v=17&t=24000002"></script>
+    <script src="regional-data.js?v=17&t=24000002"></script>
+    <script src="canada-map.js?v=17&t=24000002"></script>
+    <script src="income-sources.js?v=17&t=24000002"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000002"></script>
+    <script src="scenario-manager.js?v=17&t=24000002"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000002"></script>
+    <script src="calc.js?v=17&t=24000002"></script>
     <script src="app-round6-debug.js"></script>
     
     <!-- V5 Advanced Features -->
@@ -890,7 +898,7 @@
     <script src="app-v5-enhanced.js?v=5"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=1"></script>
+    <script src="slider-inputs.js?v=2"></script>
 
     <!-- Diagnostics removed -->
 

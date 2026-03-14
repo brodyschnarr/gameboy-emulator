@@ -796,6 +796,63 @@ const AppV4 = {
             barClass = 'warning';
         }
         
+        // ── Retirement age optimization ──
+        // Binary search: earliest retirement age that sustains the same spending to life expectancy
+        const currentRetireAge = inputs.retirementAge;
+        let ageLow = 50;
+        let ageHigh = currentRetireAge;
+        let earliestAge = currentRetireAge;
+
+        if (moneyLastsAge >= lifeExpectancy) {
+            // Ahead: find how early they could retire
+            for (let i = 0; i < 15; i++) {
+                const testAge = Math.round((ageLow + ageHigh) / 2);
+                if (testAge === ageHigh) break;
+                const testResult = RetirementCalcV4.calculate({
+                    ...inputs,
+                    retirementAge: testAge
+                });
+                if (testResult.summary.moneyLastsAge >= lifeExpectancy) {
+                    earliestAge = testAge;
+                    ageHigh = testAge;
+                } else {
+                    ageLow = testAge + 1;
+                }
+            }
+        }
+
+        let latestAge = currentRetireAge;
+        if (moneyLastsAge < lifeExpectancy) {
+            // Behind: find what retirement age would make it work
+            let aLow = currentRetireAge;
+            let aHigh = 80;
+            for (let i = 0; i < 15; i++) {
+                const testAge = Math.round((aLow + aHigh) / 2);
+                if (testAge === aLow) break;
+                const testResult = RetirementCalcV4.calculate({
+                    ...inputs,
+                    retirementAge: testAge
+                });
+                if (testResult.summary.moneyLastsAge >= lifeExpectancy) {
+                    latestAge = testAge;
+                    aHigh = testAge;
+                } else {
+                    aLow = testAge + 1;
+                }
+            }
+        }
+
+        let ageMessage = '';
+        if (moneyLastsAge >= lifeExpectancy && earliestAge < currentRetireAge) {
+            const yearsSaved = currentRetireAge - earliestAge;
+            ageMessage = `<div class="optimizer-age-insight">🎯 You could retire at <strong>${earliestAge}</strong> instead of ${currentRetireAge} and enjoy the same retirement — that's <strong>${yearsSaved} year${yearsSaved > 1 ? 's' : ''} earlier</strong>!</div>`;
+        } else if (moneyLastsAge < lifeExpectancy && latestAge > currentRetireAge) {
+            const yearsMore = latestAge - currentRetireAge;
+            ageMessage = `<div class="optimizer-age-insight warning">📅 For this retirement lifestyle, you'd need to work until <strong>age ${latestAge}</strong> — that's <strong>${yearsMore} more year${yearsMore > 1 ? 's' : ''}</strong> than planned.</div>`;
+        } else if (moneyLastsAge < lifeExpectancy) {
+            ageMessage = `<div class="optimizer-age-insight warning">📅 Even retiring later may not be enough — consider reducing spending or increasing savings.</div>`;
+        }
+
         content.innerHTML = `
             <div class="spending-optimizer-card">
                 <h3>${icon} Spending Check</h3>
@@ -811,6 +868,7 @@ const AppV4 = {
                     <span>$0</span>
                     <span>Max sustainable: ${fmt(maxSustainable)}</span>
                 </div>
+                ${ageMessage}
             </div>
         `;
     },
