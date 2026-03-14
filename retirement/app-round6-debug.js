@@ -47,6 +47,7 @@ const AppV4 = {
         this._setupScenarios();
         this._setupModals();
         this._setupAdvancedToggle();
+        this._setupSpendingCurve();
     },
 
     _setupNavigation() {
@@ -760,6 +761,7 @@ const AppV4 = {
         
         // Round to nearest $1K
         maxSustainable = Math.floor(maxSustainable / 1000) * 1000;
+        this._lastMaxSustainable = maxSustainable;
         
         const diff = maxSustainable - currentSpending;
         const pctOfMax = Math.min(100, (currentSpending / maxSustainable) * 100);
@@ -1248,6 +1250,141 @@ const AppV4 = {
                 }
             });
         }
+    },
+
+    _setupSpendingCurve() {
+        this.spendingCurve = 'flat';
+        const btns = document.querySelectorAll('.curve-btn');
+        const detail = document.getElementById('spending-curve-detail');
+        btns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                btns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.spendingCurve = btn.dataset.curve;
+                if (detail) detail.classList.toggle('hidden', this.spendingCurve === 'flat');
+            });
+        });
+    },
+
+    _generateRetirementNarrative(inputs, results) {
+        const section = document.getElementById('retirement-narrative');
+        const content = document.getElementById('retirement-narrative-content');
+        if (!section || !content) return;
+
+        section.classList.remove('hidden');
+
+        const fmt = (v) => '$' + Math.round(v).toLocaleString();
+        const fmtK = (v) => {
+            const n = Math.round(v);
+            if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return '$' + Math.round(n / 1000).toLocaleString() + 'K';
+            return '$' + n.toLocaleString();
+        };
+
+        const retireAge = inputs.retirementAge;
+        const lifeExp = inputs.lifeExpectancy;
+        const retirementYears = lifeExp - retireAge;
+        const annualSpending = inputs.annualSpending;
+        const monthlySpending = Math.round(annualSpending / 12);
+        const portfolio = results.summary.portfolioAtRetirement || 0;
+        const lastsAge = results.summary.moneyLastsAge || lifeExp;
+        const legacy = results.summary.legacyAmount || 0;
+        const isOnTrack = lastsAge >= lifeExp;
+        const probability = this.monteCarloResults?.successRate || 0;
+
+        // Get gov income
+        const retYear = results.yearByYear?.find(y => y.age === retireAge);
+        const cpp = retYear?.cppReceived || 0;
+        const oas = retYear?.oasReceived || 0;
+        const gis = retYear?.gisReceived || 0;
+        const govTotal = cpp + oas + gis;
+
+        // Spending curve info
+        const isFrontLoaded = inputs.spendingCurve === 'frontloaded';
+        const goGoSpending = isFrontLoaded ? Math.round(annualSpending * 1.2) : annualSpending;
+        const noGoSpending = isFrontLoaded ? Math.round(annualSpending * 0.8) : annualSpending;
+
+        // Max sustainable from optimizer
+        const maxSustainable = this._lastMaxSustainable || annualSpending;
+        const extraRoom = maxSustainable - annualSpending;
+        const extraMonthly = Math.round(extraRoom / 12);
+
+        // Build narrative
+        let narrative = '';
+
+        // Opening
+        if (isOnTrack) {
+            narrative += `<h3>📖 Your Retirement Story</h3>`;
+            narrative += `<p>You retire at <strong>${retireAge}</strong> with a portfolio of <strong>${fmtK(portfolio)}</strong> and <strong>${retirementYears} years</strong> of retirement ahead.</p>`;
+        } else {
+            narrative += `<h3>📖 Your Retirement Outlook</h3>`;
+            narrative += `<p>At age <strong>${retireAge}</strong>, you'd have <strong>${fmtK(portfolio)}</strong> saved — but your plan runs short at age <strong>${lastsAge}</strong>, leaving a ${lifeExp - lastsAge}-year gap.</p>`;
+        }
+
+        // Monthly picture
+        narrative += `<p style="margin-top:12px"><strong>Monthly life:</strong> Your ${fmt(annualSpending)}/year budget means <strong>${fmt(monthlySpending)}/month</strong> to work with.`;
+        if (govTotal > 0) {
+            narrative += ` Government benefits (CPP + OAS${gis > 0 ? ' + GIS' : ''}) cover <strong>${fmt(govTotal)}/year</strong> of that — the rest comes from your savings.`;
+        }
+        narrative += `</p>`;
+
+        // Spending curve narrative
+        if (isFrontLoaded) {
+            narrative += `<div style="margin: 12px 0; padding: 10px 12px; background: #f0f9ff; border-radius: 8px; border-left: 3px solid #3b82f6;">`;
+            narrative += `<strong>🎢 Your spending curve:</strong><br>`;
+            narrative += `<strong>Go-Go years</strong> (${retireAge}–${retireAge + 9}): ${fmt(goGoSpending)}/yr — travel, hobbies, bucket list items<br>`;
+            narrative += `<strong>Slow-Go years</strong> (${retireAge + 10}–${retireAge + 19}): ${fmt(annualSpending)}/yr — settling into routine<br>`;
+            narrative += `<strong>No-Go years</strong> (${retireAge + 20}+): ${fmt(noGoSpending)}/yr — simpler lifestyle, less mobility`;
+            narrative += `</div>`;
+        }
+
+        // Extra room / what it means
+        if (isOnTrack && extraRoom > 1000) {
+            narrative += `<div style="margin: 12px 0; padding: 10px 12px; background: #ecfdf5; border-radius: 8px; border-left: 3px solid #10b981;">`;
+            narrative += `<strong>💰 You have room:</strong> You could spend up to <strong>${fmt(maxSustainable)}/year</strong> and still be funded to ${lifeExp}. `;
+            narrative += `That extra <strong>${fmt(extraRoom)}/year</strong> (${fmt(extraMonthly)}/month) could mean:`;
+            narrative += `<ul style="margin: 6px 0 0; padding-left: 20px; font-size: 14px;">`;
+
+            if (extraMonthly >= 1500) {
+                narrative += `<li>An extra international vacation every year</li>`;
+                narrative += `<li>Upgrading to a nicer car every few years</li>`;
+                narrative += `<li>Regular gifts or help for family members</li>`;
+            } else if (extraMonthly >= 800) {
+                narrative += `<li>One extra trip per year (domestic or a deal abroad)</li>`;
+                narrative += `<li>Regular restaurant meals and entertainment</li>`;
+                narrative += `<li>A hobby budget (golf, workshops, equipment)</li>`;
+            } else if (extraMonthly >= 300) {
+                narrative += `<li>A few nice dinners out each month</li>`;
+                narrative += `<li>A weekend getaway every quarter</li>`;
+                narrative += `<li>Subscription services, gym membership, hobbies</li>`;
+            } else {
+                narrative += `<li>A couple of extra treats per month</li>`;
+                narrative += `<li>Small splurges or gifts</li>`;
+            }
+            narrative += `</ul></div>`;
+        }
+
+        // Legacy
+        if (isOnTrack && legacy > 10000) {
+            narrative += `<p>📦 <strong>Legacy:</strong> At age ${lifeExp}, you'd leave behind roughly <strong>${fmtK(legacy)}</strong> for family or causes you care about.</p>`;
+        }
+
+        // Probability context
+        if (probability > 0) {
+            narrative += `<p style="font-size: 13px; color: var(--text-muted);">`;
+            if (probability >= 85) {
+                narrative += `With an ${probability}% success rate across 1,000 market simulations, this plan is robust against most economic downturns.`;
+            } else if (probability >= 70) {
+                narrative += `An ${probability}% success rate means your plan works in most scenarios, but a prolonged market downturn could require adjustments.`;
+            } else if (probability >= 50) {
+                narrative += `A ${probability}% success rate means there's meaningful risk. Consider increasing savings or reducing spending for more security.`;
+            } else {
+                narrative += `At ${probability}%, this plan has significant risk. Strongly consider adjustments — more savings, later retirement, or lower spending.`;
+            }
+            narrative += `</p>`;
+        }
+
+        content.innerHTML = `<div class="retirement-narrative-card">${narrative}</div>`;
     },
 
     _showStep(step) {
@@ -1789,6 +1926,9 @@ const AppV4 = {
 
             // Spending optimizer
             this._runSpendingOptimizer(inputs, baseResults);
+            
+            // Retirement narrative
+            this._generateRetirementNarrative(inputs, baseResults);
 
             // Setup scenario tab switching (after results are visible)
             this._setupScenarioTabs();
@@ -2105,7 +2245,8 @@ const AppV4 = {
             returnRate: parseFloat(document.getElementById('return-rate')?.value) || 6,
             inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2.5,
             contributionGrowthRate: parseFloat(document.getElementById('contribution-growth')?.value) || 0,
-            merFee: parseFloat(document.getElementById('mer-fee')?.value) || 0
+            merFee: parseFloat(document.getElementById('mer-fee')?.value) || 0,
+            spendingCurve: this.spendingCurve || 'flat'
         };
     },
 

@@ -34,6 +34,7 @@ const RetirementCalcV4 = {
             
             // Spending
             annualSpending,
+            spendingCurve = 'flat',
             
             // Healthcare
             healthStatus,
@@ -133,7 +134,8 @@ const RetirementCalcV4 = {
             oasStartAgeP2: oasStartAgeP2 || oasStartAge || 65,
             isSingle: !isFamilyMode,
             windfalls: windfalls || [],
-            currentAge
+            currentAge,
+            spendingCurve: spendingCurve || 'flat'
         });
 
         // 5. Calculate probability of success
@@ -295,7 +297,8 @@ const RetirementCalcV4 = {
             oasStartAge,
             isSingle,
             windfalls = [],
-            currentAge = startAge
+            currentAge = startAge,
+            spendingCurve = 'flat'
         } = params;
 
         const projection = [];
@@ -390,10 +393,27 @@ const RetirementCalcV4 = {
                 balances.other *= (1 + r);
                 balances.cash *= (1 + CASH_RATE);
 
-                // 2. Inflation-adjusted spending
+                // 2. Inflation-adjusted spending with optional spending curve
                 const yearsIntoRetirement = age - retirementAge;
                 const inflationFactor = Math.pow(1 + inf, yearsIntoRetirement);
-                const thisYearSpending = baseAnnualSpending * inflationFactor;
+                
+                // Spending curve: "Go-Go / Slow-Go / No-Go" pattern
+                // spendingCurve: 'flat' (default), 'frontloaded', 'custom'
+                let spendingCurveMultiplier = 1.0;
+                if (spendingCurve === 'frontloaded') {
+                    // Go-Go (first 10 years): +20% spending (travel, activities)
+                    // Slow-Go (years 11-20): baseline spending
+                    // No-Go (years 21+): -20% spending (less mobility)
+                    if (yearsIntoRetirement < 10) {
+                        spendingCurveMultiplier = 1.20;
+                    } else if (yearsIntoRetirement < 20) {
+                        spendingCurveMultiplier = 1.0;
+                    } else {
+                        spendingCurveMultiplier = 0.80;
+                    }
+                }
+                
+                const thisYearSpending = baseAnnualSpending * inflationFactor * spendingCurveMultiplier;
                 
                 // 3. Healthcare costs
                 const healthcareCost = healthcareByAge.find(h => h.age === age)?.cost || 0;

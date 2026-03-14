@@ -505,6 +505,23 @@
                 <small id="spending-recommendation" class="benchmark-text"></small>
             </div>
 
+            <!-- Spending Curve -->
+            <div class="input-group">
+                <label>Spending Pattern</label>
+                <span class="input-impact">Retirees typically spend more early on, less later</span>
+                <div class="spending-curve-selector">
+                    <button type="button" class="curve-btn active" data-curve="flat">📊 Flat</button>
+                    <button type="button" class="curve-btn" data-curve="frontloaded">🎢 Front-Loaded</button>
+                </div>
+                <div id="spending-curve-detail" class="hidden" style="margin-top: 8px;">
+                    <div style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                        <strong>Go-Go</strong> (first 10 yrs): +20% — travel, hobbies, bucket list<br>
+                        <strong>Slow-Go</strong> (years 11–20): baseline — settling in<br>
+                        <strong>No-Go</strong> (20+ yrs): −20% — less mobility, simpler needs
+                    </div>
+                </div>
+            </div>
+
             <!-- Custom Spending Breakdown -->
             <div class="input-group">
                 <button type="button" class="btn-link" id="btn-toggle-custom-spending">📝 Customize spending by category →</button>
@@ -703,6 +720,11 @@
                 <div id="spending-optimizer-content"></div>
             </section>
 
+            <!-- Retirement Narrative -->
+            <section class="card hidden" id="retirement-narrative">
+                <div id="retirement-narrative-content"></div>
+            </section>
+
             <!-- Quick Stats (compact row) -->
             <section class="card">
                 <div class="stats-grid compact">
@@ -872,17 +894,17 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000004"></script>
-    <script src="cpp-calculator.js?v=17&t=24000004"></script>
-    <script src="benchmarks.js?v=17&t=24000004"></script>
-    <script src="lifestyle-data.js?v=17&t=24000004"></script>
-    <script src="regional-data.js?v=17&t=24000004"></script>
-    <script src="canada-map.js?v=17&t=24000004"></script>
-    <script src="income-sources.js?v=17&t=24000004"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000004"></script>
-    <script src="scenario-manager.js?v=17&t=24000004"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000004"></script>
-    <script src="calc.js?v=17&t=24000004"></script>
+    <script src="canada-tax.js?v=17&t=24000005"></script>
+    <script src="cpp-calculator.js?v=17&t=24000005"></script>
+    <script src="benchmarks.js?v=17&t=24000005"></script>
+    <script src="lifestyle-data.js?v=17&t=24000005"></script>
+    <script src="regional-data.js?v=17&t=24000005"></script>
+    <script src="canada-map.js?v=17&t=24000005"></script>
+    <script src="income-sources.js?v=17&t=24000005"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000005"></script>
+    <script src="scenario-manager.js?v=17&t=24000005"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000005"></script>
+    <script src="calc.js?v=17&t=24000005"></script>
     <script src="app-round6-debug.js"></script>
     
     <!-- V5 Advanced Features -->

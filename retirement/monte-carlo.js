@@ -82,6 +82,7 @@ const MonteCarloSimulator = {
             contributionSplit,
             contributionGrowthRate = 0,
             annualSpending,
+            spendingCurve = 'flat',
             healthStatus,
             currentDebt,
             debtPayoffAge,
@@ -225,7 +226,15 @@ const MonteCarloSimulator = {
                 
                 const yearsIntoRetirement = age - retirementAge;
                 const inflationFactor = Math.pow(1 + inf, yearsIntoRetirement);
-                const thisYearSpending = futureAnnualSpending * inflationFactor;
+                // Spending curve multiplier
+                let spendingCurveMultiplier = 1.0;
+                if (spendingCurve === 'frontloaded') {
+                    const yrsRetired = age - retirementAge;
+                    if (yrsRetired < 10) spendingCurveMultiplier = 1.20;
+                    else if (yrsRetired < 20) spendingCurveMultiplier = 1.0;
+                    else spendingCurveMultiplier = 0.80;
+                }
+                const thisYearSpending = futureAnnualSpending * inflationFactor * spendingCurveMultiplier;
                 
                 const healthcareCost = healthcareCosts.byYear.find(h => h.age === age)?.cost || 0;
                 const totalNeed = thisYearSpending + healthcareCost;

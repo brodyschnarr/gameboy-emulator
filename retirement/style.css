@@ -2034,6 +2034,46 @@ input:focus {
     border-color: var(--primary);
 }
 
+/* Spending Curve Selector */
+.spending-curve-selector {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+.curve-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.curve-btn:hover { border-color: var(--primary); }
+.curve-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Retirement Narrative */
+.retirement-narrative-card {
+    line-height: 1.6;
+    font-size: 15px;
+}
+.retirement-narrative-card h3 {
+    margin: 0 0 12px;
+    font-size: 18px;
+}
+.retirement-narrative-card p {
+    margin: 0 0 8px;
+}
+.retirement-narrative-card ul {
+    margin: 4px 0;
+}
+
 .healthcare-preview {
     background: var(--bg);
     padding: 16px;
