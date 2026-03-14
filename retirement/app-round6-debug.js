@@ -792,6 +792,52 @@ const AppV4 = {
             barClass = 'warning';
         }
         
+        // ── Retirement age optimization ──
+        const currentRetireAge = inputs.retirementAge;
+        let earliestAge = currentRetireAge;
+        let latestAge = currentRetireAge;
+
+        if (moneyLastsAge >= lifeExpectancy) {
+            // Ahead: find how early they could retire with same spending
+            let ageLow = 50, ageHigh = currentRetireAge;
+            for (let i = 0; i < 15; i++) {
+                const testAge = Math.round((ageLow + ageHigh) / 2);
+                if (testAge === ageHigh) break;
+                const testResult = RetirementCalcV4.calculate({ ...inputs, retirementAge: testAge });
+                if (testResult.summary.moneyLastsAge >= lifeExpectancy) {
+                    earliestAge = testAge;
+                    ageHigh = testAge;
+                } else {
+                    ageLow = testAge + 1;
+                }
+            }
+        } else {
+            // Behind: find what retirement age would make it work
+            let aLow = currentRetireAge, aHigh = 80;
+            for (let i = 0; i < 15; i++) {
+                const testAge = Math.round((aLow + aHigh) / 2);
+                if (testAge === aLow) break;
+                const testResult = RetirementCalcV4.calculate({ ...inputs, retirementAge: testAge });
+                if (testResult.summary.moneyLastsAge >= lifeExpectancy) {
+                    latestAge = testAge;
+                    aHigh = testAge;
+                } else {
+                    aLow = testAge + 1;
+                }
+            }
+        }
+
+        let ageMessage = '';
+        if (moneyLastsAge >= lifeExpectancy && earliestAge < currentRetireAge) {
+            const yearsSaved = currentRetireAge - earliestAge;
+            ageMessage = `<div class="optimizer-age-insight">🎯 You could retire at <strong>${earliestAge}</strong> instead of ${currentRetireAge} and enjoy the same retirement — that's <strong>${yearsSaved} year${yearsSaved > 1 ? 's' : ''} earlier</strong>!</div>`;
+        } else if (moneyLastsAge < lifeExpectancy && latestAge > currentRetireAge) {
+            const yearsMore = latestAge - currentRetireAge;
+            ageMessage = `<div class="optimizer-age-insight warning">📅 For this retirement lifestyle, you'd need to work until <strong>age ${latestAge}</strong> — that's <strong>${yearsMore} more year${yearsMore > 1 ? 's' : ''}</strong> than planned.</div>`;
+        } else if (moneyLastsAge < lifeExpectancy) {
+            ageMessage = `<div class="optimizer-age-insight warning">📅 Even retiring later may not be enough — consider reducing spending or increasing savings.</div>`;
+        }
+
         content.innerHTML = `
             <div class="spending-optimizer-card">
                 <h3>${icon} Spending Check</h3>
@@ -807,6 +853,7 @@ const AppV4 = {
                     <span>$0</span>
                     <span>Max sustainable: ${fmt(maxSustainable)}</span>
                 </div>
+                ${ageMessage}
             </div>
         `;
     },
@@ -2301,6 +2348,7 @@ const AppV4 = {
             if (point.phase === 'retirement') {
                 if (point.cppReceived) html += `<br>CPP: $${Math.round(point.cppReceived).toLocaleString()}`;
                 if (point.oasReceived) html += `<br>OAS: $${Math.round(point.oasReceived).toLocaleString()}`;
+                if (point.gisReceived) html += `<br>GIS: $${Math.round(point.gisReceived).toLocaleString()}`;
                 if (point.withdrawal) html += `<br>Withdrawal: $${Math.round(point.withdrawal).toLocaleString()}`;
                 if (point.taxPaid) html += `<br>Tax: $${Math.round(point.taxPaid).toLocaleString()}`;
                 if (point.targetSpending) html += `<br>Spending: $${Math.round(point.targetSpending).toLocaleString()}`;
@@ -2387,13 +2435,15 @@ const AppV4 = {
             const wb = year.withdrawalBreakdown || {};
             const cpp = year.cppReceived || 0;
             const oas = year.oasReceived || 0;
+            const gis = year.gisReceived || 0;
             const additional = year.additionalIncome || 0;
             const fromTFSA = wb.tfsa || 0;
             const fromNonReg = wb.nonReg || 0;
             const fromRRSP = wb.rrsp || 0;
             const fromOther = wb.other || 0;
+            const fromCash = wb.cash || 0;
             
-            const totalIncome = cpp + oas + additional + fromTFSA + fromNonReg + fromRRSP + fromOther;
+            const totalIncome = cpp + oas + gis + additional + fromTFSA + fromNonReg + fromRRSP + fromOther + fromCash;
             if (totalIncome <= 0) return '';
 
             const pct = (val) => ((val / totalIncome) * 100).toFixed(1);
@@ -2403,11 +2453,13 @@ const AppV4 = {
             const segments = [];
             if (cpp > 0) segments.push({ cls: 'cpp', pct: pct(cpp), label: 'CPP', amount: fmt(cpp) });
             if (oas > 0) segments.push({ cls: 'oas', pct: pct(oas), label: 'OAS', amount: fmt(oas) });
+            if (gis > 0) segments.push({ cls: 'gis', pct: pct(gis), label: 'GIS', amount: fmt(gis) });
             if (additional > 0) segments.push({ cls: 'additional', pct: pct(additional), label: 'Other Income', amount: fmt(additional) });
             if (fromRRSP > 0) segments.push({ cls: 'rrsp', pct: pct(fromRRSP), label: 'RRSP', amount: fmt(fromRRSP) });
             if (fromTFSA > 0) segments.push({ cls: 'tfsa', pct: pct(fromTFSA), label: 'TFSA', amount: fmt(fromTFSA) });
             if (fromNonReg > 0) segments.push({ cls: 'nonreg', pct: pct(fromNonReg), label: 'Non-Reg', amount: fmt(fromNonReg) });
             if (fromOther > 0) segments.push({ cls: 'other', pct: pct(fromOther), label: 'Other', amount: fmt(fromOther) });
+            if (fromCash > 0) segments.push({ cls: 'cash', pct: pct(fromCash), label: 'Cash', amount: fmt(fromCash) });
 
             const barSegments = segments.map(s => 
                 `<div class="bar-segment ${s.cls}" style="width: ${s.pct}%" title="${s.label}: ${s.amount} (${s.pct}%)"></div>`
@@ -2438,6 +2490,7 @@ const AppV4 = {
             <div class="chart-legend income-legend">
                 <div class="legend-item"><span class="legend-color cpp"></span> CPP</div>
                 <div class="legend-item"><span class="legend-color oas"></span> OAS</div>
+                <div class="legend-item"><span class="legend-color gis"></span> GIS</div>
                 <div class="legend-item"><span class="legend-color rrsp"></span> RRSP</div>
                 <div class="legend-item"><span class="legend-color tfsa"></span> TFSA</div>
                 <div class="legend-item"><span class="legend-color nonreg"></span> Non-Reg</div>
