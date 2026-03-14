@@ -43,7 +43,7 @@ const AppV5Enhanced = {
                 try {
                     this.monteCarloResults = MonteCarloSimulator.simulate(baseInputs, {
                         iterations: 1000,
-                        volatility: 0.15,
+                        volatility: 0.12,
                         marketCrashProbability: 0.00
                     });
                 } catch (mcError) {
@@ -341,7 +341,7 @@ const AppV5Enhanced = {
         
         return `
             <h3>🎲 Monte Carlo Simulation Results</h3>
-            <p>We ran <strong>1,000 different market scenarios</strong> with realistic volatility and occasional crashes. Here's what we found:</p>
+            <p>We ran <strong>1,000 different market scenarios</strong> with realistic market volatility. Here's what we found:</p>
             
             <div class="stats-grid">
                 <div class="stat-card success">

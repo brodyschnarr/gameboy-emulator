@@ -527,6 +527,16 @@ const AppV4 = {
     },
 
     _setupHealthcare() {
+        // Slider-based health selector
+        const healthSlider = document.getElementById('health-status-slider');
+        if (healthSlider) {
+            const healthMap = ['excellent', 'average', 'fair'];
+            healthSlider.addEventListener('input', () => {
+                this.healthStatus = healthMap[parseInt(healthSlider.value)];
+                this._updateHealthcarePreview();
+            });
+        }
+        // Legacy: button-based health selector (fallback)
         document.querySelectorAll('.health-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.health-btn').forEach(b => b.classList.remove('active'));
@@ -2187,7 +2197,7 @@ const AppV4 = {
             }
             try {
                 const mc = MonteCarloSimulator.simulate(this.scenarioResults[key].inputs, {
-                    iterations: 200, volatility: 0.15, marketCrashProbability: 0.00
+                    iterations: 200, volatility: 0.12, marketCrashProbability: 0.00
                 });
                 this.scenarioResults[key].mcRate = mc.successRate;
             } catch(e) {
