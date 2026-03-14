@@ -763,10 +763,25 @@ const AppV4 = {
         maxSustainable = Math.floor(maxSustainable / 1000) * 1000;
         this._lastMaxSustainable = maxSustainable;
         
-        const diff = maxSustainable - currentSpending;
-        const pctOfMax = Math.min(100, (currentSpending / maxSustainable) * 100);
-        
         let icon, amountClass, message, barClass;
+        
+        // Safety: if plan fails but optimizer says we can spend MORE, cap it
+        if (moneyLastsAge < lifeExpectancy && maxSustainable >= currentSpending) {
+            // Contradiction — recalculate more carefully
+            // Try stepping down from currentSpending in $1K increments
+            maxSustainable = currentSpending;
+            for (let test = currentSpending; test >= 10000; test -= 1000) {
+                const tr = RetirementCalcV4.calculate({ ...inputs, annualSpending: test });
+                if (tr.summary.moneyLastsAge >= lifeExpectancy) {
+                    maxSustainable = test;
+                    break;
+                }
+            }
+            this._lastMaxSustainable = maxSustainable;
+        }
+
+        const diff = maxSustainable - currentSpending;
+        const pctOfMax = Math.min(100, (currentSpending / (maxSustainable || 1)) * 100);
         
         if (moneyLastsAge < lifeExpectancy) {
             // Money runs out — need to cut
@@ -2585,23 +2600,43 @@ const AppV4 = {
             const fromOther = wb.other || 0;
             const fromCash = wb.cash || 0;
             
-            const totalIncome = cpp + oas + gis + additional + fromTFSA + fromNonReg + fromRRSP + fromOther + fromCash;
+            const grossIncome = cpp + oas + gis + additional + fromTFSA + fromNonReg + fromRRSP + fromOther + fromCash;
+            if (grossIncome <= 0) return '';
+            
+            // Show after-tax income as the headline number (what you actually get to spend)
+            const tax = year.taxPaid || 0;
+            const totalIncome = grossIncome - tax;
             if (totalIncome <= 0) return '';
+
+            // For the bar, show after-tax proportions
+            // Tax-free sources: TFSA, GIS (not taxed), OAS/CPP/RRSP/NonReg are taxed proportionally
+            const taxableGross = cpp + oas + fromRRSP + fromNonReg + fromOther + additional;
+            const taxRate = taxableGross > 0 ? tax / taxableGross : 0;
+            const afterTaxCPP = cpp * (1 - taxRate);
+            const afterTaxOAS = oas * (1 - taxRate);
+            const afterTaxRRSP = fromRRSP * (1 - taxRate);
+            const afterTaxNonReg = fromNonReg * (1 - taxRate);
+            const afterTaxOther = fromOther * (1 - taxRate);
+            const afterTaxAdditional = additional * (1 - taxRate);
+            // GIS, TFSA, Cash are tax-free
+            const afterTaxGIS = gis;
+            const afterTaxTFSA = fromTFSA;
+            const afterTaxCash = fromCash;
 
             const pct = (val) => ((val / totalIncome) * 100).toFixed(1);
             const fmt = (val) => '$' + Math.round(val).toLocaleString();
 
-            // Build segments (only show non-zero)
+            // Build segments (only show non-zero, using after-tax amounts)
             const segments = [];
-            if (cpp > 0) segments.push({ cls: 'cpp', pct: pct(cpp), label: 'CPP', amount: fmt(cpp) });
-            if (oas > 0) segments.push({ cls: 'oas', pct: pct(oas), label: 'OAS', amount: fmt(oas) });
-            if (gis > 0) segments.push({ cls: 'gis', pct: pct(gis), label: 'GIS', amount: fmt(gis) });
-            if (additional > 0) segments.push({ cls: 'additional', pct: pct(additional), label: 'Other Income', amount: fmt(additional) });
-            if (fromRRSP > 0) segments.push({ cls: 'rrsp', pct: pct(fromRRSP), label: 'RRSP', amount: fmt(fromRRSP) });
-            if (fromTFSA > 0) segments.push({ cls: 'tfsa', pct: pct(fromTFSA), label: 'TFSA', amount: fmt(fromTFSA) });
-            if (fromNonReg > 0) segments.push({ cls: 'nonreg', pct: pct(fromNonReg), label: 'Non-Reg', amount: fmt(fromNonReg) });
-            if (fromOther > 0) segments.push({ cls: 'other', pct: pct(fromOther), label: 'Other', amount: fmt(fromOther) });
-            if (fromCash > 0) segments.push({ cls: 'cash', pct: pct(fromCash), label: 'Cash', amount: fmt(fromCash) });
+            if (afterTaxCPP > 0) segments.push({ cls: 'cpp', pct: pct(afterTaxCPP), label: 'CPP', amount: fmt(afterTaxCPP) });
+            if (afterTaxOAS > 0) segments.push({ cls: 'oas', pct: pct(afterTaxOAS), label: 'OAS', amount: fmt(afterTaxOAS) });
+            if (afterTaxGIS > 0) segments.push({ cls: 'gis', pct: pct(afterTaxGIS), label: 'GIS', amount: fmt(afterTaxGIS) });
+            if (afterTaxAdditional > 0) segments.push({ cls: 'additional', pct: pct(afterTaxAdditional), label: 'Other Income', amount: fmt(afterTaxAdditional) });
+            if (afterTaxRRSP > 0) segments.push({ cls: 'rrsp', pct: pct(afterTaxRRSP), label: 'RRSP', amount: fmt(afterTaxRRSP) });
+            if (afterTaxTFSA > 0) segments.push({ cls: 'tfsa', pct: pct(afterTaxTFSA), label: 'TFSA', amount: fmt(afterTaxTFSA) });
+            if (afterTaxNonReg > 0) segments.push({ cls: 'nonreg', pct: pct(afterTaxNonReg), label: 'Non-Reg', amount: fmt(afterTaxNonReg) });
+            if (afterTaxOther > 0) segments.push({ cls: 'other', pct: pct(afterTaxOther), label: 'Other', amount: fmt(afterTaxOther) });
+            if (afterTaxCash > 0) segments.push({ cls: 'cash', pct: pct(afterTaxCash), label: 'Cash', amount: fmt(afterTaxCash) });
 
             const barSegments = segments.map(s => 
                 `<div class="bar-segment ${s.cls}" style="width: ${s.pct}%" title="${s.label}: ${s.amount} (${s.pct}%)"></div>`
