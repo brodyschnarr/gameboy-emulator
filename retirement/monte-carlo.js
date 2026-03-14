@@ -165,30 +165,39 @@ const MonteCarloSimulator = {
                 returnRate: returnRate * 100
             };
             
-            // Windfalls
-            if (windfalls && windfalls.length > 0) {
-                const applicableWindfalls = windfalls.filter(w => {
-                    const targetAge = w.year || (currentAge + w.yearsFromNow);
-                    return targetAge === age;
-                });
-                
-                applicableWindfalls.forEach(windfall => {
-                    const occurs = Math.random() * 100 <= windfall.probability;
-                    if (occurs) {
-                        const afterTaxAmount = windfall.taxable
-                            ? windfall.amount * 0.7
-                            : windfall.amount;
-                        
-                        if (windfall.destination === 'rrsp') balances.rrsp += afterTaxAmount;
-                        else if (windfall.destination === 'tfsa') balances.tfsa += afterTaxAmount;
-                        else if (windfall.destination === 'nonReg') balances.nonReg += afterTaxAmount;
-                        else {
-                            balances.tfsa += afterTaxAmount * 0.5;
-                            balances.nonReg += afterTaxAmount * 0.5;
-                        }
-                        
-                        yearData.windfall = { name: windfall.name, amount: afterTaxAmount };
+            // Windfalls (V2: supports simple, shares, uncertain types)
+            if (windfalls && windfalls.length > 0 && typeof WindfallManager !== 'undefined') {
+                windfalls.forEach(windfall => {
+                    const resolved = WindfallManager._resolveWindfall(windfall, { currentAge, lifeExpectancy }, true);
+                    if (!resolved || resolved.age !== age) return;
+                    
+                    const afterTaxAmount = windfall.taxable
+                        ? resolved.amount * 0.7
+                        : resolved.amount;
+                    
+                    if (windfall.destination === 'rrsp') balances.rrsp += afterTaxAmount;
+                    else if (windfall.destination === 'tfsa') balances.tfsa += afterTaxAmount;
+                    else if (windfall.destination === 'nonReg') balances.nonReg += afterTaxAmount;
+                    else {
+                        balances.tfsa += afterTaxAmount * 0.5;
+                        balances.nonReg += afterTaxAmount * 0.5;
                     }
+                    
+                    yearData.windfall = { name: windfall.name, amount: afterTaxAmount };
+                });
+            } else if (windfalls && windfalls.length > 0) {
+                // Fallback: legacy simple windfall handling
+                windfalls.forEach(windfall => {
+                    const targetAge = windfall.year || (currentAge + (windfall.yearsFromNow || 0));
+                    if (targetAge !== age) return;
+                    if (Math.random() * 100 > (windfall.probability || 100)) return;
+                    
+                    const afterTaxAmount = windfall.taxable ? windfall.amount * 0.7 : windfall.amount;
+                    if (windfall.destination === 'rrsp') balances.rrsp += afterTaxAmount;
+                    else if (windfall.destination === 'tfsa') balances.tfsa += afterTaxAmount;
+                    else if (windfall.destination === 'nonReg') balances.nonReg += afterTaxAmount;
+                    else { balances.tfsa += afterTaxAmount * 0.5; balances.nonReg += afterTaxAmount * 0.5; }
+                    yearData.windfall = { name: windfall.name, amount: afterTaxAmount };
                 });
             }
             
