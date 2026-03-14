@@ -2650,12 +2650,20 @@ const AppV4 = {
                 ? `<div class="year-tax-note">Tax: ${fmt(year.taxPaid)}</div>` 
                 : '';
 
+            const balance = year.totalBalance || 0;
+            const balanceLine = balance > 0 
+                ? `<div class="year-balance-note">💰 Portfolio: ${fmt(balance)}</div>`
+                : balance <= 0 && year.age > retirementAge 
+                    ? `<div class="year-balance-note depleted">💰 Portfolio: depleted</div>`
+                    : '';
+
             return `
                 <div class="year-bar-row income-breakdown-row">
                     <div class="year-bar-header">
                         <span class="year-label">Age ${year.age}</span>
                         <span class="year-total-income">${fmt(totalIncome)}</span>
                     </div>
+                    ${balanceLine}
                     <div class="year-bar">${barSegments}</div>
                     <div class="year-income-details">${detailItems}</div>
                     ${taxLine}
