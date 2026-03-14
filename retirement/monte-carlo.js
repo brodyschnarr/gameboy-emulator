@@ -265,20 +265,31 @@ const MonteCarloSimulator = {
                     .filter(s => age >= s.startAge && (s.endAge === null || age <= s.endAge))
                     .reduce((sum, s) => sum + s.annualAmount, 0);
                 
-                // GIS pre-estimate (conservative — before withdrawal)
+                // GIS pre-estimate — account for taxable withdrawals
                 let gisEstimateMC = 0;
                 if (age >= effOAS1) {
                     const GIS_MAX_SINGLE_MC = 12780;
                     const GIS_MAX_COUPLE_MC = 7692;
                     const gisMaxMC = isSingle ? GIS_MAX_SINGLE_MC : GIS_MAX_COUPLE_MC * 2;
-                    gisEstimateMC = Math.max(0, gisMaxMC - (cppIncome + additionalIncome) * 0.5) * cpiFromRetirement;
+                    const gisTestPre = cppIncome + additionalIncome;
+                    
+                    const hasTaxable = (balances.rrsp > 0 || balances.nonReg > 0);
+                    if (hasTaxable) {
+                        const roughNeed = Math.max(0, totalNeed - cppIncome - oasIncome - additionalIncome);
+                        const estTaxable = Math.min(roughNeed, balances.rrsp + balances.nonReg);
+                        const nonRegPart = Math.min(estTaxable, balances.nonReg);
+                        const rrspPart = estTaxable - nonRegPart;
+                        const estGISTest = gisTestPre + rrspPart + nonRegPart * 0.5;
+                        gisEstimateMC = Math.max(0, gisMaxMC - estGISTest * 0.5) * cpiFromRetirement;
+                    } else {
+                        gisEstimateMC = Math.max(0, gisMaxMC - gisTestPre * 0.5) * cpiFromRetirement;
+                    }
                 }
 
                 const totalOtherIncome = cppIncome + oasIncome + additionalIncome + gisEstimateMC;
                 const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncome);
                 
-                // FIX #7 & #9: Use same smart tax-optimized withdrawal as deterministic
-                const withdrawal = RetirementCalcV4._withdrawSmartOptimal(
+                let withdrawal = RetirementCalcV4._withdrawSmartOptimal(
                     balances,
                     neededFromPortfolio,
                     province,
@@ -287,6 +298,20 @@ const MonteCarloSimulator = {
                     age >= effOAS1,
                     { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle }
                 );
+                
+                // Pass 2: check if GIS was overestimated, compensate from TFSA
+                if (age >= effOAS1) {
+                    const gisMax2 = isSingle ? 12780 : 7692 * 2;
+                    const gisTestPost = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0)
+                        + additionalIncome + ((withdrawal.fromNonReg || 0) * 0.5);
+                    const gisActual = Math.max(0, gisMax2 - gisTestPost * 0.5) * cpiFromRetirement;
+                    const shortfall = gisEstimateMC - gisActual;
+                    if (shortfall > 100) {
+                        const remainTFSA = Math.max(0, balances.tfsa - withdrawal.fromTFSA);
+                        const extra = Math.min(shortfall, remainTFSA);
+                        withdrawal = { ...withdrawal, fromTFSA: withdrawal.fromTFSA + extra, total: withdrawal.total + extra };
+                    }
+                }
                 
                 balances.tfsa = Math.max(0, balances.tfsa - withdrawal.fromTFSA);
                 balances.nonReg = Math.max(0, balances.nonReg - withdrawal.fromNonReg);

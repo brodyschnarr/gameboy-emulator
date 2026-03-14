@@ -450,32 +450,79 @@ const RetirementCalcV4 = {
                     .filter(s => age >= s.startAge && (s.endAge === null || age <= s.endAge))
                     .reduce((sum, s) => sum + s.annualAmount, 0);
 
-                // GIS pre-estimate (before withdrawal — conservative, assumes no taxable withdrawals)
+                // GIS estimate — two-pass approach to avoid circular dependency
+                // Pass 1: estimate GIS assuming no taxable withdrawals
+                // Pass 2: after withdrawal, recalculate GIS and re-withdraw if needed
                 let gisEstimate = 0;
                 if (age >= effOAS1) {
                     const GIS_MAX_SINGLE = 12780;
                     const GIS_MAX_COUPLE = 7692;
                     const gisMax = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
-                    const gisTestPre = cppIncome + additionalIncome; // just known taxable income
-                    gisEstimate = Math.max(0, gisMax - gisTestPre * 0.5) * cpiFromRetirement;
+                    const gisTestPre = cppIncome + additionalIncome;
+                    
+                    // If there are taxable accounts, assume withdrawal will reduce/eliminate GIS
+                    const hasTaxableAccounts = (balances.rrsp > 0 || balances.nonReg > 0);
+                    if (hasTaxableAccounts) {
+                        // Conservative: estimate how much taxable withdrawal is needed
+                        const roughNeed = Math.max(0, totalNeed - cppIncome - oasIncome - additionalIncome);
+                        const estimatedTaxableWithdrawal = Math.min(roughNeed, balances.rrsp + balances.nonReg);
+                        // NonReg at 50% inclusion, RRSP at 100% — rough split
+                        const nonRegShare = balances.nonReg > 0 ? Math.min(estimatedTaxableWithdrawal, balances.nonReg) : 0;
+                        const rrspShare = estimatedTaxableWithdrawal - nonRegShare;
+                        const estimatedGISTestIncome = gisTestPre + rrspShare + nonRegShare * 0.5;
+                        gisEstimate = Math.max(0, gisMax - estimatedGISTestIncome * 0.5) * cpiFromRetirement;
+                    } else {
+                        // Only TFSA/cash — GIS unaffected by withdrawals
+                        gisEstimate = Math.max(0, gisMax - gisTestPre * 0.5) * cpiFromRetirement;
+                    }
                 }
 
                 // Total non-portfolio income BEFORE clawback
                 const totalOtherIncomePreClawback = cppIncome + oasIncome + additionalIncome + gisEstimate;
 
                 // FIX #9: Smart withdrawal — OAS-clawback-aware
-                // We pass OAS amount so withdrawal can optimize around clawback threshold
                 const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncomePreClawback);
 
-                const withdrawal = this._withdrawSmartOptimal(
+                let withdrawal = this._withdrawSmartOptimal(
                     balances,
                     neededFromPortfolio,
                     province,
-                    cppIncome + additionalIncome, // non-OAS taxable income
-                    oasIncome,                    // OAS amount (combined, for withdrawal budget)
-                    age >= effOAS1,               // is OAS active?
-                    { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle } // per-person for clawback
+                    cppIncome + additionalIncome,
+                    oasIncome,
+                    age >= effOAS1,
+                    { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle }
                 );
+                
+                // Pass 2: recalculate GIS with actual withdrawals and re-withdraw if short
+                if (age >= effOAS1) {
+                    const GIS_MAX_SINGLE = 12780;
+                    const GIS_MAX_COUPLE = 7692;
+                    const gisMax2 = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
+                    const gisTestPost = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0) 
+                        + additionalIncome + ((withdrawal.fromNonReg || 0) * 0.5);
+                    const gisActual = Math.max(0, gisMax2 - gisTestPost * 0.5) * cpiFromRetirement;
+                    const shortfall = gisEstimate - gisActual;
+                    
+                    if (shortfall > 100) {
+                        // GIS was overestimated — need more from portfolio
+                        const extraNeeded = shortfall;
+                        const balancesCopy = { ...balances };
+                        // Reduce by what was already withdrawn
+                        balancesCopy.tfsa = Math.max(0, balancesCopy.tfsa - withdrawal.fromTFSA);
+                        balancesCopy.nonReg = Math.max(0, balancesCopy.nonReg - withdrawal.fromNonReg);
+                        balancesCopy.rrsp = Math.max(0, balancesCopy.rrsp - withdrawal.fromRRSP);
+                        balancesCopy.other = Math.max(0, balancesCopy.other - withdrawal.fromOther);
+                        balancesCopy.cash = Math.max(0, balancesCopy.cash - (withdrawal.fromCash || 0));
+                        
+                        // Prefer TFSA for the shortfall (doesn't affect GIS)
+                        const extraTFSA = Math.min(extraNeeded, balancesCopy.tfsa);
+                        withdrawal = {
+                            ...withdrawal,
+                            fromTFSA: withdrawal.fromTFSA + extraTFSA,
+                            total: withdrawal.total + extraTFSA
+                        };
+                    }
+                }
 
                 // Update balances
                 balances.tfsa = Math.max(0, balances.tfsa - withdrawal.fromTFSA);
