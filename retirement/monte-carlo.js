@@ -338,6 +338,55 @@ const MonteCarloSimulator = {
         };
     },
     
+    _buildPerYearPercentiles(results, p10Run, p50Run, p90Run) {
+        // Build per-year percentile projections across ALL simulations
+        // Instead of picking a single run (which can have windfall randomness),
+        // compute the 10th/50th/90th percentile of totalBalance at each age.
+        const numYears = p50Run.projection.length;
+        const p10Proj = [];
+        const p50Proj = [];
+        const p90Proj = [];
+
+        for (let i = 0; i < numYears; i++) {
+            const age = p50Run.projection[i].age;
+            // Collect all balances at this year index
+            const balancesAtYear = [];
+            for (let r = 0; r < results.length; r++) {
+                if (results[r].projection[i]) {
+                    balancesAtYear.push(results[r].projection[i].totalBalance || 0);
+                }
+            }
+            balancesAtYear.sort((a, b) => a - b);
+
+            const getP = (pct) => {
+                const idx = Math.min(Math.floor(balancesAtYear.length * pct), balancesAtYear.length - 1);
+                return balancesAtYear[idx];
+            };
+
+            p10Proj.push({ age, totalBalance: getP(0.10) });
+            p50Proj.push({ age, totalBalance: getP(0.50) });
+            p90Proj.push({ age, totalBalance: getP(0.90) });
+        }
+
+        return {
+            p10: {
+                moneyLastsAge: p10Run.moneyLastsAge,
+                finalBalance: Math.round(p10Run.finalBalance),
+                projection: p10Proj
+            },
+            p50: {
+                moneyLastsAge: p50Run.moneyLastsAge,
+                finalBalance: Math.round(p50Run.finalBalance),
+                projection: p50Proj
+            },
+            p90: {
+                moneyLastsAge: p90Run.moneyLastsAge,
+                finalBalance: Math.round(p90Run.finalBalance),
+                projection: p90Proj
+            }
+        };
+    },
+
     _analyzeResults(results, baseInputs) {
         const { lifeExpectancy } = baseInputs;
         
@@ -401,23 +450,7 @@ const MonteCarloSimulator = {
                 best: moneyLastsAges[moneyLastsAges.length - 1]
             },
             
-            percentiles: {
-                p10: {
-                    moneyLastsAge: p10.moneyLastsAge,
-                    finalBalance: Math.round(p10.finalBalance),
-                    projection: p10.projection
-                },
-                p50: {
-                    moneyLastsAge: p50.moneyLastsAge,
-                    finalBalance: Math.round(p50.finalBalance),
-                    projection: p50.projection
-                },
-                p90: {
-                    moneyLastsAge: p90.moneyLastsAge,
-                    finalBalance: Math.round(p90.finalBalance),
-                    projection: p90.projection
-                }
-            },
+            percentiles: this._buildPerYearPercentiles(results, p10, p50, p90),
             
             worstCase: {
                 moneyLastsAge: worstCase.moneyLastsAge,
