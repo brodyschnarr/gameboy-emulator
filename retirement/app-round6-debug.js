@@ -801,7 +801,8 @@ const AppV4 = {
 
         if (moneyLastsAge >= lifeExpectancy) {
             // Ahead: find how early they could retire with same spending
-            let ageLow = 50, ageHigh = currentRetireAge;
+            // Can't retire earlier than current age
+            let ageLow = Math.max(inputs.currentAge + 1, 50), ageHigh = currentRetireAge;
             for (let i = 0; i < 15; i++) {
                 const testAge = Math.round((ageLow + ageHigh) / 2);
                 if (testAge === ageHigh) break;

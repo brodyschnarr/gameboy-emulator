@@ -358,8 +358,8 @@ const AppV5Enhanced = {
                 
                 <div class="stat-card">
                     <div class="stat-label">Median Outcome (50th)</div>
-                    <div class="stat-value">${fmtMoney(mc.finalBalance.p50)}</div>
-                    <div class="stat-note">Middle of the distribution</div>
+                    <div class="stat-value">${fmtMoney(mc.finalBalance.p50 || mc.successP50Balance || 0)}</div>
+                    <div class="stat-note">${mc.finalBalance.p50 > 0 ? 'Middle of the distribution' : (mc.successP50Balance > 0 ? 'Median of successful runs' : 'Portfolio depleted — sustained by government income')}</div>
                 </div>
                 
                 <div class="stat-card warning">
@@ -406,8 +406,9 @@ const AppV5Enhanced = {
             
             <div class="insight-box">
                 <h4>What This Means</h4>
-                <p><strong>Success rate of ${mc.successRate}%</strong> means that in ${mc.successRate} out of 100 simulations with realistic market conditions, your money lasted through your entire retirement.</p>
-                <p>The wide range between worst case (${fmtMoney(mc.finalBalance.p10)}) and best case (${fmtMoney(mc.finalBalance.p90)}) shows the impact of market timing and sequence of returns.</p>
+                <p><strong>Success rate of ${mc.successRate}%</strong> means that in ${mc.successRate} out of 100 simulations with realistic market conditions, your income (portfolio + government benefits) covered your spending through retirement.</p>
+                ${mc.finalBalance.p50 === 0 && mc.successRate > 50 ? '<p>⚠️ In many successful scenarios, your portfolio is depleted but <strong>government income (CPP + OAS + GIS)</strong> covers your spending. Consider this a safety net, not a comfortable margin.</p>' : ''}
+                <p>The range between worst case (${fmtMoney(mc.finalBalance.p10)}) and best case (${fmtMoney(mc.finalBalance.p90)}) shows the impact of market timing and sequence of returns.</p>
             </div>
         `;
     },

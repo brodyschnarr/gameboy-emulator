@@ -429,10 +429,17 @@ const MonteCarloSimulator = {
         const worstCase = results[0];
         const bestCase = results[results.length - 1];
         
+        // Successful runs percentiles (more meaningful than all-runs)
+        const successfulResults = results.filter(r => r.success);
+        const successP50Balance = successfulResults.length > 0
+            ? successfulResults[Math.floor(successfulResults.length * 0.5)].finalBalance
+            : 0;
+        
         return {
             successRate: Math.round(successRate),
             totalRuns: results.length,
             successfulRuns,
+            successP50Balance: Math.round(successP50Balance),
             
             finalBalance: {
                 p10: Math.round(p10.finalBalance),
