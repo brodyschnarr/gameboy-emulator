@@ -43,8 +43,8 @@ const AppV5Enhanced = {
                 try {
                     this.monteCarloResults = MonteCarloSimulator.simulate(baseInputs, {
                         iterations: 1000,
-                        volatility: 0.11,
-                        marketCrashProbability: 0.04
+                        volatility: 0.15,
+                        marketCrashProbability: 0.00
                     });
                 } catch (mcError) {
                     console.error('[AppV5] Monte Carlo error:', mcError);

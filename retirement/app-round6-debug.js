@@ -2187,7 +2187,7 @@ const AppV4 = {
             }
             try {
                 const mc = MonteCarloSimulator.simulate(this.scenarioResults[key].inputs, {
-                    iterations: 200, volatility: 0.11, marketCrashProbability: 0.04
+                    iterations: 200, volatility: 0.15, marketCrashProbability: 0.00
                 });
                 this.scenarioResults[key].mcRate = mc.successRate;
             } catch(e) {
