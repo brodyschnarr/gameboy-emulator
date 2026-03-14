@@ -347,16 +347,18 @@ const BenchmarksV2 = {
     },
 
     _getContributionMessage(vsRecommended, vsIncomePeer) {
-        if (vsRecommended > 20) {
-            return `💪 Exceeding recommended 15% (${vsRecommended > 0 ? '+' : ''}${vsRecommended}%)`;
-        } else if (vsRecommended > -5) {
+        const r = Math.round(vsRecommended);
+        const p = Math.round(vsIncomePeer);
+        if (r > 20) {
+            return `💪 Exceeding recommended 15% (${r > 0 ? '+' : ''}${r}%)`;
+        } else if (r > -5) {
             return `✅ Meeting recommended target`;
-        } else if (vsIncomePeer > 0) {
-            return `📊 Above peers at your income level (${vsIncomePeer > 0 ? '+' : ''}${vsIncomePeer}%)`;
-        } else if (vsRecommended > -25) {
-            return `⚠️ Below recommended 15% (${vsRecommended}%)`;
+        } else if (p > 0) {
+            return `📊 Above peers at your income level (${p > 0 ? '+' : ''}${p}%)`;
+        } else if (r > -25) {
+            return `⚠️ Below recommended 15% (${r}%)`;
         } else {
-            return `🚨 Well below recommended (${vsRecommended}%)`;
+            return `🚨 Well below recommended (${r}%)`;
         }
     },
 

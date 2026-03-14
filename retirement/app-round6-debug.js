@@ -293,6 +293,15 @@ const AppV4 = {
                 });
             }
         });
+
+        // Live update contribution benchmark & grounding on slider/input change
+        const contribInput = document.getElementById('monthly-contribution');
+        if (contribInput) {
+            contribInput.addEventListener('input', () => {
+                this._updateContributionBenchmark();
+                this._updateContributionGrounding();
+            });
+        }
     },
 
     _setupPresets() {

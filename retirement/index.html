@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0">
     <meta name="description" content="Canadian retirement calculator with regional data and tax-aware projections">
     <title>Retirement Planner V5 | Advanced Canadian Calculator</title>
-    <link rel="stylesheet" href="style.css?v=round6&t=20260314100000">
-    <link rel="stylesheet" href="style-v5.css?v=round6&t=20260314100000">
-    <link rel="stylesheet" href="mobile-polish.css?v=round6&t=20260314100000">
+    <link rel="stylesheet" href="style.css?v=round6&t=20260314110000">
+    <link rel="stylesheet" href="style-v5.css?v=round6&t=20260314110000">
+    <link rel="stylesheet" href="mobile-polish.css?v=round6&t=20260314110000">
     <link rel="stylesheet" href="slider-inputs.css?v=1">
     
     <!-- Debug scripts removed -->
@@ -586,6 +586,29 @@
                 </div>
             </div>
 
+            <button type="button" class="btn-secondary" id="btn-back-contributions">← Back</button>
+            <button type="button" class="btn-primary" id="btn-next-healthcare">Continue →</button>
+        </section>
+
+        <!-- ══════════════════════════════════════
+             STEP 5: Healthcare & Debt
+        ═══════════════════════════════════════ -->
+        <section class="card hidden" id="step-healthcare">
+            <h2>⚙️ Step 5 of 5: Fine-Tune Your Plan</h2>
+            <p class="section-intro">Add anything that could change the picture — extra income, side work, debts, or health costs.</p>
+
+            <!-- Additional Income / Windfalls -->
+            <h3 style="margin: 20px 0 8px;">📈 Additional Income</h3>
+            <p class="section-intro" style="margin-top:0;">Windfalls, inheritance, or other boosts to your retirement</p>
+
+            <div class="input-group windfalls-container">
+                <label>💰 One-Time Windfalls</label>
+                <span class="input-impact">Inheritance, business sale, insurance payout, etc.</span>
+                <div id="windfalls-list"></div>
+                <div id="windfall-form-container"></div>
+                <button type="button" class="btn-add-windfall" id="btn-add-windfall">+ Add Windfall</button>
+            </div>
+
             <!-- Part-Time Work After Retirement -->
             <div class="input-group">
                 <label>
@@ -631,20 +654,9 @@
                 </div>
             </div>
 
-            <button type="button" class="btn-secondary" id="btn-back-contributions">← Back</button>
-            <button type="button" class="btn-primary" id="btn-next-healthcare">Continue →</button>
-        </section>
-
-        <!-- ══════════════════════════════════════
-             STEP 5: Healthcare & Debt
-        ═══════════════════════════════════════ -->
-        <section class="card hidden" id="step-healthcare">
-            <h2>⚙️ Step 5 of 5: Adjust for Real Life</h2>
-            <p class="section-intro">No plan is perfectly predictable. Account for extra costs, windfalls, and health here.</p>
-
             <!-- Additional Expenses -->
-            <h3 style="margin: 20px 0 8px;">📉 Additional Expenses</h3>
-            <p class="section-intro" style="margin-top:0;">Things that reduce your retirement savings</p>
+            <h3 style="margin: 24px 0 8px;">📉 Additional Expenses</h3>
+            <p class="section-intro" style="margin-top:0;">Debts and health costs that reduce your retirement savings</p>
 
             <!-- Debt -->
             <div class="input-group">
@@ -681,18 +693,6 @@
                         <span id="healthcare-total">$0</span>
                     </div>
                 </div>
-            </div>
-
-            <!-- Additional Income / Windfalls -->
-            <h3 style="margin: 24px 0 8px;">📈 Additional Income</h3>
-            <p class="section-intro" style="margin-top:0;">Things that boost your retirement — windfalls, inheritance, etc.</p>
-
-            <div class="input-group windfalls-container">
-                <label>💰 One-Time Windfalls</label>
-                <span class="input-impact">Inheritance, business sale, insurance payout, etc.</span>
-                <div id="windfalls-list"></div>
-                <div id="windfall-form-container"></div>
-                <button type="button" class="btn-add-windfall" id="btn-add-windfall">+ Add Windfall</button>
             </div>
 
             <button type="button" class="btn-secondary" id="btn-back-retirement">← Back</button>
@@ -894,17 +894,17 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000009"></script>
-    <script src="cpp-calculator.js?v=17&t=24000009"></script>
-    <script src="benchmarks.js?v=17&t=24000009"></script>
-    <script src="lifestyle-data.js?v=17&t=24000009"></script>
-    <script src="regional-data.js?v=17&t=24000009"></script>
-    <script src="canada-map.js?v=17&t=24000009"></script>
-    <script src="income-sources.js?v=17&t=24000009"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000009"></script>
-    <script src="scenario-manager.js?v=17&t=24000009"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000009"></script>
-    <script src="calc.js?v=17&t=24000009"></script>
+    <script src="canada-tax.js?v=17&t=24000010"></script>
+    <script src="cpp-calculator.js?v=17&t=24000010"></script>
+    <script src="benchmarks.js?v=17&t=24000010"></script>
+    <script src="lifestyle-data.js?v=17&t=24000010"></script>
+    <script src="regional-data.js?v=17&t=24000010"></script>
+    <script src="canada-map.js?v=17&t=24000010"></script>
+    <script src="income-sources.js?v=17&t=24000010"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000010"></script>
+    <script src="scenario-manager.js?v=17&t=24000010"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000010"></script>
+    <script src="calc.js?v=17&t=24000010"></script>
     <script src="app-round6-debug.js"></script>
     
     <!-- V5 Advanced Features -->
