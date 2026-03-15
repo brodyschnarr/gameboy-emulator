@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════
-//  Retirement Calculation Engine V4.1
+//  Retirement Calculation Engine V4.2
 //  Tax-aware + OAS clawback + Smart withdrawal + CPP inflation indexing
-//  + Contribution growth + Split normalization + Partner age
+//  + RRIF mandatory conversion at 71 + LIRA/LIF support
+//  + Tax savings comparison (smart vs naive)
 // ═══════════════════════════════════════════
 
 const RetirementCalcV4 = {
@@ -67,7 +68,11 @@ const RetirementCalcV4 = {
             contributionGrowthRate = 0,
             
             // MER / fees
-            merFee = 0
+            merFee = 0,
+
+            // LIRA (Locked-In Retirement Account)
+            lira = 0,
+            liraProvince  // Provincial rules differ for LIF max withdrawals
         } = inputs;
 
         const yearsToRetirement = retirementAge - currentAge;
@@ -115,7 +120,7 @@ const RetirementCalcV4 = {
             startAge: currentAge,
             retirementAge,
             lifeExpectancy,
-            accounts: { rrsp, tfsa, nonReg, other, cash },
+            accounts: { rrsp, tfsa, nonReg, other, cash, lira: lira || 0 },
             annualContribution: monthlyContribution * 12,
             contributionSplit: normalizedSplit,
             contributionGrowthRate: (contributionGrowthRate || 0) / 100,
@@ -135,7 +140,8 @@ const RetirementCalcV4 = {
             isSingle: !isFamilyMode,
             windfalls: windfalls || [],
             currentAge,
-            spendingCurve: spendingCurve || 'flat'
+            spendingCurve: spendingCurve || 'flat',
+            _withdrawalStrategy: inputs._withdrawalStrategy || 'smart'
         });
 
         // 5. Calculate probability of success
@@ -196,6 +202,49 @@ const RetirementCalcV4 = {
     // ═══════════════════════════════════════
     // FIX #8: Normalize contribution split
     // ═══════════════════════════════════════
+    // ═══════════════════════════════════════
+    // RRIF Minimum Withdrawal Rates (CRA)
+    // At age 71, RRSP must convert to RRIF with mandatory minimums
+    // ═══════════════════════════════════════
+    RRIF_MINIMUMS: {
+        71: 0.0528, 72: 0.0540, 73: 0.0553, 74: 0.0567, 75: 0.0582,
+        76: 0.0598, 77: 0.0617, 78: 0.0636, 79: 0.0658, 80: 0.0682,
+        81: 0.0708, 82: 0.0738, 83: 0.0771, 84: 0.0808, 85: 0.0851,
+        86: 0.0899, 87: 0.0955, 88: 0.1021, 89: 0.1099, 90: 0.1192,
+        91: 0.1306, 92: 0.1449, 93: 0.1634, 94: 0.1879, 95: 0.2000
+    },
+
+    // LIF Maximum Withdrawal Rates (Ontario/Federal — most provinces similar)
+    // LIRA converts to LIF; you can't withdraw more than this percentage per year
+    LIF_MAXIMUMS: {
+        55: 0.0640, 56: 0.0650, 57: 0.0660, 58: 0.0670, 59: 0.0680,
+        60: 0.0690, 61: 0.0710, 62: 0.0720, 63: 0.0740, 64: 0.0760,
+        65: 0.0780, 66: 0.0800, 67: 0.0830, 68: 0.0860, 69: 0.0890,
+        70: 0.0930, 71: 0.0970, 72: 0.1020, 73: 0.1070, 74: 0.1130,
+        75: 0.1190, 76: 0.1270, 77: 0.1350, 78: 0.1450, 79: 0.1570,
+        80: 0.1710, 81: 0.1870, 82: 0.2070, 83: 0.2310, 84: 0.2610,
+        85: 0.3000, 86: 0.3500, 87: 0.4150, 88: 0.5060, 89: 0.6390,
+        90: 0.8510, 91: 1.0000, 92: 1.0000, 93: 1.0000, 94: 1.0000, 95: 1.0000
+    },
+
+    _getRRIFMinimum(age, balance) {
+        if (age < 71) return 0;
+        const rate = this.RRIF_MINIMUMS[Math.min(age, 95)] || 0.2000;
+        return balance * rate;
+    },
+
+    _getLIFMaximum(age, balance) {
+        if (age < 55) return 0;
+        const rate = this.LIF_MAXIMUMS[Math.min(age, 95)] || 1.0;
+        return balance * rate;
+    },
+
+    _getLIFMinimum(age, balance) {
+        // LIF minimums are the same as RRIF minimums (after age 71)
+        if (age < 71) return 0;
+        return this._getRRIFMinimum(age, balance);
+    },
+
     _normalizeSplit(split) {
         const total = (split.rrsp || 0) + (split.tfsa || 0) + (split.nonReg || 0);
         if (total === 0) return { rrsp: 0, tfsa: 0, nonReg: 0 };
@@ -298,7 +347,8 @@ const RetirementCalcV4 = {
             isSingle,
             windfalls = [],
             currentAge = startAge,
-            spendingCurve = 'flat'
+            spendingCurve = 'flat',
+            _withdrawalStrategy = 'smart'
         } = params;
 
         const projection = [];
@@ -307,8 +357,10 @@ const RetirementCalcV4 = {
             tfsa: accounts.tfsa || 0,
             nonReg: accounts.nonReg || 0,
             other: accounts.other || 0,
-            cash: accounts.cash || 0
+            cash: accounts.cash || 0,
+            lira: accounts.lira || 0
         };
+        let rrspConvertedToRRIF = false; // Track RRIF conversion at 71
         const CASH_RATE = 0.015; // 1.5% for HISA/GICs
         let debt = currentDebt;
         const r = returnRate / 100;
@@ -357,6 +409,7 @@ const RetirementCalcV4 = {
                 balances.tfsa *= (1 + r);
                 balances.nonReg *= (1 + r);
                 balances.other *= (1 + r);
+                balances.lira *= (1 + r);
                 balances.cash *= (1 + CASH_RATE);
 
                 // Pay down debt
@@ -376,7 +429,8 @@ const RetirementCalcV4 = {
                     nonReg: Math.round(balances.nonReg),
                     other: Math.round(balances.other),
                     cash: Math.round(balances.cash),
-                    totalBalance: Math.round(balances.rrsp + balances.tfsa + balances.nonReg + balances.other + balances.cash),
+                    lira: Math.round(balances.lira),
+                    totalBalance: Math.round(balances.rrsp + balances.tfsa + balances.nonReg + balances.other + balances.cash + balances.lira),
                     debt: Math.round(debt),
                     contribution: Math.round(thisYearContribution)
                 });
@@ -391,7 +445,26 @@ const RetirementCalcV4 = {
                 balances.tfsa *= (1 + r);
                 balances.nonReg *= (1 + r);
                 balances.other *= (1 + r);
+                balances.lira *= (1 + r);
                 balances.cash *= (1 + CASH_RATE);
+
+                // RRIF mandatory conversion at 71
+                if (age >= 71 && !rrspConvertedToRRIF) {
+                    rrspConvertedToRRIF = true;
+                    // RRSP becomes RRIF — balance stays same, just subject to minimum withdrawals now
+                }
+
+                // RRIF mandatory minimum withdrawal (age 71+)
+                let rrifMandatory = 0;
+                if (age >= 71 && balances.rrsp > 0) {
+                    rrifMandatory = RetirementCalcV4._getRRIFMinimum(age, balances.rrsp);
+                }
+
+                // LIF mandatory minimum (same as RRIF min, age 71+)
+                let lifMandatory = 0;
+                if (age >= 71 && balances.lira > 0) {
+                    lifMandatory = RetirementCalcV4._getLIFMinimum(age, balances.lira);
+                }
 
                 // 2. Inflation-adjusted spending with optional spending curve
                 const yearsIntoRetirement = age - retirementAge;
@@ -483,15 +556,54 @@ const RetirementCalcV4 = {
                 // FIX #9: Smart withdrawal — OAS-clawback-aware
                 const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncomePreClawback);
 
-                let withdrawal = this._withdrawSmartOptimal(
-                    balances,
-                    neededFromPortfolio,
-                    province,
-                    cppIncome + additionalIncome,
-                    oasIncome,
-                    age >= effOAS1,
-                    { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle }
-                );
+                // RRIF/LIF mandatory minimums — must be withdrawn regardless
+                // These count toward meeting the spending need
+                const totalMandatory = rrifMandatory + lifMandatory;
+                const neededBeyondMandatory = Math.max(0, neededFromPortfolio - totalMandatory);
+
+                let withdrawal;
+                if (_withdrawalStrategy === 'naive') {
+                    withdrawal = this._withdrawNaive(
+                        balances,
+                        neededBeyondMandatory,
+                        province,
+                        cppIncome + additionalIncome + totalMandatory
+                    );
+                } else {
+                    withdrawal = this._withdrawSmartOptimal(
+                        balances,
+                        neededBeyondMandatory,
+                        province,
+                        cppIncome + additionalIncome + totalMandatory,
+                        oasIncome,
+                        age >= effOAS1,
+                        { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle }
+                    );
+                }
+
+                // Apply mandatory RRIF/LIF withdrawals (on top of smart withdrawal)
+                // These are taxable and must be accounted for in tax calculation
+                let mandatoryTax = 0;
+                const baseTaxableBeforeMandatory = withdrawal.taxableIncome || (cppIncome + additionalIncome);
+                if (rrifMandatory > 0) {
+                    const mandatoryRRSP = Math.min(rrifMandatory, balances.rrsp);
+                    const extraRRSP = Math.max(0, mandatoryRRSP - withdrawal.fromRRSP);
+                    withdrawal.fromRRSP += extraRRSP;
+                    withdrawal.total += extraRRSP;
+                    // Tax on mandatory RRSP withdrawal
+                    if (extraRRSP > 0) {
+                        mandatoryTax += CanadianTax.calculateTax(baseTaxableBeforeMandatory + extraRRSP, province).total
+                            - CanadianTax.calculateTax(baseTaxableBeforeMandatory, province).total;
+                    }
+                }
+                if (lifMandatory > 0 && balances.lira > 0) {
+                    const mandatoryLIRA = Math.min(lifMandatory, balances.lira);
+                    withdrawal.fromLIRA = mandatoryLIRA;
+                    withdrawal.total += mandatoryLIRA;
+                    mandatoryTax += CanadianTax.calculateTax(baseTaxableBeforeMandatory + (withdrawal.fromRRSP || 0) + mandatoryLIRA, province).total
+                        - CanadianTax.calculateTax(baseTaxableBeforeMandatory + (withdrawal.fromRRSP || 0), province).total;
+                }
+                withdrawal.taxPaid = (withdrawal.taxPaid || 0) + mandatoryTax;
                 
                 // Pass 2: recalculate GIS with actual withdrawals and re-withdraw if short
                 if (age >= effOAS1) {
@@ -530,8 +642,9 @@ const RetirementCalcV4 = {
                 balances.rrsp = Math.max(0, balances.rrsp - withdrawal.fromRRSP);
                 balances.other = Math.max(0, balances.other - withdrawal.fromOther);
                 balances.cash = Math.max(0, balances.cash - (withdrawal.fromCash || 0));
+                balances.lira = Math.max(0, balances.lira - (withdrawal.fromLIRA || 0));
 
-                const totalBalance = balances.rrsp + balances.tfsa + balances.nonReg + balances.other + balances.cash;
+                const totalBalance = balances.rrsp + balances.tfsa + balances.nonReg + balances.other + balances.cash + balances.lira;
 
                 // Actual OAS after clawback (based on actual taxable income)
                 const actualOAS = withdrawal.actualOAS !== undefined ? withdrawal.actualOAS : oasIncome;
@@ -561,15 +674,19 @@ const RetirementCalcV4 = {
                     nonReg: Math.round(balances.nonReg),
                     other: Math.round(balances.other),
                     cash: Math.round(balances.cash),
+                    lira: Math.round(balances.lira),
                     totalBalance: Math.round(totalBalance),
                     withdrawal: withdrawal.total,
                     withdrawalBreakdown: {
                         tfsa: withdrawal.fromTFSA,
                         nonReg: withdrawal.fromNonReg,
                         rrsp: withdrawal.fromRRSP,
+                        lira: withdrawal.fromLIRA || 0,
                         cash: withdrawal.fromCash || 0,
                         other: withdrawal.fromOther
                     },
+                    rrifMandatory: Math.round(rrifMandatory),
+                    lifMandatory: Math.round(lifMandatory),
                     governmentIncome: Math.round(govIncome),
                     additionalIncome: Math.round(additionalIncome),
                     oasReceived: Math.round(actualOAS),
@@ -906,5 +1023,124 @@ const RetirementCalcV4 = {
         }
 
         return Math.max(0, Math.min(100, baseProb));
+    },
+
+    // ═══════════════════════════════════════
+    // Tax Savings Comparison: Smart vs Naive withdrawal
+    // Shows how much the tax-optimized strategy saves
+    // ═══════════════════════════════════════
+    compareTaxStrategies(inputs) {
+        // Run smart strategy (default)
+        const smartResult = this.calculate(inputs);
+        
+        // Run naive strategy: RRSP first → NonReg → TFSA → Other
+        const naiveResult = this.calculate({ ...inputs, _withdrawalStrategy: 'naive' });
+        
+        const smartYears = smartResult.yearByYear.filter(y => y.phase === 'retirement');
+        const naiveYears = naiveResult.yearByYear.filter(y => y.phase === 'retirement');
+        
+        const smartTotalTax = smartYears.reduce((s, y) => s + (y.taxPaid || 0), 0);
+        const naiveTotalTax = naiveYears.reduce((s, y) => s + (y.taxPaid || 0), 0);
+        const taxSaved = naiveTotalTax - smartTotalTax;
+        
+        const smartOAS = smartYears.reduce((s, y) => s + (y.oasReceived || 0), 0);
+        const naiveOAS = naiveYears.reduce((s, y) => s + (y.oasReceived || 0), 0);
+        const oasPreserved = smartOAS - naiveOAS;
+        
+        const smartGIS = smartYears.reduce((s, y) => s + (y.gisReceived || 0), 0);
+        const naiveGIS = naiveYears.reduce((s, y) => s + (y.gisReceived || 0), 0);
+        const gisPreserved = smartGIS - naiveGIS;
+        
+        return {
+            smart: {
+                totalTax: Math.round(smartTotalTax),
+                totalOAS: Math.round(smartOAS),
+                totalGIS: Math.round(smartGIS),
+                moneyLastsAge: smartResult.summary.moneyLastsAge,
+                legacy: Math.round(smartResult.summary.legacyAmount)
+            },
+            naive: {
+                totalTax: Math.round(naiveTotalTax),
+                totalOAS: Math.round(naiveOAS),
+                totalGIS: Math.round(naiveGIS),
+                moneyLastsAge: naiveResult.summary.moneyLastsAge,
+                legacy: Math.round(naiveResult.summary.legacyAmount)
+            },
+            savings: {
+                taxSaved: Math.round(taxSaved),
+                oasPreserved: Math.round(oasPreserved),
+                gisPreserved: Math.round(gisPreserved),
+                extraYears: naiveResult.summary.moneyLastsAge < smartResult.summary.moneyLastsAge 
+                    ? smartResult.summary.moneyLastsAge - naiveResult.summary.moneyLastsAge : 0,
+                totalBenefit: Math.round(taxSaved + oasPreserved + gisPreserved)
+            }
+        };
+    },
+
+    // Naive withdrawal: TFSA first → NonReg → RRSP → Other
+    // This is what most uninformed retirees do: "use tax-free first to save tax"
+    // It's the OPPOSITE of optimal — burns tax-free room early, 
+    // leaves RRSP to grow and force huge RRIF withdrawals later
+    _withdrawNaive(balances, neededAfterTax, province, taxableIncome) {
+        let stillNeed = neededAfterTax;
+        let fromRRSP = 0, fromNonReg = 0, fromTFSA = 0, fromOther = 0, fromCash = 0, fromLIRA = 0;
+        let cumTaxable = taxableIncome;
+        
+        // 1. TFSA first (naive: "why pay tax when I don't have to?")
+        if (stillNeed > 0 && balances.tfsa > 0) {
+            fromTFSA = Math.min(stillNeed, balances.tfsa);
+            stillNeed -= fromTFSA;
+        }
+        
+        // 2. Cash
+        if (stillNeed > 0 && balances.cash > 0) {
+            fromCash = Math.min(stillNeed, balances.cash);
+            stillNeed -= fromCash;
+        }
+        
+        // 3. Non-Reg (50% capital gains)
+        if (stillNeed > 0 && balances.nonReg > 0) {
+            fromNonReg = Math.min(stillNeed * 1.3, balances.nonReg);
+            const capGain = fromNonReg * 0.5;
+            const taxOnNR = CanadianTax.calculateTax(cumTaxable + capGain, province).total
+                - CanadianTax.calculateTax(cumTaxable, province).total;
+            cumTaxable += capGain;
+            stillNeed -= (fromNonReg - taxOnNR);
+        }
+        
+        // 4. RRSP last (naive: "I'll avoid the tax hit as long as possible")
+        if (stillNeed > 0 && balances.rrsp > 0) {
+            fromRRSP = this._binarySearchGross(stillNeed, cumTaxable, province, balances.rrsp);
+            const taxOnRRSP = CanadianTax.calculateTax(cumTaxable + fromRRSP, province).total 
+                - CanadianTax.calculateTax(cumTaxable, province).total;
+            cumTaxable += fromRRSP;
+            stillNeed -= (fromRRSP - taxOnRRSP);
+        }
+        
+        // 5. LIRA
+        if (stillNeed > 0 && balances.lira > 0) {
+            fromLIRA = Math.min(stillNeed * 1.5, balances.lira);
+            cumTaxable += fromLIRA;
+            stillNeed -= fromLIRA * 0.65; // rough after-tax
+        }
+        
+        // 6. Other
+        if (stillNeed > 0 && balances.other > 0) {
+            fromOther = Math.min(stillNeed * 1.5, balances.other);
+            cumTaxable += fromOther;
+        }
+        
+        const totalGross = fromRRSP + fromNonReg + fromTFSA + fromOther + fromCash + fromLIRA;
+        const totalTax = CanadianTax.calculateTax(cumTaxable, province).total 
+            - CanadianTax.calculateTax(taxableIncome, province).total;
+        
+        return {
+            fromTFSA, fromNonReg, fromRRSP, fromOther, fromCash, fromLIRA,
+            total: totalGross,
+            taxableIncome: cumTaxable,
+            taxPaid: totalTax,
+            afterTax: totalGross - totalTax,
+            actualOAS: undefined
+        };
     }
 };

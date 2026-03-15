@@ -275,7 +275,7 @@ const AppV4 = {
 
     _setupBenchmarks() {
         // Savings inputs
-        ['rrsp', 'tfsa', 'nonreg', 'other'].forEach(id => {
+        ['rrsp', 'tfsa', 'nonreg', 'lira', 'other'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', () => {
@@ -1301,6 +1301,67 @@ const AppV4 = {
         });
     },
 
+    _displayTaxComparison(inputs) {
+        const section = document.getElementById('tax-comparison');
+        const content = document.getElementById('tax-comparison-content');
+        if (!section || !content) return;
+
+        try {
+            const comparison = RetirementCalcV4.compareTaxStrategies(inputs);
+            const s = comparison.savings;
+            const fmt = (v) => '$' + Math.abs(Math.round(v)).toLocaleString();
+
+            // Only show if there's meaningful savings
+            if (s.totalBenefit < 500 && s.taxSaved < 500) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+
+            const items = [];
+            if (s.taxSaved > 0) items.push(`<div class="tax-saving-item"><span class="saving-label">💰 Tax Savings</span><span class="saving-value">${fmt(s.taxSaved)}</span><span class="saving-desc">Less tax paid over retirement</span></div>`);
+            if (s.oasPreserved > 0) items.push(`<div class="tax-saving-item"><span class="saving-label">🏛️ OAS Preserved</span><span class="saving-value">${fmt(s.oasPreserved)}</span><span class="saving-desc">More OAS by avoiding clawback</span></div>`);
+            if (s.gisPreserved > 0) items.push(`<div class="tax-saving-item"><span class="saving-label">🛡️ GIS Preserved</span><span class="saving-value">${fmt(s.gisPreserved)}</span><span class="saving-desc">More GIS by managing taxable income</span></div>`);
+            if (s.extraYears > 0) items.push(`<div class="tax-saving-item"><span class="saving-label">📅 Extra Years</span><span class="saving-value">+${s.extraYears} years</span><span class="saving-desc">Money lasts longer</span></div>`);
+
+            const totalBenefit = Math.max(0, s.totalBenefit);
+
+            content.innerHTML = `
+                <h3>🧮 Smart Withdrawal Strategy</h3>
+                <p class="section-intro">How our tax-optimized approach compares to a basic "use TFSA first" strategy:</p>
+                
+                <div class="tax-comparison-total">
+                    <div class="total-saved">${fmt(totalBenefit)}</div>
+                    <div class="total-label">Total lifetime benefit</div>
+                </div>
+
+                <div class="tax-saving-grid">${items.join('')}</div>
+
+                <div class="tax-comparison-detail">
+                    <div class="strategy-row">
+                        <span>📊 Our strategy (tax paid):</span>
+                        <span>${fmt(comparison.smart.totalTax)}</span>
+                    </div>
+                    <div class="strategy-row">
+                        <span>📉 Basic strategy (tax paid):</span>
+                        <span>${fmt(comparison.naive.totalTax)}</span>
+                    </div>
+                </div>
+
+                <details class="tax-explainer">
+                    <summary>How does this work?</summary>
+                    <div class="explainer-content">
+                        <p><strong>Basic approach:</strong> Most people use TFSA first ("why pay tax?"), then savings, then RRSP last. This leaves RRSP growing — but at 71, CRA forces minimum withdrawals (RRIF). With a large balance, these forced withdrawals push you into high tax brackets and can trigger OAS clawback.</p>
+                        <p><strong>Our approach:</strong> Strategic RRSP "meltdown" in the gap years (retirement to 65) fills low tax brackets cheaply. By 71, your RRSP balance is smaller, so forced RRIF minimums are manageable. TFSA is preserved for tax-free income when you need it most.</p>
+                    </div>
+                </details>
+            `;
+        } catch (e) {
+            section.classList.add('hidden');
+        }
+    },
+
     _generateRetirementNarrative(inputs, results) {
         const section = document.getElementById('retirement-narrative');
         const content = document.getElementById('retirement-narrative-content');
@@ -1581,9 +1642,10 @@ const AppV4 = {
         const rrsp = parseFloat(document.getElementById('rrsp')?.value) || 0;
         const tfsa = parseFloat(document.getElementById('tfsa')?.value) || 0;
         const nonreg = parseFloat(document.getElementById('nonreg')?.value) || 0;
+        const lira = parseFloat(document.getElementById('lira')?.value) || 0;
         const other = parseFloat(document.getElementById('other')?.value) || 0;
 
-        const total = rrsp + tfsa + nonreg + other;
+        const total = rrsp + tfsa + nonreg + lira + other;
 
         const display = document.getElementById('total-savings-display');
         if (display) {
@@ -1961,6 +2023,9 @@ const AppV4 = {
 
             // Spending optimizer
             this._runSpendingOptimizer(inputs, baseResults);
+
+            // Tax savings comparison
+            this._displayTaxComparison(inputs);
             
             // Retirement narrative
             this._generateRetirementNarrative(inputs, baseResults);
@@ -2253,6 +2318,7 @@ const AppV4 = {
             rrsp: parseFloat(document.getElementById('rrsp')?.value) || 0,
             tfsa: parseFloat(document.getElementById('tfsa')?.value) || 0,
             nonReg: parseFloat(document.getElementById('nonreg')?.value) || 0,
+            lira: parseFloat(document.getElementById('lira')?.value) || 0,
             other: parseFloat(document.getElementById('other')?.value) || 0,
 
             monthlyContribution: parseFloat(document.getElementById('monthly-contribution')?.value) || 0,
@@ -2618,8 +2684,9 @@ const AppV4 = {
             const fromRRSP = wb.rrsp || 0;
             const fromOther = wb.other || 0;
             const fromCash = wb.cash || 0;
+            const fromLIRA = wb.lira || 0;
             
-            const grossIncome = cpp + oas + gis + additional + fromTFSA + fromNonReg + fromRRSP + fromOther + fromCash;
+            const grossIncome = cpp + oas + gis + additional + fromTFSA + fromNonReg + fromRRSP + fromOther + fromCash + fromLIRA;
             if (grossIncome <= 0) return '';
             
             // Show after-tax income as the headline number (what you actually get to spend)
@@ -2629,13 +2696,14 @@ const AppV4 = {
 
             // For the bar, show after-tax proportions
             // Tax-free sources: TFSA, GIS (not taxed), OAS/CPP/RRSP/NonReg are taxed proportionally
-            const taxableGross = cpp + oas + fromRRSP + fromNonReg + fromOther + additional;
+            const taxableGross = cpp + oas + fromRRSP + fromNonReg + fromOther + fromLIRA + additional;
             const taxRate = taxableGross > 0 ? tax / taxableGross : 0;
             const afterTaxCPP = cpp * (1 - taxRate);
             const afterTaxOAS = oas * (1 - taxRate);
             const afterTaxRRSP = fromRRSP * (1 - taxRate);
             const afterTaxNonReg = fromNonReg * (1 - taxRate);
             const afterTaxOther = fromOther * (1 - taxRate);
+            const afterTaxLIRA = fromLIRA * (1 - taxRate);
             const afterTaxAdditional = additional * (1 - taxRate);
             // GIS, TFSA, Cash are tax-free
             const afterTaxGIS = gis;
@@ -2655,6 +2723,7 @@ const AppV4 = {
             if (afterTaxTFSA > 0) segments.push({ cls: 'tfsa', pct: pct(afterTaxTFSA), label: 'TFSA', amount: fmt(afterTaxTFSA) });
             if (afterTaxNonReg > 0) segments.push({ cls: 'nonreg', pct: pct(afterTaxNonReg), label: 'Non-Reg', amount: fmt(afterTaxNonReg) });
             if (afterTaxOther > 0) segments.push({ cls: 'other', pct: pct(afterTaxOther), label: 'Other', amount: fmt(afterTaxOther) });
+            if (afterTaxLIRA > 0) segments.push({ cls: 'lira', pct: pct(afterTaxLIRA), label: 'LIRA/LIF', amount: fmt(afterTaxLIRA) });
             if (afterTaxCash > 0) segments.push({ cls: 'cash', pct: pct(afterTaxCash), label: 'Cash', amount: fmt(afterTaxCash) });
 
             const barSegments = segments.map(s => 

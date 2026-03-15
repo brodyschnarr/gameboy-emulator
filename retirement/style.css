@@ -1304,6 +1304,10 @@ input:focus {
     background: #3b82f6;
 }
 
+.bar-segment.lira {
+    background: #ec4899;
+}
+
 .bar-segment.other {
     background: #f59e0b;
 }
@@ -1367,6 +1371,10 @@ input:focus {
 
 .legend-color.nonreg {
     background: #3b82f6;
+}
+
+.legend-color.lira {
+    background: #ec4899;
 }
 
 .legend-color.other {
@@ -2598,3 +2606,96 @@ input:focus {
 .stats-grid.compact .stat-card { padding: 12px 8px; }
 .assumptions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 400px) { .assumptions-grid { grid-template-columns: 1fr; } }
+
+/* Tax Comparison Card */
+.tax-comparison-total {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.tax-comparison-total .total-saved {
+    font-size: 36px;
+    font-weight: 800;
+    color: #059669;
+}
+
+.tax-comparison-total .total-label {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.tax-saving-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.tax-saving-item {
+    background: var(--bg-muted, #f9fafb);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+}
+
+.tax-saving-item .saving-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.tax-saving-item .saving-value {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    color: #059669;
+}
+
+.tax-saving-item .saving-desc {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.tax-comparison-detail {
+    border-top: 1px solid var(--border, #e5e7eb);
+    padding-top: 12px;
+    margin-top: 12px;
+}
+
+.strategy-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+.tax-explainer {
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.tax-explainer summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.explainer-content {
+    margin-top: 8px;
+    line-height: 1.6;
+}
+
+.explainer-content p {
+    margin: 8px 0;
+}
+
+@media (max-width: 480px) {
+    .tax-saving-grid {
+        grid-template-columns: 1fr;
+    }
+}
