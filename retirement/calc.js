@@ -1029,58 +1029,87 @@ const RetirementCalcV4 = {
     // Tax Savings Comparison: Smart vs Naive withdrawal
     // Shows how much the tax-optimized strategy saves
     // ═══════════════════════════════════════
-    // Find the optimal CPP/OAS timing + withdrawal strategy for maximum after-tax income
+    // Find the optimal CPP/OAS timing + withdrawal strategy for maximum sustainable spending
+    // Two-phase: coarse sweep (every 2 years), then fine-tune around winner
     optimizePlan(inputs) {
-        let bestATI = -Infinity;
-        let bestResult = null;
+        const lifeExp = inputs.lifeExpectancy || 90;
+
+        const findMaxSpend = (overrides) => {
+            let lo = 20000, hi = 200000;
+            for (let i = 0; i < 14; i++) {
+                const mid = (lo + hi) / 2;
+                const r = this.calculate({ ...inputs, ...overrides, annualSpending: mid });
+                if (r.summary.moneyLastsAge >= lifeExp) lo = mid; else hi = mid;
+            }
+            return Math.floor(lo / 1000) * 1000;
+        };
+
+        let bestMaxSpend = 0;
         let bestParams = null;
 
+        // Phase 1: Coarse sweep (every 2 years) — ~36 combos × 2 strategies = 72
+        const coarseCPP = [60, 62, 64, 65, 66, 68, 70];
+        const coarseOAS = [65, 66, 68, 70];
         const strategies = ['smart', 'naive'];
-        const cppAges = [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70];
-        const oasAges = [65, 66, 67, 68, 69, 70];
-
-        const retAge = inputs.retirementAge || 65;
 
         for (const strategy of strategies) {
-            for (const cppAge of cppAges) {
-                if (cppAge < retAge && strategy === 'smart') continue; // can't start CPP before retirement in smart (needs income)
-                for (const oasAge of oasAges) {
+            for (const cppAge of coarseCPP) {
+                for (const oasAge of coarseOAS) {
                     try {
-                        const testInputs = {
-                            ...inputs,
-                            cppStartAge: cppAge,
-                            oasStartAge: oasAge,
-                            cppStartAgeP2: cppAge,
-                            oasStartAgeP2: oasAge,
+                        const overrides = {
+                            cppStartAge: cppAge, oasStartAge: oasAge,
+                            cppStartAgeP2: cppAge, oasStartAgeP2: oasAge,
                             _withdrawalStrategy: strategy
                         };
-                        const result = this.calculate(testInputs);
-                        const retYears = result.yearByYear.filter(y => y.phase === 'retirement');
-                        
-                        // Total after-tax income (the real measure of "more money")
-                        const ati = retYears.reduce((s, y) => {
-                            const wb = y.withdrawalBreakdown || {};
-                            const gross = (y.cppReceived||0) + (y.oasReceived||0) + (y.gisReceived||0) + (y.additionalIncome||0)
-                                + (wb.tfsa||0) + (wb.nonReg||0) + (wb.rrsp||0) + (wb.other||0) + (wb.cash||0) + (wb.lira||0);
-                            return s + gross - (y.taxPaid||0);
-                        }, 0);
-
-                        // Penalize if money runs out early
-                        const lifeExp = inputs.lifeExpectancy || 90;
-                        const shortage = Math.max(0, lifeExp - result.summary.moneyLastsAge);
-                        const penalizedATI = ati - (shortage * inputs.annualSpending * 0.5);
-
-                        if (penalizedATI > bestATI) {
-                            bestATI = penalizedATI;
-                            bestResult = result;
-                            bestParams = { cppAge, oasAge, strategy, ati: Math.round(ati) };
+                        const maxSpend = findMaxSpend(overrides);
+                        if (maxSpend > bestMaxSpend) {
+                            bestMaxSpend = maxSpend;
+                            bestParams = { cppAge, oasAge, strategy, maxSpend };
                         }
                     } catch(e) {}
                 }
             }
         }
 
-        return { result: bestResult, params: bestParams };
+        // Phase 2: Fine-tune ±1 year around best (max 15 combos)
+        const fineCPP = new Set();
+        const fineOAS = new Set();
+        for (let d = -1; d <= 1; d++) {
+            const c = bestParams.cppAge + d;
+            const o = bestParams.oasAge + d;
+            if (c >= 60 && c <= 70) fineCPP.add(c);
+            if (o >= 65 && o <= 70) fineOAS.add(o);
+        }
+
+        for (const strategy of strategies) {
+            for (const cppAge of fineCPP) {
+                for (const oasAge of fineOAS) {
+                    try {
+                        const overrides = {
+                            cppStartAge: cppAge, oasStartAge: oasAge,
+                            cppStartAgeP2: cppAge, oasStartAgeP2: oasAge,
+                            _withdrawalStrategy: strategy
+                        };
+                        const maxSpend = findMaxSpend(overrides);
+                        if (maxSpend > bestMaxSpend) {
+                            bestMaxSpend = maxSpend;
+                            bestParams = { cppAge, oasAge, strategy, maxSpend };
+                        }
+                    } catch(e) {}
+                }
+            }
+        }
+
+        // Re-run at user's actual spending with best params for display
+        const bestInputs = {
+            ...inputs,
+            cppStartAge: bestParams.cppAge, oasStartAge: bestParams.oasAge,
+            cppStartAgeP2: bestParams.cppAge, oasStartAgeP2: bestParams.oasAge,
+            _withdrawalStrategy: bestParams.strategy
+        };
+        const bestResult = this.calculate(bestInputs);
+
+        return { result: bestResult, params: bestParams, inputs: bestInputs };
     },
 
     compareTaxStrategies(inputs) {

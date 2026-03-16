@@ -1316,18 +1316,11 @@ const AppV4 = {
             };
             const advisorResults = RetirementCalcV4.calculate(advisorInputs);
 
-            // 2. Optimized plan — sweep CPP/OAS timing + strategy
+            // 2. Optimized plan — sweep CPP/OAS timing + strategy for max spending
             const optimized = RetirementCalcV4.optimizePlan(inputs);
             const optResult = optimized.result;
             const optParams = optimized.params;
-
-            // Build optimized inputs for re-running on tab switch
-            const optInputs = {
-                ...inputs,
-                cppStartAge: optParams.cppAge, oasStartAge: optParams.oasAge,
-                cppStartAgeP2: optParams.cppAge, oasStartAgeP2: optParams.oasAge,
-                _withdrawalStrategy: optParams.strategy
-            };
+            const optInputs = optimized.inputs;
 
             // Store all three for tab switching
             this._strategyData = {
@@ -1372,30 +1365,32 @@ const AppV4 = {
 
             const fmt = (v) => '$' + Math.round(Math.abs(v)).toLocaleString();
 
-            // Find winner
-            const allATI = [
-                { key: 'smart', ati: userStats.ati, label: 'Your Plan' },
-                { key: 'advisor', ati: advStats.ati, label: 'Advisor' },
-                { key: 'optimized', ati: optStats.ati, label: 'Optimized' }
+            // Winner = highest max sustainable spending (the real question: "how much can I spend?")
+            const allPlans = [
+                { key: 'smart', max: userMax, label: 'Your Plan', stats: userStats },
+                { key: 'advisor', max: advMax, label: 'Advisor', stats: advStats },
+                { key: 'optimized', max: optMax || optParams.maxSpend, label: 'Optimized', stats: optStats }
             ];
-            allATI.sort((a, b) => b.ati - a.ati);
-            const winnerKey = allATI[0].key;
+            allPlans.sort((a, b) => (b.max||0) - (a.max||0));
+            const winnerKey = allPlans[0].key;
 
             const buildCol = (header, stats, maxSpend, isWinner, note) => `
                 <div class="strategy-col ${isWinner ? '' : 'loser'}">
                     <div class="strategy-col-header">${header}</div>
+                    ${maxSpend ? `<div class="strategy-stat highlight"><span>Max Spending</span><span>${fmt(maxSpend)}/yr</span></div>` : ''}
                     <div class="strategy-stat"><span>Total Tax</span><span>${fmt(stats.tax)}</span></div>
                     <div class="strategy-stat"><span>CPP Collected</span><span>${fmt(stats.cpp)}</span></div>
                     <div class="strategy-stat"><span>OAS Collected</span><span>${fmt(stats.oas)}</span></div>
                     <div class="strategy-stat"><span>GIS Collected</span><span>${fmt(stats.gis)}</span></div>
-                    ${maxSpend ? `<div class="strategy-stat highlight"><span>Max Spending</span><span>${fmt(maxSpend)}/yr</span></div>` : ''}
-                    <div class="strategy-stat"><span>After-Tax Income</span><span>${fmt(stats.ati)}</span></div>
                     <div class="strategy-stat"><span>Money Lasts To</span><span>Age ${stats.lasts}</span></div>
                     ${note ? `<div class="strategy-note">${note}</div>` : ''}
                 </div>`;
 
             const optNote = `CPP at ${optParams.cppAge}, OAS at ${optParams.oasAge}` +
                 (optParams.strategy === 'naive' ? ', TFSA-primary' : ', RRSP meltdown');
+
+            const bestMax = allPlans[0].max || 0;
+            const worstMax = allPlans[allPlans.length-1].max || 0;
 
             tabs.classList.remove('hidden');
             summary.innerHTML = `
@@ -1404,13 +1399,11 @@ const AppV4 = {
                         `CPP at ${inputs.cppStartAge}, OAS at ${inputs.oasStartAge}`)}
                     ${buildCol('👔 Advisor', advStats, advMax, winnerKey === 'advisor',
                         'CPP/OAS at 65, TFSA-primary')}
-                    ${buildCol('🎯 Optimized', optStats, optMax, winnerKey === 'optimized', optNote)}
+                    ${buildCol('🎯 Optimized', optStats, optMax || optParams.maxSpend, winnerKey === 'optimized', optNote)}
                 </div>
                 <div class="strategy-verdict positive">
-                    🏆 <strong>${allATI[0].label}</strong> wins with <strong>${fmt(allATI[0].ati - allATI[allATI.length-1].ati)}</strong> more after-tax income
-                    ${optMax && userMax && optMax > userMax
-                        ? `<br><span style="font-size:13px">You could spend <strong>${fmt(optMax)}/yr</strong> instead of <strong>${fmt(userMax)}/yr</strong></span>`
-                        : ''}
+                    🏆 <strong>${allPlans[0].label}</strong> lets you spend <strong>${fmt(bestMax)}/yr</strong>
+                    ${bestMax > worstMax ? ` — <strong>${fmt(bestMax - worstMax)}/yr more</strong> than ${allPlans[allPlans.length-1].label}` : ''}
                 </div>
             `;
             summary.classList.remove('hidden');
