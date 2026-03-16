@@ -1077,28 +1077,42 @@ const RetirementCalcV4 = {
         };
     },
 
-    // Naive withdrawal: TFSA first → NonReg → RRSP → Other
-    // This is what most uninformed retirees do: "use tax-free first to save tax"
-    // It's the OPPOSITE of optimal — burns tax-free room early, 
-    // leaves RRSP to grow and force huge RRIF withdrawals later
+    // "Good Advisor" withdrawal strategy:
+    // TFSA as primary source, but pull RRSP up to the basic personal amount
+    // (~$15,705 federally tax-free) or low bracket ceiling to use cheap tax room.
+    // This is what a competent (non-optimizing) advisor would do:
+    // "Don't waste your personal amount — pull some RRSP to fill it, then use TFSA"
     _withdrawNaive(balances, neededAfterTax, province, taxableIncome) {
         let stillNeed = neededAfterTax;
         let fromRRSP = 0, fromNonReg = 0, fromTFSA = 0, fromOther = 0, fromCash = 0, fromLIRA = 0;
         let cumTaxable = taxableIncome;
         
-        // 1. TFSA first (naive: "why pay tax when I don't have to?")
+        const BASIC_PERSONAL = 15705; // 2024 federal basic personal amount
+        
+        // 1. Pull RRSP up to fill basic personal amount (essentially tax-free)
+        if (balances.rrsp > 0 && cumTaxable < BASIC_PERSONAL) {
+            const roomToFill = BASIC_PERSONAL - cumTaxable;
+            const rrspPull = Math.min(roomToFill, balances.rrsp, stillNeed > 0 ? stillNeed * 1.5 : roomToFill);
+            fromRRSP = rrspPull;
+            const taxOnPull = CanadianTax.calculateTax(cumTaxable + rrspPull, province).total
+                - CanadianTax.calculateTax(cumTaxable, province).total;
+            cumTaxable += rrspPull;
+            stillNeed -= (rrspPull - taxOnPull);
+        }
+        
+        // 2. TFSA for the rest of spending need (primary source)
         if (stillNeed > 0 && balances.tfsa > 0) {
             fromTFSA = Math.min(stillNeed, balances.tfsa);
             stillNeed -= fromTFSA;
         }
         
-        // 2. Cash
+        // 3. Cash
         if (stillNeed > 0 && balances.cash > 0) {
             fromCash = Math.min(stillNeed, balances.cash);
             stillNeed -= fromCash;
         }
         
-        // 3. Non-Reg (50% capital gains)
+        // 4. Non-Reg (50% capital gains)
         if (stillNeed > 0 && balances.nonReg > 0) {
             fromNonReg = Math.min(stillNeed * 1.3, balances.nonReg);
             const capGain = fromNonReg * 0.5;
@@ -1108,23 +1122,24 @@ const RetirementCalcV4 = {
             stillNeed -= (fromNonReg - taxOnNR);
         }
         
-        // 4. RRSP last (naive: "I'll avoid the tax hit as long as possible")
-        if (stillNeed > 0 && balances.rrsp > 0) {
-            fromRRSP = this._binarySearchGross(stillNeed, cumTaxable, province, balances.rrsp);
-            const taxOnRRSP = CanadianTax.calculateTax(cumTaxable + fromRRSP, province).total 
+        // 5. More RRSP if still needed
+        if (stillNeed > 0 && balances.rrsp > fromRRSP) {
+            const moreRRSP = this._binarySearchGross(stillNeed, cumTaxable, province, balances.rrsp - fromRRSP);
+            fromRRSP += moreRRSP;
+            const taxOnMore = CanadianTax.calculateTax(cumTaxable + moreRRSP, province).total
                 - CanadianTax.calculateTax(cumTaxable, province).total;
-            cumTaxable += fromRRSP;
-            stillNeed -= (fromRRSP - taxOnRRSP);
+            cumTaxable += moreRRSP;
+            stillNeed -= (moreRRSP - taxOnMore);
         }
         
-        // 5. LIRA
+        // 6. LIRA
         if (stillNeed > 0 && balances.lira > 0) {
             fromLIRA = Math.min(stillNeed * 1.5, balances.lira);
             cumTaxable += fromLIRA;
-            stillNeed -= fromLIRA * 0.65; // rough after-tax
+            stillNeed -= fromLIRA * 0.65;
         }
         
-        // 6. Other
+        // 7. Other
         if (stillNeed > 0 && balances.other > 0) {
             fromOther = Math.min(stillNeed * 1.5, balances.other);
             cumTaxable += fromOther;

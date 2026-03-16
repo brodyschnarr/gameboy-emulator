@@ -1307,7 +1307,7 @@ const AppV4 = {
         if (!tabs || !summary) return;
 
         try {
-            // Run the "advisor" plan: CPP/OAS at 65, naive withdrawal (TFSA first)
+            // "Good advisor" plan: CPP/OAS at 65, TFSA-primary but fills basic personal amount with RRSP
             const advisorInputs = {
                 ...inputs,
                 cppStartAge: 65,
@@ -1328,58 +1328,85 @@ const AppV4 = {
             const smartYears = smartResults.yearByYear.filter(y => y.phase === 'retirement');
             const advYears = advisorResults.yearByYear.filter(y => y.phase === 'retirement');
 
-            const smartTax = smartYears.reduce((s, y) => s + (y.taxPaid || 0), 0);
-            const advTax = advYears.reduce((s, y) => s + (y.taxPaid || 0), 0);
-            const smartGIS = smartYears.reduce((s, y) => s + (y.gisReceived || 0), 0);
-            const advGIS = advYears.reduce((s, y) => s + (y.gisReceived || 0), 0);
-            const smartOAS = smartYears.reduce((s, y) => s + (y.oasReceived || 0), 0);
-            const advOAS = advYears.reduce((s, y) => s + (y.oasReceived || 0), 0);
-            const smartCPP = smartYears.reduce((s, y) => s + (y.cppReceived || 0), 0);
-            const advCPP = advYears.reduce((s, y) => s + (y.cppReceived || 0), 0);
+            const sum = (arr, key) => arr.reduce((s, y) => s + (y[key] || 0), 0);
+            const smartTax = sum(smartYears, 'taxPaid');
+            const advTax = sum(advYears, 'taxPaid');
+            const smartGIS = sum(smartYears, 'gisReceived');
+            const advGIS = sum(advYears, 'gisReceived');
+            const smartOAS = sum(smartYears, 'oasReceived');
+            const advOAS = sum(advYears, 'oasReceived');
+            const smartCPP = sum(smartYears, 'cppReceived');
+            const advCPP = sum(advYears, 'cppReceived');
 
-            const smartTotalIncome = smartYears.reduce((s, y) => {
+            const totalAfterTax = (years) => years.reduce((s, y) => {
                 const wb = y.withdrawalBreakdown || {};
                 const gross = (y.cppReceived||0) + (y.oasReceived||0) + (y.gisReceived||0) + (y.additionalIncome||0)
                     + (wb.tfsa||0) + (wb.nonReg||0) + (wb.rrsp||0) + (wb.other||0) + (wb.cash||0) + (wb.lira||0);
                 return s + gross - (y.taxPaid||0);
             }, 0);
-            const advTotalIncome = advYears.reduce((s, y) => {
-                const wb = y.withdrawalBreakdown || {};
-                const gross = (y.cppReceived||0) + (y.oasReceived||0) + (y.gisReceived||0) + (y.additionalIncome||0)
-                    + (wb.tfsa||0) + (wb.nonReg||0) + (wb.rrsp||0) + (wb.other||0) + (wb.cash||0) + (wb.lira||0);
-                return s + gross - (y.taxPaid||0);
-            }, 0);
+
+            const smartTotalIncome = totalAfterTax(smartYears);
+            const advTotalIncome = totalAfterTax(advYears);
+
+            // Run spending optimizer for both strategies to find max sustainable
+            let smartMaxSpend = null, advMaxSpend = null;
+            try {
+                const optimizeFor = (overrides) => {
+                    const optInputs = { ...inputs, ...overrides };
+                    let lo = 20000, hi = optInputs.annualSpending * 2.5;
+                    for (let i = 0; i < 20; i++) {
+                        const mid = (lo + hi) / 2;
+                        const r = RetirementCalcV4.calculate({ ...optInputs, annualSpending: mid });
+                        if (r.summary.moneyLastsAge >= (optInputs.lifeExpectancy || 90)) {
+                            lo = mid;
+                        } else {
+                            hi = mid;
+                        }
+                    }
+                    return Math.floor(lo / 1000) * 1000; // round down to nearest $1K
+                };
+                smartMaxSpend = optimizeFor({});
+                advMaxSpend = optimizeFor({ cppStartAge: 65, oasStartAge: 65, cppStartAgeP2: 65, oasStartAgeP2: 65, _withdrawalStrategy: 'naive' });
+            } catch(e) {}
 
             const fmt = (v) => '$' + Math.round(Math.abs(v)).toLocaleString();
-            const fmtDelta = (v) => (v >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(v)).toLocaleString();
+            const winner = smartTotalIncome >= advTotalIncome;
 
             tabs.classList.remove('hidden');
 
             summary.innerHTML = `
                 <div class="strategy-summary-grid">
-                    <div class="strategy-col">
+                    <div class="strategy-col ${winner ? '' : 'loser'}">
                         <div class="strategy-col-header">🧠 Your Plan</div>
                         <div class="strategy-stat"><span>Total Tax</span><span>${fmt(smartTax)}</span></div>
                         <div class="strategy-stat"><span>CPP Collected</span><span>${fmt(smartCPP)}</span></div>
                         <div class="strategy-stat"><span>OAS Collected</span><span>${fmt(smartOAS)}</span></div>
                         <div class="strategy-stat"><span>GIS Collected</span><span>${fmt(smartGIS)}</span></div>
+                        ${smartMaxSpend ? `<div class="strategy-stat highlight"><span>Max Spending</span><span>${fmt(smartMaxSpend)}/yr</span></div>` : ''}
                         <div class="strategy-stat"><span>After-Tax Income</span><span>${fmt(smartTotalIncome)}</span></div>
                         <div class="strategy-stat"><span>Money Lasts To</span><span>Age ${smartResults.summary.moneyLastsAge}</span></div>
                     </div>
-                    <div class="strategy-col advisor">
-                        <div class="strategy-col-header">👔 Typical Advisor</div>
+                    <div class="strategy-col ${winner ? 'loser' : ''}">
+                        <div class="strategy-col-header">👔 Good Advisor</div>
                         <div class="strategy-stat"><span>Total Tax</span><span>${fmt(advTax)}</span></div>
                         <div class="strategy-stat"><span>CPP Collected</span><span>${fmt(advCPP)}</span></div>
                         <div class="strategy-stat"><span>OAS Collected</span><span>${fmt(advOAS)}</span></div>
                         <div class="strategy-stat"><span>GIS Collected</span><span>${fmt(advGIS)}</span></div>
+                        ${advMaxSpend ? `<div class="strategy-stat highlight"><span>Max Spending</span><span>${fmt(advMaxSpend)}/yr</span></div>` : ''}
                         <div class="strategy-stat"><span>After-Tax Income</span><span>${fmt(advTotalIncome)}</span></div>
                         <div class="strategy-stat"><span>Money Lasts To</span><span>Age ${advisorResults.summary.moneyLastsAge}</span></div>
                     </div>
                 </div>
-                <div class="strategy-verdict ${smartTotalIncome >= advTotalIncome ? 'positive' : 'negative'}">
-                    ${smartTotalIncome >= advTotalIncome 
-                        ? `🏆 Your plan puts <strong>${fmt(smartTotalIncome - advTotalIncome)}</strong> more in your pocket over retirement`
-                        : `⚠️ Advisor plan puts <strong>${fmt(advTotalIncome - smartTotalIncome)}</strong> more in your pocket`}
+                <div class="strategy-detail-note">
+                    <strong>Good Advisor plan:</strong> CPP/OAS at 65, TFSA as primary income, RRSP pulled to basic personal amount ($15,705) for tax-free bracket
+                </div>
+                <div class="strategy-verdict ${winner ? 'positive' : 'negative'}">
+                    ${winner 
+                        ? `🏆 Your plan puts <strong>${fmt(smartTotalIncome - advTotalIncome)}</strong> more in your pocket`
+                        : `⚠️ Good Advisor plan puts <strong>${fmt(advTotalIncome - smartTotalIncome)}</strong> more in your pocket`}
+                    ${smartMaxSpend && advMaxSpend && smartMaxSpend !== advMaxSpend 
+                        ? `<br><span style="font-size:13px">Max sustainable spending: <strong>${fmt(smartMaxSpend)}</strong> vs <strong>${fmt(advMaxSpend)}</strong>/yr</span>` 
+                        : ''}
                 </div>
             `;
             summary.classList.remove('hidden');
@@ -1392,7 +1419,7 @@ const AppV4 = {
                     const strategy = tab.dataset.strategy;
                     const data = this._strategyData[strategy];
                     if (data) {
-                        this._drawYearBreakdown(data.results.yearByYear, data.inputs.retirementAge || data.inputs.retirementAge);
+                        this._drawYearBreakdown(data.results.yearByYear, data.inputs.retirementAge);
                     }
                 });
             });
