@@ -1301,6 +1301,108 @@ const AppV4 = {
         });
     },
 
+    _buildStrategyComparison(inputs, smartResults) {
+        const tabs = document.getElementById('strategy-tabs');
+        const summary = document.getElementById('strategy-comparison-summary');
+        if (!tabs || !summary) return;
+
+        try {
+            // Run the "advisor" plan: CPP/OAS at 65, naive withdrawal (TFSA first)
+            const advisorInputs = {
+                ...inputs,
+                cppStartAge: 65,
+                oasStartAge: 65,
+                cppStartAgeP2: 65,
+                oasStartAgeP2: 65,
+                _withdrawalStrategy: 'naive'
+            };
+            const advisorResults = RetirementCalcV4.calculate(advisorInputs);
+
+            // Store both for tab switching
+            this._strategyData = {
+                smart: { results: smartResults, inputs },
+                advisor: { results: advisorResults, inputs: advisorInputs }
+            };
+
+            // Calculate comparison stats
+            const smartYears = smartResults.yearByYear.filter(y => y.phase === 'retirement');
+            const advYears = advisorResults.yearByYear.filter(y => y.phase === 'retirement');
+
+            const smartTax = smartYears.reduce((s, y) => s + (y.taxPaid || 0), 0);
+            const advTax = advYears.reduce((s, y) => s + (y.taxPaid || 0), 0);
+            const smartGIS = smartYears.reduce((s, y) => s + (y.gisReceived || 0), 0);
+            const advGIS = advYears.reduce((s, y) => s + (y.gisReceived || 0), 0);
+            const smartOAS = smartYears.reduce((s, y) => s + (y.oasReceived || 0), 0);
+            const advOAS = advYears.reduce((s, y) => s + (y.oasReceived || 0), 0);
+            const smartCPP = smartYears.reduce((s, y) => s + (y.cppReceived || 0), 0);
+            const advCPP = advYears.reduce((s, y) => s + (y.cppReceived || 0), 0);
+
+            const smartTotalIncome = smartYears.reduce((s, y) => {
+                const wb = y.withdrawalBreakdown || {};
+                const gross = (y.cppReceived||0) + (y.oasReceived||0) + (y.gisReceived||0) + (y.additionalIncome||0)
+                    + (wb.tfsa||0) + (wb.nonReg||0) + (wb.rrsp||0) + (wb.other||0) + (wb.cash||0) + (wb.lira||0);
+                return s + gross - (y.taxPaid||0);
+            }, 0);
+            const advTotalIncome = advYears.reduce((s, y) => {
+                const wb = y.withdrawalBreakdown || {};
+                const gross = (y.cppReceived||0) + (y.oasReceived||0) + (y.gisReceived||0) + (y.additionalIncome||0)
+                    + (wb.tfsa||0) + (wb.nonReg||0) + (wb.rrsp||0) + (wb.other||0) + (wb.cash||0) + (wb.lira||0);
+                return s + gross - (y.taxPaid||0);
+            }, 0);
+
+            const fmt = (v) => '$' + Math.round(Math.abs(v)).toLocaleString();
+            const fmtDelta = (v) => (v >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(v)).toLocaleString();
+
+            tabs.classList.remove('hidden');
+
+            summary.innerHTML = `
+                <div class="strategy-summary-grid">
+                    <div class="strategy-col">
+                        <div class="strategy-col-header">🧠 Your Plan</div>
+                        <div class="strategy-stat"><span>Total Tax</span><span>${fmt(smartTax)}</span></div>
+                        <div class="strategy-stat"><span>CPP Collected</span><span>${fmt(smartCPP)}</span></div>
+                        <div class="strategy-stat"><span>OAS Collected</span><span>${fmt(smartOAS)}</span></div>
+                        <div class="strategy-stat"><span>GIS Collected</span><span>${fmt(smartGIS)}</span></div>
+                        <div class="strategy-stat"><span>After-Tax Income</span><span>${fmt(smartTotalIncome)}</span></div>
+                        <div class="strategy-stat"><span>Money Lasts To</span><span>Age ${smartResults.summary.moneyLastsAge}</span></div>
+                    </div>
+                    <div class="strategy-col advisor">
+                        <div class="strategy-col-header">👔 Typical Advisor</div>
+                        <div class="strategy-stat"><span>Total Tax</span><span>${fmt(advTax)}</span></div>
+                        <div class="strategy-stat"><span>CPP Collected</span><span>${fmt(advCPP)}</span></div>
+                        <div class="strategy-stat"><span>OAS Collected</span><span>${fmt(advOAS)}</span></div>
+                        <div class="strategy-stat"><span>GIS Collected</span><span>${fmt(advGIS)}</span></div>
+                        <div class="strategy-stat"><span>After-Tax Income</span><span>${fmt(advTotalIncome)}</span></div>
+                        <div class="strategy-stat"><span>Money Lasts To</span><span>Age ${advisorResults.summary.moneyLastsAge}</span></div>
+                    </div>
+                </div>
+                <div class="strategy-verdict ${smartTotalIncome >= advTotalIncome ? 'positive' : 'negative'}">
+                    ${smartTotalIncome >= advTotalIncome 
+                        ? `🏆 Your plan puts <strong>${fmt(smartTotalIncome - advTotalIncome)}</strong> more in your pocket over retirement`
+                        : `⚠️ Advisor plan puts <strong>${fmt(advTotalIncome - smartTotalIncome)}</strong> more in your pocket`}
+                </div>
+            `;
+            summary.classList.remove('hidden');
+
+            // Setup tab switching
+            tabs.querySelectorAll('.strategy-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.querySelectorAll('.strategy-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const strategy = tab.dataset.strategy;
+                    const data = this._strategyData[strategy];
+                    if (data) {
+                        this._drawYearBreakdown(data.results.yearByYear, data.inputs.retirementAge || data.inputs.retirementAge);
+                    }
+                });
+            });
+
+        } catch (e) {
+            tabs.classList.add('hidden');
+            summary.classList.add('hidden');
+        }
+    },
+
     _displayTaxComparison(inputs) {
         const section = document.getElementById('tax-comparison');
         const content = document.getElementById('tax-comparison-content');
@@ -2024,8 +2126,9 @@ const AppV4 = {
             // Spending optimizer
             this._runSpendingOptimizer(inputs, baseResults);
 
-            // Tax savings comparison
+            // Tax savings comparison + strategy comparison view
             this._displayTaxComparison(inputs);
+            this._buildStrategyComparison(inputs, baseResults);
             
             // Retirement narrative
             this._generateRetirementNarrative(inputs, baseResults);
