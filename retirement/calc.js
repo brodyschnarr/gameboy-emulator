@@ -1122,7 +1122,7 @@ const RetirementCalcV4 = {
 
         const findMaxSpend = (overrides) => {
             let lo = 20000, hi = 200000;
-            for (let i = 0; i < 14; i++) {
+            for (let i = 0; i < 18; i++) {
                 const mid = (lo + hi) / 2;
                 const r = this.calculate({ ...inputs, ...overrides, annualSpending: mid });
                 if (r.summary.moneyLastsAge >= lifeExp) lo = mid; else hi = mid;
@@ -1186,6 +1186,20 @@ const RetirementCalcV4 = {
                 }
             }
         }
+
+        // Also test the "advisor" config explicitly to guarantee optimizer >= advisor
+        try {
+            const advOverrides = {
+                cppStartAge: 65, oasStartAge: 65,
+                cppStartAgeP2: 65, oasStartAgeP2: 65,
+                _withdrawalStrategy: 'naive'
+            };
+            const advMax = findMaxSpend(advOverrides);
+            if (advMax > bestMaxSpend) {
+                bestMaxSpend = advMax;
+                bestParams = { cppAge: 65, oasAge: 65, strategy: 'naive', maxSpend: advMax };
+            }
+        } catch(e) {}
 
         // Re-run at user's actual spending with best params for display
         const bestInputs = {
