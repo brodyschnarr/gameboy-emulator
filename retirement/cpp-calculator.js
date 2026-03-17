@@ -21,21 +21,21 @@ const CPPCalculator = {
         maxAnnual: 1360              // Max additional annual benefit (2024, will increase)
     },
 
-    // GIS (Guaranteed Income Supplement) - 2024
+    // GIS (Guaranteed Income Supplement) - 2024 Q4
     gis: {
-        maxSingle: 11678,           // Max annual for singles
-        maxCouple: 7025,            // Max annual per person in couple
+        maxSingle: 12780,           // Max annual for singles (2024 Q4)
+        maxCouple: 7692,            // Max annual per person in couple
         incomeThresholdSingle: 21624, // Income above which GIS phases out (single)
         incomeThresholdCouple: 28560, // Combined income threshold (couple)
         reductionRate: 0.50         // 50% reduction for every dollar of income
     },
 
-    // OAS (Old Age Security) - 2024
+    // OAS (Old Age Security) - 2025 Q1
     oas: {
-        maxAnnual: 8479,            // Max annual OAS
-        maxMonthly: 706.58,         // Max monthly OAS
-        clawbackStart: 90997,       // Income where clawback starts
-        clawbackEnd: 142609,        // Income where OAS fully clawed back
+        maxAnnual: 9217,            // Max annual OAS (2025 Q1: $768.46/mo)
+        maxMonthly: 768.46,         // Max monthly OAS
+        clawbackStart: 93454,       // Income where clawback starts (2025)
+        clawbackEnd: 151668,        // Income where OAS fully clawed back
         clawbackRate: 0.15          // 15% clawback rate
     },
 

@@ -177,9 +177,9 @@ console.error('\n📊 Test Group 3: OAS clawback');
     assert(oasNoClawback === CPPCalculator.oas.maxAnnual,
         'Full OAS at $80K income (below threshold)');
     
-    const oasFullClawback = CPPCalculator.calculateOAS(150000);
+    const oasFullClawback = CPPCalculator.calculateOAS(155000);
     assert(oasFullClawback === 0,
-        'Zero OAS at $150K income (above full clawback)');
+        'Zero OAS at $155K income (above full clawback)');
 }
 
 // ═══════════════════════════════════════

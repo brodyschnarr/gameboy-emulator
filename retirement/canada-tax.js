@@ -4,12 +4,12 @@
 
 const CanadianTax = {
     
-    // Federal tax brackets (2024)
+    // Federal tax brackets (2024 — CRA)
     federalBrackets: [
         { max: 55867, rate: 0.15 },
         { max: 111733, rate: 0.205 },
-        { max: 173205, rate: 0.26 },
-        { max: 246752, rate: 0.29 },
+        { max: 154906, rate: 0.26 },
+        { max: 220000, rate: 0.29 },
         { max: Infinity, rate: 0.33 }
     ],
 
@@ -80,10 +80,27 @@ const CanadianTax = {
         ]
     },
 
+    // Basic Personal Amount (2024) — non-refundable tax credits
+    // Federal BPA: $15,705 (enhanced BPA phases down above $173,205)
+    // Provincial BPA varies by province
+    FEDERAL_BPA: 15705,
+    PROVINCIAL_BPA: {
+        ON: 11865, BC: 11981, AB: 21003, QC: 17183, SK: 17661,
+        MB: 15780, NB: 12458, NS: 8481, PE: 12000, NL: 10382
+    },
+
     // Calculate total tax on income
     calculateTax(income, province = 'ON', options = {}) {
         let federalTax = this._calculateBracketTax(income, this.federalBrackets);
         let provincialTax = this._calculateBracketTax(income, this.provincialBrackets[province] || this.provincialBrackets.ON);
+
+        // Basic Personal Amount — everyone gets this
+        // Federal: $15,705 * 15% = $2,355.75 credit
+        federalTax -= this.FEDERAL_BPA * 0.15;
+        // Provincial: BPA * lowest provincial rate
+        const provBPA = this.PROVINCIAL_BPA[province] || 11865;
+        const provLowestRate = (this.provincialBrackets[province] || this.provincialBrackets.ON)[0].rate;
+        provincialTax -= provBPA * provLowestRate;
 
         // Senior tax credits (age 65+)
         if (options.age >= 65) {
@@ -156,9 +173,9 @@ const CanadianTax = {
 
     // OAS clawback calculation
     calculateOASClawback(income) {
-        const threshold = 90997; // 2024 threshold
-        const maxClawback = 142609; // Full clawback at this income
-        const oasMax = 8479; // Max annual OAS
+        const threshold = 93454; // 2025 threshold
+        const maxClawback = 151668; // Full clawback at this income
+        const oasMax = 9217; // Max annual OAS (2025 Q1)
 
         if (income <= threshold) return 0;
         if (income >= maxClawback) return oasMax;

@@ -768,7 +768,7 @@ const RetirementCalcV4 = {
     //   Fill cheap taxable room first, preserve TFSA, avoid clawback.
     // ═══════════════════════════════════════
     _withdrawSmartOptimal(balances, neededAfterTax, province, nonOASTaxableIncome, oasAmount, oasActive, perPerson) {
-        const OAS_CLAWBACK_START = 90997;
+        const OAS_CLAWBACK_START = 93454;
         const OAS_CLAWBACK_RATE = 0.15;
 
         let stillNeed = neededAfterTax;
