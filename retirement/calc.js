@@ -567,7 +567,8 @@ const RetirementCalcV4 = {
                         balances,
                         neededBeyondMandatory,
                         province,
-                        cppIncome + additionalIncome + totalMandatory
+                        cppIncome + additionalIncome + totalMandatory,
+                        age
                     );
                 } else {
                     withdrawal = this._withdrawSmartOptimal(
@@ -577,7 +578,7 @@ const RetirementCalcV4 = {
                         cppIncome + additionalIncome + totalMandatory,
                         oasIncome,
                         age >= effOAS1,
-                        { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle }
+                        { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle, age }
                     );
                 }
 
@@ -934,10 +935,13 @@ const RetirementCalcV4 = {
             }
         }
 
-        // Final tax
+        // Final tax (with senior credits if 65+)
         const totalTaxableForCalc = cumulativeTaxableIncome + (oasActive ? actualOAS : 0);
-        const totalTax = CanadianTax.calculateTax(totalTaxableForCalc, province).total -
-                        CanadianTax.calculateTax(nonOASTaxableIncome, province).total;
+        const currentAge = perPerson.age || 0;
+        const pensionIncome = fromRRSP; // RRIF withdrawals count as pension income for credit
+        const taxOpts = currentAge >= 65 ? { age: currentAge, pensionIncome } : {};
+        const totalTax = CanadianTax.calculateTax(totalTaxableForCalc, province, taxOpts).total -
+                        CanadianTax.calculateTax(nonOASTaxableIncome, province, taxOpts).total;
         
         const totalWithdrawn = fromTFSA + fromNonReg + fromRRSP + fromOther + fromCash;
 
@@ -1048,7 +1052,8 @@ const RetirementCalcV4 = {
         let bestParams = null;
 
         // Phase 1: Coarse sweep (every 2 years) — ~36 combos × 2 strategies = 72
-        const coarseCPP = [60, 62, 64, 65, 66, 68, 70];
+        const retAge = inputs.retirementAge || 65;
+        const coarseCPP = [60, 62, 64, 65, 66, 68, 70].filter(a => a >= retAge);
         const coarseOAS = [65, 66, 68, 70];
         const strategies = ['smart', 'naive'];
 
@@ -1077,7 +1082,7 @@ const RetirementCalcV4 = {
         for (let d = -1; d <= 1; d++) {
             const c = bestParams.cppAge + d;
             const o = bestParams.oasAge + d;
-            if (c >= 60 && c <= 70) fineCPP.add(c);
+            if (c >= retAge && c <= 70) fineCPP.add(c);
             if (o >= 65 && o <= 70) fineOAS.add(o);
         }
 
@@ -1165,7 +1170,7 @@ const RetirementCalcV4 = {
     // (~$15,705 federally tax-free) or low bracket ceiling to use cheap tax room.
     // This is what a competent (non-optimizing) advisor would do:
     // "Don't waste your personal amount — pull some RRSP to fill it, then use TFSA"
-    _withdrawNaive(balances, neededAfterTax, province, taxableIncome) {
+    _withdrawNaive(balances, neededAfterTax, province, taxableIncome, age) {
         let stillNeed = neededAfterTax;
         let fromRRSP = 0, fromNonReg = 0, fromTFSA = 0, fromOther = 0, fromCash = 0, fromLIRA = 0;
         let cumTaxable = taxableIncome;
@@ -1229,8 +1234,9 @@ const RetirementCalcV4 = {
         }
         
         const totalGross = fromRRSP + fromNonReg + fromTFSA + fromOther + fromCash + fromLIRA;
-        const totalTax = CanadianTax.calculateTax(cumTaxable, province).total 
-            - CanadianTax.calculateTax(taxableIncome, province).total;
+        const taxOpts = age >= 65 ? { age, pensionIncome: fromRRSP + fromLIRA } : {};
+        const totalTax = CanadianTax.calculateTax(cumTaxable, province, taxOpts).total 
+            - CanadianTax.calculateTax(taxableIncome, province, taxOpts).total;
         
         return {
             fromTFSA, fromNonReg, fromRRSP, fromOther, fromCash, fromLIRA,

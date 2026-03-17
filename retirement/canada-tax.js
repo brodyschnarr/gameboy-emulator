@@ -81,15 +81,48 @@ const CanadianTax = {
     },
 
     // Calculate total tax on income
-    calculateTax(income, province = 'ON') {
-        const federalTax = this._calculateBracketTax(income, this.federalBrackets);
-        const provincialTax = this._calculateBracketTax(income, this.provincialBrackets[province] || this.provincialBrackets.ON);
-        
+    calculateTax(income, province = 'ON', options = {}) {
+        let federalTax = this._calculateBracketTax(income, this.federalBrackets);
+        let provincialTax = this._calculateBracketTax(income, this.provincialBrackets[province] || this.provincialBrackets.ON);
+
+        // Senior tax credits (age 65+)
+        if (options.age >= 65) {
+            // Age Amount: $8,790 federal, phases out above $44,325 at 15%
+            const AGE_AMOUNT = 8790;
+            const AGE_CLAWBACK_START = 44325;
+            let ageAmount = AGE_AMOUNT;
+            if (income > AGE_CLAWBACK_START) {
+                ageAmount = Math.max(0, AGE_AMOUNT - (income - AGE_CLAWBACK_START) * 0.15);
+            }
+            federalTax -= ageAmount * 0.15; // 15% non-refundable credit rate
+
+            // Provincial age amount (Ontario: $5,586, similar clawback)
+            const PROV_AGE = { ON: 5586, BC: 5376, AB: 5853, QC: 3500, SK: 5180, MB: 3728, NB: 5513, NS: 4141, PE: 4019, NL: 6584 };
+            const provAge = PROV_AGE[province] || 5000;
+            const provLowestRate = (this.provincialBrackets[province] || this.provincialBrackets.ON)[0].rate;
+            let provAgeAmount = provAge;
+            if (income > AGE_CLAWBACK_START) {
+                provAgeAmount = Math.max(0, provAge - (income - AGE_CLAWBACK_START) * 0.15);
+            }
+            provincialTax -= provAgeAmount * provLowestRate;
+
+            // Pension Income Credit: $2,000 on eligible pension income (RRIF/LIF/annuity at 65+)
+            const pensionIncome = options.pensionIncome || 0; // RRIF/LIF withdrawals
+            if (pensionIncome > 0) {
+                const eligiblePension = Math.min(pensionIncome, 2000);
+                federalTax -= eligiblePension * 0.15;
+                provincialTax -= eligiblePension * provLowestRate;
+            }
+        }
+
+        federalTax = Math.max(0, federalTax);
+        provincialTax = Math.max(0, provincialTax);
+
         return {
             federal: federalTax,
             provincial: provincialTax,
             total: federalTax + provincialTax,
-            effectiveRate: (federalTax + provincialTax) / income
+            effectiveRate: income > 0 ? (federalTax + provincialTax) / income : 0
         };
     },
 

@@ -1333,13 +1333,9 @@ const AppV4 = {
             const getStats = (results) => {
                 const yrs = results.yearByYear.filter(y => y.phase === 'retirement');
                 const s = (key) => yrs.reduce((a, y) => a + (y[key] || 0), 0);
-                const ati = yrs.reduce((a, y) => {
-                    const wb = y.withdrawalBreakdown || {};
-                    const gross = (y.cppReceived||0) + (y.oasReceived||0) + (y.gisReceived||0) + (y.additionalIncome||0)
-                        + (wb.tfsa||0) + (wb.nonReg||0) + (wb.rrsp||0) + (wb.other||0) + (wb.cash||0) + (wb.lira||0);
-                    return a + gross - (y.taxPaid||0);
-                }, 0);
-                return { tax: s('taxPaid'), cpp: s('cppReceived'), oas: s('oasReceived'), gis: s('gisReceived'), ati, lasts: results.summary.moneyLastsAge };
+                const lastYear = yrs[yrs.length - 1];
+                const legacy = lastYear ? lastYear.totalBalance : 0;
+                return { tax: s('taxPaid'), cpp: s('cppReceived'), oas: s('oasReceived'), gis: s('gisReceived'), legacy, lasts: results.summary.moneyLastsAge };
             };
 
             const userStats = getStats(smartResults);
@@ -1382,6 +1378,7 @@ const AppV4 = {
                     <div class="strategy-stat"><span>CPP Collected</span><span>${fmt(stats.cpp)}</span></div>
                     <div class="strategy-stat"><span>OAS Collected</span><span>${fmt(stats.oas)}</span></div>
                     <div class="strategy-stat"><span>GIS Collected</span><span>${fmt(stats.gis)}</span></div>
+                    <div class="strategy-stat"><span>Estate Value</span><span>${stats.legacy > 0 ? fmt(stats.legacy) : '$0'}</span></div>
                     <div class="strategy-stat"><span>Money Lasts To</span><span>Age ${stats.lasts}</span></div>
                     ${note ? `<div class="strategy-note">${note}</div>` : ''}
                 </div>`;
