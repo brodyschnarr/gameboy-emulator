@@ -90,43 +90,49 @@ const CanadianTax = {
     },
 
     // Calculate total tax on income
+    // options.inflationFactor: CRA indexes brackets/credits annually to CPI.
+    //   Pass (1+inf)^years to scale all dollar thresholds for future years.
+    //   Default 1.0 = current-year dollars.
     calculateTax(income, province = 'ON', options = {}) {
-        let federalTax = this._calculateBracketTax(income, this.federalBrackets);
-        let provincialTax = this._calculateBracketTax(income, this.provincialBrackets[province] || this.provincialBrackets.ON);
+        const cpi = options.inflationFactor || 1.0;
 
-        // Basic Personal Amount — everyone gets this
-        // Federal: $15,705 * 15% = $2,355.75 credit
-        federalTax -= this.FEDERAL_BPA * 0.15;
-        // Provincial: BPA * lowest provincial rate
-        const provBPA = this.PROVINCIAL_BPA[province] || 11865;
+        // Scale brackets by inflation (CRA indexes annually)
+        const scaleBrackets = (brackets) => brackets.map(b => ({
+            max: b.max === Infinity ? Infinity : b.max * cpi,
+            rate: b.rate
+        }));
+
+        let federalTax = this._calculateBracketTax(income, scaleBrackets(this.federalBrackets));
+        let provincialTax = this._calculateBracketTax(income, scaleBrackets(this.provincialBrackets[province] || this.provincialBrackets.ON));
+
+        // Basic Personal Amount — indexed to CPI
+        federalTax -= (this.FEDERAL_BPA * cpi) * 0.15;
+        const provBPA = (this.PROVINCIAL_BPA[province] || 11865) * cpi;
         const provLowestRate = (this.provincialBrackets[province] || this.provincialBrackets.ON)[0].rate;
         provincialTax -= provBPA * provLowestRate;
 
-        // Senior tax credits (age 65+)
+        // Senior tax credits (age 65+) — all thresholds indexed
         if (options.age >= 65) {
-            // Age Amount: $8,790 federal, phases out above $44,325 at 15%
-            const AGE_AMOUNT = 8790;
-            const AGE_CLAWBACK_START = 44325;
+            const AGE_AMOUNT = 8790 * cpi;
+            const AGE_CLAWBACK_START = 44325 * cpi;
             let ageAmount = AGE_AMOUNT;
             if (income > AGE_CLAWBACK_START) {
                 ageAmount = Math.max(0, AGE_AMOUNT - (income - AGE_CLAWBACK_START) * 0.15);
             }
-            federalTax -= ageAmount * 0.15; // 15% non-refundable credit rate
+            federalTax -= ageAmount * 0.15;
 
-            // Provincial age amount (Ontario: $5,586, similar clawback)
             const PROV_AGE = { ON: 5586, BC: 5376, AB: 5853, QC: 3500, SK: 5180, MB: 3728, NB: 5513, NS: 4141, PE: 4019, NL: 6584 };
-            const provAge = PROV_AGE[province] || 5000;
-            const provLowestRate = (this.provincialBrackets[province] || this.provincialBrackets.ON)[0].rate;
+            const provAge = (PROV_AGE[province] || 5000) * cpi;
             let provAgeAmount = provAge;
             if (income > AGE_CLAWBACK_START) {
                 provAgeAmount = Math.max(0, provAge - (income - AGE_CLAWBACK_START) * 0.15);
             }
             provincialTax -= provAgeAmount * provLowestRate;
 
-            // Pension Income Credit: $2,000 on eligible pension income (RRIF/LIF/annuity at 65+)
-            const pensionIncome = options.pensionIncome || 0; // RRIF/LIF withdrawals
+            // Pension Income Credit — $2,000 indexed
+            const pensionIncome = options.pensionIncome || 0;
             if (pensionIncome > 0) {
-                const eligiblePension = Math.min(pensionIncome, 2000);
+                const eligiblePension = Math.min(pensionIncome, 2000 * cpi);
                 federalTax -= eligiblePension * 0.15;
                 provincialTax -= eligiblePension * provLowestRate;
             }

@@ -498,6 +498,8 @@ const RetirementCalcV4 = {
                 // 2. Inflation-adjusted spending with optional spending curve
                 const yearsIntoRetirement = age - retirementAge;
                 const inflationFactor = Math.pow(1 + inf, yearsIntoRetirement);
+                // CRA indexes tax brackets/credits to CPI from today
+                const cpiFromToday = Math.pow(1 + inf, age - startAge);
                 
                 // Spending curve: "Go-Go / Slow-Go / No-Go" pattern
                 // spendingCurve: 'flat' (default), 'frontloaded', 'custom'
@@ -614,7 +616,8 @@ const RetirementCalcV4 = {
                         neededFromPortfolio,
                         province,
                         cppIncome + additionalIncome + pensionIncome + totalMandatory,
-                        age
+                        age,
+                        cpiFromToday
                     );
                 } else {
                     withdrawal = this._withdrawSmartOptimal(
@@ -624,7 +627,7 @@ const RetirementCalcV4 = {
                         cppIncome + additionalIncome + pensionIncome + totalMandatory,
                         oasIncome,
                         age >= effOAS1,
-                        { cppP1, cppP2, oasP1, oasP2, additionalIncome: additionalIncome + pensionIncome, isSingle, age }
+                        { cppP1, cppP2, oasP1, oasP2, additionalIncome: additionalIncome + pensionIncome, isSingle, age, cpiFromToday }
                     );
                 }
 
@@ -639,16 +642,18 @@ const RetirementCalcV4 = {
                     withdrawal.total += extraRRSP;
                     // Tax on mandatory RRSP withdrawal
                     if (extraRRSP > 0) {
-                        mandatoryTax += CanadianTax.calculateTax(baseTaxableBeforeMandatory + extraRRSP, province).total
-                            - CanadianTax.calculateTax(baseTaxableBeforeMandatory, province).total;
+                        const mTaxOpts = { inflationFactor: cpiFromToday };
+                        mandatoryTax += CanadianTax.calculateTax(baseTaxableBeforeMandatory + extraRRSP, province, mTaxOpts).total
+                            - CanadianTax.calculateTax(baseTaxableBeforeMandatory, province, mTaxOpts).total;
                     }
                 }
                 if (lifMandatory > 0 && balances.lira > 0) {
                     const mandatoryLIRA = Math.min(lifMandatory, balances.lira);
                     withdrawal.fromLIRA = mandatoryLIRA;
                     withdrawal.total += mandatoryLIRA;
-                    mandatoryTax += CanadianTax.calculateTax(baseTaxableBeforeMandatory + (withdrawal.fromRRSP || 0) + mandatoryLIRA, province).total
-                        - CanadianTax.calculateTax(baseTaxableBeforeMandatory + (withdrawal.fromRRSP || 0), province).total;
+                    const mTaxOpts = { inflationFactor: cpiFromToday };
+                    mandatoryTax += CanadianTax.calculateTax(baseTaxableBeforeMandatory + (withdrawal.fromRRSP || 0) + mandatoryLIRA, province, mTaxOpts).total
+                        - CanadianTax.calculateTax(baseTaxableBeforeMandatory + (withdrawal.fromRRSP || 0), province, mTaxOpts).total;
                 }
                 withdrawal.taxPaid = (withdrawal.taxPaid || 0) + mandatoryTax;
                 
@@ -768,7 +773,9 @@ const RetirementCalcV4 = {
     //   Fill cheap taxable room first, preserve TFSA, avoid clawback.
     // ═══════════════════════════════════════
     _withdrawSmartOptimal(balances, neededAfterTax, province, nonOASTaxableIncome, oasAmount, oasActive, perPerson) {
-        const OAS_CLAWBACK_START = 93454;
+        const cpi = (perPerson && perPerson.cpiFromToday) || 1.0;
+        const taxOpts = { inflationFactor: cpi };
+        const OAS_CLAWBACK_START = 93454 * cpi;
         const OAS_CLAWBACK_RATE = 0.15;
 
         let stillNeed = neededAfterTax;
@@ -805,13 +812,12 @@ const RetirementCalcV4 = {
             //
             // Beyond the first bracket, RRSP gets expensive (29%+ marginal).
             // Better to use NonReg (50% inclusion) or TFSA for the rest.
-            const FIRST_BRACKET_CEILING = 55867; // Federal 15% bracket top (2024)
+            const FIRST_BRACKET_CEILING = 55867 * cpi; // Federal 15% bracket top, indexed
             const rrspTargetIncome = Math.min(FIRST_BRACKET_CEILING, OAS_CLAWBACK_START);
             const rrspRoom = Math.max(0, rrspTargetIncome - nonOASTaxableIncome);
             
             // If we have a lot of RRSP, also fill second bracket to prevent massive RRIF later
-            // Second bracket top: $111,733 (at 26% federal)
-            const SECOND_BRACKET_CEILING = 111733;
+            const SECOND_BRACKET_CEILING = 111733 * cpi;
             const extraRoomIfNeeded = balances.rrsp > 300000 
                 ? Math.max(0, SECOND_BRACKET_CEILING - rrspTargetIncome) 
                 : 0;
@@ -821,11 +827,11 @@ const RetirementCalcV4 = {
                 const maxGross = Math.min(rrspRoom, balances.rrsp);
                 const taxIfMax = CanadianTax.calculateTax(
                     cumulativeTaxableIncome + maxGross, province
-                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province).total;
+                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province, taxOpts).total;
                 const maxAfterTax = maxGross - taxIfMax;
 
                 if (maxAfterTax >= stillNeed) {
-                    fromRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, balances.rrsp);
+                    fromRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, balances.rrsp, taxOpts);
                     cumulativeTaxableIncome += fromRRSP;
                     stillNeed = 0;
                 } else {
@@ -842,11 +848,11 @@ const RetirementCalcV4 = {
                 const extraGross = Math.min(extraRoomIfNeeded, remaining);
                 const taxOnExtra = CanadianTax.calculateTax(
                     cumulativeTaxableIncome + extraGross, province
-                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province).total;
+                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province, taxOpts).total;
                 const extraAfterTax = extraGross - taxOnExtra;
                 
                 if (extraAfterTax >= stillNeed) {
-                    const additionalRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, remaining);
+                    const additionalRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, remaining, taxOpts);
                     fromRRSP += additionalRRSP;
                     cumulativeTaxableIncome += additionalRRSP;
                     stillNeed = 0;
@@ -859,11 +865,11 @@ const RetirementCalcV4 = {
 
             // 2. Non-Reg (50% capital gains inclusion — cheaper than more RRSP above ceiling)
             if (stillNeed > 0 && balances.nonReg > 0) {
-                fromNonReg = this._withdrawNonReg(stillNeed, cumulativeTaxableIncome, province, balances.nonReg);
+                fromNonReg = this._withdrawNonReg(stillNeed, cumulativeTaxableIncome, province, balances.nonReg, taxOpts);
                 const capitalGain = fromNonReg * 0.5;
                 const taxOnNonReg = CanadianTax.calculateTax(
                     cumulativeTaxableIncome + capitalGain, province
-                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province).total;
+                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province, taxOpts).total;
                 cumulativeTaxableIncome += capitalGain;
                 stillNeed -= (fromNonReg - taxOnNonReg);
             }
@@ -871,10 +877,10 @@ const RetirementCalcV4 = {
             // 3. More RRSP if still needed (above the ceiling, still better than burning TFSA)
             if (stillNeed > 0 && balances.rrsp > fromRRSP) {
                 const remainingRRSP = balances.rrsp - fromRRSP;
-                const additionalRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, remainingRRSP);
+                const additionalRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, remainingRRSP, taxOpts);
                 const taxOnAdditional = CanadianTax.calculateTax(
                     cumulativeTaxableIncome + additionalRRSP, province
-                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province).total;
+                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province, taxOpts).total;
                 const afterTaxAdditional = additionalRRSP - taxOnAdditional;
                 fromRRSP += additionalRRSP;
                 cumulativeTaxableIncome += additionalRRSP;
@@ -931,7 +937,7 @@ const RetirementCalcV4 = {
                 const maxAfterTax = maxRRSPGross - taxIfMaxRRSP;
 
                 if (maxAfterTax >= stillNeed) {
-                    fromRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome + oasForTax, province, balances.rrsp);
+                    fromRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome + oasForTax, province, balances.rrsp, taxOpts);
                     cumulativeTaxableIncome += fromRRSP;
                     stillNeed = 0;
                 } else {
@@ -943,7 +949,7 @@ const RetirementCalcV4 = {
 
             // 2. Non-Reg (50% inclusion — cheaper than more RRSP, and cheaper than burning TFSA)
             if (stillNeed > 0 && balances.nonReg > 0) {
-                fromNonReg = this._withdrawNonReg(stillNeed, cumulativeTaxableIncome + oasForTax, province, balances.nonReg);
+                fromNonReg = this._withdrawNonReg(stillNeed, cumulativeTaxableIncome + oasForTax, province, balances.nonReg, taxOpts);
                 const capitalGain = fromNonReg * 0.5;
                 const taxOnNonReg = CanadianTax.calculateTax(
                     cumulativeTaxableIncome + capitalGain + oasForTax, province
@@ -1031,22 +1037,22 @@ const RetirementCalcV4 = {
         const totalTaxableForCalc = cumulativeTaxableIncome + (oasActive ? actualOAS : 0);
         const currentAge = perPerson.age || 0;
         const eligiblePensionIncome = fromRRSP + (perPerson.additionalIncome || 0); // RRIF + DB pension
-        const taxOpts = currentAge >= 65 ? { age: currentAge, pensionIncome: eligiblePensionIncome } : {};
+        const seniorTaxOpts = currentAge >= 65 
+            ? { age: currentAge, pensionIncome: eligiblePensionIncome, inflationFactor: cpi } 
+            : { inflationFactor: cpi };
 
         let totalTax;
         if (!perPerson.isSingle && currentAge >= 65 && eligiblePensionIncome > 0) {
-            // Pension income splitting: transfer up to 50% of eligible pension to lower-income spouse
-            // This reduces the higher earner's taxable income and gives the spouse the pension credit
             const splitAmount = eligiblePensionIncome * 0.5;
             const p1Taxable = totalTaxableForCalc - splitAmount;
-            const p2Taxable = splitAmount; // spouse receives this as their pension income
-            const p1Tax = CanadianTax.calculateTax(Math.max(0, p1Taxable), province, { age: currentAge, pensionIncome: eligiblePensionIncome - splitAmount }).total;
-            const p2Tax = CanadianTax.calculateTax(p2Taxable, province, { age: currentAge, pensionIncome: splitAmount }).total;
-            const baseTax = CanadianTax.calculateTax(nonOASTaxableIncome, province, taxOpts).total;
+            const p2Taxable = splitAmount;
+            const p1Tax = CanadianTax.calculateTax(Math.max(0, p1Taxable), province, { age: currentAge, pensionIncome: eligiblePensionIncome - splitAmount, inflationFactor: cpi }).total;
+            const p2Tax = CanadianTax.calculateTax(p2Taxable, province, { age: currentAge, pensionIncome: splitAmount, inflationFactor: cpi }).total;
+            const baseTax = CanadianTax.calculateTax(nonOASTaxableIncome, province, seniorTaxOpts).total;
             totalTax = (p1Tax + p2Tax) - baseTax;
         } else {
-            totalTax = CanadianTax.calculateTax(totalTaxableForCalc, province, taxOpts).total -
-                        CanadianTax.calculateTax(nonOASTaxableIncome, province, taxOpts).total;
+            totalTax = CanadianTax.calculateTax(totalTaxableForCalc, province, seniorTaxOpts).total -
+                        CanadianTax.calculateTax(nonOASTaxableIncome, province, seniorTaxOpts).total;
         }
         
         const totalWithdrawn = fromTFSA + fromNonReg + fromRRSP + fromOther + fromCash;
@@ -1066,7 +1072,7 @@ const RetirementCalcV4 = {
     },
 
     // Helper: Binary search Non-Reg withdrawal for target after-tax amount
-    _withdrawNonReg(targetAfterTax, existingTaxable, province, maxAvailable) {
+    _withdrawNonReg(targetAfterTax, existingTaxable, province, maxAvailable, taxOpts) {
         let low = 0;
         let high = Math.min(targetAfterTax * 2, maxAvailable);
         let best = 0;
@@ -1075,8 +1081,8 @@ const RetirementCalcV4 = {
             const testAmount = (low + high) / 2;
             const capitalGain = testAmount * 0.5;
             const taxOnGain = CanadianTax.calculateTax(
-                existingTaxable + capitalGain, province
-            ).total - CanadianTax.calculateTax(existingTaxable, province).total;
+                existingTaxable + capitalGain, province, taxOpts
+            ).total - CanadianTax.calculateTax(existingTaxable, province, taxOpts).total;
             const afterTax = testAmount - taxOnGain;
             
             if (Math.abs(afterTax - targetAfterTax) < 10) { best = testAmount; break; }
@@ -1089,7 +1095,7 @@ const RetirementCalcV4 = {
     },
 
     // Binary search for gross RRSP amount that yields targetAfterTax
-    _binarySearchGross(targetAfterTax, existingTaxable, province, maxAvailable) {
+    _binarySearchGross(targetAfterTax, existingTaxable, province, maxAvailable, taxOpts) {
         let low = targetAfterTax;
         let high = Math.min(targetAfterTax * 2.5, maxAvailable);
         let best = targetAfterTax * 1.4;
@@ -1097,8 +1103,8 @@ const RetirementCalcV4 = {
         for (let iter = 0; iter < 20; iter++) {
             const testAmount = (low + high) / 2;
             const taxOnAmount = CanadianTax.calculateTax(
-                existingTaxable + testAmount, province
-            ).total - CanadianTax.calculateTax(existingTaxable, province).total;
+                existingTaxable + testAmount, province, taxOpts
+            ).total - CanadianTax.calculateTax(existingTaxable, province, taxOpts).total;
             
             const afterTax = testAmount - taxOnAmount;
             
@@ -1299,20 +1305,22 @@ const RetirementCalcV4 = {
     // (~$15,705 federally tax-free) or low bracket ceiling to use cheap tax room.
     // This is what a competent (non-optimizing) advisor would do:
     // "Don't waste your personal amount — pull some RRSP to fill it, then use TFSA"
-    _withdrawNaive(balances, neededAfterTax, province, taxableIncome, age) {
+    _withdrawNaive(balances, neededAfterTax, province, taxableIncome, age, cpiFromToday) {
         let stillNeed = neededAfterTax;
         let fromRRSP = 0, fromNonReg = 0, fromTFSA = 0, fromOther = 0, fromCash = 0, fromLIRA = 0;
         let cumTaxable = taxableIncome;
+        const cpi = cpiFromToday || 1.0;
+        const taxOpts = { inflationFactor: cpi };
         
-        const BASIC_PERSONAL = 15705; // 2024 federal basic personal amount
+        const BASIC_PERSONAL = 15705 * cpi; // Federal BPA indexed to CPI
         
         // 1. Pull RRSP up to fill basic personal amount (essentially tax-free)
         if (balances.rrsp > 0 && cumTaxable < BASIC_PERSONAL) {
             const roomToFill = BASIC_PERSONAL - cumTaxable;
             const rrspPull = Math.min(roomToFill, balances.rrsp, stillNeed > 0 ? stillNeed * 1.5 : roomToFill);
             fromRRSP = rrspPull;
-            const taxOnPull = CanadianTax.calculateTax(cumTaxable + rrspPull, province).total
-                - CanadianTax.calculateTax(cumTaxable, province).total;
+            const taxOnPull = CanadianTax.calculateTax(cumTaxable + rrspPull, province, taxOpts).total
+                - CanadianTax.calculateTax(cumTaxable, province, taxOpts).total;
             cumTaxable += rrspPull;
             stillNeed -= (rrspPull - taxOnPull);
         }
@@ -1333,8 +1341,8 @@ const RetirementCalcV4 = {
         if (stillNeed > 0 && balances.nonReg > 0) {
             fromNonReg = Math.min(stillNeed * 1.3, balances.nonReg);
             const capGain = fromNonReg * 0.5;
-            const taxOnNR = CanadianTax.calculateTax(cumTaxable + capGain, province).total
-                - CanadianTax.calculateTax(cumTaxable, province).total;
+            const taxOnNR = CanadianTax.calculateTax(cumTaxable + capGain, province, taxOpts).total
+                - CanadianTax.calculateTax(cumTaxable, province, taxOpts).total;
             cumTaxable += capGain;
             stillNeed -= (fromNonReg - taxOnNR);
         }
@@ -1343,8 +1351,8 @@ const RetirementCalcV4 = {
         if (stillNeed > 0 && balances.rrsp > fromRRSP) {
             const moreRRSP = this._binarySearchGross(stillNeed, cumTaxable, province, balances.rrsp - fromRRSP);
             fromRRSP += moreRRSP;
-            const taxOnMore = CanadianTax.calculateTax(cumTaxable + moreRRSP, province).total
-                - CanadianTax.calculateTax(cumTaxable, province).total;
+            const taxOnMore = CanadianTax.calculateTax(cumTaxable + moreRRSP, province, taxOpts).total
+                - CanadianTax.calculateTax(cumTaxable, province, taxOpts).total;
             cumTaxable += moreRRSP;
             stillNeed -= (moreRRSP - taxOnMore);
         }
@@ -1363,9 +1371,11 @@ const RetirementCalcV4 = {
         }
         
         const totalGross = fromRRSP + fromNonReg + fromTFSA + fromOther + fromCash + fromLIRA;
-        const taxOpts = age >= 65 ? { age, pensionIncome: fromRRSP + fromLIRA } : {};
-        const totalTax = CanadianTax.calculateTax(cumTaxable, province, taxOpts).total 
-            - CanadianTax.calculateTax(taxableIncome, province, taxOpts).total;
+        const finalTaxOpts = age >= 65 
+            ? { age, pensionIncome: fromRRSP + fromLIRA, inflationFactor: cpi } 
+            : { inflationFactor: cpi };
+        const totalTax = CanadianTax.calculateTax(cumTaxable, province, finalTaxOpts).total 
+            - CanadianTax.calculateTax(taxableIncome, province, finalTaxOpts).total;
         
         return {
             fromTFSA, fromNonReg, fromRRSP, fromOther, fromCash, fromLIRA,
