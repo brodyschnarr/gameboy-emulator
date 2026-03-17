@@ -24,6 +24,7 @@
         { id: 'tfsa',             min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
         { id: 'nonreg',           min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
         { id: 'lira',             min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
+        { id: 'employer-pension', min: 0, max: 10000,   step: 100,   format: 'currency', label: null },
         { id: 'other',            min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
         { id: 'cash',             min: 0, max: 500000,  step: 1000,  format: 'currency', label: null },
 

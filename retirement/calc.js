@@ -72,7 +72,15 @@ const RetirementCalcV4 = {
 
             // LIRA (Locked-In Retirement Account)
             lira = 0,
-            liraProvince  // Provincial rules differ for LIF max withdrawals
+            liraProvince,  // Provincial rules differ for LIF max withdrawals
+
+            // Employer Pension (Defined Benefit)
+            employerPension = 0,           // Monthly pension amount at retirement
+            employerPensionStartAge,       // Age pension begins (default: retirementAge)
+            employerPensionIndexed = true,  // Indexed to inflation?
+
+            // Withdrawal strategy override (for comparison engine)
+            _withdrawalStrategy = 'smart'
         } = inputs;
 
         const yearsToRetirement = retirementAge - currentAge;
@@ -141,7 +149,11 @@ const RetirementCalcV4 = {
             windfalls: windfalls || [],
             currentAge,
             spendingCurve: spendingCurve || 'flat',
-            _withdrawalStrategy: inputs._withdrawalStrategy || 'smart'
+            _withdrawalStrategy,
+            employerPension: employerPension || 0,
+            employerPensionStartAge: employerPensionStartAge || retirementAge,
+            employerPensionIndexed: employerPensionIndexed !== false,
+            isFamilyMode
         });
 
         // 5. Calculate probability of success
@@ -348,7 +360,11 @@ const RetirementCalcV4 = {
             windfalls = [],
             currentAge = startAge,
             spendingCurve = 'flat',
-            _withdrawalStrategy = 'smart'
+            _withdrawalStrategy = 'smart',
+            employerPension = 0,
+            employerPensionStartAge = retirementAge,
+            employerPensionIndexed = true,
+            isFamilyMode = false
         } = params;
 
         const projection = [];
@@ -523,6 +539,15 @@ const RetirementCalcV4 = {
                     .filter(s => age >= s.startAge && (s.endAge === null || age <= s.endAge))
                     .reduce((sum, s) => sum + s.annualAmount, 0);
 
+                // Employer pension (DB pension)
+                let pensionIncome = 0;
+                if (employerPension > 0 && age >= employerPensionStartAge) {
+                    pensionIncome = employerPension * 12; // monthly → annual
+                    if (employerPensionIndexed) {
+                        pensionIncome *= cpiFromRetirement;
+                    }
+                }
+
                 // GIS estimate — two-pass approach to avoid circular dependency
                 // Pass 1: estimate GIS assuming no taxable withdrawals
                 // Pass 2: after withdrawal, recalculate GIS and re-withdraw if needed
@@ -531,13 +556,13 @@ const RetirementCalcV4 = {
                     const GIS_MAX_SINGLE = 12780;
                     const GIS_MAX_COUPLE = 7692;
                     const gisMax = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
-                    const gisTestPre = cppIncome + additionalIncome;
+                    const gisTestPre = cppIncome + additionalIncome + pensionIncome;
                     
                     // If there are taxable accounts, assume withdrawal will reduce/eliminate GIS
                     const hasTaxableAccounts = (balances.rrsp > 0 || balances.nonReg > 0);
                     if (hasTaxableAccounts) {
                         // Conservative: estimate how much taxable withdrawal is needed
-                        const roughNeed = Math.max(0, totalNeed - cppIncome - oasIncome - additionalIncome);
+                        const roughNeed = Math.max(0, totalNeed - cppIncome - oasIncome - additionalIncome - pensionIncome);
                         const estimatedTaxableWithdrawal = Math.min(roughNeed, balances.rrsp + balances.nonReg);
                         // NonReg at 50% inclusion, RRSP at 100% — rough split
                         const nonRegShare = balances.nonReg > 0 ? Math.min(estimatedTaxableWithdrawal, balances.nonReg) : 0;
@@ -551,7 +576,7 @@ const RetirementCalcV4 = {
                 }
 
                 // Total non-portfolio income BEFORE clawback
-                const totalOtherIncomePreClawback = cppIncome + oasIncome + additionalIncome + gisEstimate;
+                const totalOtherIncomePreClawback = cppIncome + oasIncome + additionalIncome + pensionIncome + gisEstimate;
 
                 // FIX #9: Smart withdrawal — OAS-clawback-aware
                 const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncomePreClawback);
@@ -567,7 +592,7 @@ const RetirementCalcV4 = {
                         balances,
                         neededBeyondMandatory,
                         province,
-                        cppIncome + additionalIncome + totalMandatory,
+                        cppIncome + additionalIncome + pensionIncome + totalMandatory,
                         age
                     );
                 } else {
@@ -575,17 +600,17 @@ const RetirementCalcV4 = {
                         balances,
                         neededBeyondMandatory,
                         province,
-                        cppIncome + additionalIncome + totalMandatory,
+                        cppIncome + additionalIncome + pensionIncome + totalMandatory,
                         oasIncome,
                         age >= effOAS1,
-                        { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle, age }
+                        { cppP1, cppP2, oasP1, oasP2, additionalIncome: additionalIncome + pensionIncome, isSingle, age }
                     );
                 }
 
                 // Apply mandatory RRIF/LIF withdrawals (on top of smart withdrawal)
                 // These are taxable and must be accounted for in tax calculation
                 let mandatoryTax = 0;
-                const baseTaxableBeforeMandatory = withdrawal.taxableIncome || (cppIncome + additionalIncome);
+                const baseTaxableBeforeMandatory = withdrawal.taxableIncome || (cppIncome + additionalIncome + pensionIncome);
                 if (rrifMandatory > 0) {
                     const mandatoryRRSP = Math.min(rrifMandatory, balances.rrsp);
                     const extraRRSP = Math.max(0, mandatoryRRSP - withdrawal.fromRRSP);
@@ -612,7 +637,7 @@ const RetirementCalcV4 = {
                     const GIS_MAX_COUPLE = 7692;
                     const gisMax2 = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
                     const gisTestPost = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0) 
-                        + additionalIncome + ((withdrawal.fromNonReg || 0) * 0.5);
+                        + additionalIncome + pensionIncome + ((withdrawal.fromNonReg || 0) * 0.5);
                     const gisActual = Math.max(0, gisMax2 - gisTestPost * 0.5) * cpiFromRetirement;
                     const shortfall = gisEstimate - gisActual;
                     
@@ -660,7 +685,7 @@ const RetirementCalcV4 = {
                     const gisMax = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
                     // GIS income test excludes OAS but includes CPP, RRSP withdrawals, etc.
                     const gisTestIncome = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0) + additionalIncome
-                        + ((withdrawal.fromNonReg || 0) * 0.5); // NonReg at 50% inclusion
+                        + pensionIncome + ((withdrawal.fromNonReg || 0) * 0.5); // NonReg at 50% inclusion
                     const gisClawback = gisTestIncome * GIS_CLAWBACK_RATE;
                     gisIncome = Math.max(0, gisMax - gisClawback) * cpiFromRetirement;
                 }
@@ -690,19 +715,20 @@ const RetirementCalcV4 = {
                     lifMandatory: Math.round(lifMandatory),
                     governmentIncome: Math.round(govIncome),
                     additionalIncome: Math.round(additionalIncome),
+                    pensionIncome: Math.round(pensionIncome),
                     oasReceived: Math.round(actualOAS),
                     gisReceived: Math.round(gisIncome),
                     cppReceived: Math.round(cppIncome),
                     taxableIncome: withdrawal.taxableIncome,
                     taxPaid: withdrawal.taxPaid,
-                    grossIncome: withdrawal.total + govIncome + additionalIncome,
-                    afterTaxIncome: withdrawal.afterTax + govIncome + additionalIncome,
+                    grossIncome: withdrawal.total + govIncome + additionalIncome + pensionIncome,
+                    afterTaxIncome: withdrawal.afterTax + govIncome + additionalIncome + pensionIncome,
                     targetSpending: Math.round(totalNeed),
                     healthcareCost: Math.round(healthcareCost)
                 });
 
                 // Continue projecting even after depletion if there's government income
-                if (totalBalance <= 0 && govIncome + additionalIncome <= 0) break;
+                if (totalBalance <= 0 && govIncome + additionalIncome + pensionIncome <= 0) break;
             }
         }
 
@@ -747,14 +773,29 @@ const RetirementCalcV4 = {
             // If spending need exceeds that, use NonReg then TFSA for the rest.
             // ═══════════════════════════════════════
 
-            // How much low-bracket room is available for RRSP?
-            // Use OAS clawback threshold: every dollar below this pre-OAS
-            // is cheaper than withdrawing it post-OAS (where CPP+OAS consume
-            // low brackets and additional income triggers clawback).
-            const MELTDOWN_CEILING = OAS_CLAWBACK_START; // $90,997
-            const rrspRoom = Math.max(0, MELTDOWN_CEILING - nonOASTaxableIncome);
+            // Smart bracket-filling RRSP meltdown:
+            // Pre-OAS, fill tax brackets precisely to minimize lifetime tax.
+            // The optimal amount depends on what post-OAS income will look like.
+            // 
+            // Strategy: Fill to the LOWER of:
+            //   a) First bracket ceiling ($55,867 federal — 20.5% rate)
+            //   b) OAS clawback threshold ($90,997 — where 15% clawback kicks in)
+            //   c) Whatever the spending need requires
+            //
+            // Beyond the first bracket, RRSP gets expensive (29%+ marginal).
+            // Better to use NonReg (50% inclusion) or TFSA for the rest.
+            const FIRST_BRACKET_CEILING = 55867; // Federal 15% bracket top (2024)
+            const rrspTargetIncome = Math.min(FIRST_BRACKET_CEILING, OAS_CLAWBACK_START);
+            const rrspRoom = Math.max(0, rrspTargetIncome - nonOASTaxableIncome);
+            
+            // If we have a lot of RRSP, also fill second bracket to prevent massive RRIF later
+            // Second bracket top: $111,733 (at 26% federal)
+            const SECOND_BRACKET_CEILING = 111733;
+            const extraRoomIfNeeded = balances.rrsp > 300000 
+                ? Math.max(0, SECOND_BRACKET_CEILING - rrspTargetIncome) 
+                : 0;
 
-            // 1. RRSP up to the meltdown ceiling (fill low brackets)
+            // 1. RRSP up to first bracket ceiling (cheapest tax room)
             if (stillNeed > 0 && balances.rrsp > 0 && rrspRoom > 0) {
                 const maxGross = Math.min(rrspRoom, balances.rrsp);
                 const taxIfMax = CanadianTax.calculateTax(
@@ -763,15 +804,35 @@ const RetirementCalcV4 = {
                 const maxAfterTax = maxGross - taxIfMax;
 
                 if (maxAfterTax >= stillNeed) {
-                    // Can cover everything within the low-bracket cap
                     fromRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, balances.rrsp);
                     cumulativeTaxableIncome += fromRRSP;
                     stillNeed = 0;
                 } else {
-                    // Use all room, still need more
                     fromRRSP = maxGross;
                     cumulativeTaxableIncome += fromRRSP;
                     stillNeed -= maxAfterTax;
+                }
+            }
+            
+            // 1b. If large RRSP (>$300K), extend meltdown into second bracket
+            // to prevent massive RRIF later. Only if still have spending need.
+            if (stillNeed > 0 && balances.rrsp > fromRRSP && extraRoomIfNeeded > 0) {
+                const remaining = balances.rrsp - fromRRSP;
+                const extraGross = Math.min(extraRoomIfNeeded, remaining);
+                const taxOnExtra = CanadianTax.calculateTax(
+                    cumulativeTaxableIncome + extraGross, province
+                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province).total;
+                const extraAfterTax = extraGross - taxOnExtra;
+                
+                if (extraAfterTax >= stillNeed) {
+                    const additionalRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, remaining);
+                    fromRRSP += additionalRRSP;
+                    cumulativeTaxableIncome += additionalRRSP;
+                    stillNeed = 0;
+                } else {
+                    fromRRSP += extraGross;
+                    cumulativeTaxableIncome += extraGross;
+                    stillNeed -= extraAfterTax;
                 }
             }
 
@@ -938,10 +999,24 @@ const RetirementCalcV4 = {
         // Final tax (with senior credits if 65+)
         const totalTaxableForCalc = cumulativeTaxableIncome + (oasActive ? actualOAS : 0);
         const currentAge = perPerson.age || 0;
-        const pensionIncome = fromRRSP; // RRIF withdrawals count as pension income for credit
-        const taxOpts = currentAge >= 65 ? { age: currentAge, pensionIncome } : {};
-        const totalTax = CanadianTax.calculateTax(totalTaxableForCalc, province, taxOpts).total -
+        const eligiblePensionIncome = fromRRSP + (perPerson.additionalIncome || 0); // RRIF + DB pension
+        const taxOpts = currentAge >= 65 ? { age: currentAge, pensionIncome: eligiblePensionIncome } : {};
+
+        let totalTax;
+        if (!perPerson.isSingle && currentAge >= 65 && eligiblePensionIncome > 0) {
+            // Pension income splitting: transfer up to 50% of eligible pension to lower-income spouse
+            // This reduces the higher earner's taxable income and gives the spouse the pension credit
+            const splitAmount = eligiblePensionIncome * 0.5;
+            const p1Taxable = totalTaxableForCalc - splitAmount;
+            const p2Taxable = splitAmount; // spouse receives this as their pension income
+            const p1Tax = CanadianTax.calculateTax(Math.max(0, p1Taxable), province, { age: currentAge, pensionIncome: eligiblePensionIncome - splitAmount }).total;
+            const p2Tax = CanadianTax.calculateTax(p2Taxable, province, { age: currentAge, pensionIncome: splitAmount }).total;
+            const baseTax = CanadianTax.calculateTax(nonOASTaxableIncome, province, taxOpts).total;
+            totalTax = (p1Tax + p2Tax) - baseTax;
+        } else {
+            totalTax = CanadianTax.calculateTax(totalTaxableForCalc, province, taxOpts).total -
                         CanadianTax.calculateTax(nonOASTaxableIncome, province, taxOpts).total;
+        }
         
         const totalWithdrawn = fromTFSA + fromNonReg + fromRRSP + fromOther + fromCash;
 

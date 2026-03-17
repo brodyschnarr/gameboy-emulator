@@ -1304,6 +1304,10 @@ input:focus {
     background: #3b82f6;
 }
 
+.bar-segment.pension {
+    background: #8b5cf6;
+}
+
 .bar-segment.lira {
     background: #ec4899;
 }

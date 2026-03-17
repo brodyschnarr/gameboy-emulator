@@ -2465,6 +2465,10 @@ const AppV4 = {
             additionalIncomeSources: IncomeSources.getAll(),
             windfalls: this.windfalls || [],
 
+            employerPension: parseFloat(document.getElementById('employer-pension')?.value) || 0,
+            employerPensionStartAge: parseInt(document.getElementById('pension-start-age')?.value) || 65,
+            employerPensionIndexed: document.getElementById('pension-indexed')?.checked !== false,
+
             returnRate: parseFloat(document.getElementById('return-rate')?.value) || 6,
             inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2.5,
             contributionGrowthRate: parseFloat(document.getElementById('contribution-growth')?.value) || 0,
@@ -2807,8 +2811,9 @@ const AppV4 = {
             const fromOther = wb.other || 0;
             const fromCash = wb.cash || 0;
             const fromLIRA = wb.lira || 0;
+            const pension = year.pensionIncome || 0;
             
-            const grossIncome = cpp + oas + gis + additional + fromTFSA + fromNonReg + fromRRSP + fromOther + fromCash + fromLIRA;
+            const grossIncome = cpp + oas + gis + additional + pension + fromTFSA + fromNonReg + fromRRSP + fromOther + fromCash + fromLIRA;
             if (grossIncome <= 0) return '';
             
             // Show after-tax income as the headline number (what you actually get to spend)
@@ -2818,7 +2823,7 @@ const AppV4 = {
 
             // For the bar, show after-tax proportions
             // Tax-free sources: TFSA, GIS (not taxed), OAS/CPP/RRSP/NonReg are taxed proportionally
-            const taxableGross = cpp + oas + fromRRSP + fromNonReg + fromOther + fromLIRA + additional;
+            const taxableGross = cpp + oas + fromRRSP + fromNonReg + fromOther + fromLIRA + additional + pension;
             const taxRate = taxableGross > 0 ? tax / taxableGross : 0;
             const afterTaxCPP = cpp * (1 - taxRate);
             const afterTaxOAS = oas * (1 - taxRate);
@@ -2840,6 +2845,8 @@ const AppV4 = {
             if (afterTaxCPP > 0) segments.push({ cls: 'cpp', pct: pct(afterTaxCPP), label: 'CPP', amount: fmt(afterTaxCPP) });
             if (afterTaxOAS > 0) segments.push({ cls: 'oas', pct: pct(afterTaxOAS), label: 'OAS', amount: fmt(afterTaxOAS) });
             if (afterTaxGIS > 0) segments.push({ cls: 'gis', pct: pct(afterTaxGIS), label: 'GIS', amount: fmt(afterTaxGIS) });
+            const afterTaxPension = pension * (1 - taxRate);
+            if (afterTaxPension > 0) segments.push({ cls: 'pension', pct: pct(afterTaxPension), label: 'Pension', amount: fmt(afterTaxPension) });
             if (afterTaxAdditional > 0) segments.push({ cls: 'additional', pct: pct(afterTaxAdditional), label: 'Other Income', amount: fmt(afterTaxAdditional) });
             if (afterTaxRRSP > 0) segments.push({ cls: 'rrsp', pct: pct(afterTaxRRSP), label: 'RRSP', amount: fmt(afterTaxRRSP) });
             if (afterTaxTFSA > 0) segments.push({ cls: 'tfsa', pct: pct(afterTaxTFSA), label: 'TFSA', amount: fmt(afterTaxTFSA) });
