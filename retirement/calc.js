@@ -826,7 +826,7 @@ const RetirementCalcV4 = {
             if (stillNeed > 0 && balances.rrsp > 0 && rrspRoom > 0) {
                 const maxGross = Math.min(rrspRoom, balances.rrsp);
                 const taxIfMax = CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + maxGross, province
+                    cumulativeTaxableIncome + maxGross, province, taxOpts
                 ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province, taxOpts).total;
                 const maxAfterTax = maxGross - taxIfMax;
 
@@ -847,7 +847,7 @@ const RetirementCalcV4 = {
                 const remaining = balances.rrsp - fromRRSP;
                 const extraGross = Math.min(extraRoomIfNeeded, remaining);
                 const taxOnExtra = CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + extraGross, province
+                    cumulativeTaxableIncome + extraGross, province, taxOpts
                 ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province, taxOpts).total;
                 const extraAfterTax = extraGross - taxOnExtra;
                 
@@ -868,7 +868,7 @@ const RetirementCalcV4 = {
                 fromNonReg = this._withdrawNonReg(stillNeed, cumulativeTaxableIncome, province, balances.nonReg, taxOpts);
                 const capitalGain = fromNonReg * 0.5;
                 const taxOnNonReg = CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + capitalGain, province
+                    cumulativeTaxableIncome + capitalGain, province, taxOpts
                 ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province, taxOpts).total;
                 cumulativeTaxableIncome += capitalGain;
                 stillNeed -= (fromNonReg - taxOnNonReg);
@@ -879,7 +879,7 @@ const RetirementCalcV4 = {
                 const remainingRRSP = balances.rrsp - fromRRSP;
                 const additionalRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, remainingRRSP, taxOpts);
                 const taxOnAdditional = CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + additionalRRSP, province
+                    cumulativeTaxableIncome + additionalRRSP, province, taxOpts
                 ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province, taxOpts).total;
                 const afterTaxAdditional = additionalRRSP - taxOnAdditional;
                 fromRRSP += additionalRRSP;
@@ -930,9 +930,9 @@ const RetirementCalcV4 = {
             if (stillNeed > 0 && balances.rrsp > 0 && rrspRoomBeforeClawback > 0) {
                 const maxRRSPGross = Math.min(rrspRoomBeforeClawback, balances.rrsp);
                 const taxIfMaxRRSP = CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + maxRRSPGross + oasForTax, province
+                    cumulativeTaxableIncome + maxRRSPGross + oasForTax, province, taxOpts
                 ).total - CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + oasForTax, province
+                    cumulativeTaxableIncome + oasForTax, province, taxOpts
                 ).total;
                 const maxAfterTax = maxRRSPGross - taxIfMaxRRSP;
 
@@ -952,9 +952,9 @@ const RetirementCalcV4 = {
                 fromNonReg = this._withdrawNonReg(stillNeed, cumulativeTaxableIncome + oasForTax, province, balances.nonReg, taxOpts);
                 const capitalGain = fromNonReg * 0.5;
                 const taxOnNonReg = CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + capitalGain + oasForTax, province
+                    cumulativeTaxableIncome + capitalGain + oasForTax, province, taxOpts
                 ).total - CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + oasForTax, province
+                    cumulativeTaxableIncome + oasForTax, province, taxOpts
                 ).total;
                 cumulativeTaxableIncome += capitalGain;
                 stillNeed -= (fromNonReg - taxOnNonReg);
@@ -973,9 +973,9 @@ const RetirementCalcV4 = {
                     stillNeed, cumulativeTaxableIncome + oasForTax, province, remainingRRSP
                 );
                 const taxOnAdditional = CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + oasForTax + additionalRRSP, province
+                    cumulativeTaxableIncome + oasForTax + additionalRRSP, province, taxOpts
                 ).total - CanadianTax.calculateTax(
-                    cumulativeTaxableIncome + oasForTax, province
+                    cumulativeTaxableIncome + oasForTax, province, taxOpts
                 ).total;
                 const afterTaxAdditional = additionalRRSP - taxOnAdditional;
                 fromRRSP += additionalRRSP;
