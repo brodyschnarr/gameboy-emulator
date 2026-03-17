@@ -970,7 +970,7 @@ const RetirementCalcV4 = {
             if (stillNeed > 0 && balances.rrsp > fromRRSP) {
                 const remainingRRSP = balances.rrsp - fromRRSP;
                 const additionalRRSP = this._binarySearchGross(
-                    stillNeed, cumulativeTaxableIncome + oasForTax, province, remainingRRSP
+                    stillNeed, cumulativeTaxableIncome + oasForTax, province, remainingRRSP, taxOpts
                 );
                 const taxOnAdditional = CanadianTax.calculateTax(
                     cumulativeTaxableIncome + oasForTax + additionalRRSP, province, taxOpts
@@ -1349,7 +1349,7 @@ const RetirementCalcV4 = {
         
         // 5. More RRSP if still needed
         if (stillNeed > 0 && balances.rrsp > fromRRSP) {
-            const moreRRSP = this._binarySearchGross(stillNeed, cumTaxable, province, balances.rrsp - fromRRSP);
+            const moreRRSP = this._binarySearchGross(stillNeed, cumTaxable, province, balances.rrsp - fromRRSP, taxOpts);
             fromRRSP += moreRRSP;
             const taxOnMore = CanadianTax.calculateTax(cumTaxable + moreRRSP, province, taxOpts).total
                 - CanadianTax.calculateTax(cumTaxable, province, taxOpts).total;

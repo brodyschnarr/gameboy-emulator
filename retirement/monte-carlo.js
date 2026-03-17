@@ -235,6 +235,7 @@ const MonteCarloSimulator = {
                 
                 const yearsIntoRetirement = age - retirementAge;
                 const inflationFactor = Math.pow(1 + inf, yearsIntoRetirement);
+                const cpiFromToday = Math.pow(1 + inf, age - currentAge);
                 // Spending curve multiplier
                 let spendingCurveMultiplier = 1.0;
                 if (spendingCurve === 'frontloaded') {
@@ -305,7 +306,7 @@ const MonteCarloSimulator = {
                     cppIncome + additionalIncome,
                     oasIncome,
                     age >= effOAS1,
-                    { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle }
+                    { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle, age, cpiFromToday }
                 );
                 
                 // Pass 2: check if GIS was overestimated, compensate from TFSA
