@@ -142,26 +142,6 @@
                 </div>
             </div>
 
-            <!-- Employer Pension -->
-            <div class="input-group">
-                <h3>Employer Pension (DB/DC)</h3>
-                <p class="section-intro">Defined benefit or defined contribution pension from employer</p>
-                <label for="employer-pension">Monthly Pension Amount
-                    <button type="button" class="info-btn" data-tooltip="Your guaranteed monthly pension from an employer plan. This is taxable income but qualifies for the pension income credit at 65+. If indexed, it grows with inflation.">?</button>
-                </label>
-                <div class="input-with-prefix">
-                    <span class="prefix">$</span>
-                    <input type="number" id="employer-pension" placeholder="0" min="0" step="100">
-                </div>
-                <label for="pension-start-age">Pension Start Age</label>
-                <input type="number" id="pension-start-age" placeholder="65" min="50" max="75" step="1" value="65">
-                <div class="input-row" style="margin-top:8px">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="pension-indexed" checked> Indexed to inflation
-                    </label>
-                </div>
-            </div>
-
             <!-- Additional Income Sources -->
             <div class="input-group">
                 <h3>Additional Income Sources</h3>
@@ -919,6 +899,13 @@
                     </div>
                 </div>
 
+                <div id="income-pension-options" class="input-group hidden">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="income-indexed" checked> Indexed to inflation
+                    </label>
+                    <small class="input-hint">Pension grows with CPI each year</small>
+                </div>
+
                 <div class="button-row">
                     <button type="button" class="btn-secondary" id="close-income-modal">Cancel</button>
                     <button type="submit" class="btn-primary">Add Income Source</button>
@@ -939,17 +926,17 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000020"></script>
-    <script src="cpp-calculator.js?v=17&t=24000020"></script>
-    <script src="benchmarks.js?v=17&t=24000020"></script>
-    <script src="lifestyle-data.js?v=17&t=24000020"></script>
-    <script src="regional-data.js?v=17&t=24000020"></script>
-    <script src="canada-map.js?v=17&t=24000020"></script>
-    <script src="income-sources.js?v=17&t=24000020"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000020"></script>
-    <script src="scenario-manager.js?v=17&t=24000020"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000020"></script>
-    <script src="calc.js?v=17&t=24000020"></script>
+    <script src="canada-tax.js?v=17&t=24000021"></script>
+    <script src="cpp-calculator.js?v=17&t=24000021"></script>
+    <script src="benchmarks.js?v=17&t=24000021"></script>
+    <script src="lifestyle-data.js?v=17&t=24000021"></script>
+    <script src="regional-data.js?v=17&t=24000021"></script>
+    <script src="canada-map.js?v=17&t=24000021"></script>
+    <script src="income-sources.js?v=17&t=24000021"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000021"></script>
+    <script src="scenario-manager.js?v=17&t=24000021"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000021"></script>
+    <script src="calc.js?v=17&t=24000021"></script>
     <script src="app-round6-debug.js"></script>
     
     <!-- V5 Advanced Features -->

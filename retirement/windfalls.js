@@ -257,6 +257,17 @@ const WindfallManager = {
                 <h4>${isEdit ? 'Edit' : 'Add'} Windfall</h4>
                 
                 <div class="form-group">
+                    <label>Common Scenarios</label>
+                    <div class="windfall-preset-selector">
+                        <button type="button" class="wf-preset-btn" data-preset="home-sale">🏠 Home Sale</button>
+                        <button type="button" class="wf-preset-btn" data-preset="inheritance">💎 Inheritance</button>
+                        <button type="button" class="wf-preset-btn" data-preset="stock-options">📈 Stock Options</button>
+                        <button type="button" class="wf-preset-btn" data-preset="insurance">🛡️ Insurance</button>
+                        <button type="button" class="wf-preset-btn" data-preset="custom">✏️ Custom</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label>Type</label>
                     <div class="windfall-type-selector">
                         <button type="button" class="wf-type-btn ${type === 'simple' ? 'active' : ''}" data-type="simple">💰 Fixed Amount</button>
@@ -264,7 +275,7 @@ const WindfallManager = {
                         <button type="button" class="wf-type-btn ${type === 'uncertain' ? 'active' : ''}" data-type="uncertain">🎲 Uncertain</button>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label>Name</label>
                     <input type="text" id="windfall-name" placeholder="e.g., Inheritance, Stock options" value="${windfall?.name || ''}" />
@@ -395,6 +406,37 @@ const WindfallManager = {
             });
         });
         
+        // Preset buttons — pre-fill fields for common scenarios
+        container.querySelectorAll('.wf-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                container.querySelectorAll('.wf-preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const preset = btn.dataset.preset;
+                const nameField = document.getElementById('windfall-name');
+                const taxField = document.getElementById('windfall-taxable');
+                const destField = document.getElementById('windfall-destination');
+                const probField = document.getElementById('windfall-probability');
+                const probDisp = document.getElementById('wf-prob-display');
+                
+                const presets = {
+                    'home-sale': { name: 'Home Sale', type: 'simple', taxable: 'false', dest: 'split', prob: 90 },
+                    'inheritance': { name: 'Inheritance', type: 'uncertain', taxable: 'false', dest: 'split', prob: 60 },
+                    'stock-options': { name: 'Stock Options', type: 'shares', taxable: 'true', dest: 'nonReg', prob: 85 },
+                    'insurance': { name: 'Life Insurance Payout', type: 'uncertain', taxable: 'false', dest: 'tfsa', prob: 50 },
+                    'custom': { name: '', type: 'simple', taxable: 'false', dest: 'split', prob: 75 }
+                };
+                const p = presets[preset] || presets.custom;
+                if (nameField) nameField.value = p.name;
+                if (taxField) taxField.value = p.taxable;
+                if (destField) destField.value = p.dest;
+                if (probField) { probField.value = p.prob; if (probDisp) probDisp.textContent = p.prob + '%'; }
+                
+                // Switch to appropriate type
+                const typeBtn = container.querySelector(`.wf-type-btn[data-type="${p.type}"]`);
+                if (typeBtn) typeBtn.click();
+            });
+        });
+
         // Probability slider live display
         const probSlider = document.getElementById('windfall-probability');
         const probDisplay = document.getElementById('wf-prob-display');

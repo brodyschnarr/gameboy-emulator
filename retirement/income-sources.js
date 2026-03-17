@@ -18,7 +18,7 @@ const IncomeSources = {
     /**
      * Add a new income source
      */
-    add(type, amount, startAge, endAge = null, name = null) {
+    add(type, amount, startAge, endAge = null, name = null, indexed = false) {
         const source = {
             id: this.nextId++,
             type,
@@ -26,6 +26,8 @@ const IncomeSources = {
             annualAmount: amount,
             startAge,
             endAge, // null = lifetime
+            indexed, // pension/annuity: grows with inflation
+            isPension: (type === 'pension' || type === 'annuity')
         };
 
         this.sources.push(source);
@@ -134,21 +136,27 @@ const IncomeSources = {
             });
         }
 
-        // Update type description
+        // Update type description and show/hide pension options
         if (typeSelect) {
-            typeSelect.addEventListener('change', (e) => {
+            const updateTypeUI = (type) => {
                 const desc = document.getElementById('income-type-description');
+                const pensionOpts = document.getElementById('income-pension-options');
                 if (desc) {
                     const descriptions = {
-                        pension: 'Regular monthly payments from a defined benefit pension plan',
-                        annuity: 'Fixed annual payments from an annuity contract',
-                        rental: 'Income from rental properties (after expenses)',
+                        pension: 'Regular monthly payments from a defined benefit pension plan. Qualifies for pension income credit at 65+.',
+                        annuity: 'Fixed annual payments from an annuity contract. Qualifies for pension income credit at 65+.',
+                        rental: 'Income from rental properties (after expenses). Taxable as regular income.',
                         partTime: 'Part-time work or consulting income',
                         other: 'Any other recurring income'
                     };
-                    desc.textContent = descriptions[e.target.value] || '';
+                    desc.textContent = descriptions[type] || '';
                 }
-            });
+                if (pensionOpts) {
+                    pensionOpts.classList.toggle('hidden', type !== 'pension' && type !== 'annuity');
+                }
+            };
+            typeSelect.addEventListener('change', (e) => updateTypeUI(e.target.value));
+            updateTypeUI(typeSelect.value);
         }
 
         // Form submission
@@ -164,7 +172,9 @@ const IncomeSources = {
                 const customName = document.getElementById('income-custom-name').value;
 
                 if (amount > 0 && startAge > 0) {
-                    this.add(type, amount, startAge, endAge, customName);
+                    const indexed = document.getElementById('income-indexed')?.checked || false;
+                    const isPension = (type === 'pension' || type === 'annuity');
+                    this.add(type, amount, startAge, endAge, customName, isPension ? indexed : false);
                     modal.classList.add('hidden');
                     form.reset();
                 }

@@ -815,17 +815,17 @@ const AppV4 = {
             message = `You're well-funded! You could spend up to <strong>${fmt(maxSustainable)}/year</strong> and still last to age ${lifeExpectancy}.`;
             barClass = 'safe';
         } else if (diff > 0) {
-            // Small room
+            // Small room — still safe
             icon = '✅';
             amountClass = 'on-target';
             message = `You're close to your max. Sustainable spending: <strong>${fmt(maxSustainable)}/year</strong>.`;
-            barClass = 'warning';
+            barClass = 'safe-tight';
         } else {
             // Exactly at limit
             icon = '✅';
             amountClass = 'on-target';
             message = `Your spending is right at the sustainable limit.`;
-            barClass = 'warning';
+            barClass = 'safe-tight';
         }
         
         // ── Retirement age optimization ──

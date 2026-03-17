@@ -1805,6 +1805,7 @@ input:focus {
 }
 
 .optimizer-bar-fill.safe { background: #10b981; }
+.optimizer-bar-fill.safe-tight { background: #86efac; }
 .optimizer-bar-fill.warning { background: #f59e0b; }
 .optimizer-bar-fill.danger { background: #ef4444; }
 
@@ -2841,7 +2842,38 @@ input:focus {
 
 @media (max-width: 600px) {
     .strategy-summary-grid.three-col {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+    }
+    .strategy-col {
+        padding: 10px 8px;
+    }
+    .strategy-col-header {
+        font-size: 12px;
+        margin-bottom: 6px;
+    }
+    .strategy-stat {
+        font-size: 10px;
+        padding: 3px 0;
+        flex-direction: column;
+        gap: 1px;
+    }
+    .strategy-stat span:first-child {
+        color: var(--text-muted);
+        font-size: 9px;
+    }
+    .strategy-stat span:last-child {
+        font-weight: 600;
+    }
+    .strategy-stat.highlight {
+        padding: 3px 4px;
+        font-size: 11px;
+    }
+    .strategy-stat.highlight span:last-child {
+        font-size: 12px;
+    }
+    .strategy-note {
+        font-size: 9px;
     }
     .strategy-tabs {
         flex-wrap: nowrap;
@@ -2850,4 +2882,31 @@ input:focus {
         font-size: 12px;
         padding: 10px 6px;
     }
+}
+
+/* Windfall Preset Buttons */
+.windfall-preset-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.wf-preset-btn {
+    padding: 8px 12px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 8px;
+    background: var(--bg-muted, #f9fafb);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wf-preset-btn:hover {
+    border-color: var(--primary);
+}
+
+.wf-preset-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
 }

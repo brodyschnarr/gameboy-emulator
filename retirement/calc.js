@@ -534,19 +534,26 @@ const RetirementCalcV4 = {
                 }
                 const oasIncome = oasP1 + oasP2;
 
-                // 5. Additional income sources
+                // 5. Additional income sources (with inflation indexing for pensions)
                 const additionalIncome = additionalIncomeSources
                     .filter(s => age >= s.startAge && (s.endAge === null || age <= s.endAge))
-                    .reduce((sum, s) => sum + s.annualAmount, 0);
+                    .reduce((sum, s) => {
+                        const base = s.annualAmount;
+                        return sum + (s.indexed ? base * cpiFromRetirement : base);
+                    }, 0);
 
-                // Employer pension (DB pension)
+                // Employer pension (standalone field — backwards compatible)
                 let pensionIncome = 0;
                 if (employerPension > 0 && age >= employerPensionStartAge) {
-                    pensionIncome = employerPension * 12; // monthly → annual
+                    pensionIncome = employerPension * 12;
                     if (employerPensionIndexed) {
                         pensionIncome *= cpiFromRetirement;
                     }
                 }
+                
+                // Check if any additional income is pension-type (for pension credit)
+                const hasPensionTypeIncome = additionalIncomeSources.some(s => 
+                    s.isPension && age >= s.startAge && (s.endAge === null || age <= s.endAge));
 
                 // GIS estimate — two-pass approach to avoid circular dependency
                 // Pass 1: estimate GIS assuming no taxable withdrawals
