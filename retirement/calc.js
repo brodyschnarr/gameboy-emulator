@@ -168,7 +168,20 @@ const RetirementCalcV4 = {
         const finalYear = projection[projection.length - 1];
         const legacyAmount = finalYear ? finalYear.totalBalance : 0;
         
-        const runsOutYear = projection.find(p => p.totalBalance <= 0);
+        // Portfolio is "depleted" if balance < $100 OR if withdrawal can't meet spending need
+        // (prevents floating-point $1 balances from falsely passing the check)
+        const runsOutYear = projection.find(p => {
+            if (p.phase !== 'retirement') return false;
+            if (p.totalBalance <= 100) return true;
+            // Also check if portfolio couldn't meet spending need
+            // (withdrawal + govt income significantly short of target spending)
+            if (p.targetSpending > 0) {
+                const totalIncome = (p.withdrawal || 0) + (p.governmentIncome || 0) + (p.additionalIncome || 0) + (p.pensionIncome || 0);
+                const shortfall = p.targetSpending - totalIncome;
+                if (shortfall > p.targetSpending * 0.1) return true; // >10% short = can't sustain
+            }
+            return false;
+        });
         const moneyLastsAge = runsOutYear ? runsOutYear.age : lifeExpectancy;
         
         const firstRetirementYear = projection.find(p => p.age === retirementAge);
@@ -589,15 +602,16 @@ const RetirementCalcV4 = {
                 const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncomePreClawback);
 
                 // RRIF/LIF mandatory minimums — must be withdrawn regardless
-                // These count toward meeting the spending need
+                // Don't subtract mandatory from need: the smart withdrawal usually pulls
+                // from RRSP anyway (covering the mandatory within its pull).
+                // The mandatory check after withdrawal ensures the minimum is met.
                 const totalMandatory = rrifMandatory + lifMandatory;
-                const neededBeyondMandatory = Math.max(0, neededFromPortfolio - totalMandatory);
 
                 let withdrawal;
                 if (_withdrawalStrategy === 'naive') {
                     withdrawal = this._withdrawNaive(
                         balances,
-                        neededBeyondMandatory,
+                        neededFromPortfolio,
                         province,
                         cppIncome + additionalIncome + pensionIncome + totalMandatory,
                         age
@@ -605,7 +619,7 @@ const RetirementCalcV4 = {
                 } else {
                     withdrawal = this._withdrawSmartOptimal(
                         balances,
-                        neededBeyondMandatory,
+                        neededFromPortfolio,
                         province,
                         cppIncome + additionalIncome + pensionIncome + totalMandatory,
                         oasIncome,
@@ -858,9 +872,13 @@ const RetirementCalcV4 = {
             if (stillNeed > 0 && balances.rrsp > fromRRSP) {
                 const remainingRRSP = balances.rrsp - fromRRSP;
                 const additionalRRSP = this._binarySearchGross(stillNeed, cumulativeTaxableIncome, province, remainingRRSP);
+                const taxOnAdditional = CanadianTax.calculateTax(
+                    cumulativeTaxableIncome + additionalRRSP, province
+                ).total - CanadianTax.calculateTax(cumulativeTaxableIncome, province).total;
+                const afterTaxAdditional = additionalRRSP - taxOnAdditional;
                 fromRRSP += additionalRRSP;
                 cumulativeTaxableIncome += additionalRRSP;
-                stillNeed = 0;
+                stillNeed = Math.max(0, stillNeed - afterTaxAdditional);
             }
 
             // 4. TFSA (last resort — preserve tax-free growth as long as possible)
@@ -948,9 +966,15 @@ const RetirementCalcV4 = {
                 const additionalRRSP = this._binarySearchGross(
                     stillNeed, cumulativeTaxableIncome + oasForTax, province, remainingRRSP
                 );
+                const taxOnAdditional = CanadianTax.calculateTax(
+                    cumulativeTaxableIncome + oasForTax + additionalRRSP, province
+                ).total - CanadianTax.calculateTax(
+                    cumulativeTaxableIncome + oasForTax, province
+                ).total;
+                const afterTaxAdditional = additionalRRSP - taxOnAdditional;
                 fromRRSP += additionalRRSP;
                 cumulativeTaxableIncome += additionalRRSP;
-                stillNeed = 0;
+                stillNeed = Math.max(0, stillNeed - afterTaxAdditional);
             }
 
             // 5. Cash (accessible savings)

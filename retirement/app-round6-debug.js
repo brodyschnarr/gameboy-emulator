@@ -2278,10 +2278,19 @@ const AppV4 = {
             : 'No legacy remaining - money runs out before end of life.';
 
 
-        // Find when money runs out (check totalBalance first, then totalPortfolio)
+        // Find when money runs out — use $100 threshold to avoid floating-point ghost balances
+        // Also check if income can't meet spending need (>10% shortfall = effectively depleted)
         const runOutYear = results.yearByYear.find(y => {
+            if (y.phase !== 'retirement') return false;
             const balance = y.totalBalance !== undefined ? y.totalBalance : y.totalPortfolio;
-            return (balance || 0) <= 0;
+            if ((balance || 0) <= 100) return true;
+            // Check if spending need can't be met
+            if (y.targetSpending > 0) {
+                const totalIncome = (y.withdrawal || 0) + (y.governmentIncome || 0) + (y.additionalIncome || 0) + (y.pensionIncome || 0);
+                const shortfall = y.targetSpending - totalIncome;
+                if (shortfall > y.targetSpending * 0.1) return true;
+            }
+            return false;
         });
         results.summary.moneyLastsAge = runOutYear ? runOutYear.age : inputs.lifeExpectancy;
 
