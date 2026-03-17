@@ -1187,19 +1187,28 @@ const RetirementCalcV4 = {
             }
         }
 
-        // Also test the "advisor" config explicitly to guarantee optimizer >= advisor
-        try {
-            const advOverrides = {
-                cppStartAge: 65, oasStartAge: 65,
-                cppStartAgeP2: 65, oasStartAgeP2: 65,
-                _withdrawalStrategy: 'naive'
-            };
-            const advMax = findMaxSpend(advOverrides);
-            if (advMax > bestMaxSpend) {
-                bestMaxSpend = advMax;
-                bestParams = { cppAge: 65, oasAge: 65, strategy: 'naive', maxSpend: advMax };
-            }
-        } catch(e) {}
+        // Guarantee optimizer >= both advisor AND user's plan
+        const floors = [
+            // Advisor config
+            { cppStartAge: 65, oasStartAge: 65, cppStartAgeP2: 65, oasStartAgeP2: 65, _withdrawalStrategy: 'naive' },
+            // User's own config (both strategies)
+            { cppStartAge: inputs.cppStartAge, oasStartAge: inputs.oasStartAge, cppStartAgeP2: inputs.cppStartAgeP2 || inputs.cppStartAge, oasStartAgeP2: inputs.oasStartAgeP2 || inputs.oasStartAge, _withdrawalStrategy: 'smart' },
+            { cppStartAge: inputs.cppStartAge, oasStartAge: inputs.oasStartAge, cppStartAgeP2: inputs.cppStartAgeP2 || inputs.cppStartAge, oasStartAgeP2: inputs.oasStartAgeP2 || inputs.oasStartAge, _withdrawalStrategy: 'naive' },
+        ];
+        for (const floorOverrides of floors) {
+            try {
+                const floorMax = findMaxSpend(floorOverrides);
+                if (floorMax > bestMaxSpend) {
+                    bestMaxSpend = floorMax;
+                    bestParams = { 
+                        cppAge: floorOverrides.cppStartAge, 
+                        oasAge: floorOverrides.oasStartAge, 
+                        strategy: floorOverrides._withdrawalStrategy, 
+                        maxSpend: floorMax 
+                    };
+                }
+            } catch(e) {}
+        }
 
         // Re-run at user's actual spending with best params for display
         const bestInputs = {
