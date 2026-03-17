@@ -2910,3 +2910,33 @@ input:focus {
     color: white;
     border-color: var(--primary);
 }
+
+/* Strategy card details */
+.strategy-details {
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.strategy-details summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.strategy-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.strategy-details summary span:first-child::after {
+    content: ' ▸';
+    font-size: 8px;
+}
+
+.strategy-details[open] summary span:first-child::after {
+    content: ' ▾';
+}
+
+.strategy-stat.sub {
+    padding-left: 12px;
+    font-size: 9px;
+    color: var(--text-muted);
+    border-bottom: none;
+}

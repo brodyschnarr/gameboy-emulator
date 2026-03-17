@@ -1370,18 +1370,31 @@ const AppV4 = {
             allPlans.sort((a, b) => (b.max||0) - (a.max||0));
             const winnerKey = allPlans[0].key;
 
-            const buildCol = (header, stats, maxSpend, isWinner, note) => `
+            // MER fee impact: advisor charges ~1% AUM, DIY ~0.25%
+            const estimateLifetimeFees = (results, merRate) => {
+                return results.yearByYear.filter(y => y.phase === 'retirement')
+                    .reduce((s, y) => s + (y.totalBalance || 0) * merRate, 0);
+            };
+
+            const buildCol = (header, stats, maxSpend, isWinner, note, merFees) => {
+                const govTotal = stats.cpp + stats.oas + stats.gis;
+                return `
                 <div class="strategy-col ${isWinner ? '' : 'loser'}">
                     <div class="strategy-col-header">${header}</div>
                     ${maxSpend ? `<div class="strategy-stat highlight"><span>Max Spending</span><span>${fmt(maxSpend)}/yr</span></div>` : ''}
-                    <div class="strategy-stat"><span>Total Tax</span><span>${fmt(stats.tax)}</span></div>
-                    <div class="strategy-stat"><span>CPP Collected</span><span>${fmt(stats.cpp)}</span></div>
-                    <div class="strategy-stat"><span>OAS Collected</span><span>${fmt(stats.oas)}</span></div>
-                    <div class="strategy-stat"><span>GIS Collected</span><span>${fmt(stats.gis)}</span></div>
-                    <div class="strategy-stat"><span>Estate Value</span><span>${stats.legacy > 0 ? fmt(stats.legacy) : '$0'}</span></div>
-                    <div class="strategy-stat"><span>Money Lasts To</span><span>Age ${stats.lasts}</span></div>
+                    <div class="strategy-stat"><span>💰 Total Tax</span><span>${fmt(stats.tax)}</span></div>
+                    <details class="strategy-details">
+                        <summary class="strategy-stat"><span>🏛️ Gov Benefits</span><span>${fmt(govTotal)}</span></summary>
+                        <div class="strategy-stat sub"><span>CPP</span><span>${fmt(stats.cpp)}</span></div>
+                        <div class="strategy-stat sub"><span>OAS</span><span>${fmt(stats.oas)}</span></div>
+                        <div class="strategy-stat sub"><span>GIS</span><span>${fmt(stats.gis)}</span></div>
+                    </details>
+                    ${merFees !== undefined ? `<div class="strategy-stat"><span>📋 Fees</span><span>${fmt(merFees)}</span></div>` : ''}
+                    <div class="strategy-stat"><span>🏠 Estate</span><span>${stats.legacy > 0 ? fmt(stats.legacy) : '$0'}</span></div>
+                    <div class="strategy-stat"><span>📅 Lasts To</span><span>Age ${stats.lasts}</span></div>
                     ${note ? `<div class="strategy-note">${note}</div>` : ''}
                 </div>`;
+            };
 
             const optNote = `CPP at ${optParams.cppAge}, OAS at ${optParams.oasAge}` +
                 (optParams.strategy === 'naive' ? ', TFSA-primary' : ', RRSP meltdown');
@@ -1389,14 +1402,19 @@ const AppV4 = {
             const bestMax = allPlans[0].max || 0;
             const worstMax = allPlans[allPlans.length-1].max || 0;
 
+            // Estimate lifetime fees: advisor ~1% MER, DIY ~0.25%
+            const userFees = Math.round(estimateLifetimeFees(smartResults, 0.0025));
+            const advFees = Math.round(estimateLifetimeFees(advisorResults, 0.01));
+            const optFees = Math.round(estimateLifetimeFees(optResult, 0.0025));
+
             tabs.classList.remove('hidden');
             summary.innerHTML = `
                 <div class="strategy-summary-grid three-col">
                     ${buildCol('📋 Your Plan', userStats, userMax, winnerKey === 'smart',
-                        `CPP at ${inputs.cppStartAge}, OAS at ${inputs.oasStartAge}`)}
+                        `CPP at ${inputs.cppStartAge}, OAS at ${inputs.oasStartAge}`, userFees)}
                     ${buildCol('👔 Advisor', advStats, advMax, winnerKey === 'advisor',
-                        'CPP/OAS at 65, TFSA-primary')}
-                    ${buildCol('🎯 Optimized', optStats, optMax || optParams.maxSpend, winnerKey === 'optimized', optNote)}
+                        'CPP/OAS at 65, TFSA-primary', advFees)}
+                    ${buildCol('🎯 Optimized', optStats, optMax || optParams.maxSpend, winnerKey === 'optimized', optNote, optFees)}
                 </div>
                 <div class="strategy-verdict positive">
                     🏆 <strong>${allPlans[0].label}</strong> lets you spend <strong>${fmt(bestMax)}/yr</strong>
