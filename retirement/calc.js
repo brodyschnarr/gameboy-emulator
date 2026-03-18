@@ -1270,7 +1270,14 @@ const RetirementCalcV4 = {
     // ═══════════════════════════════════════
     // Find the optimal CPP/OAS timing + withdrawal strategy for maximum sustainable spending
     // Two-phase: coarse sweep (every 2 years), then fine-tune around winner
-    optimizePlan(inputs) {
+    /**
+     * @param {Object} inputs
+     * @param {Object} options
+     * @param {boolean} options.includeSplitOptimization - if true, run Phase 3 (contribution split)
+     * @param {number} options.marginalRate - user's marginal tax rate for RRSP refund adjustment (0-1)
+     */
+    optimizePlan(inputs, options = {}) {
+        const { includeSplitOptimization = false, marginalRate = 0 } = options;
         const lifeExp = inputs.lifeExpectancy || 90;
 
         const findMaxSpend = (overrides) => {
@@ -1340,31 +1347,45 @@ const RetirementCalcV4 = {
             }
         }
 
-        // Phase 3: Test contribution split variations with best timing
-        const splitCandidates = [
-            { rrsp: 0.70, tfsa: 0.20, nonReg: 0.10 }, // RRSP-heavy (max deductions)
-            { rrsp: 0.20, tfsa: 0.60, nonReg: 0.20 }, // TFSA-heavy (GIS-friendly)
-            { rrsp: 0.50, tfsa: 0.30, nonReg: 0.20 }, // Balanced (default)
-            { rrsp: 0.40, tfsa: 0.40, nonReg: 0.20 }, // Even split
-            { rrsp: 0.30, tfsa: 0.50, nonReg: 0.20 }, // Lean TFSA
-            { rrsp: 0.60, tfsa: 0.30, nonReg: 0.10 }, // Lean RRSP
-        ];
+        // Phase 3: Test contribution split variations (only when requested)
         let bestSplit = inputs.contributionSplit;
-        for (const split of splitCandidates) {
-            try {
-                const overrides = {
-                    cppStartAge: bestParams.cppAge, oasStartAge: bestParams.oasAge,
-                    cppStartAgeP2: bestParams.cppAge, oasStartAgeP2: bestParams.oasAge,
-                    _withdrawalStrategy: bestParams.strategy,
-                    contributionSplit: split
-                };
-                const maxSpend = findMaxSpend(overrides);
-                if (maxSpend > bestMaxSpend) {
-                    bestMaxSpend = maxSpend;
-                    bestParams = { ...bestParams, maxSpend, contributionSplit: split };
-                    bestSplit = split;
-                }
-            } catch(e) {}
+        if (includeSplitOptimization) {
+            const splitCandidates = [
+                { rrsp: 0.70, tfsa: 0.20, nonReg: 0.10 }, // RRSP-heavy (max deductions)
+                { rrsp: 0.20, tfsa: 0.60, nonReg: 0.20 }, // TFSA-heavy (GIS-friendly)
+                { rrsp: 0.50, tfsa: 0.30, nonReg: 0.20 }, // Balanced (default)
+                { rrsp: 0.40, tfsa: 0.40, nonReg: 0.20 }, // Even split
+                { rrsp: 0.30, tfsa: 0.50, nonReg: 0.20 }, // Lean TFSA
+                { rrsp: 0.60, tfsa: 0.30, nonReg: 0.10 }, // Lean RRSP
+            ];
+            for (const split of splitCandidates) {
+                try {
+                    // Adjust contribution for RRSP refund loss:
+                    // If shifting away from RRSP, you lose the tax refund on those dollars
+                    const userRRSPShare = inputs.contributionSplit?.rrsp || 0;
+                    const newRRSPShare = split.rrsp;
+                    let adjustedContribution = inputs.monthlyContribution;
+                    if (marginalRate > 0 && newRRSPShare < userRRSPShare) {
+                        const rrspDollarLoss = inputs.monthlyContribution * (userRRSPShare - newRRSPShare);
+                        const refundLoss = rrspDollarLoss * marginalRate;
+                        adjustedContribution = inputs.monthlyContribution - refundLoss;
+                    }
+
+                    const overrides = {
+                        cppStartAge: bestParams.cppAge, oasStartAge: bestParams.oasAge,
+                        cppStartAgeP2: bestParams.cppAge, oasStartAgeP2: bestParams.oasAge,
+                        _withdrawalStrategy: bestParams.strategy,
+                        contributionSplit: split,
+                        monthlyContribution: adjustedContribution
+                    };
+                    const maxSpend = findMaxSpend(overrides);
+                    if (maxSpend > bestMaxSpend) {
+                        bestMaxSpend = maxSpend;
+                        bestParams = { ...bestParams, maxSpend, contributionSplit: split, adjustedContribution };
+                        bestSplit = split;
+                    }
+                } catch(e) {}
+            }
         }
         if (!bestParams.contributionSplit) bestParams.contributionSplit = bestSplit;
 

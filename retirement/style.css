@@ -2871,6 +2871,44 @@ input:focus {
     background: rgba(220, 38, 38, 0.1);
 }
 
+/* Savings split analysis box */
+.savings-split-box {
+    margin-top: 12px;
+}
+.savings-split-result {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.refund-warning {
+    color: #b45309;
+    background: rgba(180, 83, 9, 0.08);
+    border-radius: 6px;
+    padding: 8px;
+    margin: 8px 0;
+    font-size: 12px;
+}
+.split-benefit {
+    margin-top: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+.split-benefit.positive {
+    color: #16a34a;
+    background: rgba(22, 163, 74, 0.08);
+}
+.split-benefit.neutral {
+    color: var(--text-muted);
+}
+.split-benefit.negative {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.08);
+}
+
 .strategy-note {
     font-size: 10px;
     color: var(--text-muted);

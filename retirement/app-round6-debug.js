@@ -1320,8 +1320,8 @@ const AppV4 = {
             };
             const advisorResults = RetirementCalcV4.calculate(advisorInputs);
 
-            // 2. Optimized plan — sweep CPP/OAS timing + strategy for max spending
-            const optimized = RetirementCalcV4.optimizePlan(inputs);
+            // 2. Optimized plan — sweep CPP/OAS timing + strategy for max spending (same savings split)
+            const optimized = RetirementCalcV4.optimizePlan(inputs, { includeSplitOptimization: false });
             const optResult = optimized.result;
             const optParams = optimized.params;
             const optInputs = optimized.inputs;
@@ -1361,7 +1361,7 @@ const AppV4 = {
 
             const userMax = findMaxSpend({});
             const advMax = findMaxSpend({ cppStartAge:65, oasStartAge:65, cppStartAgeP2:65, oasStartAgeP2:65, _withdrawalStrategy:'naive' });
-            const optMax = findMaxSpend({ cppStartAge:optParams.cppAge, oasStartAge:optParams.oasAge, cppStartAgeP2:optParams.cppAge, oasStartAgeP2:optParams.oasAge, _withdrawalStrategy:optParams.strategy, contributionSplit: optParams.contributionSplit });
+            const optMax = findMaxSpend({ cppStartAge:optParams.cppAge, oasStartAge:optParams.oasAge, cppStartAgeP2:optParams.cppAge, oasStartAgeP2:optParams.oasAge, _withdrawalStrategy:optParams.strategy });
 
             const fmt = (v) => '$' + Math.round(Math.abs(v)).toLocaleString();
 
@@ -1422,16 +1422,8 @@ const AppV4 = {
                 </div>`;
             };
 
-            const splitChanged = optParams.contributionSplit && inputs.contributionSplit && (
-                Math.abs((optParams.contributionSplit.rrsp || 0) - (inputs.contributionSplit.rrsp || 0)) > 0.05 ||
-                Math.abs((optParams.contributionSplit.tfsa || 0) - (inputs.contributionSplit.tfsa || 0)) > 0.05
-            );
             let optNote = `CPP at ${optParams.cppAge}, OAS at ${optParams.oasAge}` +
                 (optParams.strategy === 'naive' ? ', TFSA-primary' : ', RRSP meltdown');
-            if (splitChanged && optParams.contributionSplit) {
-                const s = optParams.contributionSplit;
-                optNote += `<br>💡 Savings: ${Math.round(s.rrsp*100)}% RRSP / ${Math.round(s.tfsa*100)}% TFSA / ${Math.round(s.nonReg*100)}% Non-Reg`;
-            }
 
             const bestMax = allPlans[0].max || 0;
             const worstMax = allPlans[allPlans.length-1].max || 0;
@@ -1457,6 +1449,10 @@ const AppV4 = {
                     🏆 <strong>${allPlans[0].label}</strong> lets you spend <strong>${fmt(bestMax)}/yr</strong>
                     ${bestMax > worstMax ? ` — <strong>${fmt(bestMax - worstMax)}/yr more</strong> than ${allPlans[allPlans.length-1].label}` : ''}
                 </div>
+                <div id="savings-split-suggestion" class="savings-split-box hidden"></div>
+                <button type="button" class="btn-link" id="btn-optimize-savings" style="margin-top: 8px; font-size: 13px;">
+                    💡 What if I also changed my savings split?
+                </button>
                 <details class="strategy-narrative-details">
                     <summary class="strategy-narrative-toggle">📖 How each strategy works</summary>
                     <div class="strategy-narratives">
@@ -1477,6 +1473,19 @@ const AppV4 = {
             `;
             summary.classList.remove('hidden');
 
+            // Wire up savings split optimizer button
+            const splitBtn = document.getElementById('btn-optimize-savings');
+            if (splitBtn) {
+                splitBtn.addEventListener('click', () => {
+                    splitBtn.disabled = true;
+                    splitBtn.textContent = '⏳ Analyzing savings splits...';
+                    setTimeout(() => {
+                        this._runSavingsSplitAnalysis(inputs, optParams, optMax, fmt);
+                        splitBtn.classList.add('hidden');
+                    }, 50);
+                });
+            }
+
             // Tab switching
             tabs.querySelectorAll('.strategy-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
@@ -1491,6 +1500,79 @@ const AppV4 = {
             console.error('Strategy comparison error:', e);
             tabs.classList.add('hidden');
             summary.classList.add('hidden');
+        }
+    },
+
+    _runSavingsSplitAnalysis(inputs, optParams, currentOptMax, fmt) {
+        const box = document.getElementById('savings-split-suggestion');
+        if (!box) return;
+
+        try {
+            // Estimate marginal rate from income
+            const income = inputs.currentIncome || 70000;
+            let marginalRate = 0.20; // default
+            if (income > 220000) marginalRate = 0.33;
+            else if (income > 155000) marginalRate = 0.29;
+            else if (income > 110000) marginalRate = 0.26;
+            else if (income > 55000) marginalRate = 0.205;
+            else marginalRate = 0.15;
+            // Add ~5% for provincial
+            marginalRate += 0.05;
+
+            const splitOptimized = RetirementCalcV4.optimizePlan(inputs, {
+                includeSplitOptimization: true,
+                marginalRate
+            });
+
+            const newSplit = splitOptimized.params.contributionSplit;
+            const userSplit = inputs.contributionSplit || { rrsp: 0.5, tfsa: 0.3, nonReg: 0.2 };
+
+            const splitChanged = newSplit && (
+                Math.abs((newSplit.rrsp || 0) - (userSplit.rrsp || 0)) > 0.05 ||
+                Math.abs((newSplit.tfsa || 0) - (userSplit.tfsa || 0)) > 0.05
+            );
+
+            if (!splitChanged) {
+                box.innerHTML = `<p style="color: var(--text-muted); font-size: 13px;">✅ Your current savings split is already optimal for this strategy.</p>`;
+                box.classList.remove('hidden');
+                return;
+            }
+
+            // Calculate the max spend with the new split (accounting for refund loss)
+            const newMax = splitOptimized.params.maxSpend;
+            const adjustedContrib = splitOptimized.params.adjustedContribution;
+            const contribDiff = adjustedContrib ? (inputs.monthlyContribution - adjustedContrib) : 0;
+
+            const s = newSplit;
+            let html = `<div class="savings-split-result">`;
+            html += `<strong>💡 Optimized Savings Split</strong>`;
+            html += `<div style="margin: 8px 0; font-size: 13px;">`;
+            html += `<div>Current: ${Math.round(userSplit.rrsp*100)}% RRSP / ${Math.round(userSplit.tfsa*100)}% TFSA / ${Math.round((userSplit.nonReg||0)*100)}% Non-Reg</div>`;
+            html += `<div>Suggested: <strong>${Math.round(s.rrsp*100)}% RRSP / ${Math.round(s.tfsa*100)}% TFSA / ${Math.round((s.nonReg||0)*100)}% Non-Reg</strong></div>`;
+            html += `</div>`;
+
+            if (contribDiff > 0) {
+                html += `<div class="refund-warning">`;
+                html += `⚠️ Shifting from RRSP reduces your tax refund by ~${fmt(contribDiff)}/mo (${fmt(contribDiff * 12)}/yr). `;
+                html += `Your effective contribution drops from ${fmt(inputs.monthlyContribution)}/mo to ${fmt(adjustedContrib)}/mo.`;
+                html += `</div>`;
+            }
+
+            if (newMax > currentOptMax) {
+                html += `<div class="split-benefit positive">Even after the refund loss, this split lets you spend <strong>${fmt(newMax)}/yr</strong> (${fmt(newMax - currentOptMax)}/yr more).</div>`;
+            } else if (newMax === currentOptMax) {
+                html += `<div class="split-benefit neutral">Same spending power, but may improve tax efficiency or estate value.</div>`;
+            } else {
+                html += `<div class="split-benefit negative">After accounting for the lost RRSP refund, this actually reduces spending to ${fmt(newMax)}/yr. <strong>Keep your current split.</strong></div>`;
+            }
+
+            html += `</div>`;
+            box.innerHTML = html;
+            box.classList.remove('hidden');
+        } catch(e) {
+            console.error('Split analysis error:', e);
+            box.innerHTML = `<p style="color: var(--text-muted); font-size: 13px;">Couldn't analyze savings splits.</p>`;
+            box.classList.remove('hidden');
         }
     },
 
@@ -1549,19 +1631,7 @@ const AppV4 = {
             optNarr += `Max sustainable spending: ${fmt(optMax)}/yr.`;
         }
 
-        // Add contribution split recommendation if changed
-        if (optParams.contributionSplit && inputs.contributionSplit) {
-            const os = optParams.contributionSplit;
-            const is = inputs.contributionSplit;
-            if (Math.abs((os.rrsp||0)-(is.rrsp||0)) > 0.05 || Math.abs((os.tfsa||0)-(is.tfsa||0)) > 0.05) {
-                optNarr += ` The optimizer also suggests changing your savings split to ${Math.round(os.rrsp*100)}% RRSP / ${Math.round(os.tfsa*100)}% TFSA / ${Math.round(os.nonReg*100)}% Non-Reg`;
-                if (os.rrsp > (is.rrsp||0)) {
-                    optNarr += ` — more RRSP means bigger tax deductions now, which you can reinvest.`;
-                } else if (os.tfsa > (is.tfsa||0)) {
-                    optNarr += ` — more TFSA preserves GIS eligibility and gives tax-free income in retirement.`;
-                }
-            }
-        }
+        optNarr += ` Use the "What if I changed my savings split?" button above to explore further.`;
 
         return { user: userNarr, advisor: advNarr, optimized: optNarr };
     },

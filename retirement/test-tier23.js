@@ -209,12 +209,20 @@ console.log('\n📊 11. Spouse Allowance');
 
 console.log('\n📊 12. Contribution Split Optimization');
 {
+    // Default: no split optimization (same split as user)
     const t1 = Date.now();
     const opt = RetirementCalcV4.optimizePlan({...base, monthlyContribution: 1000});
     const elapsed = Date.now() - t1;
-    assert(elapsed < 2000, `Optimizer completes in ${elapsed}ms (<2s)`);
+    assert(elapsed < 2000, `Optimizer (no split) completes in ${elapsed}ms (<2s)`);
     assert(opt.params.contributionSplit !== undefined, 'Optimizer returns contribution split');
     assert(opt.params.contributionSplit.rrsp + opt.params.contributionSplit.tfsa + opt.params.contributionSplit.nonReg > 0.95, 'Split sums to ~1.0');
+
+    // With split optimization + marginal rate for refund adjustment
+    const t2 = Date.now();
+    const optSplit = RetirementCalcV4.optimizePlan({...base, monthlyContribution: 1000}, { includeSplitOptimization: true, marginalRate: 0.30 });
+    const elapsed2 = Date.now() - t2;
+    assert(elapsed2 < 3000, `Optimizer (with split) completes in ${elapsed2}ms (<3s)`);
+    assert(optSplit.params.contributionSplit !== undefined, 'Split optimizer returns contribution split');
 }
 
 console.log('\n📊 13. Monotonicity with all features');
