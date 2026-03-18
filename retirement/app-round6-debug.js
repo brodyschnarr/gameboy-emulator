@@ -1380,13 +1380,35 @@ const AppV4 = {
                     .reduce((s, y) => s + (y.totalBalance || 0) * merRate, 0);
             };
 
+            // Compute lifetime tax (income tax + estate tax) for each strategy
+            const lifetimeTax = (stats) => stats.tax + (stats.estateTax || 0);
+            const userLifetimeTax = lifetimeTax(userStats);
+
             const buildCol = (header, stats, maxSpend, isWinner, note, merFees) => {
                 const govTotal = stats.cpp + stats.oas + stats.gis;
+                const thisLifetimeTax = lifetimeTax(stats);
+                const taxDiff = thisLifetimeTax - userLifetimeTax;
+                // Only show savings badge on non-"Your Plan" columns
+                const isUserPlan = header.includes('Your Plan');
+                let taxBadge = '';
+                if (!isUserPlan && taxDiff !== 0) {
+                    if (taxDiff < 0) {
+                        taxBadge = `<span class="tax-savings-badge positive">Save ${fmt(Math.abs(taxDiff))}</span>`;
+                    } else {
+                        taxBadge = `<span class="tax-savings-badge negative">${fmt(taxDiff)} more</span>`;
+                    }
+                }
                 return `
                 <div class="strategy-col ${isWinner ? '' : 'loser'}">
                     <div class="strategy-col-header">${header}</div>
                     ${maxSpend ? `<div class="strategy-stat highlight"><span>Max Spending</span><span>${fmt(maxSpend)}/yr</span></div>` : ''}
-                    <div class="strategy-stat"><span>💰 Total Tax</span><span>${fmt(stats.tax)}</span></div>
+                    <div class="strategy-stat"><span>💰 Lifetime Tax</span><span>${fmt(thisLifetimeTax)}</span></div>
+                    ${taxBadge ? `<div class="tax-badge-row">${taxBadge}</div>` : ''}
+                    <details class="strategy-details">
+                        <summary class="strategy-stat"><span>Tax breakdown</span><span></span></summary>
+                        <div class="strategy-stat sub"><span>Income tax</span><span>${fmt(stats.tax)}</span></div>
+                        <div class="strategy-stat sub"><span>Estate tax</span><span>${fmt(stats.estateTax || 0)}</span></div>
+                    </details>
                     <details class="strategy-details">
                         <summary class="strategy-stat"><span>🏛️ Gov Benefits</span><span>${fmt(govTotal)}</span></summary>
                         <div class="strategy-stat sub"><span>CPP</span><span>${fmt(stats.cpp)}</span></div>
@@ -1394,9 +1416,7 @@ const AppV4 = {
                         <div class="strategy-stat sub"><span>GIS</span><span>${fmt(stats.gis)}</span></div>
                     </details>
                     ${merFees !== undefined ? `<div class="strategy-stat"><span>📋 Fees</span><span>${fmt(merFees)}</span></div>` : ''}
-                    <div class="strategy-stat"><span>🏠 Estate</span><span>${stats.legacy > 0 ? fmt(stats.legacy) : '$0'}</span></div>
-                    ${stats.estateTax > 0 ? `<div class="strategy-stat sub"><span>Deemed tax at death</span><span>-${fmt(stats.estateTax)}</span></div>
-                    <div class="strategy-stat sub"><span>Net to heirs</span><span>${fmt(stats.netEstate)}</span></div>` : ''}
+                    <div class="strategy-stat"><span>🏠 Estate</span><span>${stats.netEstate > 0 ? fmt(stats.netEstate) : (stats.legacy > 0 ? fmt(stats.legacy) : '$0')}</span></div>
                     <div class="strategy-stat"><span>📅 Lasts To</span><span>Age ${stats.lasts}</span></div>
                     ${note ? `<div class="strategy-note">${note}</div>` : ''}
                 </div>`;
@@ -1476,6 +1496,7 @@ const AppV4 = {
 
     _generateStrategyNarratives(inputs, optParams, userStats, advStats, optStats, userMax, advMax, optMax) {
         const fmt = (v) => '$' + Math.round(Math.abs(v)).toLocaleString();
+        const lifetimeTax = (stats) => stats.tax + (stats.estateTax || 0);
         const retAge = inputs.retirementAge || 65;
         const lifeExp = inputs.lifeExpectancy || 90;
         const retYears = lifeExp - retAge;
@@ -1492,14 +1513,14 @@ const AppV4 = {
         } else {
             userNarr += `Taking benefits right at 65 gives you income immediately. `;
         }
-        userNarr += `Total tax paid: ${fmt(userStats.tax)}. `;
+        userNarr += `Lifetime tax (income + estate): ${fmt(lifetimeTax(userStats))}. `;
         if (userStats.legacy > 0) userNarr += `You'd leave about ${fmt(userStats.legacy)} to your estate.`;
 
         // Advisor narrative
         let advNarr = `A good advisor starts CPP and OAS at 65 and does conservative bracket-filling — `;
         advNarr += `pulling from RRSP up to the first tax bracket ($55K) to use cheap tax room, then TFSA for the rest. `;
         advNarr += `For large RRSPs (>$300K), they'll fill up to the OAS clawback threshold. `;
-        advNarr += `Total tax: ${fmt(advStats.tax)}. `;
+        advNarr += `Lifetime tax: ${fmt(lifetimeTax(advStats))}. `;
         if (advMax < userMax) {
             advNarr += `Result: you can only sustain ${fmt(advMax)}/yr — ${fmt(userMax - advMax)}/yr less than your plan.`;
         } else if (advMax > userMax) {
@@ -1513,7 +1534,7 @@ const AppV4 = {
         optNarr += `Best result: CPP at ${optParams.cppAge}, OAS at ${optParams.oasAge}`;
         if (optParams.strategy !== 'naive') {
             optNarr += ` with RRSP meltdown — deliberately pulling from your RRSP in low-tax years to avoid massive forced withdrawals after 71. `;
-            optNarr += `This means higher taxes now (${fmt(optStats.tax)} total) but smarter tax distribution over your lifetime. `;
+            optNarr += `Lifetime tax: ${fmt(lifetimeTax(optStats))}. `;
         } else {
             optNarr += ` with TFSA-primary withdrawals. `;
         }

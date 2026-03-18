@@ -2850,6 +2850,27 @@ input:focus {
     font-size: 13px;
 }
 
+/* Tax savings badge */
+.tax-badge-row {
+    text-align: center;
+    margin: -2px 0 4px;
+}
+.tax-savings-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+.tax-savings-badge.positive {
+    color: #16a34a;
+    background: rgba(22, 163, 74, 0.1);
+}
+.tax-savings-badge.negative {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.1);
+}
+
 .strategy-note {
     font-size: 10px;
     color: var(--text-muted);
