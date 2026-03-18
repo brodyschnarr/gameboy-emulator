@@ -2241,7 +2241,7 @@ const AppV4 = {
             this._runSpendingOptimizer(inputs, baseResults);
 
             // Tax savings comparison + strategy comparison view
-            this._displayTaxComparison(inputs);
+            // Tax comparison removed — covered by strategy comparison
             this._buildStrategyComparison(inputs, baseResults);
             
             // Retirement narrative
