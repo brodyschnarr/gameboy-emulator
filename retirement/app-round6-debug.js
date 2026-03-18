@@ -48,6 +48,8 @@ const AppV4 = {
         this._setupModals();
         this._setupAdvancedToggle();
         this._setupSpendingCurve();
+        this._restoreFormState();
+        this._setupFormAutosave();
     },
 
     _setupNavigation() {
@@ -2256,6 +2258,9 @@ const AppV4 = {
 
             // NOW display results (charts will draw to visible parent)
             this.currentScenario = 'base';
+            this._lastCalcInputs = inputs;
+            this._lastCalcResults = baseResults;
+            this._initScenarioButtons();
             this._displayResults(baseResults, inputs);
 
             // House sale comparison (if enabled)
@@ -2617,6 +2622,223 @@ const AppV4 = {
             downsizingSpendingChange: -(parseFloat(document.getElementById('downsizing-spending-change')?.value) || 0), // Negative = savings
             categoryInflation: this._getCategoryInflation()
         };
+    },
+
+    // ═══════════════════════════════════════
+    // Scenario Save/Compare
+    // ═══════════════════════════════════════
+    _initScenarioButtons() {
+        const saveBtn = document.getElementById('btn-save-scenario');
+        const compareBtn = document.getElementById('btn-compare-scenarios');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this._saveScenario());
+        }
+        if (compareBtn) {
+            compareBtn.addEventListener('click', () => this._showScenarioComparison());
+        }
+        this._updateScenarioUI();
+    },
+
+    _getSavedScenarios() {
+        try {
+            return JSON.parse(localStorage.getItem('retirement_scenarios') || '[]');
+        } catch { return []; }
+    },
+
+    _saveScenario() {
+        if (!this._lastCalcInputs || !this._lastCalcResults) return;
+        const name = prompt('Name this scenario:', `Scenario ${this._getSavedScenarios().length + 1}`);
+        if (!name) return;
+        
+        const scenarios = this._getSavedScenarios();
+        const inputs = this._lastCalcInputs;
+        const results = this._lastCalcResults;
+        const summary = results.summary;
+        
+        scenarios.push({
+            name,
+            savedAt: Date.now(),
+            inputs: {
+                retirementAge: inputs.retirementAge,
+                annualSpending: inputs.annualSpending,
+                cppStartAge: inputs.cppStartAge,
+                oasStartAge: inputs.oasStartAge,
+                province: inputs.province,
+                monthlyContribution: inputs.monthlyContribution,
+                rrsp: inputs.rrsp, tfsa: inputs.tfsa, nonReg: inputs.nonReg,
+                rentalIncome: inputs.rentalIncome || 0,
+                downsizingAge: inputs.downsizingAge,
+                ltcMonthly: inputs.ltcMonthly || 0,
+            },
+            results: {
+                moneyLastsAge: summary.moneyLastsAge,
+                portfolioAtRetirement: summary.portfolioAtRetirement,
+                totalTax: summary.avgTaxRateInRetirement,
+                legacyAmount: summary.legacyAmount,
+                estateTax: results.legacy?.estateTax || 0,
+                netEstate: results.legacy?.netEstate || 0,
+            }
+        });
+        
+        localStorage.setItem('retirement_scenarios', JSON.stringify(scenarios.slice(-10))); // Keep last 10
+        this._updateScenarioUI();
+    },
+
+    _updateScenarioUI() {
+        const scenarios = this._getSavedScenarios();
+        const compareBtn = document.getElementById('btn-compare-scenarios');
+        if (compareBtn) {
+            compareBtn.style.display = scenarios.length >= 1 ? '' : 'none';
+            compareBtn.textContent = `📊 Compare (${scenarios.length} saved)`;
+        }
+    },
+
+    _showScenarioComparison() {
+        const panel = document.getElementById('scenario-compare-panel');
+        if (!panel) return;
+        
+        const scenarios = this._getSavedScenarios();
+        if (scenarios.length === 0) { panel.classList.add('hidden'); return; }
+        
+        const fmt = (v) => '$' + Math.round(Math.abs(v || 0)).toLocaleString();
+        
+        // Add current plan as first column
+        const current = this._lastCalcResults ? {
+            name: '📍 Current',
+            results: {
+                moneyLastsAge: this._lastCalcResults.summary.moneyLastsAge,
+                portfolioAtRetirement: this._lastCalcResults.summary.portfolioAtRetirement,
+                legacyAmount: this._lastCalcResults.summary.legacyAmount,
+                estateTax: this._lastCalcResults.legacy?.estateTax || 0,
+                netEstate: this._lastCalcResults.legacy?.netEstate || 0,
+            },
+            inputs: this._lastCalcInputs || {}
+        } : null;
+        
+        const allScenarios = current ? [current, ...scenarios] : scenarios;
+        
+        const cols = allScenarios.map((s, i) => {
+            const isCurrent = i === 0 && current;
+            return `
+                <div class="scenario-compare-col ${isCurrent ? 'current' : ''}">
+                    <div class="scenario-compare-name">${s.name}${!isCurrent ? `<button class="btn-delete-scenario" data-idx="${i-1}" title="Delete">✕</button>` : ''}</div>
+                    <div class="scenario-compare-stat">
+                        <span>Retire at</span><strong>${s.inputs.retirementAge || '?'}</strong>
+                    </div>
+                    <div class="scenario-compare-stat">
+                        <span>Spending</span><strong>${fmt(s.inputs.annualSpending)}/yr</strong>
+                    </div>
+                    <div class="scenario-compare-stat">
+                        <span>Lasts to</span><strong>Age ${s.results.moneyLastsAge}</strong>
+                    </div>
+                    <div class="scenario-compare-stat">
+                        <span>Portfolio</span><strong>${fmt(s.results.portfolioAtRetirement)}</strong>
+                    </div>
+                    <div class="scenario-compare-stat">
+                        <span>Estate</span><strong>${fmt(s.results.legacyAmount)}</strong>
+                    </div>
+                    ${s.results.estateTax > 0 ? `<div class="scenario-compare-stat sub"><span>Net to heirs</span><strong>${fmt(s.results.netEstate)}</strong></div>` : ''}
+                </div>
+            `;
+        }).join('');
+        
+        panel.innerHTML = `
+            <div class="scenario-compare-grid">${cols}</div>
+            <button type="button" class="btn-link" id="btn-clear-scenarios" style="margin-top: 8px; color: #dc2626;">🗑️ Clear all saved</button>
+        `;
+        panel.classList.remove('hidden');
+        
+        // Delete handlers
+        panel.querySelectorAll('.btn-delete-scenario').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.idx);
+                const sc = this._getSavedScenarios();
+                sc.splice(idx, 1);
+                localStorage.setItem('retirement_scenarios', JSON.stringify(sc));
+                this._showScenarioComparison();
+                this._updateScenarioUI();
+            });
+        });
+        
+        document.getElementById('btn-clear-scenarios')?.addEventListener('click', () => {
+            localStorage.removeItem('retirement_scenarios');
+            panel.classList.add('hidden');
+            this._updateScenarioUI();
+        });
+    },
+
+    // ═══════════════════════════════════════
+    // Form State Persistence (localStorage)
+    // ═══════════════════════════════════════
+    _formFields: [
+        'current-age', 'partner-age', 'current-income', 'income-1', 'income-2',
+        'rrsp-balance', 'tfsa-balance', 'non-reg-balance', 'other-balance', 'cash-balance', 'lira-balance',
+        'monthly-contribution', 'split-rrsp', 'split-tfsa', 'split-nonreg',
+        'retirement-age', 'life-expectancy', 'annual-spending',
+        'current-debt', 'debt-payoff-age',
+        'return-rate', 'inflation-rate', 'mer-fee', 'contribution-growth',
+        'employer-pension', 'pension-start-age',
+        'rental-income', 'annuity-lump-sum', 'annuity-purchase-age', 'annuity-monthly-payout',
+        'downsizing-age', 'downsizing-proceeds', 'downsizing-spending-change',
+        'ltc-monthly', 'ltc-start-age', 'healthcare-inflation',
+        'inf-housing', 'inf-food', 'inf-discretionary'
+    ],
+
+    _setupFormAutosave() {
+        // Auto-save on input change (debounced)
+        let saveTimeout;
+        const save = () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => this._saveFormState(), 500);
+        };
+        this._formFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', save);
+        });
+        // Checkboxes
+        document.getElementById('dtc-checkbox')?.addEventListener('change', save);
+        document.getElementById('pension-indexed')?.addEventListener('change', save);
+    },
+
+    _saveFormState() {
+        const state = {};
+        this._formFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.value) state[id] = el.value;
+        });
+        // Checkboxes
+        const dtc = document.getElementById('dtc-checkbox');
+        if (dtc) state['dtc-checkbox'] = dtc.checked;
+        const pi = document.getElementById('pension-indexed');
+        if (pi) state['pension-indexed'] = pi.checked;
+        // Select fields
+        const fs = document.getElementById('family-status');
+        if (fs) state['family-status'] = fs.value;
+        
+        localStorage.setItem('retirement_form_state', JSON.stringify(state));
+    },
+
+    _restoreFormState() {
+        try {
+            const state = JSON.parse(localStorage.getItem('retirement_form_state') || '{}');
+            if (Object.keys(state).length === 0) return;
+            
+            this._formFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && state[id] !== undefined) el.value = state[id];
+            });
+            // Checkboxes
+            const dtc = document.getElementById('dtc-checkbox');
+            if (dtc && state['dtc-checkbox'] !== undefined) dtc.checked = state['dtc-checkbox'];
+            const pi = document.getElementById('pension-indexed');
+            if (pi && state['pension-indexed'] !== undefined) pi.checked = state['pension-indexed'];
+            // Family status select
+            const fs = document.getElementById('family-status');
+            if (fs && state['family-status']) {
+                fs.value = state['family-status'];
+                fs.dispatchEvent(new Event('change'));
+            }
+        } catch(e) {}
     },
 
     _getCategoryInflation() {

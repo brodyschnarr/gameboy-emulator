@@ -3064,3 +3064,103 @@ input:focus {
 .bar-segment.annuity { background: #8b5cf6; }
 .rental-color { color: #f59e0b; }
 .annuity-color { color: #8b5cf6; }
+
+/* Step 5 expandable sections */
+.step5-section {
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+.step5-section-header {
+    font-size: 15px;
+    font-weight: 600;
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-card, #f9fafb);
+    user-select: none;
+    -webkit-user-select: none;
+}
+.step5-section-header::after {
+    content: '▸';
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+}
+.step5-section[open] > .step5-section-header::after {
+    transform: rotate(90deg);
+}
+.step5-section-content {
+    padding: 4px 16px 16px;
+}
+.step5-count {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+/* Scenario Save/Compare */
+.scenario-save-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 0;
+}
+.btn-sm {
+    font-size: 13px;
+    padding: 6px 12px;
+}
+.scenario-compare-grid {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0;
+    -webkit-overflow-scrolling: touch;
+}
+.scenario-compare-col {
+    min-width: 140px;
+    flex: 1;
+    background: var(--bg-card, #f9fafb);
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid var(--border-color, #e5e7eb);
+}
+.scenario-compare-col.current {
+    border-color: var(--primary, #10b981);
+    border-width: 2px;
+}
+.scenario-compare-name {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.btn-delete-scenario {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 4px;
+}
+.scenario-compare-stat {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border-color, #f0f0f0);
+}
+.scenario-compare-stat.sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    border-bottom: none;
+}
+.scenario-compare-stat strong {
+    font-weight: 600;
+}
