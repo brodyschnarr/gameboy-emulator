@@ -2940,3 +2940,76 @@ input:focus {
     color: var(--text-muted);
     border-bottom: none;
 }
+
+/* Strategy Narratives */
+.strategy-narrative-details {
+    margin-top: 16px;
+}
+.strategy-narrative-toggle {
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 0;
+    color: var(--primary);
+}
+.strategy-narratives {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+}
+.narrative-card {
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--primary);
+}
+.narrative-card h4 {
+    margin: 0 0 6px 0;
+    font-size: 13px;
+}
+.narrative-card p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* Expandable year rows */
+.expandable-row .year-bar-header {
+    user-select: none;
+    -webkit-user-select: none;
+}
+.expand-arrow {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+.year-accounts-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    padding: 6px 0 2px;
+    border-top: 1px dashed var(--border-color, #e5e7eb);
+    margin-top: 6px;
+}
+.acct-bal {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 11px;
+    min-width: 120px;
+    flex: 1 1 45%;
+}
+.acct-bal span:last-child {
+    font-weight: 600;
+}
+.acct-label {
+    color: var(--text-muted);
+}
+.expanded {
+    background: var(--bg-card, #f9fafb);
+    border-radius: 8px;
+    padding: 8px;
+    margin: 2px 0;
+}

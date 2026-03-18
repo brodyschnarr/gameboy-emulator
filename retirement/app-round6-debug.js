@@ -1407,6 +1407,9 @@ const AppV4 = {
             const advFees = Math.round(estimateLifetimeFees(advisorResults, 0.01));
             const optFees = Math.round(estimateLifetimeFees(optResult, 0.0025));
 
+            // Generate strategy narratives
+            const narratives = this._generateStrategyNarratives(inputs, optParams, userStats, advStats, optStats, userMax, advMax, optMax || optParams.maxSpend);
+
             tabs.classList.remove('hidden');
             summary.innerHTML = `
                 <div class="strategy-summary-grid three-col">
@@ -1420,6 +1423,23 @@ const AppV4 = {
                     🏆 <strong>${allPlans[0].label}</strong> lets you spend <strong>${fmt(bestMax)}/yr</strong>
                     ${bestMax > worstMax ? ` — <strong>${fmt(bestMax - worstMax)}/yr more</strong> than ${allPlans[allPlans.length-1].label}` : ''}
                 </div>
+                <details class="strategy-narrative-details">
+                    <summary class="strategy-narrative-toggle">📖 How each strategy works</summary>
+                    <div class="strategy-narratives">
+                        <div class="narrative-card">
+                            <h4>📋 Your Plan</h4>
+                            <p>${narratives.user}</p>
+                        </div>
+                        <div class="narrative-card">
+                            <h4>👔 Advisor</h4>
+                            <p>${narratives.advisor}</p>
+                        </div>
+                        <div class="narrative-card">
+                            <h4>🎯 Optimized</h4>
+                            <p>${narratives.optimized}</p>
+                        </div>
+                    </div>
+                </details>
             `;
             summary.classList.remove('hidden');
 
@@ -1438,6 +1458,63 @@ const AppV4 = {
             tabs.classList.add('hidden');
             summary.classList.add('hidden');
         }
+    },
+
+    _generateStrategyNarratives(inputs, optParams, userStats, advStats, optStats, userMax, advMax, optMax) {
+        const fmt = (v) => '$' + Math.round(Math.abs(v)).toLocaleString();
+        const retAge = inputs.retirementAge || 65;
+        const lifeExp = inputs.lifeExpectancy || 90;
+        const retYears = lifeExp - retAge;
+
+        // Your Plan narrative
+        const userCppDelay = inputs.cppStartAge > 65;
+        const userOasDelay = inputs.oasStartAge > 65;
+        let userNarr = `You're taking CPP at ${inputs.cppStartAge} and OAS at ${inputs.oasStartAge}. `;
+        if (userCppDelay || userOasDelay) {
+            userNarr += `By delaying, you get larger monthly cheques — your total government benefits come to ${fmt(userStats.cpp + userStats.oas + userStats.gis)} over ${retYears} years. `;
+            if (inputs.cppStartAge > retAge) {
+                userNarr += `From ${retAge} to ${inputs.cppStartAge - 1}, you draw from your portfolio (mainly RRSP at low tax brackets) to bridge the gap. `;
+            }
+        } else {
+            userNarr += `Taking benefits right at 65 gives you income immediately. `;
+        }
+        userNarr += `Total tax paid: ${fmt(userStats.tax)}. `;
+        if (userStats.legacy > 0) userNarr += `You'd leave about ${fmt(userStats.legacy)} to your estate.`;
+
+        // Advisor narrative
+        let advNarr = `A typical advisor starts CPP and OAS at 65 — "take it when it's available." `;
+        advNarr += `They prioritize TFSA withdrawals first since they're tax-free, only pulling from RRSP to fill the basic personal amount (~$15K tax-free room). `;
+        advNarr += `This keeps annual taxes low (${fmt(advStats.tax)} total), but the TFSA runs out faster, `;
+        advNarr += `and the large RRSP balance eventually forces big taxable RRIF withdrawals after 71. `;
+        if (advMax < userMax) {
+            advNarr += `Result: you can only sustain ${fmt(advMax)}/yr — ${fmt(userMax - advMax)}/yr less than your plan.`;
+        } else if (advMax > userMax) {
+            advNarr += `Result: you can sustain ${fmt(advMax)}/yr.`;
+        } else {
+            advNarr += `Result: same spending power at ${fmt(advMax)}/yr.`;
+        }
+
+        // Optimized narrative
+        let optNarr = `The optimizer tested ~70 combinations of CPP timing, OAS timing, and withdrawal strategies to find the best fit. `;
+        optNarr += `Best result: CPP at ${optParams.cppAge}, OAS at ${optParams.oasAge}`;
+        if (optParams.strategy !== 'naive') {
+            optNarr += ` with RRSP meltdown — deliberately pulling from your RRSP in low-tax years to avoid massive forced withdrawals after 71. `;
+            optNarr += `This means higher taxes now (${fmt(optStats.tax)} total) but smarter tax distribution over your lifetime. `;
+        } else {
+            optNarr += ` with TFSA-primary withdrawals. `;
+        }
+        if (optStats.gis > 0) {
+            optNarr += `This strategy also qualifies you for ${fmt(optStats.gis)} in GIS by keeping taxable income low in key years. `;
+        }
+        if (optMax >= userMax && optStats.legacy > userStats.legacy) {
+            optNarr += `Same spending power as your plan, but ${fmt(optStats.legacy - userStats.legacy)} more in estate value.`;
+        } else if (optMax > userMax) {
+            optNarr += `You can spend ${fmt(optMax - userMax)}/yr more than your current plan.`;
+        } else {
+            optNarr += `Max sustainable spending: ${fmt(optMax)}/yr.`;
+        }
+
+        return { user: userNarr, advisor: advNarr, optimized: optNarr };
     },
 
     _displayTaxComparison(inputs) {
@@ -2901,16 +2978,32 @@ const AppV4 = {
                     ? `<div class="year-balance-note depleted">💰 Portfolio: depleted</div>`
                     : '';
 
+            // Account balance breakdown (expandable)
+            const acctBalances = [];
+            if (year.rrsp > 0) acctBalances.push(`<div class="acct-bal"><span class="acct-label rrsp-color">RRSP</span><span>${fmt(year.rrsp)}</span></div>`);
+            if (year.tfsa > 0) acctBalances.push(`<div class="acct-bal"><span class="acct-label tfsa-color">TFSA</span><span>${fmt(year.tfsa)}</span></div>`);
+            if (year.nonReg > 0) acctBalances.push(`<div class="acct-bal"><span class="acct-label nonreg-color">Non-Reg</span><span>${fmt(year.nonReg)}</span></div>`);
+            if (year.lira > 0) acctBalances.push(`<div class="acct-bal"><span class="acct-label lira-color">LIRA</span><span>${fmt(year.lira)}</span></div>`);
+            if (year.cash > 0) acctBalances.push(`<div class="acct-bal"><span class="acct-label">Cash</span><span>${fmt(year.cash)}</span></div>`);
+            if (year.other > 0) acctBalances.push(`<div class="acct-bal"><span class="acct-label">Other</span><span>${fmt(year.other)}</span></div>`);
+
+            const acctSection = acctBalances.length > 0 ? `
+                <div class="year-accounts-breakdown">
+                    ${acctBalances.join('')}
+                </div>
+            ` : '';
+
             return `
-                <div class="year-bar-row income-breakdown-row">
+                <div class="year-bar-row income-breakdown-row expandable-row">
                     <div class="year-bar-header">
                         <span class="year-label">Age ${year.age}</span>
-                        <span class="year-total-income">${fmt(totalIncome)}</span>
+                        <span class="year-total-income">${fmt(totalIncome)} <span class="expand-arrow">▸</span></span>
                     </div>
                     ${balanceLine}
                     <div class="year-bar">${barSegments}</div>
                     <div class="year-income-details">${detailItems}</div>
                     ${taxLine}
+                    ${acctSection}
                 </div>
             `;
         }).join('');
@@ -2931,6 +3024,23 @@ const AppV4 = {
         const rows = html.split('</div>\n            ');
         // Actually, use DOM approach after inserting
         container.innerHTML = legend + html;
+
+        // Expandable year rows — tap to show account balances
+        container.querySelectorAll('.expandable-row').forEach(row => {
+            const header = row.querySelector('.year-bar-header');
+            const accounts = row.querySelector('.year-accounts-breakdown');
+            const arrow = row.querySelector('.expand-arrow');
+            if (header && accounts) {
+                accounts.style.display = 'none';
+                header.style.cursor = 'pointer';
+                header.addEventListener('click', () => {
+                    const isOpen = accounts.style.display !== 'none';
+                    accounts.style.display = isOpen ? 'none' : '';
+                    if (arrow) arrow.textContent = isOpen ? '▸' : '▾';
+                    row.classList.toggle('expanded', !isOpen);
+                });
+            }
+        });
         
         const allRows = container.querySelectorAll('.income-breakdown-row');
         const INITIAL_SHOW = 5;
