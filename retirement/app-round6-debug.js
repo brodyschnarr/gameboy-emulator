@@ -1426,7 +1426,7 @@ const AppV4 = {
                     ${buildCol('📋 Your Plan', userStats, userMax, winnerKey === 'smart',
                         `CPP at ${inputs.cppStartAge}, OAS at ${inputs.oasStartAge}`, userFees)}
                     ${buildCol('👔 Advisor', advStats, advMax, winnerKey === 'advisor',
-                        'CPP/OAS at 65, TFSA-primary', advFees)}
+                        'CPP/OAS at 65, bracket-filling', advFees)}
                     ${buildCol('🎯 Optimized', optStats, optMax || optParams.maxSpend, winnerKey === 'optimized', optNote, optFees)}
                 </div>
                 <div class="strategy-verdict positive">
@@ -1492,10 +1492,10 @@ const AppV4 = {
         if (userStats.legacy > 0) userNarr += `You'd leave about ${fmt(userStats.legacy)} to your estate.`;
 
         // Advisor narrative
-        let advNarr = `A typical advisor starts CPP and OAS at 65 — "take it when it's available." `;
-        advNarr += `They prioritize TFSA withdrawals first since they're tax-free, only pulling from RRSP to fill the basic personal amount (~$15K tax-free room). `;
-        advNarr += `This keeps annual taxes low (${fmt(advStats.tax)} total), but the TFSA runs out faster, `;
-        advNarr += `and the large RRSP balance eventually forces big taxable RRIF withdrawals after 71. `;
+        let advNarr = `A good advisor starts CPP and OAS at 65 and does conservative bracket-filling — `;
+        advNarr += `pulling from RRSP up to the first tax bracket ($55K) to use cheap tax room, then TFSA for the rest. `;
+        advNarr += `For large RRSPs (>$300K), they'll fill up to the OAS clawback threshold. `;
+        advNarr += `Total tax: ${fmt(advStats.tax)}. `;
         if (advMax < userMax) {
             advNarr += `Result: you can only sustain ${fmt(advMax)}/yr — ${fmt(userMax - advMax)}/yr less than your plan.`;
         } else if (advMax > userMax) {

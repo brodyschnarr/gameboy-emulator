@@ -1451,10 +1451,13 @@ const RetirementCalcV4 = {
     },
 
     // "Good Advisor" withdrawal strategy:
-    // TFSA as primary source, but pull RRSP up to the basic personal amount
-    // (~$15,705 federally tax-free) or low bracket ceiling to use cheap tax room.
-    // This is what a competent (non-optimizing) advisor would do:
-    // "Don't waste your personal amount — pull some RRSP to fill it, then use TFSA"
+    // A competent advisor does bracket-filling RRSP meltdown, but conservatively:
+    // - Fill up to first bracket ceiling ($55,867) from RRSP (cheap 15% federal rate)
+    // - For large RRSPs (>$300K), also fill to OAS clawback threshold
+    // - Use TFSA for remaining spending need
+    // - Standard CPP/OAS at 65 timing
+    // This is realistic — not a strawman. The difference vs "optimized" is timing
+    // (CPP/OAS age) and meltdown aggressiveness, not basic competence.
     _withdrawNaive(balances, neededAfterTax, province, taxableIncome, age, cpiFromToday, dtcFlag) {
         let stillNeed = neededAfterTax;
         let fromRRSP = 0, fromNonReg = 0, fromTFSA = 0, fromOther = 0, fromCash = 0, fromLIRA = 0;
@@ -1462,20 +1465,34 @@ const RetirementCalcV4 = {
         const cpi = cpiFromToday || 1.0;
         const taxOpts = { inflationFactor: cpi, dtc: dtcFlag };
         
-        const BASIC_PERSONAL = 15705 * cpi; // Federal BPA indexed to CPI
+        const FIRST_BRACKET_CEILING = 55867 * cpi;
+        const OAS_CLAWBACK_START = 93454 * cpi;
         
-        // 1. Pull RRSP up to fill basic personal amount (essentially tax-free)
-        if (balances.rrsp > 0 && cumTaxable < BASIC_PERSONAL) {
-            const roomToFill = BASIC_PERSONAL - cumTaxable;
-            const rrspPull = Math.min(roomToFill, balances.rrsp, stillNeed > 0 ? stillNeed * 1.5 : roomToFill);
-            fromRRSP = rrspPull;
-            const taxOnPull = CanadianTax.calculateTax(cumTaxable + rrspPull, province, taxOpts).total
+        // 1. RRSP bracket-filling: pull up to first bracket ceiling (15% federal rate)
+        // A good advisor always uses cheap tax room
+        const rrspTarget = balances.rrsp > 300000 * cpi 
+            ? OAS_CLAWBACK_START  // Large RRSP: fill to clawback threshold to prevent RRIF bomb
+            : FIRST_BRACKET_CEILING; // Normal: fill first bracket
+        const rrspRoom = Math.max(0, rrspTarget - cumTaxable);
+        
+        if (balances.rrsp > 0 && rrspRoom > 0) {
+            const maxGross = Math.min(rrspRoom, balances.rrsp);
+            const taxIfMax = CanadianTax.calculateTax(cumTaxable + maxGross, province, taxOpts).total
                 - CanadianTax.calculateTax(cumTaxable, province, taxOpts).total;
-            cumTaxable += rrspPull;
-            stillNeed -= (rrspPull - taxOnPull);
+            const maxAfterTax = maxGross - taxIfMax;
+            
+            if (stillNeed > 0 && maxAfterTax >= stillNeed) {
+                fromRRSP = this._binarySearchGross(stillNeed, cumTaxable, province, balances.rrsp, taxOpts);
+                cumTaxable += fromRRSP;
+                stillNeed = 0;
+            } else {
+                fromRRSP = maxGross;
+                cumTaxable += fromRRSP;
+                if (stillNeed > 0) stillNeed -= maxAfterTax;
+            }
         }
         
-        // 2. TFSA for the rest of spending need (primary source)
+        // 2. TFSA for remaining spending need
         if (stillNeed > 0 && balances.tfsa > 0) {
             fromTFSA = Math.min(stillNeed, balances.tfsa);
             stillNeed -= fromTFSA;
