@@ -83,7 +83,7 @@ const RetirementCalcV4 = {
             _withdrawalStrategy = 'smart',
 
             // Tier 2/3 features
-            rentalIncome = 0,              // Monthly rental income (fully taxable)
+            // rentalIncome removed — now flows through additionalIncomeSources with continuesInRetirement flag
             healthcareInflation = 5,       // Healthcare inflation % (default 5%)
             ltcMonthly = 0,                // Long-term care monthly cost
             ltcStartAge = 80,              // Age LTC costs begin
@@ -183,7 +183,7 @@ const RetirementCalcV4 = {
             employerPensionIndexed: employerPensionIndexed !== false,
             isFamilyMode,
             partnerAge: partnerAge || currentAge,
-            rentalIncome: rentalIncome || 0,
+            rentalIncome: 0, // Legacy — now included in additionalIncomeSources
             effectiveInflation,
             annuityLumpSum: annuityLumpSum || 0,
             annuityPurchaseAge: annuityPurchaseAge || retirementAge,
@@ -432,7 +432,6 @@ const RetirementCalcV4 = {
             employerPensionStartAge = retirementAge,
             employerPensionIndexed = true,
             isFamilyMode = false,
-            rentalIncome = 0,
             effectiveInflation,
             annuityLumpSum = 0,
             annuityPurchaseAge = retirementAge,
@@ -622,9 +621,15 @@ const RetirementCalcV4 = {
                 }
                 const oasIncome = oasP1 + oasP2;
 
-                // 5. Additional income sources (with inflation indexing for pensions)
+                // 5. Additional income sources (respects continuesInRetirement flag)
                 const additionalIncome = additionalIncomeSources
-                    .filter(s => age >= s.startAge && (s.endAge === null || age <= s.endAge))
+                    .filter(s => {
+                        if (age < s.startAge) return false;
+                        if (s.endAge !== null && age > s.endAge) return false;
+                        // In retirement years, only include sources flagged to continue
+                        if (age >= retirementAge && s.continuesInRetirement === false) return false;
+                        return true;
+                    })
                     .reduce((sum, s) => {
                         const base = s.annualAmount;
                         return sum + (s.indexed ? base * cpiFromRetirement : base);
@@ -639,11 +644,8 @@ const RetirementCalcV4 = {
                     }
                 }
                 
-                // Rental income (fully taxable, inflation-indexed)
-                let rentalIncomeThisYear = 0;
-                if (rentalIncome > 0) {
-                    rentalIncomeThisYear = rentalIncome * 12 * cpiFromRetirement;
-                }
+                // Rental income now included in additionalIncome above
+                let rentalIncomeThisYear = 0; // kept for backward compat with year data output
 
                 // Annuity: subtract lump sum at purchase age, add payout afterward
                 let annuityPayoutThisYear = 0;

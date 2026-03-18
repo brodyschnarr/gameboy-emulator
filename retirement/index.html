@@ -142,10 +142,10 @@
                 </div>
             </div>
 
-            <!-- Additional Income Sources -->
+            <!-- Additional Income Sources (Working Years) -->
             <div class="input-group">
                 <h3>Additional Income Sources</h3>
-                <p class="section-intro">Rental income, annuity, side business, etc.</p>
+                <p class="section-intro">Rental income, side gigs, freelancing — anything beyond your salary</p>
                 <div id="income-sources-list"></div>
                 <button type="button" class="btn-secondary" id="btn-add-income-source">+ Add Income Source</button>
             </div>
@@ -647,20 +647,41 @@
                 </div>
             </div>
 
-            <!-- ═══ EXPANDABLE: Extra Income ═══ -->
+            <!-- ═══ EXPANDABLE: Retirement Income ═══ -->
             <details class="step5-section">
-                <summary class="step5-section-header">📈 Extra Income <span class="step5-count" id="income-count"></span></summary>
+                <summary class="step5-section-header">📈 Retirement Income <span class="step5-count" id="income-count"></span></summary>
                 <div class="step5-section-content">
+                    <!-- Read-only summary of Step 1 sources that continue into retirement -->
                     <div class="input-group">
-                        <label>🏠 Rental Income</label>
-                        <span class="input-impact">Fully taxable — counts for GIS/OAS clawback</span>
-                        <div class="input-with-prefix">
-                            <span class="prefix">$</span>
-                            <input type="number" id="rental-income" placeholder="0" min="0" step="100">
-                        </div>
-                        <small class="input-hint">Monthly net rental income (after expenses)</small>
+                        <label>📌 Carrying From Step 1</label>
+                        <div id="retirement-income-from-step1"></div>
                     </div>
 
+                    <!-- Employer Pension (DB/DC) -->
+                    <div class="input-group">
+                        <label>🏢 Employer Pension
+                            <button type="button" class="info-btn" data-tooltip="Defined Benefit or Defined Contribution pension from your employer. Enter the expected monthly payout at your chosen start age.">?</button>
+                        </label>
+                        <span class="input-impact">Qualifies for pension income credit at 65+</span>
+                        <div class="split-inputs">
+                            <div>
+                                <label for="employer-pension">Monthly Amount</label>
+                                <div class="input-with-prefix"><span class="prefix">$</span>
+                                    <input type="number" id="employer-pension" placeholder="0" min="0" step="100">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="pension-start-age">Start Age</label>
+                                <input type="number" id="pension-start-age" placeholder="65" min="50" max="75" value="65">
+                            </div>
+                        </div>
+                        <label class="checkbox-label" style="margin-top: 8px;">
+                            <input type="checkbox" id="pension-indexed" checked> Indexed to inflation
+                        </label>
+                        <small class="input-hint">Most public-sector pensions are indexed; private-sector often are not</small>
+                    </div>
+
+                    <!-- Post-Retirement Work -->
                     <div class="input-group">
                         <label>💼 Work After Retirement</label>
                         <p class="section-intro">Part-time work, consulting, or a second career</p>
@@ -985,10 +1006,9 @@
                 <div class="input-group">
                     <label for="income-source-type">Type</label>
                     <select id="income-source-type" required>
-                        <option value="pension">Defined Benefit Pension</option>
-                        <option value="annuity">Annuity</option>
                         <option value="rental">Rental Income</option>
                         <option value="partTime">Part-Time Work</option>
+                        <option value="sideGig">Side Business</option>
                         <option value="other">Other Income</option>
                     </select>
                     <small id="income-type-description" class="input-hint"></small>
@@ -996,7 +1016,7 @@
 
                 <div class="input-group">
                     <label for="income-custom-name">Name (optional)</label>
-                    <input type="text" id="income-custom-name" placeholder="e.g., Teacher's Pension">
+                    <input type="text" id="income-custom-name" placeholder="e.g., Airbnb rental">
                 </div>
 
                 <div class="input-group">
@@ -1010,7 +1030,7 @@
                 <div class="input-row">
                     <div class="input-group">
                         <label for="income-start-age">Start Age</label>
-                        <input type="number" id="income-start-age" placeholder="65" min="0" max="110" required>
+                        <input type="number" id="income-start-age" placeholder="30" min="0" max="110" required>
                     </div>
 
                     <div class="input-group">
@@ -1020,11 +1040,11 @@
                     </div>
                 </div>
 
-                <div id="income-pension-options" class="input-group hidden">
+                <div class="input-group">
                     <label class="checkbox-label">
-                        <input type="checkbox" id="income-indexed" checked> Indexed to inflation
+                        <input type="checkbox" id="income-continues-retirement" checked> Continues into retirement
                     </label>
-                    <small class="input-hint">Pension grows with CPI each year</small>
+                    <small class="input-hint">If checked, this income carries into your retirement plan (visible in Step 5)</small>
                 </div>
 
                 <div class="button-row">
@@ -1047,17 +1067,17 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000035"></script>
-    <script src="cpp-calculator.js?v=17&t=24000035"></script>
-    <script src="benchmarks.js?v=17&t=24000035"></script>
-    <script src="lifestyle-data.js?v=17&t=24000035"></script>
-    <script src="regional-data.js?v=17&t=24000035"></script>
-    <script src="canada-map.js?v=17&t=24000035"></script>
-    <script src="income-sources.js?v=17&t=24000035"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000035"></script>
-    <script src="scenario-manager.js?v=17&t=24000035"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000035"></script>
-    <script src="calc.js?v=17&t=24000035"></script>
+    <script src="canada-tax.js?v=17&t=24000036"></script>
+    <script src="cpp-calculator.js?v=17&t=24000036"></script>
+    <script src="benchmarks.js?v=17&t=24000036"></script>
+    <script src="lifestyle-data.js?v=17&t=24000036"></script>
+    <script src="regional-data.js?v=17&t=24000036"></script>
+    <script src="canada-map.js?v=17&t=24000036"></script>
+    <script src="income-sources.js?v=17&t=24000036"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000036"></script>
+    <script src="scenario-manager.js?v=17&t=24000036"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000036"></script>
+    <script src="calc.js?v=17&t=24000036"></script>
     <script src="app-round6-debug.js"></script>
     
     <!-- V5 Advanced Features -->

@@ -97,7 +97,6 @@ const MonteCarloSimulator = {
             returnSequence,
             inflationRate,
             merFee = 0,
-            rentalIncome = 0,
             healthcareInflation = 5,
             ltcMonthly = 0,
             ltcStartAge = 80,
@@ -282,7 +281,7 @@ const MonteCarloSimulator = {
                     }
                 }
                 const annuityPayout = (annuityMonthlyPayout > 0 && age >= (annuityPurchaseAge || retirementAge)) ? annuityMonthlyPayout * 12 * cpiFromRetirement : 0;
-                const rentalIncomeYr = rentalIncome > 0 ? rentalIncome * 12 * cpiFromRetirement : 0;
+                const rentalIncomeYr = 0; // Rental now flows through additionalIncomeSources
                 
                 let cppP1 = 0, cppP2 = 0;
                 if (age >= (cppStartAge || 65)) {
@@ -304,8 +303,13 @@ const MonteCarloSimulator = {
                 const oasIncome = oasP1 + oasP2;
                 
                 const additionalIncome = (additionalIncomeSources || [])
-                    .filter(s => age >= s.startAge && (s.endAge === null || age <= s.endAge))
-                    .reduce((sum, s) => sum + s.annualAmount, 0);
+                    .filter(s => {
+                        if (age < s.startAge) return false;
+                        if (s.endAge !== null && age > s.endAge) return false;
+                        if (age >= retirementAge && s.continuesInRetirement === false) return false;
+                        return true;
+                    })
+                    .reduce((sum, s) => sum + (s.indexed ? s.annualAmount * cpiFromRetirement : s.annualAmount), 0);
                 
                 // GIS pre-estimate — account for taxable withdrawals
                 let gisEstimateMC = 0;

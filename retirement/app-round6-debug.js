@@ -564,6 +564,8 @@ const AppV4 = {
 
     _setupIncomeSources() {
         IncomeSources.initModal();
+        // Render Step 5 retirement income summary (initially empty)
+        IncomeSources._renderRetirementSummary();
     },
 
     _setupCustomSpending() {
@@ -2609,7 +2611,6 @@ const AppV4 = {
             spendingCurve: this.spendingCurve || 'flat',
 
             // Tier 2/3 features
-            rentalIncome: parseFloat(document.getElementById('rental-income')?.value) || 0,
             healthcareInflation: parseFloat(document.getElementById('healthcare-inflation')?.value) || 5,
             ltcMonthly: parseFloat(document.getElementById('ltc-monthly')?.value) || 0,
             ltcStartAge: parseInt(document.getElementById('ltc-start-age')?.value) || 80,
@@ -2666,7 +2667,6 @@ const AppV4 = {
                 province: inputs.province,
                 monthlyContribution: inputs.monthlyContribution,
                 rrsp: inputs.rrsp, tfsa: inputs.tfsa, nonReg: inputs.nonReg,
-                rentalIncome: inputs.rentalIncome || 0,
                 downsizingAge: inputs.downsizingAge,
                 ltcMonthly: inputs.ltcMonthly || 0,
             },
@@ -2778,7 +2778,7 @@ const AppV4 = {
         'current-debt', 'debt-payoff-age',
         'return-rate', 'inflation-rate', 'mer-fee', 'contribution-growth',
         'employer-pension', 'pension-start-age',
-        'rental-income', 'annuity-lump-sum', 'annuity-purchase-age', 'annuity-monthly-payout',
+        'annuity-lump-sum', 'annuity-purchase-age', 'annuity-monthly-payout',
         'downsizing-age', 'downsizing-proceeds', 'downsizing-spending-change',
         'ltc-monthly', 'ltc-start-age', 'healthcare-inflation',
         'inf-housing', 'inf-food', 'inf-discretionary'
@@ -3235,10 +3235,8 @@ const AppV4 = {
             if (afterTaxOther > 0) segments.push({ cls: 'other', pct: pct(afterTaxOther), label: 'Other', amount: fmt(afterTaxOther) });
             if (afterTaxLIRA > 0) segments.push({ cls: 'lira', pct: pct(afterTaxLIRA), label: 'LIRA/LIF', amount: fmt(afterTaxLIRA) });
             if (afterTaxCash > 0) segments.push({ cls: 'cash', pct: pct(afterTaxCash), label: 'Cash', amount: fmt(afterTaxCash) });
-            const rental = year.rentalIncome || 0;
             const annuity = year.annuityIncome || 0;
             const spouseAllow = year.spouseAllowance || 0;
-            if (rental > 0) segments.push({ cls: 'rental', pct: pct(rental * (1-taxRate)), label: 'Rental', amount: fmt(rental * (1-taxRate)) });
             if (annuity > 0) segments.push({ cls: 'annuity', pct: pct(annuity * 0.85), label: 'Annuity', amount: fmt(annuity * 0.85) });
             if (spouseAllow > 0) segments.push({ cls: 'gis', pct: pct(spouseAllow), label: 'Allowance', amount: fmt(spouseAllow) });
 

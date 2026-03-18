@@ -66,18 +66,26 @@ console.log('\n📊 2. Disability Tax Credit');
     assert(rDTC.summary.moneyLastsAge >= rNoDTC.summary.moneyLastsAge, 'DTC extends plan or keeps same');
 }
 
-console.log('\n📊 3. Rental Income');
+console.log('\n📊 3. Rental Income (via additionalIncomeSources)');
 {
+    const rentalSource = { type: 'rental', name: 'Rental', annualAmount: 12000, startAge: 30, endAge: null, indexed: false, isPension: false, continuesInRetirement: true };
     const rNoRental = RetirementCalcV4.calculate({...base, annualSpending: 30000});
-    const rRental = RetirementCalcV4.calculate({...base, annualSpending: 30000, rentalIncome: 1000});
-    // $1K/mo rental = $12K/yr extra income
+    const rRental = RetirementCalcV4.calculate({...base, annualSpending: 30000, additionalIncomeSources: [rentalSource]});
+    // $12K/yr extra income
     assert(rRental.summary.moneyLastsAge >= rNoRental.summary.moneyLastsAge, 'Rental income extends plan');
     
     const y70 = rRental.yearByYear.find(y => y.age === 70);
-    assert(y70 && y70.rentalIncome > 12000, 'Rental income inflated above $12K at age 70');
+    assert(y70 && y70.additionalIncome >= 12000, 'Rental flows through additionalIncome ($12K+)');
     
-    // Rental is taxable — should appear in income
-    assert(y70.afterTaxIncome > rNoRental.yearByYear.find(y => y.age === 70).afterTaxIncome, 'Rental adds to after-tax income');
+    // Rental reduces need for portfolio withdrawals — smart strategy pulls less
+    const y70nr = rNoRental.yearByYear.find(y => y.age === 70);
+    assert(y70.additionalIncome > (y70nr.additionalIncome || 0), 'Rental adds to additional income vs no-rental');
+
+    // Test continuesInRetirement=false — income should stop at retirement
+    const workOnlySource = { type: 'partTime', name: 'Freelance', annualAmount: 10000, startAge: 30, endAge: null, indexed: false, isPension: false, continuesInRetirement: false };
+    const rWorkOnly = RetirementCalcV4.calculate({...base, annualSpending: 30000, additionalIncomeSources: [workOnlySource]});
+    const y70wo = rWorkOnly.yearByYear.find(y => y.age === 70);
+    assert((y70wo?.additionalIncome || 0) === 0, 'continuesInRetirement=false stops income at retirement');
 }
 
 console.log('\n📊 4. Healthcare Inflation');
@@ -214,7 +222,8 @@ console.log('\n📊 13. Monotonicity with all features');
     let prev = 999, ok = true;
     for (let s = 20000; s <= 120000; s += 5000) {
         const r = RetirementCalcV4.calculate({...base, annualSpending: s,
-            rentalIncome: 500, healthcareInflation: 5, ltcMonthly: 3000, ltcStartAge: 82,
+            additionalIncomeSources: [{ type: 'rental', name: 'Rental', annualAmount: 6000, startAge: 30, endAge: null, indexed: false, isPension: false, continuesInRetirement: true }],
+            healthcareInflation: 5, ltcMonthly: 3000, ltcStartAge: 82,
             dtc: true, downsizingAge: 72, downsizingProceeds: 200000, downsizingSpendingChange: -500,
             categoryInflation: {housing: 3, food: 3, healthcare: 5, discretionary: 2}
         });
