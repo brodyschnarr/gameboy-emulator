@@ -52,17 +52,33 @@ const HealthcareEstimator = {
 
     /**
      * Project total healthcare costs over retirement
+     * @param {number} healthcareInflation - Annual healthcare inflation rate (default 5% = 0.05)
+     * @param {object} ltcOptions - Long-term care: { monthlyAmount, startAge }
      */
-    projectTotal(retirementAge, lifeExpectancy, province = 'ON', healthStatus = 'average') {
+    projectTotal(retirementAge, lifeExpectancy, province = 'ON', healthStatus = 'average', healthcareInflation = 0.05, ltcOptions = null) {
         let total = 0;
         const byYear = [];
         
         for (let age = retirementAge; age <= lifeExpectancy; age++) {
-            const annualCost = this.estimateAnnual(age, province, healthStatus);
-            total += annualCost;
+            const baseCost = this.estimateAnnual(age, province, healthStatus);
+            const yearsFromRetirement = age - retirementAge;
+            // Healthcare inflates faster than general CPI
+            const inflatedCost = baseCost * Math.pow(1 + healthcareInflation, yearsFromRetirement);
+            
+            // Long-term care costs
+            let ltcCost = 0;
+            if (ltcOptions && ltcOptions.monthlyAmount > 0 && age >= (ltcOptions.startAge || 80)) {
+                const ltcYears = age - Math.max(retirementAge, ltcOptions.startAge || 80);
+                ltcCost = ltcOptions.monthlyAmount * 12 * Math.pow(1 + healthcareInflation, ltcYears);
+            }
+            
+            const totalCost = Math.round(inflatedCost + ltcCost);
+            total += totalCost;
             byYear.push({
                 age: age,
-                cost: annualCost
+                cost: totalCost,
+                healthcareCost: Math.round(inflatedCost),
+                ltcCost: Math.round(ltcCost)
             });
         }
 
@@ -71,10 +87,10 @@ const HealthcareEstimator = {
             averageAnnual: Math.round(total / (lifeExpectancy - retirementAge + 1)),
             byYear: byYear,
             breakdown: {
-                prescriptions: Math.round(total * 0.40),  // 40% prescriptions
-                dental: Math.round(total * 0.25),         // 25% dental
-                vision: Math.round(total * 0.15),         // 15% vision
-                other: Math.round(total * 0.20)           // 20% other
+                prescriptions: Math.round(total * 0.40),
+                dental: Math.round(total * 0.25),
+                vision: Math.round(total * 0.15),
+                other: Math.round(total * 0.20)
             }
         };
     },

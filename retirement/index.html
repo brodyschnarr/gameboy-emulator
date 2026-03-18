@@ -612,9 +612,20 @@
             <h3 style="margin: 20px 0 8px;">📈 Additional Income</h3>
             <p class="section-intro" style="margin-top:0;">Windfalls, inheritance, or other boosts to your retirement</p>
 
+            <!-- Rental Income -->
+            <div class="input-group">
+                <label>🏠 Rental Income</label>
+                <span class="input-impact">Fully taxable — counts for GIS/OAS clawback</span>
+                <div class="input-with-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="rental-income" placeholder="0" min="0" step="100">
+                </div>
+                <small class="input-hint">Monthly net rental income (after expenses)</small>
+            </div>
+
             <div class="input-group windfalls-container">
                 <label>💰 One-Time Windfalls</label>
-                <span class="input-impact">Inheritance, business sale, insurance payout, etc.</span>
+                <span class="input-impact">Inheritance, business sale, insurance payout, severance/retiring allowance (can be rolled into RRSP tax-free)</span>
                 <div id="windfalls-list"></div>
                 <div id="windfall-form-container"></div>
                 <button type="button" class="btn-secondary" id="btn-add-windfall">+ Add Windfall</button>
@@ -665,6 +676,60 @@
                 </div>
             </div>
 
+            <!-- Annuity -->
+            <details class="input-group-collapsible">
+                <summary class="collapsible-header">🔒 Annuity Purchase <span class="optional-tag">Optional</span></summary>
+                <div class="collapsible-content">
+                    <p class="section-intro">Convert a lump sum into guaranteed income for life</p>
+                    <div class="split-inputs">
+                        <div>
+                            <label for="annuity-lump-sum">Lump Sum</label>
+                            <div class="input-with-prefix"><span class="prefix">$</span>
+                                <input type="number" id="annuity-lump-sum" placeholder="0" min="0" step="10000">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="annuity-purchase-age">Purchase Age</label>
+                            <input type="number" id="annuity-purchase-age" placeholder="65" min="50" max="85">
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-top: 8px;">
+                        <label for="annuity-monthly-payout">Monthly Payout</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="annuity-monthly-payout" placeholder="0" min="0" step="100">
+                        </div>
+                        <small class="input-hint">~50% taxable (prescribed annuity). Get quotes from insurance companies.</small>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Downsizing -->
+            <details class="input-group-collapsible">
+                <summary class="collapsible-header">🏡 Downsizing Plan <span class="optional-tag">Optional</span></summary>
+                <div class="collapsible-content">
+                    <p class="section-intro">Sell your home and reduce housing costs</p>
+                    <div class="split-inputs">
+                        <div>
+                            <label for="downsizing-age">Sell at Age</label>
+                            <input type="number" id="downsizing-age" placeholder="70" min="50" max="95">
+                        </div>
+                        <div>
+                            <label for="downsizing-proceeds">Net Proceeds</label>
+                            <div class="input-with-prefix"><span class="prefix">$</span>
+                                <input type="number" id="downsizing-proceeds" placeholder="0" min="0" step="10000">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-top: 8px;">
+                        <label for="downsizing-spending-change">Monthly Housing Savings</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="downsizing-spending-change" placeholder="0" min="0" step="100">
+                        </div>
+                        <small class="input-hint">How much less per month in housing costs (e.g., $500 = save $6K/yr)</small>
+                    </div>
+                </div>
+            </details>
+
             <!-- Additional Expenses -->
             <h3 style="margin: 24px 0 8px;">📉 Additional Expenses</h3>
             <p class="section-intro" style="margin-top:0;">Debts and health costs that reduce your retirement savings</p>
@@ -708,6 +773,68 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Long-Term Care -->
+            <details class="input-group-collapsible">
+                <summary class="collapsible-header">🏥 Long-Term Care <span class="optional-tag">Optional</span></summary>
+                <div class="collapsible-content">
+                    <p class="section-intro">Home care or facility costs in later years ($5-10K/month is typical)</p>
+                    <div class="split-inputs">
+                        <div>
+                            <label for="ltc-monthly">Monthly Cost</label>
+                            <div class="input-with-prefix"><span class="prefix">$</span>
+                                <input type="number" id="ltc-monthly" placeholder="0" min="0" step="500">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="ltc-start-age">Starting Age</label>
+                            <input type="number" id="ltc-start-age" placeholder="80" min="60" max="100" value="80">
+                        </div>
+                    </div>
+                    <small class="input-hint">Inflates at healthcare rate (~5%/yr). Average stay: 3-5 years.</small>
+                </div>
+            </details>
+
+            <!-- DTC -->
+            <div class="input-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="dtc-checkbox">
+                    ♿ Disability Tax Credit (DTC)
+                </label>
+                <small class="input-hint">$9,428 federal credit — saves ~$1,900/yr in taxes. Requires CRA approval (Form T2201).</small>
+            </div>
+
+            <!-- Healthcare Inflation -->
+            <details class="input-group-collapsible">
+                <summary class="collapsible-header">📊 Inflation Settings <span class="optional-tag">Advanced</span></summary>
+                <div class="collapsible-content">
+                    <div class="input-group">
+                        <label for="healthcare-inflation">Healthcare Inflation (%)</label>
+                        <input type="number" id="healthcare-inflation" placeholder="5" min="0" max="15" step="0.5" value="5">
+                        <small class="input-hint">Healthcare costs rise ~5%/yr vs ~2.5% general. Compounds significantly over 30 years.</small>
+                    </div>
+                    <p class="section-intro" style="margin-top: 12px;">Category inflation rates (optional)</p>
+                    <div class="split-inputs">
+                        <div>
+                            <label for="inf-housing">Housing (%)</label>
+                            <input type="number" id="inf-housing" placeholder="3" min="0" max="10" step="0.5">
+                        </div>
+                        <div>
+                            <label for="inf-food">Food (%)</label>
+                            <input type="number" id="inf-food" placeholder="3" min="0" max="10" step="0.5">
+                        </div>
+                    </div>
+                    <div class="split-inputs" style="margin-top: 4px;">
+                        <div>
+                            <label for="inf-discretionary">Discretionary (%)</label>
+                            <input type="number" id="inf-discretionary" placeholder="2" min="0" max="10" step="0.5">
+                        </div>
+                        <div>
+                            <small class="input-hint" style="margin-top: 20px;">Weights: Housing 30%, Food 15%, Healthcare 15%, Discretionary 40%</small>
+                        </div>
+                    </div>
+                </div>
+            </details>
 
             <button type="button" class="btn-secondary" id="btn-back-retirement">← Back</button>
             <button type="button" class="btn-primary" id="btn-calculate">Calculate My Plan 🚀</button>
@@ -923,17 +1050,17 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000031"></script>
-    <script src="cpp-calculator.js?v=17&t=24000031"></script>
-    <script src="benchmarks.js?v=17&t=24000031"></script>
-    <script src="lifestyle-data.js?v=17&t=24000031"></script>
-    <script src="regional-data.js?v=17&t=24000031"></script>
-    <script src="canada-map.js?v=17&t=24000031"></script>
-    <script src="income-sources.js?v=17&t=24000031"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000031"></script>
-    <script src="scenario-manager.js?v=17&t=24000031"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000031"></script>
-    <script src="calc.js?v=17&t=24000031"></script>
+    <script src="canada-tax.js?v=17&t=24000032"></script>
+    <script src="cpp-calculator.js?v=17&t=24000032"></script>
+    <script src="benchmarks.js?v=17&t=24000032"></script>
+    <script src="lifestyle-data.js?v=17&t=24000032"></script>
+    <script src="regional-data.js?v=17&t=24000032"></script>
+    <script src="canada-map.js?v=17&t=24000032"></script>
+    <script src="income-sources.js?v=17&t=24000032"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000032"></script>
+    <script src="scenario-manager.js?v=17&t=24000032"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000032"></script>
+    <script src="calc.js?v=17&t=24000032"></script>
     <script src="app-round6-debug.js"></script>
     
     <!-- V5 Advanced Features -->

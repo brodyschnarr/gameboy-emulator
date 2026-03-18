@@ -3013,3 +3013,54 @@ input:focus {
     padding: 8px;
     margin: 2px 0;
 }
+
+/* Collapsible input sections */
+.input-group-collapsible {
+    margin-bottom: 12px;
+}
+.collapsible-header {
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.optional-tag {
+    font-size: 10px;
+    font-weight: 400;
+    background: var(--bg-card, #f3f4f6);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text-muted);
+}
+.collapsible-content {
+    padding: 8px 0;
+}
+
+/* Checkbox label */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+}
+
+/* OAS Clawback line */
+.year-tax-note.clawback {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+/* Rental/Annuity bar colors */
+.bar-segment.rental { background: #f59e0b; }
+.bar-segment.annuity { background: #8b5cf6; }
+.rental-color { color: #f59e0b; }
+.annuity-color { color: #8b5cf6; }

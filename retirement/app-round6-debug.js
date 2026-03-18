@@ -1335,7 +1335,7 @@ const AppV4 = {
                 const s = (key) => yrs.reduce((a, y) => a + (y[key] || 0), 0);
                 const lastYear = yrs[yrs.length - 1];
                 const legacy = lastYear ? lastYear.totalBalance : 0;
-                return { tax: s('taxPaid'), cpp: s('cppReceived'), oas: s('oasReceived'), gis: s('gisReceived'), legacy, lasts: results.summary.moneyLastsAge };
+                return { tax: s('taxPaid'), cpp: s('cppReceived'), oas: s('oasReceived'), gis: s('gisReceived'), legacy, lasts: results.summary.moneyLastsAge, estateTax: results.legacy?.estateTax || 0, netEstate: results.legacy?.netEstate || 0 };
             };
 
             const userStats = getStats(smartResults);
@@ -1391,6 +1391,8 @@ const AppV4 = {
                     </details>
                     ${merFees !== undefined ? `<div class="strategy-stat"><span>📋 Fees</span><span>${fmt(merFees)}</span></div>` : ''}
                     <div class="strategy-stat"><span>🏠 Estate</span><span>${stats.legacy > 0 ? fmt(stats.legacy) : '$0'}</span></div>
+                    ${stats.estateTax > 0 ? `<div class="strategy-stat sub"><span>Deemed tax at death</span><span>-${fmt(stats.estateTax)}</span></div>
+                    <div class="strategy-stat sub"><span>Net to heirs</span><span>${fmt(stats.netEstate)}</span></div>` : ''}
                     <div class="strategy-stat"><span>📅 Lasts To</span><span>Age ${stats.lasts}</span></div>
                     ${note ? `<div class="strategy-note">${note}</div>` : ''}
                 </div>`;
@@ -2577,8 +2579,39 @@ const AppV4 = {
             inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2.5,
             contributionGrowthRate: parseFloat(document.getElementById('contribution-growth')?.value) || 0,
             merFee: parseFloat(document.getElementById('mer-fee')?.value) || 0,
-            spendingCurve: this.spendingCurve || 'flat'
+            spendingCurve: this.spendingCurve || 'flat',
+
+            // Tier 2/3 features
+            rentalIncome: parseFloat(document.getElementById('rental-income')?.value) || 0,
+            healthcareInflation: parseFloat(document.getElementById('healthcare-inflation')?.value) || 5,
+            ltcMonthly: parseFloat(document.getElementById('ltc-monthly')?.value) || 0,
+            ltcStartAge: parseInt(document.getElementById('ltc-start-age')?.value) || 80,
+            annuityLumpSum: parseFloat(document.getElementById('annuity-lump-sum')?.value) || 0,
+            annuityPurchaseAge: parseInt(document.getElementById('annuity-purchase-age')?.value) || undefined,
+            annuityMonthlyPayout: parseFloat(document.getElementById('annuity-monthly-payout')?.value) || 0,
+            dtc: document.getElementById('dtc-checkbox')?.checked || false,
+            downsizingAge: parseInt(document.getElementById('downsizing-age')?.value) || undefined,
+            downsizingProceeds: parseFloat(document.getElementById('downsizing-proceeds')?.value) || 0,
+            downsizingSpendingChange: -(parseFloat(document.getElementById('downsizing-spending-change')?.value) || 0), // Negative = savings
+            categoryInflation: this._getCategoryInflation()
         };
+    },
+
+    _getCategoryInflation() {
+        const h = document.getElementById('inf-housing')?.value;
+        const f = document.getElementById('inf-food')?.value;
+        const d = document.getElementById('inf-discretionary')?.value;
+        const hc = document.getElementById('healthcare-inflation')?.value;
+        // Only return object if user customized at least one field
+        if (h || f || d) {
+            return {
+                housing: parseFloat(h) || 3,
+                food: parseFloat(f) || 3,
+                healthcare: parseFloat(hc) || 5,
+                discretionary: parseFloat(d) || 2
+            };
+        }
+        return null;
     },
 
     _displayResults(results, inputs) {
@@ -2958,6 +2991,12 @@ const AppV4 = {
             if (afterTaxOther > 0) segments.push({ cls: 'other', pct: pct(afterTaxOther), label: 'Other', amount: fmt(afterTaxOther) });
             if (afterTaxLIRA > 0) segments.push({ cls: 'lira', pct: pct(afterTaxLIRA), label: 'LIRA/LIF', amount: fmt(afterTaxLIRA) });
             if (afterTaxCash > 0) segments.push({ cls: 'cash', pct: pct(afterTaxCash), label: 'Cash', amount: fmt(afterTaxCash) });
+            const rental = year.rentalIncome || 0;
+            const annuity = year.annuityIncome || 0;
+            const spouseAllow = year.spouseAllowance || 0;
+            if (rental > 0) segments.push({ cls: 'rental', pct: pct(rental * (1-taxRate)), label: 'Rental', amount: fmt(rental * (1-taxRate)) });
+            if (annuity > 0) segments.push({ cls: 'annuity', pct: pct(annuity * 0.85), label: 'Annuity', amount: fmt(annuity * 0.85) });
+            if (spouseAllow > 0) segments.push({ cls: 'gis', pct: pct(spouseAllow), label: 'Allowance', amount: fmt(spouseAllow) });
 
             const barSegments = segments.map(s => 
                 `<div class="bar-segment ${s.cls}" style="width: ${s.pct}%" title="${s.label}: ${s.amount} (${s.pct}%)"></div>`
@@ -2969,6 +3008,10 @@ const AppV4 = {
 
             const taxLine = year.taxPaid > 0 
                 ? `<div class="year-tax-note">Tax: ${fmt(year.taxPaid)}</div>` 
+                : '';
+            
+            const clawbackLine = (year.oasClawback || 0) > 0
+                ? `<div class="year-tax-note clawback">OAS clawback: -${fmt(year.oasClawback)}</div>`
                 : '';
 
             const balance = year.totalBalance || 0;
@@ -3003,6 +3046,7 @@ const AppV4 = {
                     <div class="year-bar">${barSegments}</div>
                     <div class="year-income-details">${detailItems}</div>
                     ${taxLine}
+                    ${clawbackLine}
                     ${acctSection}
                 </div>
             `;

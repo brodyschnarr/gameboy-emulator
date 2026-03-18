@@ -138,14 +138,36 @@ const CanadianTax = {
             }
         }
 
+        // Disability Tax Credit (DTC)
+        if (options.dtc) {
+            const DTC_AMOUNT = 9428 * cpi;
+            federalTax -= DTC_AMOUNT * 0.15;
+            const PROV_DTC = { ON: 9428, BC: 9428, AB: 16635, QC: 3500, SK: 9428, MB: 9428, NB: 9128, NS: 7341, PE: 6890, NL: 7011 };
+            provincialTax -= ((PROV_DTC[province] || 9428) * cpi) * provLowestRate;
+        }
+
         federalTax = Math.max(0, federalTax);
         provincialTax = Math.max(0, provincialTax);
+
+        // Ontario Health Premium (not indexed to inflation — legislated fixed thresholds)
+        let ontarioHealthPremium = 0;
+        if (province === 'ON') {
+            // CRA tiered rates on taxable income
+            if (income > 200000) ontarioHealthPremium = 900;
+            else if (income > 72000) ontarioHealthPremium = Math.min(900, 750 + (income - 72000) * 0.25);
+            else if (income > 48000) ontarioHealthPremium = 600 + (income - 48000) * 0.25;
+            else if (income > 36000) ontarioHealthPremium = 450 + (income - 36000) * 0.25;
+            else if (income > 25000) ontarioHealthPremium = 300 + (income - 25000) * 0.06;
+            else if (income > 20000) ontarioHealthPremium = (income - 20000) * 0.06;
+            ontarioHealthPremium = Math.max(0, ontarioHealthPremium);
+        }
 
         return {
             federal: federalTax,
             provincial: provincialTax,
-            total: federalTax + provincialTax,
-            effectiveRate: income > 0 ? (federalTax + provincialTax) / income : 0
+            ontarioHealthPremium,
+            total: federalTax + provincialTax + ontarioHealthPremium,
+            effectiveRate: income > 0 ? (federalTax + provincialTax + ontarioHealthPremium) / income : 0
         };
     },
 

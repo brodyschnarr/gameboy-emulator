@@ -80,7 +80,21 @@ const RetirementCalcV4 = {
             employerPensionIndexed = true,  // Indexed to inflation?
 
             // Withdrawal strategy override (for comparison engine)
-            _withdrawalStrategy = 'smart'
+            _withdrawalStrategy = 'smart',
+
+            // Tier 2/3 features
+            rentalIncome = 0,              // Monthly rental income (fully taxable)
+            healthcareInflation = 5,       // Healthcare inflation % (default 5%)
+            ltcMonthly = 0,                // Long-term care monthly cost
+            ltcStartAge = 80,              // Age LTC costs begin
+            annuityLumpSum = 0,            // Lump sum to purchase annuity
+            annuityPurchaseAge,            // Age to buy annuity
+            annuityMonthlyPayout = 0,      // Monthly annuity payout
+            dtc = false,                   // Disability Tax Credit
+            downsizingAge,                 // Age to sell home
+            downsizingProceeds = 0,        // Net proceeds from home sale
+            downsizingSpendingChange = 0,  // Monthly change in housing cost (negative = savings)
+            categoryInflation,             // { housing, food, healthcare, discretionary } rates
         } = inputs;
 
         const yearsToRetirement = retirementAge - currentAge;
@@ -111,16 +125,30 @@ const RetirementCalcV4 = {
             cppOverrideP2: cppOverrideP2 || null
         });
 
-        // 2. Calculate healthcare costs
+        // 2. Calculate healthcare costs (with healthcare-specific inflation + LTC)
+        const healthcareInfRate = (healthcareInflation || 5) / 100;
+        const ltcOpts = ltcMonthly > 0 ? { monthlyAmount: ltcMonthly, startAge: ltcStartAge || 80 } : null;
         const healthcareCosts = HealthcareEstimator.projectTotal(
             retirementAge,
             lifeExpectancy,
             province,
-            healthStatus || 'average'
+            healthStatus || 'average',
+            healthcareInfRate,
+            ltcOpts
         );
 
         // 3. Inflation-adjusted spending at retirement
-        const inflationMultiplier = Math.pow(1 + inflationRate / 100, yearsToRetirement);
+        // Category inflation blends housing/food/healthcare/discretionary if provided
+        let effectiveInflation = inflationRate / 100;
+        if (categoryInflation && typeof categoryInflation === 'object') {
+            // Typical Canadian spending weights: Housing 30%, Food 15%, Healthcare 15%, Discretionary 40%
+            const h = (categoryInflation.housing ?? inflationRate) / 100;
+            const f = (categoryInflation.food ?? inflationRate) / 100;
+            const hc = (categoryInflation.healthcare ?? healthcareInflation ?? 5) / 100;
+            const d = (categoryInflation.discretionary ?? inflationRate) / 100;
+            effectiveInflation = h * 0.30 + f * 0.15 + hc * 0.15 + d * 0.40;
+        }
+        const inflationMultiplier = Math.pow(1 + effectiveInflation, yearsToRetirement);
         const futureAnnualSpending = annualSpending * inflationMultiplier;
 
         // 4. Year-by-year projection
@@ -153,7 +181,17 @@ const RetirementCalcV4 = {
             employerPension: employerPension || 0,
             employerPensionStartAge: employerPensionStartAge || retirementAge,
             employerPensionIndexed: employerPensionIndexed !== false,
-            isFamilyMode
+            isFamilyMode,
+            partnerAge: partnerAge || currentAge,
+            rentalIncome: rentalIncome || 0,
+            effectiveInflation,
+            annuityLumpSum: annuityLumpSum || 0,
+            annuityPurchaseAge: annuityPurchaseAge || retirementAge,
+            annuityMonthlyPayout: annuityMonthlyPayout || 0,
+            dtc: dtc || false,
+            downsizingAge: downsizingAge || null,
+            downsizingProceeds: downsizingProceeds || 0,
+            downsizingSpendingChange: downsizingSpendingChange || 0,
         });
 
         // 5. Calculate probability of success
@@ -176,7 +214,7 @@ const RetirementCalcV4 = {
             // Also check if portfolio couldn't meet spending need
             // (withdrawal + govt income significantly short of target spending)
             if (p.targetSpending > 0) {
-                const totalIncome = (p.withdrawal || 0) + (p.governmentIncome || 0) + (p.additionalIncome || 0) + (p.pensionIncome || 0);
+                const totalIncome = (p.withdrawal || 0) + (p.governmentIncome || 0) + (p.additionalIncome || 0) + (p.pensionIncome || 0) + (p.rentalIncome || 0) + (p.annuityIncome || 0) + (p.spouseAllowance || 0);
                 const shortfall = p.targetSpending - totalIncome;
                 if (shortfall > p.targetSpending * 0.1) return true; // >10% short = can't sustain
             }
@@ -192,6 +230,20 @@ const RetirementCalcV4 = {
         const portfolioAtRetirement = firstRetirementYear ? firstRetirementYear.totalBalance : 0;
         const onTrack = moneyLastsAge >= lifeExpectancy;
         
+        // Estate tax at death — deemed disposition of RRSP/RRIF + capital gains on non-reg
+        let estateTax = 0;
+        if (finalYear && legacyAmount > 0) {
+            const rrspAtDeath = finalYear.rrsp || 0;
+            const nonRegAtDeath = finalYear.nonReg || 0;
+            // RRSP/RRIF fully taxable at death (deemed disposition)
+            // Non-reg: 50% capital gains inclusion (assume 50% of value is gains)
+            const deemedIncome = rrspAtDeath + (nonRegAtDeath * 0.5 * 0.5); // 50% of non-reg is gain, 50% inclusion
+            const cpiAtDeath = finalYear ? Math.pow(1 + inflationRate / 100, (finalYear.age || lifeExpectancy) - currentAge) : 1;
+            const deathTax = CanadianTax.calculateTax(deemedIncome, province, { inflationFactor: cpiAtDeath }).total;
+            estateTax = Math.round(deathTax);
+        }
+        const netEstate = Math.max(0, Math.round(legacyAmount) - estateTax);
+
         let legacyDescription = '';
         if (legacyAmount > 1000000) legacyDescription = 'Significant legacy for heirs';
         else if (legacyAmount > 500000) legacyDescription = 'Comfortable legacy';
@@ -212,7 +264,9 @@ const RetirementCalcV4 = {
             },
             legacy: {
                 amount: Math.round(legacyAmount),
-                description: legacyDescription
+                description: legacyDescription,
+                estateTax,
+                netEstate
             },
             probability: Math.round(probability),
             onTrack: onTrack,
@@ -377,7 +431,16 @@ const RetirementCalcV4 = {
             employerPension = 0,
             employerPensionStartAge = retirementAge,
             employerPensionIndexed = true,
-            isFamilyMode = false
+            isFamilyMode = false,
+            rentalIncome = 0,
+            effectiveInflation,
+            annuityLumpSum = 0,
+            annuityPurchaseAge = retirementAge,
+            annuityMonthlyPayout = 0,
+            dtc = false,
+            downsizingAge = null,
+            downsizingProceeds = 0,
+            downsizingSpendingChange = 0
         } = params;
 
         const projection = [];
@@ -500,7 +563,20 @@ const RetirementCalcV4 = {
                 const inflationFactor = Math.pow(1 + inf, yearsIntoRetirement);
                 // CRA indexes tax brackets/credits to CPI from today
                 const cpiFromToday = Math.pow(1 + inf, age - startAge);
-                
+                const cpiFromRetirement = Math.pow(1 + inf, yearsIntoRetirement);
+
+                // Downsizing: add proceeds at sell age, adjust spending afterward
+                let downsizingAdjustment = 0;
+                if (downsizingAge && age === downsizingAge && downsizingProceeds > 0) {
+                    const tfsaRoom = Math.max(0, 95000 - balances.tfsa);
+                    const toTFSA = Math.min(downsizingProceeds, tfsaRoom);
+                    balances.tfsa += toTFSA;
+                    balances.nonReg += (downsizingProceeds - toTFSA);
+                }
+                if (downsizingAge && age >= downsizingAge && downsizingSpendingChange !== 0) {
+                    downsizingAdjustment = downsizingSpendingChange * 12 * cpiFromRetirement;
+                }
+
                 // Spending curve: "Go-Go / Slow-Go / No-Go" pattern
                 // spendingCurve: 'flat' (default), 'frontloaded', 'custom'
                 let spendingCurveMultiplier = 1.0;
@@ -519,14 +595,11 @@ const RetirementCalcV4 = {
                 
                 const thisYearSpending = baseAnnualSpending * inflationFactor * spendingCurveMultiplier;
                 
-                // 3. Healthcare costs
+                // 3. Healthcare costs + spending adjustments
                 const healthcareCost = healthcareByAge.find(h => h.age === age)?.cost || 0;
-                const totalNeed = thisYearSpending + healthcareCost;
+                // totalNeed adjusted by downsizing spending change (negative = savings)
+                const totalNeed = Math.max(0, thisYearSpending + healthcareCost + downsizingAdjustment);
 
-                // FIX #2: CPP inflation-indexed from retirement start
-                // CPP and OAS are indexed to CPI in Canada
-                const cpiFromRetirement = Math.pow(1 + inf, yearsIntoRetirement);
-                
                 // 4. Government income (inflation-indexed, tracked per-person for clawback)
                 let cppP1 = 0, cppP2 = 0;
                 if (age >= cppStartAge) {
@@ -566,6 +639,30 @@ const RetirementCalcV4 = {
                     }
                 }
                 
+                // Rental income (fully taxable, inflation-indexed)
+                let rentalIncomeThisYear = 0;
+                if (rentalIncome > 0) {
+                    rentalIncomeThisYear = rentalIncome * 12 * cpiFromRetirement;
+                }
+
+                // Annuity: subtract lump sum at purchase age, add payout afterward
+                let annuityPayoutThisYear = 0;
+                if (annuityLumpSum > 0 && age === annuityPurchaseAge) {
+                    // Subtract lump sum proportionally from accounts
+                    const totalBal = balances.rrsp + balances.tfsa + balances.nonReg + balances.other + balances.cash;
+                    if (totalBal > 0) {
+                        const ratio = Math.min(1, annuityLumpSum / totalBal);
+                        balances.rrsp *= (1 - ratio);
+                        balances.tfsa *= (1 - ratio);
+                        balances.nonReg *= (1 - ratio);
+                        balances.other *= (1 - ratio);
+                        balances.cash *= (1 - ratio);
+                    }
+                }
+                if (annuityMonthlyPayout > 0 && age >= annuityPurchaseAge) {
+                    annuityPayoutThisYear = annuityMonthlyPayout * 12 * cpiFromRetirement;
+                }
+
                 // Check if any additional income is pension-type (for pension credit)
                 const hasPensionTypeIncome = additionalIncomeSources.some(s => 
                     s.isPension && age >= s.startAge && (s.endAge === null || age <= s.endAge));
@@ -578,7 +675,9 @@ const RetirementCalcV4 = {
                     const GIS_MAX_SINGLE = 12780;
                     const GIS_MAX_COUPLE = 7692;
                     const gisMax = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
-                    const gisTestPre = cppIncome + additionalIncome + pensionIncome;
+                    // Rental + annuity (taxable portion ~50%) count for GIS income test
+                    const annuityTaxable = annuityPayoutThisYear * 0.5; // Prescribed annuity ~50% taxable
+                    const gisTestPre = cppIncome + additionalIncome + pensionIncome + rentalIncomeThisYear + annuityTaxable;
                     
                     // If there are taxable accounts, assume withdrawal will reduce/eliminate GIS
                     const hasTaxableAccounts = (balances.rrsp > 0 || balances.nonReg > 0);
@@ -597,8 +696,23 @@ const RetirementCalcV4 = {
                     }
                 }
 
+                // Spouse allowance for 60-64 partner (GIS-like benefit)
+                let spouseAllowance = 0;
+                if (!isSingle && isFamilyMode) {
+                    // If one partner is 60-64 and the other is 65+, younger qualifies for Allowance
+                    // Max ~$1,354/mo ($16,248/yr), income-tested
+                    const ALLOWANCE_MAX = 16248;
+                    const partnerAgeNow = (params.partnerAge || startAge);
+                    const partnerAgeThisYear = partnerAgeNow + (age - startAge);
+                    if (partnerAgeThisYear >= 60 && partnerAgeThisYear < 65) {
+                        const combinedIncome = cppIncome + additionalIncome + pensionIncome + rentalIncomeThisYear;
+                        spouseAllowance = Math.max(0, ALLOWANCE_MAX - combinedIncome * 0.5) * cpiFromRetirement;
+                    }
+                }
+
                 // Total non-portfolio income BEFORE clawback
-                const totalOtherIncomePreClawback = cppIncome + oasIncome + additionalIncome + pensionIncome + gisEstimate;
+                const totalOtherIncomePreClawback = cppIncome + oasIncome + additionalIncome + pensionIncome 
+                    + gisEstimate + rentalIncomeThisYear + annuityPayoutThisYear + spouseAllowance;
 
                 // FIX #9: Smart withdrawal — OAS-clawback-aware
                 const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncomePreClawback);
@@ -615,9 +729,10 @@ const RetirementCalcV4 = {
                         balances,
                         neededFromPortfolio,
                         province,
-                        cppIncome + additionalIncome + pensionIncome + totalMandatory,
+                        cppIncome + additionalIncome + pensionIncome + totalMandatory + rentalIncomeThisYear,
                         age,
-                        cpiFromToday
+                        cpiFromToday,
+                        dtc
                     );
                 } else {
                     withdrawal = this._withdrawSmartOptimal(
@@ -627,7 +742,7 @@ const RetirementCalcV4 = {
                         cppIncome + additionalIncome + pensionIncome + totalMandatory,
                         oasIncome,
                         age >= effOAS1,
-                        { cppP1, cppP2, oasP1, oasP2, additionalIncome: additionalIncome + pensionIncome, isSingle, age, cpiFromToday }
+                        { cppP1, cppP2, oasP1, oasP2, additionalIncome: additionalIncome + pensionIncome + rentalIncomeThisYear, isSingle, age, cpiFromToday, dtc }
                     );
                 }
 
@@ -743,18 +858,23 @@ const RetirementCalcV4 = {
                     additionalIncome: Math.round(additionalIncome),
                     pensionIncome: Math.round(pensionIncome),
                     oasReceived: Math.round(actualOAS),
+                    oasBeforeClawback: Math.round(oasIncome),
+                    oasClawback: Math.round(Math.max(0, oasIncome - actualOAS)),
                     gisReceived: Math.round(gisIncome),
                     cppReceived: Math.round(cppIncome),
+                    rentalIncome: Math.round(rentalIncomeThisYear),
+                    annuityIncome: Math.round(annuityPayoutThisYear),
+                    spouseAllowance: Math.round(spouseAllowance),
                     taxableIncome: withdrawal.taxableIncome,
                     taxPaid: withdrawal.taxPaid,
-                    grossIncome: withdrawal.total + govIncome + additionalIncome + pensionIncome,
-                    afterTaxIncome: withdrawal.afterTax + govIncome + additionalIncome + pensionIncome,
+                    grossIncome: withdrawal.total + govIncome + additionalIncome + pensionIncome + rentalIncomeThisYear + annuityPayoutThisYear + spouseAllowance,
+                    afterTaxIncome: withdrawal.afterTax + govIncome + additionalIncome + pensionIncome + rentalIncomeThisYear + annuityPayoutThisYear + spouseAllowance,
                     targetSpending: Math.round(totalNeed),
                     healthcareCost: Math.round(healthcareCost)
                 });
 
                 // Continue projecting even after depletion if there's government income
-                if (totalBalance <= 0 && govIncome + additionalIncome + pensionIncome <= 0) break;
+                if (totalBalance <= 0 && govIncome + additionalIncome + pensionIncome + rentalIncomeThisYear + annuityPayoutThisYear <= 0) break;
             }
         }
 
@@ -774,7 +894,8 @@ const RetirementCalcV4 = {
     // ═══════════════════════════════════════
     _withdrawSmartOptimal(balances, neededAfterTax, province, nonOASTaxableIncome, oasAmount, oasActive, perPerson) {
         const cpi = (perPerson && perPerson.cpiFromToday) || 1.0;
-        const taxOpts = { inflationFactor: cpi };
+        const hasDTC = perPerson && perPerson.dtc;
+        const taxOpts = { inflationFactor: cpi, dtc: hasDTC };
         const OAS_CLAWBACK_START = 93454 * cpi;
         const OAS_CLAWBACK_RATE = 0.15;
 
@@ -1038,16 +1159,16 @@ const RetirementCalcV4 = {
         const currentAge = perPerson.age || 0;
         const eligiblePensionIncome = fromRRSP + (perPerson.additionalIncome || 0); // RRIF + DB pension
         const seniorTaxOpts = currentAge >= 65 
-            ? { age: currentAge, pensionIncome: eligiblePensionIncome, inflationFactor: cpi } 
-            : { inflationFactor: cpi };
+            ? { age: currentAge, pensionIncome: eligiblePensionIncome, inflationFactor: cpi, dtc: hasDTC } 
+            : { inflationFactor: cpi, dtc: hasDTC };
 
         let totalTax;
         if (!perPerson.isSingle && currentAge >= 65 && eligiblePensionIncome > 0) {
             const splitAmount = eligiblePensionIncome * 0.5;
             const p1Taxable = totalTaxableForCalc - splitAmount;
             const p2Taxable = splitAmount;
-            const p1Tax = CanadianTax.calculateTax(Math.max(0, p1Taxable), province, { age: currentAge, pensionIncome: eligiblePensionIncome - splitAmount, inflationFactor: cpi }).total;
-            const p2Tax = CanadianTax.calculateTax(p2Taxable, province, { age: currentAge, pensionIncome: splitAmount, inflationFactor: cpi }).total;
+            const p1Tax = CanadianTax.calculateTax(Math.max(0, p1Taxable), province, { age: currentAge, pensionIncome: eligiblePensionIncome - splitAmount, inflationFactor: cpi, dtc: hasDTC }).total;
+            const p2Tax = CanadianTax.calculateTax(p2Taxable, province, { age: currentAge, pensionIncome: splitAmount, inflationFactor: cpi, dtc: hasDTC }).total;
             const baseTax = CanadianTax.calculateTax(nonOASTaxableIncome, province, seniorTaxOpts).total;
             totalTax = (p1Tax + p2Tax) - baseTax;
         } else {
@@ -1305,12 +1426,12 @@ const RetirementCalcV4 = {
     // (~$15,705 federally tax-free) or low bracket ceiling to use cheap tax room.
     // This is what a competent (non-optimizing) advisor would do:
     // "Don't waste your personal amount — pull some RRSP to fill it, then use TFSA"
-    _withdrawNaive(balances, neededAfterTax, province, taxableIncome, age, cpiFromToday) {
+    _withdrawNaive(balances, neededAfterTax, province, taxableIncome, age, cpiFromToday, dtcFlag) {
         let stillNeed = neededAfterTax;
         let fromRRSP = 0, fromNonReg = 0, fromTFSA = 0, fromOther = 0, fromCash = 0, fromLIRA = 0;
         let cumTaxable = taxableIncome;
         const cpi = cpiFromToday || 1.0;
-        const taxOpts = { inflationFactor: cpi };
+        const taxOpts = { inflationFactor: cpi, dtc: dtcFlag };
         
         const BASIC_PERSONAL = 15705 * cpi; // Federal BPA indexed to CPI
         
@@ -1372,8 +1493,8 @@ const RetirementCalcV4 = {
         
         const totalGross = fromRRSP + fromNonReg + fromTFSA + fromOther + fromCash + fromLIRA;
         const finalTaxOpts = age >= 65 
-            ? { age, pensionIncome: fromRRSP + fromLIRA, inflationFactor: cpi } 
-            : { inflationFactor: cpi };
+            ? { age, pensionIncome: fromRRSP + fromLIRA, inflationFactor: cpi, dtc: dtcFlag } 
+            : { inflationFactor: cpi, dtc: dtcFlag };
         const totalTax = CanadianTax.calculateTax(cumTaxable, province, finalTaxOpts).total 
             - CanadianTax.calculateTax(taxableIncome, province, finalTaxOpts).total;
         

@@ -96,7 +96,18 @@ const MonteCarloSimulator = {
             windfalls = [],
             returnSequence,
             inflationRate,
-            merFee = 0
+            merFee = 0,
+            rentalIncome = 0,
+            healthcareInflation = 5,
+            ltcMonthly = 0,
+            ltcStartAge = 80,
+            annuityLumpSum = 0,
+            annuityPurchaseAge,
+            annuityMonthlyPayout = 0,
+            dtc = false,
+            downsizingAge,
+            downsizingProceeds = 0,
+            downsizingSpendingChange = 0
         } = inputs;
         
         const merDecimal = (merFee || 0) / 100;
@@ -128,11 +139,14 @@ const MonteCarloSimulator = {
         });
         
         // Healthcare costs
+        const ltcOpts = ltcMonthly > 0 ? { monthlyAmount: ltcMonthly, startAge: ltcStartAge || 80 } : null;
         const healthcareCosts = HealthcareEstimator.projectTotal(
             retirementAge,
             lifeExpectancy,
             province,
-            healthStatus || 'average'
+            healthStatus || 'average',
+            (healthcareInflation || 5) / 100,
+            ltcOpts
         );
         
         // Inflation-adjusted spending at retirement
@@ -247,10 +261,28 @@ const MonteCarloSimulator = {
                 const thisYearSpending = futureAnnualSpending * inflationFactor * spendingCurveMultiplier;
                 
                 const healthcareCost = healthcareCosts.byYear.find(h => h.age === age)?.cost || 0;
-                const totalNeed = thisYearSpending + healthcareCost;
-                
-                // FIX #2: CPP inflation-indexed
                 const cpiFromRetirement = Math.pow(1 + inf, yearsIntoRetirement);
+
+                // Downsizing
+                if (downsizingAge && age === downsizingAge && downsizingProceeds > 0) {
+                    const tfsaRoom = Math.max(0, 95000 - balances.tfsa);
+                    balances.tfsa += Math.min(downsizingProceeds, tfsaRoom);
+                    balances.nonReg += Math.max(0, downsizingProceeds - tfsaRoom);
+                }
+                let downsizingAdj = (downsizingAge && age >= downsizingAge) ? (downsizingSpendingChange * 12 * cpiFromRetirement) : 0;
+                const totalNeed = Math.max(0, thisYearSpending + healthcareCost + downsizingAdj);
+
+                // Annuity purchase
+                if (annuityLumpSum > 0 && age === (annuityPurchaseAge || retirementAge)) {
+                    const totalBal = balances.rrsp + balances.tfsa + balances.nonReg + balances.other + balances.cash;
+                    if (totalBal > 0) {
+                        const ratio = Math.min(1, annuityLumpSum / totalBal);
+                        balances.rrsp *= (1 - ratio); balances.tfsa *= (1 - ratio);
+                        balances.nonReg *= (1 - ratio); balances.other *= (1 - ratio); balances.cash *= (1 - ratio);
+                    }
+                }
+                const annuityPayout = (annuityMonthlyPayout > 0 && age >= (annuityPurchaseAge || retirementAge)) ? annuityMonthlyPayout * 12 * cpiFromRetirement : 0;
+                const rentalIncomeYr = rentalIncome > 0 ? rentalIncome * 12 * cpiFromRetirement : 0;
                 
                 let cppP1 = 0, cppP2 = 0;
                 if (age >= (cppStartAge || 65)) {
@@ -281,7 +313,7 @@ const MonteCarloSimulator = {
                     const GIS_MAX_SINGLE_MC = 12780;
                     const GIS_MAX_COUPLE_MC = 7692;
                     const gisMaxMC = isSingle ? GIS_MAX_SINGLE_MC : GIS_MAX_COUPLE_MC * 2;
-                    const gisTestPre = cppIncome + additionalIncome;
+                    const gisTestPre = cppIncome + additionalIncome + rentalIncomeYr + annuityPayout * 0.5;
                     
                     const hasTaxable = (balances.rrsp > 0 || balances.nonReg > 0);
                     if (hasTaxable) {
@@ -296,17 +328,17 @@ const MonteCarloSimulator = {
                     }
                 }
 
-                const totalOtherIncome = cppIncome + oasIncome + additionalIncome + gisEstimateMC;
+                const totalOtherIncome = cppIncome + oasIncome + additionalIncome + gisEstimateMC + rentalIncomeYr + annuityPayout;
                 const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncome);
                 
                 let withdrawal = RetirementCalcV4._withdrawSmartOptimal(
                     balances,
                     neededFromPortfolio,
                     province,
-                    cppIncome + additionalIncome,
+                    cppIncome + additionalIncome + rentalIncomeYr,
                     oasIncome,
                     age >= effOAS1,
-                    { cppP1, cppP2, oasP1, oasP2, additionalIncome, isSingle, age, cpiFromToday }
+                    { cppP1, cppP2, oasP1, oasP2, additionalIncome: additionalIncome + rentalIncomeYr, isSingle, age, cpiFromToday, dtc }
                 );
                 
                 // Pass 2: check if GIS was overestimated, compensate from TFSA
