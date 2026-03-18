@@ -1357,7 +1357,7 @@ const AppV4 = {
 
             const userMax = findMaxSpend({});
             const advMax = findMaxSpend({ cppStartAge:65, oasStartAge:65, cppStartAgeP2:65, oasStartAgeP2:65, _withdrawalStrategy:'naive' });
-            const optMax = findMaxSpend({ cppStartAge:optParams.cppAge, oasStartAge:optParams.oasAge, cppStartAgeP2:optParams.cppAge, oasStartAgeP2:optParams.oasAge, _withdrawalStrategy:optParams.strategy });
+            const optMax = findMaxSpend({ cppStartAge:optParams.cppAge, oasStartAge:optParams.oasAge, cppStartAgeP2:optParams.cppAge, oasStartAgeP2:optParams.oasAge, _withdrawalStrategy:optParams.strategy, contributionSplit: optParams.contributionSplit });
 
             const fmt = (v) => '$' + Math.round(Math.abs(v)).toLocaleString();
 
@@ -1398,8 +1398,16 @@ const AppV4 = {
                 </div>`;
             };
 
-            const optNote = `CPP at ${optParams.cppAge}, OAS at ${optParams.oasAge}` +
+            const splitChanged = optParams.contributionSplit && inputs.contributionSplit && (
+                Math.abs((optParams.contributionSplit.rrsp || 0) - (inputs.contributionSplit.rrsp || 0)) > 0.05 ||
+                Math.abs((optParams.contributionSplit.tfsa || 0) - (inputs.contributionSplit.tfsa || 0)) > 0.05
+            );
+            let optNote = `CPP at ${optParams.cppAge}, OAS at ${optParams.oasAge}` +
                 (optParams.strategy === 'naive' ? ', TFSA-primary' : ', RRSP meltdown');
+            if (splitChanged && optParams.contributionSplit) {
+                const s = optParams.contributionSplit;
+                optNote += `<br>💡 Savings: ${Math.round(s.rrsp*100)}% RRSP / ${Math.round(s.tfsa*100)}% TFSA / ${Math.round(s.nonReg*100)}% Non-Reg`;
+            }
 
             const bestMax = allPlans[0].max || 0;
             const worstMax = allPlans[allPlans.length-1].max || 0;
@@ -1514,6 +1522,20 @@ const AppV4 = {
             optNarr += `You can spend ${fmt(optMax - userMax)}/yr more than your current plan.`;
         } else {
             optNarr += `Max sustainable spending: ${fmt(optMax)}/yr.`;
+        }
+
+        // Add contribution split recommendation if changed
+        if (optParams.contributionSplit && inputs.contributionSplit) {
+            const os = optParams.contributionSplit;
+            const is = inputs.contributionSplit;
+            if (Math.abs((os.rrsp||0)-(is.rrsp||0)) > 0.05 || Math.abs((os.tfsa||0)-(is.tfsa||0)) > 0.05) {
+                optNarr += ` The optimizer also suggests changing your savings split to ${Math.round(os.rrsp*100)}% RRSP / ${Math.round(os.tfsa*100)}% TFSA / ${Math.round(os.nonReg*100)}% Non-Reg`;
+                if (os.rrsp > (is.rrsp||0)) {
+                    optNarr += ` — more RRSP means bigger tax deductions now, which you can reinvest.`;
+                } else if (os.tfsa > (is.tfsa||0)) {
+                    optNarr += ` — more TFSA preserves GIS eligibility and gives tax-free income in retirement.`;
+                }
+            }
         }
 
         return { user: userNarr, advisor: advNarr, optimized: optNarr };
