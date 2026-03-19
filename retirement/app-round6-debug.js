@@ -166,6 +166,10 @@ const AppV4 = {
         const oasCouple = document.getElementById('oas-section-couple');
         if (oasSingle) oasSingle.classList.toggle('hidden', isCouple);
         if (oasCouple) oasCouple.classList.toggle('hidden', !isCouple);
+        
+        // Show/hide couple accounts toggle
+        const coupleAcctToggle = document.getElementById('couple-accounts-toggle');
+        if (coupleAcctToggle) coupleAcctToggle.classList.toggle('hidden', !isCouple);
 
         // Update household income if couple
         if (isCouple) {
@@ -1313,6 +1317,27 @@ const AppV4 = {
                 if (!btn.contains(e.target) && !menu.contains(e.target)) menu.classList.add('hidden');
             });
         };
+        // Couple accounts toggle (Joint vs Separate)
+        document.getElementById('accounts-joint')?.addEventListener('click', () => {
+            document.getElementById('accounts-joint').classList.add('active');
+            document.getElementById('accounts-separate').classList.remove('active');
+            // Show combined inputs, hide separate
+            document.querySelectorAll('#step-savings > .input-group').forEach(g => g.classList.remove('hidden'));
+            document.getElementById('separate-accounts-section')?.classList.add('hidden');
+            this.accountMode = 'joint';
+        });
+        document.getElementById('accounts-separate')?.addEventListener('click', () => {
+            document.getElementById('accounts-separate').classList.add('active');
+            document.getElementById('accounts-joint').classList.remove('active');
+            // Hide combined RRSP/TFSA/NonReg inputs, show separate
+            ['rrsp', 'tfsa', 'nonreg'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.closest('.input-group')?.classList.add('hidden');
+            });
+            document.getElementById('separate-accounts-section')?.classList.remove('hidden');
+            this.accountMode = 'separate';
+        });
+
         setupDropdown('btn-add-income-dropdown', 'income-dropdown-menu');
         setupDropdown('btn-add-expense-dropdown', 'expense-dropdown-menu');
         setupDropdown('btn-add-account-dropdown', 'account-dropdown-menu');
@@ -2937,9 +2962,15 @@ const AppV4 = {
             income1,
             income2,
 
-            rrsp: parseFloat(document.getElementById('rrsp')?.value) || 0,
-            tfsa: parseFloat(document.getElementById('tfsa')?.value) || 0,
-            nonReg: parseFloat(document.getElementById('nonreg')?.value) || 0,
+            rrsp: this.accountMode === 'separate' 
+                ? (parseFloat(document.getElementById('rrsp-p1')?.value) || 0) + (parseFloat(document.getElementById('rrsp-p2')?.value) || 0)
+                : (parseFloat(document.getElementById('rrsp')?.value) || 0),
+            tfsa: this.accountMode === 'separate'
+                ? (parseFloat(document.getElementById('tfsa-p1')?.value) || 0) + (parseFloat(document.getElementById('tfsa-p2')?.value) || 0)
+                : (parseFloat(document.getElementById('tfsa')?.value) || 0),
+            nonReg: this.accountMode === 'separate'
+                ? (parseFloat(document.getElementById('nonreg-p1')?.value) || 0) + (parseFloat(document.getElementById('nonreg-p2')?.value) || 0)
+                : (parseFloat(document.getElementById('nonreg')?.value) || 0),
             lira: parseFloat(document.getElementById('lira')?.value) || 0,
             other: parseFloat(document.getElementById('other')?.value) || 0,
 

@@ -161,6 +161,15 @@
         <section class="card hidden" id="step-savings">
             <h2>💵 Step 2 of 5: Current Savings</h2>
             <p class="section-intro">How much have you saved for retirement so far?</p>
+            
+            <div id="couple-accounts-toggle" class="hidden" style="margin-bottom: 12px;">
+                <div class="toggle-group" style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+                    <button type="button" class="toggle-btn active" id="accounts-joint" data-mode="joint" style="flex:1;padding:8px;font-size:13px;border:none;cursor:pointer;">Combined</button>
+                    <button type="button" class="toggle-btn" id="accounts-separate" data-mode="separate" style="flex:1;padding:8px;font-size:13px;border:none;border-left:1px solid var(--border);cursor:pointer;">Person 1 / Person 2</button>
+                </div>
+                <small class="input-hint">Combined pools all accounts; Separate tracks each person independently</small>
+            </div>
+            
             <div id="savings-benchmark"></div>
 
             <div class="input-group">
@@ -187,6 +196,42 @@
                 <div class="input-with-prefix">
                     <span class="prefix">$</span>
                     <input type="number" id="nonreg" placeholder="0" min="0" step="1000">
+                </div>
+            </div>
+
+            <!-- Separate accounts (Person 1 / Person 2) — hidden by default -->
+            <div id="separate-accounts-section" class="hidden" style="margin-top: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="step5-form" style="padding: 10px;">
+                        <div class="step5-form-header">Person 1</div>
+                        <div class="input-group" style="margin-bottom: 6px;">
+                            <label style="font-size: 11px;">RRSP</label>
+                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="rrsp-p1" placeholder="0" min="0" step="1000"></div>
+                        </div>
+                        <div class="input-group" style="margin-bottom: 6px;">
+                            <label style="font-size: 11px;">TFSA</label>
+                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="tfsa-p1" placeholder="0" min="0" step="1000"></div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-size: 11px;">Non-Reg</label>
+                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="nonreg-p1" placeholder="0" min="0" step="1000"></div>
+                        </div>
+                    </div>
+                    <div class="step5-form" style="padding: 10px;">
+                        <div class="step5-form-header">Person 2</div>
+                        <div class="input-group" style="margin-bottom: 6px;">
+                            <label style="font-size: 11px;">RRSP</label>
+                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="rrsp-p2" placeholder="0" min="0" step="1000"></div>
+                        </div>
+                        <div class="input-group" style="margin-bottom: 6px;">
+                            <label style="font-size: 11px;">TFSA</label>
+                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="tfsa-p2" placeholder="0" min="0" step="1000"></div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-size: 11px;">Non-Reg</label>
+                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="nonreg-p2" placeholder="0" min="0" step="1000"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1149,34 +1194,34 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000052"></script>
-    <script src="cpp-calculator.js?v=17&t=24000052"></script>
-    <script src="benchmarks.js?v=17&t=24000052"></script>
-    <script src="lifestyle-data.js?v=17&t=24000052"></script>
-    <script src="regional-data.js?v=17&t=24000052"></script>
-    <script src="canada-map.js?v=17&t=24000052"></script>
-    <script src="income-sources.js?v=17&t=24000052"></script>
-    <script src="deep-dive.js?v=17&t=24000052"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000052"></script>
-    <script src="scenario-manager.js?v=17&t=24000052"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000052"></script>
-    <script src="calc.js?v=17&t=24000052"></script>
-    <script src="app-round6-debug.js?v=17&t=24000052"></script>
+    <script src="canada-tax.js?v=17&t=24000053"></script>
+    <script src="cpp-calculator.js?v=17&t=24000053"></script>
+    <script src="benchmarks.js?v=17&t=24000053"></script>
+    <script src="lifestyle-data.js?v=17&t=24000053"></script>
+    <script src="regional-data.js?v=17&t=24000053"></script>
+    <script src="canada-map.js?v=17&t=24000053"></script>
+    <script src="income-sources.js?v=17&t=24000053"></script>
+    <script src="deep-dive.js?v=17&t=24000053"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000053"></script>
+    <script src="scenario-manager.js?v=17&t=24000053"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000053"></script>
+    <script src="calc.js?v=17&t=24000053"></script>
+    <script src="app-round6-debug.js?v=17&t=24000053"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000052"></script>
-    <script src="monte-carlo.js?v=17&t=24000052"></script>
-    <script src="tax-optimizer.js?v=17&t=24000052"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000052"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000052"></script>
-    <script src="advanced-charts.js?v=17&t=24000052"></script>
-    <script src="interactive-sliders.js?v=17&t=24000052"></script>
-    <script src="scenario-storage.js?v=17&t=24000052"></script>
-    <script src="windfalls.js?v=17&t=24000052"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000052"></script>
+    <script src="error-handler.js?v=17&t=24000053"></script>
+    <script src="monte-carlo.js?v=17&t=24000053"></script>
+    <script src="tax-optimizer.js?v=17&t=24000053"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000053"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000053"></script>
+    <script src="advanced-charts.js?v=17&t=24000053"></script>
+    <script src="interactive-sliders.js?v=17&t=24000053"></script>
+    <script src="scenario-storage.js?v=17&t=24000053"></script>
+    <script src="windfalls.js?v=17&t=24000053"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000053"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000052"></script>
+    <script src="slider-inputs.js?v=17&t=24000053"></script>
 
     <!-- Diagnostics removed -->
 

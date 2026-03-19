@@ -44,8 +44,14 @@ const CanadaMap = {
                 console.error(`[CanadaMap] Container #${containerId} not found`);
                 return;
             }
-            container.innerHTML = this._getMapSVG();
+            container.innerHTML = this._getMapSVG() + `
+                <div class="map-legend" style="display:flex;gap:12px;justify-content:center;margin-top:6px;font-size:11px;color:#64748b;">
+                    <span><span style="display:inline-block;width:10px;height:10px;background:#d1fae5;border-radius:2px;vertical-align:middle;"></span> Affordable</span>
+                    <span><span style="display:inline-block;width:10px;height:10px;background:#e8edf3;border-radius:2px;vertical-align:middle;"></span> Average</span>
+                    <span><span style="display:inline-block;width:10px;height:10px;background:#fde8e8;border-radius:2px;vertical-align:middle;"></span> Expensive</span>
+                </div>`;
             this._attachListeners();
+            this._applyAffordabilityColors();
         } catch (error) {
             console.error('[CanadaMap] Render failed:', error);
         }
@@ -69,22 +75,28 @@ const CanadaMap = {
                     <style>
                         .province-path {
                             fill: #e8edf3;
-                            stroke: #94a3b8;
-                            stroke-width: 1.5;
+                            stroke: #fff;
+                            stroke-width: 1;
                             stroke-linejoin: round;
                             cursor: pointer;
-                            transition: fill 0.2s, stroke 0.2s;
+                            transition: fill 0.2s;
+                            paint-order: stroke;
                         }
                         .province-path:hover {
                             fill: #cbd5e1;
-                            stroke: #64748b;
-                            stroke-width: 2;
                         }
                         .province-path.selected {
                             fill: #3b82f6;
                             stroke: #1e40af;
-                            stroke-width: 2;
+                            stroke-width: 1.5;
                         }
+                        .province-path.afford-high { fill: #d1fae5; }
+                        .province-path.afford-mid { fill: #e8edf3; }
+                        .province-path.afford-low { fill: #fde8e8; }
+                        .province-path.afford-high:hover { fill: #a7f3d0; }
+                        .province-path.afford-mid:hover { fill: #cbd5e1; }
+                        .province-path.afford-low:hover { fill: #fca5a5; }
+                        .province-path.selected { fill: #3b82f6 !important; }
                         .province-label {
                             fill: #334155;
                             font-size: 14px;
@@ -101,10 +113,19 @@ const CanadaMap = {
                         .province-label.selected-label {
                             fill: #fff;
                         }
+                        .province-indicator {
+                            font-size: 9px;
+                            pointer-events: none;
+                            text-anchor: middle;
+                            dominant-baseline: middle;
+                            font-family: system-ui, sans-serif;
+                            fill: #475569;
+                        }
                     </style>
                 </defs>
                 ${pathEls}
                 ${labelEls}
+                ${this._getAffordabilityIndicators()}
             </svg>
         `;
     },
@@ -191,6 +212,7 @@ const CanadaMap = {
         
         this.selectedRegion = regionId;
         this._showLocationDisplay(province, regionId);
+        this._trackLocationSelection(province, regionId);
         
         if (this.onSelect) {
             this.onSelect(province, regionId);
@@ -208,6 +230,62 @@ const CanadaMap = {
         
         nameEl.textContent = displayName;
         displayEl.classList.remove('hidden');
+    },
+
+    // Retirement affordability by province (cost of living index, lower = more affordable)
+    _provinceAffordability: {
+        'BC': { col: 120, label: '$$', tier: 'low' },    // Expensive
+        'AB': { col: 100, label: '$', tier: 'mid' },
+        'SK': { col: 88, label: '✓', tier: 'high' },     // Affordable
+        'MB': { col: 90, label: '✓', tier: 'high' },
+        'ON': { col: 115, label: '$$', tier: 'low' },
+        'QC': { col: 95, label: '$', tier: 'mid' },
+        'NB': { col: 85, label: '✓', tier: 'high' },
+        'NS': { col: 90, label: '$', tier: 'mid' },
+        'PE': { col: 82, label: '✓', tier: 'high' },
+        'NL': { col: 88, label: '✓', tier: 'high' }
+    },
+
+    _getAffordabilityIndicators() {
+        const indicators = [];
+        for (const [prov, data] of Object.entries(this._provinceAffordability)) {
+            const [lx, ly] = this._labels[prov] || [0, 0];
+            if (lx === 0) continue;
+            indicators.push(`<text x="${lx}" y="${ly + 16}" class="province-indicator">${data.label}</text>`);
+        }
+        return indicators.join('\n');
+    },
+
+    _applyAffordabilityColors() {
+        for (const [prov, data] of Object.entries(this._provinceAffordability)) {
+            const path = document.querySelector(`[data-province="${prov}"]`);
+            if (path && !path.classList.contains('selected')) {
+                path.classList.add('afford-' + data.tier);
+            }
+        }
+    },
+
+    // Track user location selection for analytics
+    _trackLocationSelection(province, region) {
+        try {
+            const data = {
+                province,
+                region,
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent?.substring(0, 100)
+            };
+            // Store locally
+            const existing = JSON.parse(localStorage.getItem('rc_location_events') || '[]');
+            existing.push(data);
+            // Keep last 50
+            if (existing.length > 50) existing.splice(0, existing.length - 50);
+            localStorage.setItem('rc_location_events', JSON.stringify(existing));
+            
+            // Beacon to analytics endpoint if configured
+            if (window._rcAnalyticsEndpoint) {
+                navigator.sendBeacon?.(window._rcAnalyticsEndpoint, JSON.stringify(data));
+            }
+        } catch (e) { /* silent */ }
     },
 
     setSelection(province, region) {
