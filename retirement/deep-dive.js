@@ -293,12 +293,43 @@ const DeepDive = {
                     <span>${y.age}${rrif}</span><span>${fmtK(income)}</span><span>${fmtK(tax)}</span><span>${rate}%</span><span class="dd-source-preview">${sources[0] || ''}</span>
                 </summary>
                 <div class="dd-year-expanded">
-                    <div class="dd-year-sources">${sources.join(' · ')}${clawback}</div>
-                    <div class="dd-year-balances">
-                        💰 Portfolio: ${fmtK(y.totalBalance || 0)}
-                        ${y.rrsp ? `(RRSP ${fmtK(y.rrsp)}, TFSA ${fmtK(y.tfsa)}, NR ${fmtK(y.nonReg)})` : ''}
+                    <div class="dd-year-detail-grid">
+                        <div class="dd-detail-section">
+                            <div class="dd-detail-title">💰 Account Balances</div>
+                            ${(y.rrsp || 0) > 0 ? `<div class="dd-detail-row"><span>RRSP</span><span>${fmtK(y.rrsp)}</span></div>` : ''}
+                            ${(y.tfsa || 0) > 0 ? `<div class="dd-detail-row"><span>TFSA</span><span>${fmtK(y.tfsa)}</span></div>` : ''}
+                            ${(y.nonReg || 0) > 0 ? `<div class="dd-detail-row"><span>Non-Reg</span><span>${fmtK(y.nonReg)}</span></div>` : ''}
+                            ${(y.lira || 0) > 0 ? `<div class="dd-detail-row"><span>LIRA</span><span>${fmtK(y.lira)}</span></div>` : ''}
+                            ${(y.cash || 0) > 0 ? `<div class="dd-detail-row"><span>Cash</span><span>${fmtK(y.cash)}</span></div>` : ''}
+                            ${(y.other || 0) > 0 ? `<div class="dd-detail-row"><span>Other</span><span>${fmtK(y.other)}</span></div>` : ''}
+                            <div class="dd-detail-row total"><span>Total Portfolio</span><span>${fmtK(y.totalBalance || 0)}</span></div>
+                        </div>
+                        <div class="dd-detail-section">
+                            <div class="dd-detail-title">📥 Income Sources</div>
+                            ${(wb.rrsp || 0) > 0 ? `<div class="dd-detail-row"><span>RRSP withdrawal</span><span>${fmtK(wb.rrsp)}</span></div>` : ''}
+                            ${(wb.tfsa || 0) > 0 ? `<div class="dd-detail-row"><span>TFSA withdrawal</span><span>${fmtK(wb.tfsa)}</span></div>` : ''}
+                            ${(wb.nonReg || 0) > 0 ? `<div class="dd-detail-row"><span>Non-Reg withdrawal</span><span>${fmtK(wb.nonReg)}</span></div>` : ''}
+                            ${(wb.lira || 0) > 0 ? `<div class="dd-detail-row"><span>LIRA/LIF withdrawal</span><span>${fmtK(wb.lira)}</span></div>` : ''}
+                            ${(y.cppReceived || 0) > 0 ? `<div class="dd-detail-row"><span>CPP</span><span>${fmtK(y.cppReceived)}</span></div>` : ''}
+                            ${(y.oasReceived || 0) > 0 ? `<div class="dd-detail-row"><span>OAS</span><span>${fmtK(y.oasReceived)}</span></div>` : ''}
+                            ${(y.gisReceived || 0) > 0 ? `<div class="dd-detail-row"><span>GIS</span><span>${fmtK(y.gisReceived)}</span></div>` : ''}
+                            ${(y.pensionIncome || 0) > 0 ? `<div class="dd-detail-row"><span>Pension</span><span>${fmtK(y.pensionIncome)}</span></div>` : ''}
+                            ${(y.additionalIncome || 0) > 0 ? `<div class="dd-detail-row"><span>Other income</span><span>${fmtK(y.additionalIncome)}</span></div>` : ''}
+                            ${(y.annuityIncome || 0) > 0 ? `<div class="dd-detail-row"><span>Annuity</span><span>${fmtK(y.annuityIncome)}</span></div>` : ''}
+                            <div class="dd-detail-row total"><span>Gross Income</span><span>${fmtK(y.grossIncome || 0)}</span></div>
+                        </div>
+                        <div class="dd-detail-section">
+                            <div class="dd-detail-title">📤 Taxes & Spending</div>
+                            <div class="dd-detail-row"><span>Taxable income</span><span>${fmtK(y.taxableIncome || 0)}</span></div>
+                            <div class="dd-detail-row"><span>Tax paid</span><span class="negative">-${fmtK(tax)}</span></div>
+                            ${(y.oasClawback || 0) > 0 ? `<div class="dd-detail-row"><span>OAS clawback</span><span class="negative">-${fmtK(y.oasClawback)}</span></div>` : ''}
+                            <div class="dd-detail-row"><span>After-tax income</span><span>${fmtK(y.afterTaxIncome || 0)}</span></div>
+                            <div class="dd-detail-row"><span>Target spending</span><span>${fmtK(y.targetSpending || 0)}</span></div>
+                            ${(y.healthcareCost || 0) > 0 ? `<div class="dd-detail-row"><span>Healthcare</span><span>${fmtK(y.healthcareCost)}</span></div>` : ''}
+                            ${(y.rrifMandatory || 0) > 0 ? `<div class="dd-detail-row"><span>RRIF mandatory</span><span>${fmtK(y.rrifMandatory)}</span></div>` : ''}
+                            ${(y.lifMandatory || 0) > 0 ? `<div class="dd-detail-row"><span>LIF mandatory</span><span>${fmtK(y.lifMandatory)}</span></div>` : ''}
+                        </div>
                     </div>
-                    <div class="dd-year-spending">🛒 Spending: ${fmtK(y.targetSpending || 0)} · HC: ${fmtK(y.healthcareCost || 0)}</div>
                 </div>
             </details>`;
         }

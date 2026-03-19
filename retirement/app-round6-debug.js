@@ -1315,6 +1315,21 @@ const AppV4 = {
         };
         setupDropdown('btn-add-income-dropdown', 'income-dropdown-menu');
         setupDropdown('btn-add-expense-dropdown', 'expense-dropdown-menu');
+        setupDropdown('btn-add-account-dropdown', 'account-dropdown-menu');
+        
+        // Account dropdown items show hidden account fields
+        document.querySelectorAll('[data-account]').forEach(item => {
+            item.addEventListener('click', () => {
+                const acct = item.dataset.account;
+                const group = document.getElementById(acct + '-group');
+                if (group) {
+                    group.classList.remove('hidden');
+                    group.querySelector('input')?.focus();
+                }
+                item.closest('.step5-dropdown').classList.add('hidden');
+                item.style.display = 'none'; // Hide from dropdown once added
+            });
+        });
 
         // Wire dropdown items to show forms
         document.querySelectorAll('.step5-dropdown-item').forEach(item => {
@@ -1390,6 +1405,18 @@ const AppV4 = {
         const dtc = document.getElementById('dtc-checkbox')?.checked;
         if (dtc) {
             expenseHTML += `<div class="step5-added-item"><span class="item-label">♿ DTC</span><span class="item-value">~$1,900/yr savings</span></div>`;
+        }
+        
+        // Debt
+        const debt = parseFloat(document.getElementById('current-debt')?.value) || 0;
+        if (debt > 0) {
+            expenseHTML += `<div class="step5-added-item"><span class="item-label">💳 Debt</span><span class="item-value">${fmt(debt)}</span></div>`;
+        }
+        
+        // Healthcare
+        const hcCost = document.getElementById('healthcare-annual')?.textContent || '';
+        if (hcCost && hcCost !== '$0') {
+            expenseHTML += `<div class="step5-added-item"><span class="item-label">🏥 Healthcare</span><span class="item-value">${hcCost}/yr</span></div>`;
         }
         
         incomeContainer.innerHTML = incomeHTML;
@@ -2027,6 +2054,15 @@ const AppV4 = {
         // Show target step
         document.getElementById(`step-${step}`)?.classList.remove('hidden');
         this.currentStep = step;
+        
+        // Close any open Advanced Assumptions / details sections
+        document.querySelectorAll('.step5-section[open]').forEach(d => d.removeAttribute('open'));
+        const assumptionsContent = document.getElementById('assumptions-content');
+        const assumptionsIcon = document.querySelector('.toggle-icon');
+        if (assumptionsContent && !assumptionsContent.classList.contains('hidden')) {
+            assumptionsContent.classList.add('hidden');
+            if (assumptionsIcon) assumptionsIcon.textContent = '▼';
+        }
         
         // Auto-update previews when entering certain steps
         if (step === 'contributions') {

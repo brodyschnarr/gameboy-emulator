@@ -190,32 +190,33 @@
                 </div>
             </div>
 
-            <div class="input-group">
-                <label for="lira">LIRA (Locked-In Retirement Account)
-                    <button type="button" class="info-btn" data-tooltip="From employer pension plans. Cannot withdraw freely — converts to LIF at retirement with annual max/min withdrawal limits.">?</button>
-                </label>
-                <span class="input-impact">Locked in — annual withdrawal caps apply (LIF rules)</span>
-                <div class="input-with-prefix">
-                    <span class="prefix">$</span>
-                    <input type="number" id="lira" placeholder="0" min="0" step="1000">
+            <div class="step5-add-wrapper" style="margin: 12px 0;">
+                <button type="button" class="btn-secondary" id="btn-add-account-dropdown">+ Add Another Account</button>
+                <div class="step5-dropdown hidden" id="account-dropdown-menu">
+                    <button type="button" class="step5-dropdown-item" data-account="lira">🔒 LIRA (Locked-In)</button>
+                    <button type="button" class="step5-dropdown-item" data-account="other">📊 Other Investments</button>
+                    <button type="button" class="step5-dropdown-item" data-account="cash">🏦 Cash / Savings Account</button>
                 </div>
             </div>
-
-            <div class="input-group">
-                <label for="other">Other Investments</label>
-                <span class="input-impact">Fully taxable withdrawals</span>
-                <div class="input-with-prefix">
-                    <span class="prefix">$</span>
-                    <input type="number" id="other" placeholder="0" min="0" step="1000">
+            <div id="extra-accounts-container">
+                <div class="input-group hidden" id="lira-group">
+                    <label for="lira" style="font-size: 14px;">🔒 LIRA <button type="button" class="info-btn" data-tooltip="From employer pension plans. Converts to LIF at retirement.">?</button></label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="lira" placeholder="0" min="0" step="1000">
+                    </div>
                 </div>
-            </div>
-
-            <div class="input-group">
-                <label for="cash">Cash / Savings Account</label>
-                <span class="input-impact">Low growth (~1.5%) — chequing, HISA, GICs</span>
-                <div class="input-with-prefix">
-                    <span class="prefix">$</span>
-                    <input type="number" id="cash" placeholder="0" min="0" step="1000">
+                <div class="input-group hidden" id="other-group">
+                    <label for="other" style="font-size: 14px;">📊 Other Investments</label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="other" placeholder="0" min="0" step="1000">
+                    </div>
+                </div>
+                <div class="input-group hidden" id="cash-group">
+                    <label for="cash" style="font-size: 14px;">🏦 Cash / Savings</label>
+                    <span class="input-impact" style="font-size: 11px;">Low growth (~1.5%) — chequing, HISA, GICs</span>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="cash" placeholder="0" min="0" step="1000">
+                    </div>
                 </div>
             </div>
 
@@ -627,46 +628,7 @@
         ═══════════════════════════════════════ -->
         <section class="card hidden" id="step-healthcare">
             <h2>⚙️ Step 5 of 5: Fine-Tune Your Plan</h2>
-            <p class="section-intro">Most people just need debt and healthcare below. Expand sections to add more detail.</p>
-
-            <!-- ═══ CORE: Always visible ═══ -->
-            <div class="input-group">
-                <label>Current Debt</label>
-                <span class="input-impact">Paid off before retirement from savings</span>
-                <div class="input-with-prefix">
-                    <span class="prefix">$</span>
-                    <input type="number" id="current-debt" placeholder="0" min="0" step="1000">
-                </div>
-                <small class="input-hint">Mortgage, loans, etc.</small>
-            </div>
-
-            <div class="input-group hidden" id="debt-payoff-group">
-                <label for="debt-payoff-age">Plan to pay off by age:</label>
-                <input type="number" id="debt-payoff-age" placeholder="65" min="0" max="100">
-            </div>
-
-            <div class="input-group">
-                <label>Healthcare Costs</label>
-                <span class="input-impact">Rises sharply after 75</span>
-                <div class="slider-container">
-                    <input type="range" id="health-status-slider" min="0" max="2" value="1" step="1">
-                    <div class="slider-labels">
-                        <span>Excellent</span>
-                        <span>Average</span>
-                        <span>Fair</span>
-                    </div>
-                </div>
-                <div class="healthcare-preview" id="healthcare-preview">
-                    <div class="preview-line">
-                        <span>Estimated annual cost:</span>
-                        <span id="healthcare-annual">$0</span>
-                    </div>
-                    <div class="preview-line">
-                        <span>Total over retirement:</span>
-                        <span id="healthcare-total">$0</span>
-                    </div>
-                </div>
-            </div>
+            <p class="section-intro">Add anything that affects your retirement. Most people can skip straight to Calculate.</p>
 
             <!-- ═══ RETIREMENT INCOME (dropdown-based) ═══ -->
             <div class="step5-add-section">
@@ -746,6 +708,8 @@
                 <div class="step5-add-wrapper">
                     <button type="button" class="btn-secondary" id="btn-add-expense-dropdown">+ Add Retirement Expense</button>
                     <div class="step5-dropdown hidden" id="expense-dropdown-menu">
+                        <button type="button" class="step5-dropdown-item" data-type="debt">💳 Current Debt</button>
+                        <button type="button" class="step5-dropdown-item" data-type="healthcare">🏥 Healthcare Costs</button>
                         <button type="button" class="step5-dropdown-item" data-type="ltc">🏥 Long-Term Care</button>
                         <button type="button" class="step5-dropdown-item" data-type="dtc">♿ Disability Tax Credit</button>
                         <button type="button" class="step5-dropdown-item" data-type="estate">🏠 Estate Asset</button>
@@ -754,6 +718,51 @@
             </div>
 
             <!-- Hidden forms for each expense type -->
+            <div id="form-debt" class="step5-form hidden">
+                <div class="step5-form-header">💳 Current Debt</div>
+                <div>
+                    <label for="current-debt" style="font-size: 12px;">Total Debt</label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="current-debt" placeholder="0" min="0" step="1000">
+                    </div>
+                    <small class="input-hint">Mortgage, loans — paid off before retirement from savings</small>
+                </div>
+                <div style="margin-top: 6px;" id="debt-payoff-group">
+                    <label for="debt-payoff-age" style="font-size: 12px;">Pay off by age</label>
+                    <input type="number" id="debt-payoff-age" placeholder="65" min="0" max="100" style="font-size: 13px;">
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="debt">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="debt">Cancel</button>
+                </div>
+            </div>
+
+            <div id="form-healthcare" class="step5-form hidden">
+                <div class="step5-form-header">🏥 Healthcare Costs</div>
+                <div class="slider-container">
+                    <input type="range" id="health-status-slider" min="0" max="2" value="1" step="1">
+                    <div class="slider-labels">
+                        <span>Excellent</span>
+                        <span>Average</span>
+                        <span>Fair</span>
+                    </div>
+                </div>
+                <div class="healthcare-preview" id="healthcare-preview">
+                    <div class="preview-line">
+                        <span>Estimated annual cost:</span>
+                        <span id="healthcare-annual">$0</span>
+                    </div>
+                    <div class="preview-line">
+                        <span>Total over retirement:</span>
+                        <span id="healthcare-total">$0</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="healthcare">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="healthcare">Cancel</button>
+                </div>
+            </div>
+
             <div id="form-ltc" class="step5-form hidden">
                 <div class="step5-form-header">🏥 Long-Term Care</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -1140,34 +1149,34 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000051"></script>
-    <script src="cpp-calculator.js?v=17&t=24000051"></script>
-    <script src="benchmarks.js?v=17&t=24000051"></script>
-    <script src="lifestyle-data.js?v=17&t=24000051"></script>
-    <script src="regional-data.js?v=17&t=24000051"></script>
-    <script src="canada-map.js?v=17&t=24000051"></script>
-    <script src="income-sources.js?v=17&t=24000051"></script>
-    <script src="deep-dive.js?v=17&t=24000051"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000051"></script>
-    <script src="scenario-manager.js?v=17&t=24000051"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000051"></script>
-    <script src="calc.js?v=17&t=24000051"></script>
-    <script src="app-round6-debug.js?v=17&t=24000051"></script>
+    <script src="canada-tax.js?v=17&t=24000052"></script>
+    <script src="cpp-calculator.js?v=17&t=24000052"></script>
+    <script src="benchmarks.js?v=17&t=24000052"></script>
+    <script src="lifestyle-data.js?v=17&t=24000052"></script>
+    <script src="regional-data.js?v=17&t=24000052"></script>
+    <script src="canada-map.js?v=17&t=24000052"></script>
+    <script src="income-sources.js?v=17&t=24000052"></script>
+    <script src="deep-dive.js?v=17&t=24000052"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000052"></script>
+    <script src="scenario-manager.js?v=17&t=24000052"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000052"></script>
+    <script src="calc.js?v=17&t=24000052"></script>
+    <script src="app-round6-debug.js?v=17&t=24000052"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000051"></script>
-    <script src="monte-carlo.js?v=17&t=24000051"></script>
-    <script src="tax-optimizer.js?v=17&t=24000051"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000051"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000051"></script>
-    <script src="advanced-charts.js?v=17&t=24000051"></script>
-    <script src="interactive-sliders.js?v=17&t=24000051"></script>
-    <script src="scenario-storage.js?v=17&t=24000051"></script>
-    <script src="windfalls.js?v=17&t=24000051"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000051"></script>
+    <script src="error-handler.js?v=17&t=24000052"></script>
+    <script src="monte-carlo.js?v=17&t=24000052"></script>
+    <script src="tax-optimizer.js?v=17&t=24000052"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000052"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000052"></script>
+    <script src="advanced-charts.js?v=17&t=24000052"></script>
+    <script src="interactive-sliders.js?v=17&t=24000052"></script>
+    <script src="scenario-storage.js?v=17&t=24000052"></script>
+    <script src="windfalls.js?v=17&t=24000052"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000052"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000051"></script>
+    <script src="slider-inputs.js?v=17&t=24000052"></script>
 
     <!-- Diagnostics removed -->
 

@@ -3746,3 +3746,37 @@ input:focus {
     background: none; border: none; color: var(--text-muted);
     cursor: pointer; font-size: 16px; padding: 0 4px;
 }
+
+/* ═══ Deep Dive Granular Year Detail ═══ */
+.dd-year-detail-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 0;
+}
+.dd-detail-section {
+    background: var(--bg, #f8fafc);
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+.dd-detail-title {
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+.dd-detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 2px 0;
+}
+.dd-detail-row.total {
+    font-weight: 700;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+    padding-top: 4px;
+}
+.dd-detail-row .negative { color: #ef4444; }
