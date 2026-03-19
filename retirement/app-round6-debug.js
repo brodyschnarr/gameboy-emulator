@@ -1384,39 +1384,40 @@ const AppV4 = {
             const lifetimeTax = (stats) => stats.tax + (stats.estateTax || 0);
             const userLifetimeTax = lifetimeTax(userStats);
 
-            const buildCol = (header, stats, maxSpend, isWinner, note, merFees) => {
+            const buildCol = (header, stats, maxSpend, isWinner, note, merFees, merRate) => {
                 const govTotal = stats.cpp + stats.oas + stats.gis;
                 const thisLifetimeTax = lifetimeTax(stats);
-                const taxDiff = thisLifetimeTax - userLifetimeTax;
-                // Only show savings badge on non-"Your Plan" columns
-                const isUserPlan = header.includes('Your Plan');
-                let taxBadge = '';
-                if (!isUserPlan && taxDiff !== 0) {
-                    if (taxDiff < 0) {
-                        taxBadge = `<span class="tax-savings-badge positive">Save ${fmt(Math.abs(taxDiff))}</span>`;
-                    } else {
-                        taxBadge = `<span class="tax-savings-badge negative">${fmt(taxDiff)} more</span>`;
-                    }
-                }
+                const retYears = (inputs.lifeExpectancy || 90) - (inputs.retirementAge || 65);
+                const avgAnnualTax = retYears > 0 ? Math.round(stats.tax / retYears) : 0;
+                const avgAnnualFee = retYears > 0 && merFees ? Math.round(merFees / retYears) : 0;
                 return `
                 <div class="strategy-col ${isWinner ? '' : 'loser'}">
                     <div class="strategy-col-header">${header}</div>
                     ${maxSpend ? `<div class="strategy-stat highlight"><span>Max Spending</span><span>${fmt(maxSpend)}/yr</span></div>` : ''}
-                    <div class="strategy-stat"><span>💰 Lifetime Tax</span><span>${fmt(thisLifetimeTax)}</span></div>
-                    ${taxBadge ? `<div class="tax-badge-row">${taxBadge}</div>` : ''}
                     <details class="strategy-details">
-                        <summary class="strategy-stat"><span>Tax breakdown</span><span></span></summary>
+                        <summary class="strategy-stat"><span>💰 Lifetime Tax</span><span>${fmt(thisLifetimeTax)}</span></summary>
                         <div class="strategy-stat sub"><span>Income tax</span><span>${fmt(stats.tax)}</span></div>
+                        <div class="strategy-stat sub"><span>Avg/yr</span><span>${fmt(avgAnnualTax)}/yr</span></div>
                         <div class="strategy-stat sub"><span>Estate tax</span><span>${fmt(stats.estateTax || 0)}</span></div>
                     </details>
                     <details class="strategy-details">
                         <summary class="strategy-stat"><span>🏛️ Gov Benefits</span><span>${fmt(govTotal)}</span></summary>
                         <div class="strategy-stat sub"><span>CPP</span><span>${fmt(stats.cpp)}</span></div>
                         <div class="strategy-stat sub"><span>OAS</span><span>${fmt(stats.oas)}</span></div>
-                        <div class="strategy-stat sub"><span>GIS</span><span>${fmt(stats.gis)}</span></div>
+                        ${stats.gis > 0 ? `<div class="strategy-stat sub"><span>GIS</span><span>${fmt(stats.gis)}</span></div>` : ''}
                     </details>
-                    ${merFees !== undefined ? `<div class="strategy-stat"><span>📋 Fees</span><span>${fmt(merFees)}</span></div>` : ''}
-                    <div class="strategy-stat"><span>🏠 Estate</span><span>${stats.netEstate > 0 ? fmt(stats.netEstate) : (stats.legacy > 0 ? fmt(stats.legacy) : '$0')}</span></div>
+                    <details class="strategy-details">
+                        <summary class="strategy-stat"><span>📋 Fees</span><span>${merFees !== undefined ? fmt(merFees) : '$0'}</span></summary>
+                        <div class="strategy-stat sub"><span>MER rate</span><span>${merRate || '0'}%</span></div>
+                        <div class="strategy-stat sub"><span>Avg/yr</span><span>${fmt(avgAnnualFee)}/yr</span></div>
+                        <div class="strategy-stat sub hint"><span>Charged on portfolio balance each year</span></div>
+                    </details>
+                    <details class="strategy-details">
+                        <summary class="strategy-stat"><span>🏠 Estate</span><span>${stats.netEstate > 0 ? fmt(stats.netEstate) : (stats.legacy > 0 ? fmt(stats.legacy) : '$0')}</span></summary>
+                        <div class="strategy-stat sub"><span>Portfolio at death</span><span>${fmt(stats.legacy)}</span></div>
+                        ${stats.estateTax > 0 ? `<div class="strategy-stat sub"><span>Deemed disposition</span><span>-${fmt(stats.estateTax)}</span></div>` : ''}
+                        <div class="strategy-stat sub"><span>Net to heirs</span><span>${fmt(stats.netEstate || stats.legacy)}</span></div>
+                    </details>
                     <div class="strategy-stat"><span>📅 Lasts To</span><span>Age ${stats.lasts}</span></div>
                     ${note ? `<div class="strategy-note">${note}</div>` : ''}
                 </div>`;
@@ -1440,10 +1441,10 @@ const AppV4 = {
             summary.innerHTML = `
                 <div class="strategy-summary-grid three-col">
                     ${buildCol('📋 Your Plan', userStats, userMax, winnerKey === 'smart',
-                        `CPP at ${inputs.cppStartAge}, OAS at ${inputs.oasStartAge}`, userFees)}
+                        `CPP at ${inputs.cppStartAge}, OAS at ${inputs.oasStartAge}`, userFees, '0.25')}
                     ${buildCol('👔 Advisor', advStats, advMax, winnerKey === 'advisor',
-                        'CPP/OAS at 65, bracket-filling', advFees)}
-                    ${buildCol('🎯 Optimized', optStats, optMax || optParams.maxSpend, winnerKey === 'optimized', optNote, optFees)}
+                        'CPP/OAS at 65, bracket-filling', advFees, '1.0')}
+                    ${buildCol('🎯 Optimized', optStats, optMax || optParams.maxSpend, winnerKey === 'optimized', optNote, optFees, '0.25')}
                 </div>
                 <div class="strategy-verdict positive">
                     🏆 <strong>${allPlans[0].label}</strong> lets you spend <strong>${fmt(bestMax)}/yr</strong>
