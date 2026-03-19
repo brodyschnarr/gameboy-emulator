@@ -2055,11 +2055,19 @@ const AppV4 = {
             + (parseFloat(document.getElementById('nonreg')?.value) || 0)
             + (parseFloat(document.getElementById('other')?.value) || 0);
         const monthly = parseFloat(document.getElementById('monthly-contribution')?.value) || 0;
+        const returnRate = (parseFloat(document.getElementById('return-rate')?.value) || 6) / 100;
+        const merFee = (parseFloat(document.getElementById('mer-fee')?.value) || 0) / 100;
+        const netReturn = returnRate - merFee;
+        const contribGrowth = (parseFloat(document.getElementById('contribution-growth')?.value) || 0) / 100;
         const fv = (years) => {
             if (years <= 0) return totalSavings;
-            const r = 0.06 / 12;
-            const n = years * 12;
-            return totalSavings * Math.pow(1 + r, n) + monthly * ((Math.pow(1 + r, n) - 1) / r);
+            // Year-by-year to handle contribution growth
+            let balance = totalSavings;
+            for (let y = 0; y < years; y++) {
+                const thisYearMonthly = monthly * Math.pow(1 + contribGrowth, y);
+                balance = balance * (1 + netReturn) + thisYearMonthly * 12;
+            }
+            return balance;
         };
         // Pick two meaningful milestone ages based on current age
         // If already 55+, show current + 5 years out
@@ -2080,7 +2088,7 @@ const AppV4 = {
         el.innerHTML = `
             <strong>📊 Your projected portfolio:</strong><br>
             At ${age1}: ~<strong>${fmtK(at1)}</strong> | At ${age2}: ~<strong>${fmtK(at2)}</strong>
-            <br><small style="opacity: 0.8;">Based on current savings + contributions at 6% return</small>
+            <br><small style="opacity: 0.8;">Based on ${(netReturn*100).toFixed(1)}% net return${contribGrowth > 0 ? `, ${(contribGrowth*100).toFixed(1)}% annual contrib increase` : ''}</small>
         `;
     },
 
