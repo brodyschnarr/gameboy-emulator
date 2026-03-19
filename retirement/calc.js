@@ -193,6 +193,8 @@ const RetirementCalcV4 = {
             downsizingAge: downsizingAge || null,
             downsizingProceeds: downsizingProceeds || 0,
             downsizingSpendingChange: downsizingSpendingChange || 0,
+            rrspRoomOverride: inputs.rrspRoomOverride,
+            tfsaRoomOverride: inputs.tfsaRoomOverride,
         });
 
         // 5. Calculate probability of success
@@ -441,7 +443,9 @@ const RetirementCalcV4 = {
             dtc = false,
             downsizingAge = null,
             downsizingProceeds = 0,
-            downsizingSpendingChange = 0
+            downsizingSpendingChange = 0,
+            rrspRoomOverride,
+            tfsaRoomOverride
         } = params;
 
         const projection = [];
@@ -459,23 +463,61 @@ const RetirementCalcV4 = {
         const r = returnRate / 100;
         const inf = inflationRate / 100;
 
-        // Estimate accumulated contribution room
-        // TFSA: room accumulates from age 18 or 2009 ($5K-$7K/yr). Total in 2025 ≈ $95K for someone 18+ since 2009.
-        // Available room = total accumulated - current balance
+        // ═══ TFSA Room: exact historical limits by year ═══
+        // CRA published annual limits:
+        const TFSA_LIMITS = {
+            2009: 5000, 2010: 5000, 2011: 5000, 2012: 5000,
+            2013: 5500, 2014: 5500,
+            2015: 10000,
+            2016: 5500, 2017: 5500, 2018: 5500,
+            2019: 6000, 2020: 6000, 2021: 6000, 2022: 6000,
+            2023: 6500,
+            2024: 7000, 2025: 7000
+        };
         const currentYear = new Date().getFullYear();
-        const tfsaStartYear = Math.max(2009, currentYear - (startAge - 18));
-        const tfsaYearsAccumulated = currentYear - tfsaStartYear + 1;
-        // Approximate: avg ~$6K/yr across 2009-2025 (varies $5K-$7K)
-        const estimatedTotalTFSARoom = tfsaYearsAccumulated * 6000;
-        let tfsaRoom = Math.max(0, estimatedTotalTFSARoom - (accounts.tfsa || 0));
+        const birthYear = currentYear - startAge;
+        const tfsaEligibleFrom = Math.max(2009, birthYear + 18); // Age 18 or 2009
 
-        // RRSP: 18% of income per year, max ~$31K. Unused room carries forward.
-        // Estimate: assume they've been working ~(age-22) years at current income
-        const workingYears = Math.max(0, startAge - 22);
-        const annualRRSPLimit = Math.min(currentIncome * 0.18, 31560);
-        // Estimate past contributions based on current RRSP balance vs what room would have accumulated
-        const estimatedTotalRRSPRoom = workingYears * annualRRSPLimit;
-        let rrspRoom = Math.max(0, estimatedTotalRRSPRoom - (accounts.rrsp || 0));
+        // Sum up exact room from eligible year to current year
+        let tfsaTotalRoom = 0;
+        for (let yr = tfsaEligibleFrom; yr <= currentYear; yr++) {
+            tfsaTotalRoom += TFSA_LIMITS[yr] || 7000; // Future years: $7K (indexed below)
+        }
+        // Available room = total accumulated - current balance (what they've already contributed)
+        let tfsaRoom = Math.max(0, tfsaTotalRoom - (accounts.tfsa || 0));
+
+        // ═══ RRSP Room: estimated from income history ═══
+        // CRA RRSP dollar limits by year (for reference):
+        const RRSP_MAX = {
+            2009: 21000, 2010: 22000, 2011: 22450, 2012: 22970,
+            2013: 23820, 2014: 24270, 2015: 24930, 2016: 25370,
+            2017: 26010, 2018: 26230, 2019: 26500, 2020: 27230,
+            2021: 27830, 2022: 29210, 2023: 30780, 2024: 31560, 2025: 32490
+        };
+        // Estimate past income trajectory: assume income grew ~3%/yr from a starting point
+        // Working from current income backward gives more realistic estimates
+        const workStartAge = 22;
+        const yearsWorked = Math.max(0, startAge - workStartAge);
+        const incomeGrowthRate = 0.03; // Assumed 3% annual raises
+        let rrspTotalRoom = 0;
+        for (let i = 0; i < yearsWorked; i++) {
+            const yearNum = currentYear - yearsWorked + i;
+            // Estimate income for that year (work backward from current income)
+            const yearsAgo = yearsWorked - i;
+            const estimatedIncome = currentIncome / Math.pow(1 + incomeGrowthRate, yearsAgo);
+            const rrspMaxForYear = RRSP_MAX[yearNum] || 31560;
+            const roomThisYear = Math.min(estimatedIncome * 0.18, rrspMaxForYear);
+            rrspTotalRoom += roomThisYear;
+        }
+        // Available room = total accumulated room - current RRSP balance
+        // (RRSP balance approximates lifetime contributions + growth, but contributions < balance due to growth)
+        // Better estimate: assume avg return ~5%, back-calculate rough contributions from balance
+        // Simple approach: assume current balance ≈ contributions × 1.5 (growth factor)
+        const estimatedPastContributions = (accounts.rrsp || 0) / 1.5;
+        let rrspRoom = Math.max(0, rrspTotalRoom - estimatedPastContributions);
+        // Allow override if user provides it
+        if (params.rrspRoomOverride !== undefined) rrspRoom = params.rrspRoomOverride;
+        if (params.tfsaRoomOverride !== undefined) tfsaRoom = params.tfsaRoomOverride;
 
         for (let age = startAge; age <= lifeExpectancy; age++) {
             const isRetired = age >= retirementAge;
@@ -527,9 +569,15 @@ const RetirementCalcV4 = {
                 rrspRoom -= rrspContrib;
 
                 // Add next year's new room
+                const nextCalYear = currentYear + (age - startAge + 1);
                 const cpiNextYear = Math.pow(1 + inflationRate / 100, age - startAge + 1);
-                tfsaRoom += 7000 * cpiNextYear;  // $7K/yr indexed to CPI
-                rrspRoom += Math.min(currentIncome * cpiNextYear * 0.18, 31560 * cpiNextYear);
+                // TFSA: use known limits or $7K indexed for future years
+                const tfsaNewRoom = TFSA_LIMITS[nextCalYear] || Math.round(7000 * cpiNextYear / 500) * 500; // CRA rounds to nearest $500
+                tfsaRoom += tfsaNewRoom;
+                // RRSP: 18% of income (growing with contrib growth rate), capped at CRA max (indexed)
+                const incomeForRRSP = currentIncome * Math.pow(1 + contributionGrowthRate, age - startAge + 1);
+                const rrspMaxFuture = RRSP_MAX[nextCalYear] || Math.round(31560 * cpiNextYear / 10) * 10;
+                rrspRoom += Math.min(incomeForRRSP * 0.18, rrspMaxFuture);
                 
                 balances.rrsp += rrspContrib;
                 balances.tfsa += tfsaContrib;

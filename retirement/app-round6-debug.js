@@ -2725,6 +2725,10 @@ const AppV4 = {
             merFee: parseFloat(document.getElementById('mer-fee')?.value) || 0,
             spendingCurve: this.spendingCurve || 'flat',
 
+            // Contribution room overrides (optional)
+            rrspRoomOverride: document.getElementById('rrsp-room-override')?.value ? parseFloat(document.getElementById('rrsp-room-override').value) : undefined,
+            tfsaRoomOverride: document.getElementById('tfsa-room-override')?.value ? parseFloat(document.getElementById('tfsa-room-override').value) : undefined,
+
             // Tier 2/3 features
             healthcareInflation: parseFloat(document.getElementById('healthcare-inflation')?.value) || 5,
             ltcMonthly: parseFloat(document.getElementById('ltc-monthly')?.value) || 0,
