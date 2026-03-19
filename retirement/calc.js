@@ -100,6 +100,11 @@ const RetirementCalcV4 = {
 
         const yearsToRetirement = retirementAge - currentAge;
         const isFamilyMode = familyStatus === 'couple';
+        
+        // Sanitize income inputs (NaN from empty form fields)
+        const safeIncome = (!currentIncome || isNaN(currentIncome)) ? 70000 : currentIncome;
+        const safeIncome1 = isFamilyMode ? ((!income1 || isNaN(income1)) ? safeIncome : income1) : safeIncome;
+        const safeIncome2 = isFamilyMode ? ((!income2 || isNaN(income2)) ? 0 : income2) : 0;
 
         // FIX #8: Normalize contribution split to sum to 1.0
         const normalizedSplit = this._normalizeSplit(contributionSplit);
@@ -112,8 +117,8 @@ const RetirementCalcV4 = {
 
         // 1. Calculate government benefits (base amounts at age 65)
         const govBenefits = this._calculateGovernmentBenefits({
-            income1: isFamilyMode ? income1 : currentIncome,
-            income2: isFamilyMode ? income2 : 0,
+            income1: safeIncome1,
+            income2: safeIncome2,
             retirementAge,
             cppStartAge: cppStartAge || 65,
             cppStartAgeP2: cppStartAgeP2 || cppStartAge || 65,
@@ -159,7 +164,7 @@ const RetirementCalcV4 = {
             lifeExpectancy,
             accounts: { rrsp, tfsa, nonReg, other, cash, lira: lira || 0 },
             annualContribution: monthlyContribution * 12,
-            currentIncome: currentIncome || 70000,
+            currentIncome: safeIncome,
             contributionSplit: normalizedSplit,
             contributionGrowthRate: (contributionGrowthRate || 0) / 100,
             baseAnnualSpending: futureAnnualSpending,

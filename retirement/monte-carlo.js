@@ -113,6 +113,11 @@ const MonteCarloSimulator = {
         const yearsToRetirement = retirementAge - currentAge;
         const isSingle = familyStatus === 'single';
         
+        // Sanitize income (NaN from empty form fields)
+        const safeIncome = (!currentIncome || isNaN(currentIncome)) ? 70000 : currentIncome;
+        const safeIncome1 = !isSingle ? ((!income1 || isNaN(income1)) ? safeIncome : income1) : safeIncome;
+        const safeIncome2 = !isSingle ? ((!income2 || isNaN(income2)) ? 0 : income2) : 0;
+        
         // Normalize split (FIX #8)
         const normalizedSplit = RetirementCalcV4._normalizeSplit(contributionSplit);
 
@@ -123,8 +128,8 @@ const MonteCarloSimulator = {
             : p1ContribYears;
 
         const govBenefits = RetirementCalcV4._calculateGovernmentBenefits({
-            income1: isSingle ? currentIncome : income1,
-            income2: isSingle ? 0 : income2,
+            income1: safeIncome1,
+            income2: safeIncome2,
             retirementAge,
             cppStartAge: cppStartAge || 65,
             cppStartAgeP2: cppStartAgeP2 || cppStartAge || 65,

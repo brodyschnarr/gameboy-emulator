@@ -535,6 +535,34 @@ console.log('\n📊 20. BPA (Basic Personal Amount) Applied');
     assert(tax.total <= 500, `Low income ($15K) pays minimal tax: $${Math.round(tax.total)} (BPA shelters it)`);
 }
 
+// ════════════════════════════════════════
+console.log('\n📊 21. NaN Input Sanitization');
+// ════════════════════════════════════════
+
+{
+    // NaN income should not leak into results
+    const inputs = baseInputs({ currentIncome: NaN });
+    const r = RetirementCalcV4.calculate(inputs);
+    const hasNaN = r.yearByYear.some(y => Object.values(y).some(v => typeof v === 'number' && isNaN(v)));
+    assert(!hasNaN, 'NaN income does not leak into yearByYear');
+}
+
+{
+    // undefined income
+    const inputs = baseInputs();
+    delete inputs.currentIncome;
+    const r = RetirementCalcV4.calculate(inputs);
+    const hasNaN = r.yearByYear.some(y => Object.values(y).some(v => typeof v === 'number' && isNaN(v)));
+    assert(!hasNaN, 'undefined income does not leak into yearByYear');
+}
+
+{
+    // MC with NaN income
+    const inputs = baseInputs({ currentIncome: NaN });
+    const mc = MonteCarloSimulator.simulate(inputs, { iterations: 10 });
+    assert(mc && !isNaN(mc.successRate), 'MC handles NaN income gracefully');
+}
+
 // ══════════════════════════════════════════════════
 console.log('\n══════════════════════════════════════════════════');
 console.log(`Results: ${passed} passed, ${failed} failed`);

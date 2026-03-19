@@ -34,7 +34,7 @@ const DeepDive = {
         const gisStartYear = retire.find(y => y.gisReceived > 0);
         const rrifStartYear = retire.find(y => (y.rrifMandatory || 0) > 0);
         const depletionYear = retire.find(y => (y.totalBalance || 0) < 100);
-        const peakBalance = Math.max(...years.map(y => y.totalBalance || 0));
+        const peakBalance = years.length > 0 ? Math.max(...years.map(y => y.totalBalance || 0)) : 0;
         const peakYear = years.find(y => (y.totalBalance || 0) === peakBalance);
         const clawbackYears = retire.filter(y => (y.oasClawback || 0) > 0);
         const totalClawback = clawbackYears.reduce((s, y) => s + (y.oasClawback || 0), 0);
@@ -177,7 +177,7 @@ const DeepDive = {
             { name: 'Other', val: otherAtRet + cashAtRet, cls: 'other', note: 'Fully taxable on withdrawal.' }
         ].filter(a => a.val > 0);
 
-        const maxAcct = Math.max(...accounts.map(a => a.val));
+        const maxAcct = accounts.length > 0 ? Math.max(...accounts.map(a => a.val)) : 1;
         for (const acct of accounts) {
             const width = Math.max(5, (acct.val / maxAcct) * 100);
             const share = (acct.val / portfolioAtRet * 100).toFixed(0);
