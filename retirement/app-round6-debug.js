@@ -1420,6 +1420,7 @@ const AppV4 = {
                     </details>
                     <div class="strategy-stat"><span>📅 Lasts To</span><span>Age ${stats.lasts}</span></div>
                     ${note ? `<div class="strategy-note">${note}</div>` : ''}
+                    <button type="button" class="btn-deep-dive" data-strategy="${header}">📋 Deep Dive</button>
                 </div>`;
             };
 
@@ -1494,6 +1495,20 @@ const AppV4 = {
                     tab.classList.add('active');
                     const data = this._strategyData[tab.dataset.strategy];
                     if (data) this._drawYearBreakdown(data.results.yearByYear, data.inputs.retirementAge);
+                });
+            });
+
+            // Deep Dive buttons
+            summary.querySelectorAll('.btn-deep-dive').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const label = btn.dataset.strategy;
+                    let data;
+                    if (label.includes('Your Plan')) data = this._strategyData.smart;
+                    else if (label.includes('Advisor')) data = this._strategyData.advisor;
+                    else data = this._strategyData.optimized;
+                    if (data && typeof DeepDive !== 'undefined') {
+                        DeepDive.show(data.results, data.inputs, label.replace(/[📋👔🎯]\s*/g, '').trim());
+                    }
                 });
             });
 
