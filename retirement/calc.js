@@ -459,6 +459,24 @@ const RetirementCalcV4 = {
         const r = returnRate / 100;
         const inf = inflationRate / 100;
 
+        // Estimate accumulated contribution room
+        // TFSA: room accumulates from age 18 or 2009 ($5K-$7K/yr). Total in 2025 ≈ $95K for someone 18+ since 2009.
+        // Available room = total accumulated - current balance
+        const currentYear = new Date().getFullYear();
+        const tfsaStartYear = Math.max(2009, currentYear - (startAge - 18));
+        const tfsaYearsAccumulated = currentYear - tfsaStartYear + 1;
+        // Approximate: avg ~$6K/yr across 2009-2025 (varies $5K-$7K)
+        const estimatedTotalTFSARoom = tfsaYearsAccumulated * 6000;
+        let tfsaRoom = Math.max(0, estimatedTotalTFSARoom - (accounts.tfsa || 0));
+
+        // RRSP: 18% of income per year, max ~$31K. Unused room carries forward.
+        // Estimate: assume they've been working ~(age-22) years at current income
+        const workingYears = Math.max(0, startAge - 22);
+        const annualRRSPLimit = Math.min(currentIncome * 0.18, 31560);
+        // Estimate past contributions based on current RRSP balance vs what room would have accumulated
+        const estimatedTotalRRSPRoom = workingYears * annualRRSPLimit;
+        let rrspRoom = Math.max(0, estimatedTotalRRSPRoom - (accounts.rrsp || 0));
+
         for (let age = startAge; age <= lifeExpectancy; age++) {
             const isRetired = age >= retirementAge;
             const isWorking = age < retirementAge;
@@ -490,27 +508,28 @@ const RetirementCalcV4 = {
                 const growthFactor = Math.pow(1 + contributionGrowthRate, yearsFromStart);
                 const thisYearContribution = annualContribution * growthFactor;
 
-                // Apply contribution limits (CRA 2025 values, indexed to CPI)
-                const cpiFromToday = Math.pow(1 + inflationRate / 100, age - startAge);
-                const tfsaAnnualLimit = 7000 * cpiFromToday;  // $7K/yr, indexed
-                const rrspAnnualLimit = Math.min(
-                    currentIncome * cpiFromToday * 0.18,
-                    31560 * cpiFromToday  // CRA max, indexed
-                );
-
                 let rrspContrib = thisYearContribution * (contributionSplit.rrsp || 0);
                 let tfsaContrib = thisYearContribution * (contributionSplit.tfsa || 0);
                 let nonRegContrib = thisYearContribution * (contributionSplit.nonReg || 0);
 
-                // Cap TFSA and RRSP, overflow to Non-Reg
-                if (tfsaContrib > tfsaAnnualLimit) {
-                    nonRegContrib += tfsaContrib - tfsaAnnualLimit;
-                    tfsaContrib = tfsaAnnualLimit;
+                // Cap contributions to available room, overflow to Non-Reg
+                if (tfsaContrib > tfsaRoom) {
+                    nonRegContrib += tfsaContrib - Math.max(0, tfsaRoom);
+                    tfsaContrib = Math.max(0, tfsaRoom);
                 }
-                if (rrspContrib > rrspAnnualLimit) {
-                    nonRegContrib += rrspContrib - rrspAnnualLimit;
-                    rrspContrib = rrspAnnualLimit;
+                if (rrspContrib > rrspRoom) {
+                    nonRegContrib += rrspContrib - Math.max(0, rrspRoom);
+                    rrspContrib = Math.max(0, rrspRoom);
                 }
+
+                // Deduct used room
+                tfsaRoom -= tfsaContrib;
+                rrspRoom -= rrspContrib;
+
+                // Add next year's new room
+                const cpiNextYear = Math.pow(1 + inflationRate / 100, age - startAge + 1);
+                tfsaRoom += 7000 * cpiNextYear;  // $7K/yr indexed to CPI
+                rrspRoom += Math.min(currentIncome * cpiNextYear * 0.18, 31560 * cpiNextYear);
                 
                 balances.rrsp += rrspContrib;
                 balances.tfsa += tfsaContrib;
