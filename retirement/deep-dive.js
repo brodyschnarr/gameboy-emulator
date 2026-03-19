@@ -262,6 +262,7 @@ const DeepDive = {
         html += `</div></div>`;
 
         // Year-by-year expandable
+        const avgAnnualTax = retire.length > 0 ? totalTaxPaid / retire.length : 0;
         html += `<details class="dd-year-detail">
             <summary class="dd-year-detail-toggle">📅 Year-by-Year Tax Detail</summary>
             <div class="dd-year-table">
