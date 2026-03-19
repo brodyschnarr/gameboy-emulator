@@ -668,238 +668,255 @@
                 </div>
             </div>
 
-            <!-- ═══ EXPANDABLE: Retirement Income ═══ -->
-            <details class="step5-section">
-                <summary class="step5-section-header">📈 Retirement Income <span class="step5-count" id="income-count"></span></summary>
-                <div class="step5-section-content">
-                    <!-- Read-only summary of Step 1 sources that continue into retirement -->
-                    <div class="input-group">
-                        <label>📌 Carrying From Step 1</label>
-                        <div id="retirement-income-from-step1"></div>
+            <!-- ═══ RETIREMENT INCOME (dropdown-based) ═══ -->
+            <div class="step5-add-section">
+                <div id="retirement-income-from-step1"></div>
+                <div id="added-income-items"></div>
+                <div class="step5-add-wrapper">
+                    <button type="button" class="btn-secondary" id="btn-add-income-dropdown">+ Add Retirement Income</button>
+                    <div class="step5-dropdown hidden" id="income-dropdown-menu">
+                        <button type="button" class="step5-dropdown-item" data-type="employer-pension">🏢 Employer Pension</button>
+                        <button type="button" class="step5-dropdown-item" data-type="post-retirement-work">💼 Post-Retirement Work</button>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Employer Pension (DB/DC) -->
-                    <div class="input-group">
-                        <label>🏢 Employer Pension
-                            <button type="button" class="info-btn" data-tooltip="Defined Benefit or Defined Contribution pension from your employer. Enter the expected monthly payout at your chosen start age.">?</button>
-                        </label>
-                        <span class="input-impact">Qualifies for pension income credit at 65+</span>
-                        <div class="split-inputs">
-                            <div>
-                                <label for="employer-pension">Monthly Amount</label>
-                                <div class="input-with-prefix"><span class="prefix">$</span>
-                                    <input type="number" id="employer-pension" placeholder="0" min="0" step="100">
-                                </div>
-                            </div>
-                            <div>
-                                <label for="pension-start-age">Start Age</label>
-                                <input type="number" id="pension-start-age" placeholder="65" min="50" max="75" value="65">
-                            </div>
+            <!-- Hidden forms for each income type -->
+            <div id="form-employer-pension" class="step5-form hidden">
+                <div class="step5-form-header">🏢 Employer Pension</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label for="employer-pension" style="font-size: 12px;">Monthly Amount</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="employer-pension" placeholder="0" min="0" step="100">
                         </div>
-                        <label class="checkbox-label" style="margin-top: 8px;">
-                            <input type="checkbox" id="pension-indexed" checked> Indexed to inflation
-                        </label>
-                        <small class="input-hint">Most public-sector pensions are indexed; private-sector often are not</small>
                     </div>
+                    <div>
+                        <label for="pension-start-age" style="font-size: 12px;">Start Age</label>
+                        <input type="number" id="pension-start-age" placeholder="65" min="50" max="75" value="65">
+                    </div>
+                </div>
+                <label class="checkbox-label" style="margin-top: 6px; font-size: 12px;">
+                    <input type="checkbox" id="pension-indexed" checked> Indexed to inflation
+                </label>
+                <small class="input-hint">Pension income credit applies at 65+</small>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="employer-pension">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="employer-pension">Cancel</button>
+                </div>
+            </div>
 
-                    <!-- Post-Retirement Work -->
-                    <div class="input-group">
-                        <label>💼 Work After Retirement</label>
-                        <p class="section-intro">Part-time work, consulting, or a second career</p>
-                        <div id="post-retirement-work-list"></div>
-                        <button type="button" class="btn-secondary" id="btn-add-post-retirement-work">+ Add Post-Retirement Work</button>
-                        <div id="post-retirement-work-form" class="hidden" style="margin-top: 12px;">
-                            <div class="split-inputs" style="margin-bottom: 8px;">
-                                <div>
-                                    <label for="prt-who">Who?</label>
-                                    <select id="prt-who">
-                                        <option value="me">Me</option>
-                                        <option value="partner">Partner</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="prt-income">Annual Income</label>
-                                    <div class="input-with-prefix">
-                                        <span class="prefix">$</span>
-                                        <input type="number" id="prt-income" placeholder="20000" min="0" step="1000">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="split-inputs" style="margin-bottom: 8px;">
-                                <div>
-                                    <label for="prt-start">From Age</label>
-                                    <input type="number" id="prt-start" placeholder="60" min="18" max="100">
-                                </div>
-                                <div>
-                                    <label for="prt-end">To Age</label>
-                                    <input type="number" id="prt-end" placeholder="65" min="18" max="100">
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button type="button" class="btn-primary" id="btn-save-prt-work" style="flex: 1;">Add</button>
-                                <button type="button" class="btn-secondary" id="btn-cancel-prt-work">Cancel</button>
-                            </div>
+            <div id="form-post-retirement-work" class="step5-form hidden">
+                <div class="step5-form-header">💼 Post-Retirement Work</div>
+                <div id="post-retirement-work-list"></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label for="prt-income" style="font-size: 12px;">Annual Income</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="prt-income" placeholder="20000" min="0" step="1000">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="prt-who" style="font-size: 12px;">Who?</label>
+                        <select id="prt-who"><option value="me">Me</option><option value="partner">Partner</option></select>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
+                    <div>
+                        <label for="prt-start" style="font-size: 12px;">From Age</label>
+                        <input type="number" id="prt-start" placeholder="60" min="18" max="100">
+                    </div>
+                    <div>
+                        <label for="prt-end" style="font-size: 12px;">To Age</label>
+                        <input type="number" id="prt-end" placeholder="65" min="18" max="100">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" id="btn-save-prt-work">Add</button>
+                    <button type="button" class="btn-secondary btn-sm" id="btn-cancel-prt-work">Cancel</button>
+                </div>
+            </div>
+
+            <!-- ═══ RETIREMENT EXPENSES (dropdown-based) ═══ -->
+            <div class="step5-add-section">
+                <div id="added-expense-items"></div>
+                <div class="step5-add-wrapper">
+                    <button type="button" class="btn-secondary" id="btn-add-expense-dropdown">+ Add Retirement Expense</button>
+                    <div class="step5-dropdown hidden" id="expense-dropdown-menu">
+                        <button type="button" class="step5-dropdown-item" data-type="ltc">🏥 Long-Term Care</button>
+                        <button type="button" class="step5-dropdown-item" data-type="annuity">🔒 Annuity Purchase</button>
+                        <button type="button" class="step5-dropdown-item" data-type="downsizing">🏡 Downsizing Plan</button>
+                        <button type="button" class="step5-dropdown-item" data-type="windfall">💰 Windfall / Inheritance</button>
+                        <button type="button" class="step5-dropdown-item" data-type="dtc">♿ Disability Tax Credit</button>
+                        <button type="button" class="step5-dropdown-item" data-type="estate">🏠 Estate Asset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden forms for each expense type -->
+            <div id="form-ltc" class="step5-form hidden">
+                <div class="step5-form-header">🏥 Long-Term Care</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label for="ltc-monthly" style="font-size: 12px;">Monthly Cost</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="ltc-monthly" placeholder="0" min="0" step="500">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="ltc-start-age" style="font-size: 12px;">Starting Age</label>
+                        <input type="number" id="ltc-start-age" placeholder="80" min="60" max="100" value="80">
+                    </div>
+                </div>
+                <small class="input-hint">$5-10K/month typical for facility care</small>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="ltc">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="ltc">Cancel</button>
+                </div>
+            </div>
+
+            <div id="form-annuity" class="step5-form hidden">
+                <div class="step5-form-header">🔒 Annuity Purchase</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label for="annuity-lump-sum" style="font-size: 12px;">Lump Sum</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="annuity-lump-sum" placeholder="0" min="0" step="10000">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="annuity-purchase-age" style="font-size: 12px;">Purchase Age</label>
+                        <input type="number" id="annuity-purchase-age" placeholder="65" min="50" max="85">
+                    </div>
+                </div>
+                <div style="margin-top: 6px;">
+                    <label for="annuity-monthly-payout" style="font-size: 12px;">Monthly Payout</label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="annuity-monthly-payout" placeholder="0" min="0" step="100">
+                    </div>
+                    <small class="input-hint">~50% taxable (prescribed annuity)</small>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="annuity">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="annuity">Cancel</button>
+                </div>
+            </div>
+
+            <div id="form-downsizing" class="step5-form hidden">
+                <div class="step5-form-header">🏡 Downsizing Plan</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label for="downsizing-age" style="font-size: 12px;">Sell at Age</label>
+                        <input type="number" id="downsizing-age" placeholder="70" min="50" max="95">
+                    </div>
+                    <div>
+                        <label for="downsizing-proceeds" style="font-size: 12px;">Net Proceeds</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="downsizing-proceeds" placeholder="0" min="0" step="10000">
                         </div>
                     </div>
                 </div>
-            </details>
-
-            <!-- ═══ EXPANDABLE: One-Time Events ═══ -->
-            <details class="step5-section">
-                <summary class="step5-section-header">💰 One-Time Events <span class="step5-count" id="events-count"></span></summary>
-                <div class="step5-section-content">
-                    <div class="input-group windfalls-container">
-                        <label>💰 Windfalls</label>
-                        <span class="input-impact">Inheritance, business sale, severance (can roll into RRSP tax-free)</span>
-                        <div id="windfalls-list"></div>
-                        <div id="windfall-form-container"></div>
-                        <button type="button" class="btn-secondary" id="btn-add-windfall">+ Add Windfall</button>
+                <div style="margin-top: 6px;">
+                    <label for="downsizing-spending-change" style="font-size: 12px;">Monthly Housing Savings</label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="downsizing-spending-change" placeholder="0" min="0" step="100">
                     </div>
+                    <small class="input-hint">How much less per month after downsizing</small>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="downsizing">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="downsizing">Cancel</button>
+                </div>
+            </div>
 
-                    <div class="input-group">
-                        <label>🔒 Annuity Purchase</label>
-                        <p class="section-intro">Convert a lump sum into guaranteed income for life</p>
-                        <div class="split-inputs">
-                            <div>
-                                <label for="annuity-lump-sum">Lump Sum</label>
-                                <div class="input-with-prefix"><span class="prefix">$</span>
-                                    <input type="number" id="annuity-lump-sum" placeholder="0" min="0" step="10000">
-                                </div>
-                            </div>
-                            <div>
-                                <label for="annuity-purchase-age">Purchase Age</label>
-                                <input type="number" id="annuity-purchase-age" placeholder="65" min="50" max="85">
+            <div id="form-windfall" class="step5-form hidden">
+                <div class="step5-form-header">💰 Windfall / Inheritance</div>
+                <div class="input-group windfalls-container">
+                    <span class="input-impact" style="font-size: 12px;">Inheritance, business sale, severance (can roll into RRSP tax-free)</span>
+                    <div id="windfalls-list"></div>
+                    <div id="windfall-form-container"></div>
+                    <button type="button" class="btn-secondary btn-sm" id="btn-add-windfall">+ Add Windfall</button>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="windfall">Done</button>
+                </div>
+            </div>
+
+            <div id="form-dtc" class="step5-form hidden">
+                <div class="step5-form-header">♿ Disability Tax Credit</div>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="dtc-checkbox">
+                    I qualify for DTC
+                </label>
+                <small class="input-hint">$9,428 federal credit — saves ~$1,900/yr. Requires CRA Form T2201.</small>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="dtc">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="dtc">Cancel</button>
+                </div>
+            </div>
+
+            <div id="form-estate" class="step5-form hidden">
+                <div class="step5-form-header">🏠 Estate Asset</div>
+                <div id="estate-assets-list"></div>
+                <div id="estate-asset-form" class="hidden">
+                    <div style="margin-bottom: 6px;">
+                        <label for="estate-asset-name" style="font-size: 12px;">Asset Name</label>
+                        <input type="text" id="estate-asset-name" placeholder="e.g., Primary Home, Cottage">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label for="estate-asset-value" style="font-size: 12px;">Current Value</label>
+                            <div class="input-with-prefix"><span class="prefix">$</span>
+                                <input type="number" id="estate-asset-value" placeholder="500000" min="0" step="10000">
                             </div>
                         </div>
-                        <div style="margin-top: 8px;">
-                            <label for="annuity-monthly-payout">Monthly Payout</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span>
-                                <input type="number" id="annuity-monthly-payout" placeholder="0" min="0" step="100">
-                            </div>
-                            <small class="input-hint">~50% taxable (prescribed annuity)</small>
+                        <div style="display: flex; align-items: flex-end; padding-bottom: 4px;">
+                            <label class="checkbox-label" style="font-size: 12px;">
+                                <input type="checkbox" id="estate-asset-primary" checked>
+                                Primary residence
+                            </label>
                         </div>
                     </div>
-
-                    <div class="input-group">
-                        <label>🏡 Downsizing Plan</label>
-                        <p class="section-intro">Sell your home and reduce housing costs</p>
-                        <div class="split-inputs">
-                            <div>
-                                <label for="downsizing-age">Sell at Age</label>
-                                <input type="number" id="downsizing-age" placeholder="70" min="50" max="95">
-                            </div>
-                            <div>
-                                <label for="downsizing-proceeds">Net Proceeds</label>
-                                <div class="input-with-prefix"><span class="prefix">$</span>
-                                    <input type="number" id="downsizing-proceeds" placeholder="0" min="0" step="10000">
-                                </div>
-                            </div>
-                        </div>
-                        <div style="margin-top: 8px;">
-                            <label for="downsizing-spending-change">Monthly Housing Savings</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span>
-                                <input type="number" id="downsizing-spending-change" placeholder="0" min="0" step="100">
-                            </div>
-                            <small class="input-hint">How much less per month (e.g., $500 = save $6K/yr)</small>
-                        </div>
+                    <small class="input-hint">Primary residence is tax-exempt</small>
+                    <div style="display: flex; gap: 8px; margin-top: 6px;">
+                        <button type="button" class="btn-primary btn-sm" id="btn-save-estate-asset">Add</button>
+                        <button type="button" class="btn-secondary btn-sm" id="btn-cancel-estate-asset">Cancel</button>
                     </div>
                 </div>
-            </details>
+                <button type="button" class="btn-secondary btn-sm" id="btn-add-estate-asset" style="margin-top: 8px;">+ Add Asset</button>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="estate">Done</button>
+                </div>
+            </div>
 
-            <!-- ═══ EXPANDABLE: Advanced Health & Tax ═══ -->
-            <details class="step5-section">
-                <summary class="step5-section-header">⚙️ Advanced <span class="optional-tag">Optional</span></summary>
+            <!-- Hidden: Advanced settings (healthcare inflation, category inflation) -->
+            <details class="step5-section" style="margin-top: 16px;">
+                <summary class="step5-section-header" style="font-size: 13px;">⚙️ Advanced Assumptions <span class="optional-tag">Optional</span></summary>
                 <div class="step5-section-content">
                     <div class="input-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="dtc-checkbox">
-                            ♿ Disability Tax Credit (DTC)
-                        </label>
-                        <small class="input-hint">$9,428 federal credit — saves ~$1,900/yr. Requires CRA Form T2201.</small>
-                    </div>
-
-                    <div class="input-group">
-                        <label>🏥 Long-Term Care</label>
-                        <small class="input-hint">Home care or facility costs in later years ($5-10K/month typical)</small>
-                        <div class="split-inputs" style="margin-top: 8px;">
-                            <div>
-                                <label for="ltc-monthly">Monthly Cost</label>
-                                <div class="input-with-prefix"><span class="prefix">$</span>
-                                    <input type="number" id="ltc-monthly" placeholder="0" min="0" step="500">
-                                </div>
-                            </div>
-                            <div>
-                                <label for="ltc-start-age">Starting Age</label>
-                                <input type="number" id="ltc-start-age" placeholder="80" min="60" max="100" value="80">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="healthcare-inflation">Healthcare Inflation (%)</label>
-                        <input type="number" id="healthcare-inflation" placeholder="5" min="0" max="15" step="0.5" value="5">
+                        <label for="healthcare-inflation" style="font-size: 12px;">Healthcare Inflation (%)</label>
+                        <input type="number" id="healthcare-inflation" placeholder="5" min="0" max="15" step="0.5" value="5" style="font-size: 13px;">
                         <small class="input-hint">Healthcare costs rise ~5%/yr vs ~2.5% general</small>
                     </div>
-
-                    <details class="input-group-collapsible" style="margin-top: 12px;">
-                        <summary class="collapsible-header">📊 Category Inflation <span class="optional-tag">Advanced</span></summary>
+                    <details class="input-group-collapsible" style="margin-top: 8px;">
+                        <summary class="collapsible-header" style="font-size: 12px;">📊 Category Inflation</summary>
                         <div class="collapsible-content">
-                            <div class="split-inputs">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                                 <div>
-                                    <label for="inf-housing">Housing (%)</label>
-                                    <input type="number" id="inf-housing" placeholder="3" min="0" max="10" step="0.5">
+                                    <label for="inf-housing" style="font-size: 11px;">Housing (%)</label>
+                                    <input type="number" id="inf-housing" placeholder="3" min="0" max="10" step="0.5" style="font-size: 13px;">
                                 </div>
                                 <div>
-                                    <label for="inf-food">Food (%)</label>
-                                    <input type="number" id="inf-food" placeholder="3" min="0" max="10" step="0.5">
-                                </div>
-                            </div>
-                            <div class="split-inputs" style="margin-top: 4px;">
-                                <div>
-                                    <label for="inf-discretionary">Discretionary (%)</label>
-                                    <input type="number" id="inf-discretionary" placeholder="2" min="0" max="10" step="0.5">
+                                    <label for="inf-food" style="font-size: 11px;">Food (%)</label>
+                                    <input type="number" id="inf-food" placeholder="3" min="0" max="10" step="0.5" style="font-size: 13px;">
                                 </div>
                                 <div>
-                                    <small class="input-hint" style="margin-top: 20px;">Weights: Housing 30%, Food 15%, HC 15%, Other 40%</small>
+                                    <label for="inf-discretionary" style="font-size: 11px;">Discretionary (%)</label>
+                                    <input type="number" id="inf-discretionary" placeholder="2" min="0" max="10" step="0.5" style="font-size: 13px;">
                                 </div>
                             </div>
                         </div>
                     </details>
-                </div>
-            </details>
-
-            <!-- ═══ EXPANDABLE: Estate Assets ═══ -->
-            <details class="step5-section">
-                <summary class="step5-section-header">🏠 Estate Assets <span class="optional-tag">Not sold in retirement</span></summary>
-                <div class="step5-section-content">
-                    <p class="section-intro">Assets you plan to keep and pass on — not part of your retirement income.</p>
-                    <div id="estate-assets-list"></div>
-                    <button type="button" class="btn-secondary" id="btn-add-estate-asset">+ Add Asset</button>
-                    <div id="estate-asset-form" class="hidden" style="margin-top: 12px;">
-                        <div class="input-group">
-                            <label for="estate-asset-name">Asset Name</label>
-                            <input type="text" id="estate-asset-name" placeholder="e.g., Primary Home, Cottage, Art Collection">
-                        </div>
-                        <div class="split-inputs" style="margin-bottom: 8px;">
-                            <div>
-                                <label for="estate-asset-value">Current Value</label>
-                                <div class="input-with-prefix"><span class="prefix">$</span>
-                                    <input type="number" id="estate-asset-value" placeholder="500000" min="0" step="10000">
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: flex-end; padding-bottom: 4px;">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="estate-asset-primary" checked>
-                                    Primary residence
-                                </label>
-                            </div>
-                        </div>
-                        <small class="input-hint">Primary residence is tax-exempt. Other properties/assets have capital gains tax on appreciation.</small>
-                        <div style="display: flex; gap: 8px; margin-top: 8px;">
-                            <button type="button" class="btn-primary" id="btn-save-estate-asset" style="flex: 1;">Add</button>
-                            <button type="button" class="btn-secondary" id="btn-cancel-estate-asset">Cancel</button>
-                        </div>
-                    </div>
                 </div>
             </details>
 
@@ -1123,34 +1140,34 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000048"></script>
-    <script src="cpp-calculator.js?v=17&t=24000048"></script>
-    <script src="benchmarks.js?v=17&t=24000048"></script>
-    <script src="lifestyle-data.js?v=17&t=24000048"></script>
-    <script src="regional-data.js?v=17&t=24000048"></script>
-    <script src="canada-map.js?v=17&t=24000048"></script>
-    <script src="income-sources.js?v=17&t=24000048"></script>
-    <script src="deep-dive.js?v=1&t=24000048"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000048"></script>
-    <script src="scenario-manager.js?v=17&t=24000048"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000048"></script>
-    <script src="calc.js?v=17&t=24000048"></script>
-    <script src="app-round6-debug.js"></script>
+    <script src="canada-tax.js?v=17&t=24000049"></script>
+    <script src="cpp-calculator.js?v=17&t=24000049"></script>
+    <script src="benchmarks.js?v=17&t=24000049"></script>
+    <script src="lifestyle-data.js?v=17&t=24000049"></script>
+    <script src="regional-data.js?v=17&t=24000049"></script>
+    <script src="canada-map.js?v=17&t=24000049"></script>
+    <script src="income-sources.js?v=17&t=24000049"></script>
+    <script src="deep-dive.js?v=17&t=24000049"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000049"></script>
+    <script src="scenario-manager.js?v=17&t=24000049"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000049"></script>
+    <script src="calc.js?v=17&t=24000049"></script>
+    <script src="app-round6-debug.js?v=17&t=24000049"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=5"></script>
-    <script src="monte-carlo.js?v=5"></script>
-    <script src="tax-optimizer.js?v=5"></script>
-    <script src="what-if-analyzer.js?v=5"></script>
-    <script src="safe-withdrawal.js?v=5"></script>
-    <script src="advanced-charts.js?v=5"></script>
-    <script src="interactive-sliders.js?v=5"></script>
-    <script src="scenario-storage.js?v=5"></script>
-    <script src="windfalls.js?v=5"></script>
-    <script src="app-v5-enhanced.js?v=5"></script>
+    <script src="error-handler.js?v=17&t=24000049"></script>
+    <script src="monte-carlo.js?v=17&t=24000049"></script>
+    <script src="tax-optimizer.js?v=17&t=24000049"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000049"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000049"></script>
+    <script src="advanced-charts.js?v=17&t=24000049"></script>
+    <script src="interactive-sliders.js?v=17&t=24000049"></script>
+    <script src="scenario-storage.js?v=17&t=24000049"></script>
+    <script src="windfalls.js?v=17&t=24000049"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000049"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=2"></script>
+    <script src="slider-inputs.js?v=17&t=24000049"></script>
 
     <!-- Diagnostics removed -->
 

@@ -44,6 +44,7 @@ const AppV4 = {
         this._setupHouseSale();
         this._setupWindfalls();
         this._setupEstateAssets();
+        this._setupStep5Dropdowns();
         this._setupCalculate();
         this._setupScenarios();
         this._setupModals();
@@ -1296,6 +1297,105 @@ const AppV4 = {
         });
     },
 
+    _setupStep5Dropdowns() {
+        // Wire up dropdown toggles
+        const setupDropdown = (btnId, menuId) => {
+            const btn = document.getElementById(btnId);
+            const menu = document.getElementById(menuId);
+            if (!btn || !menu) return;
+            btn.addEventListener('click', () => {
+                // Close other dropdowns
+                document.querySelectorAll('.step5-dropdown').forEach(d => { if (d !== menu) d.classList.add('hidden'); });
+                menu.classList.toggle('hidden');
+            });
+            // Close on outside click
+            document.addEventListener('click', (e) => {
+                if (!btn.contains(e.target) && !menu.contains(e.target)) menu.classList.add('hidden');
+            });
+        };
+        setupDropdown('btn-add-income-dropdown', 'income-dropdown-menu');
+        setupDropdown('btn-add-expense-dropdown', 'expense-dropdown-menu');
+
+        // Wire dropdown items to show forms
+        document.querySelectorAll('.step5-dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const type = item.dataset.type;
+                const form = document.getElementById('form-' + type);
+                if (form) {
+                    // Hide all forms, show this one
+                    document.querySelectorAll('.step5-form').forEach(f => f.classList.add('hidden'));
+                    form.classList.remove('hidden');
+                    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                // Close dropdown
+                item.closest('.step5-dropdown').classList.add('hidden');
+            });
+        });
+
+        // Wire save/cancel buttons on all forms
+        document.querySelectorAll('[data-save]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.save;
+                const form = document.getElementById('form-' + type);
+                if (form) form.classList.add('hidden');
+                this._updateStep5AddedItems();
+            });
+        });
+        document.querySelectorAll('[data-cancel]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.cancel;
+                const form = document.getElementById('form-' + type);
+                if (form) form.classList.add('hidden');
+            });
+        });
+    },
+
+    _updateStep5AddedItems() {
+        // Show summary chips of added items
+        const incomeContainer = document.getElementById('added-income-items');
+        const expenseContainer = document.getElementById('added-expense-items');
+        if (!incomeContainer || !expenseContainer) return;
+        
+        const fmt = (v) => '$' + Math.round(v).toLocaleString();
+        let incomeHTML = '';
+        let expenseHTML = '';
+        
+        // Employer pension
+        const pension = parseFloat(document.getElementById('employer-pension')?.value) || 0;
+        if (pension > 0) {
+            const age = document.getElementById('pension-start-age')?.value || '65';
+            incomeHTML += `<div class="step5-added-item"><span class="item-label">🏢 Employer Pension</span><span class="item-value">${fmt(pension)}/mo from age ${age}</span></div>`;
+        }
+        
+        // LTC
+        const ltc = parseFloat(document.getElementById('ltc-monthly')?.value) || 0;
+        if (ltc > 0) {
+            const age = document.getElementById('ltc-start-age')?.value || '80';
+            expenseHTML += `<div class="step5-added-item"><span class="item-label">🏥 Long-Term Care</span><span class="item-value">${fmt(ltc)}/mo from age ${age}</span></div>`;
+        }
+        
+        // Annuity
+        const annuity = parseFloat(document.getElementById('annuity-lump-sum')?.value) || 0;
+        if (annuity > 0) {
+            expenseHTML += `<div class="step5-added-item"><span class="item-label">🔒 Annuity</span><span class="item-value">${fmt(annuity)} lump sum</span></div>`;
+        }
+        
+        // Downsizing
+        const downProceeds = parseFloat(document.getElementById('downsizing-proceeds')?.value) || 0;
+        if (downProceeds > 0) {
+            expenseHTML += `<div class="step5-added-item"><span class="item-label">🏡 Downsizing</span><span class="item-value">${fmt(downProceeds)} proceeds</span></div>`;
+        }
+        
+        // DTC
+        const dtc = document.getElementById('dtc-checkbox')?.checked;
+        if (dtc) {
+            expenseHTML += `<div class="step5-added-item"><span class="item-label">♿ DTC</span><span class="item-value">~$1,900/yr savings</span></div>`;
+        }
+        
+        incomeContainer.innerHTML = incomeHTML;
+        expenseContainer.innerHTML = expenseHTML;
+    },
+
     _setupCalculate() {
         const calculateBtn = document.getElementById('btn-calculate');
         if (calculateBtn) {
@@ -1565,15 +1665,28 @@ const AppV4 = {
             });
 
             // Deep Dive buttons
-            summary.querySelectorAll('.btn-deep-dive').forEach(btn => {
+            const deepDiveBtns = summary.querySelectorAll('.btn-deep-dive');
+            console.log('[DeepDive] Found', deepDiveBtns.length, 'buttons, DeepDive defined:', typeof DeepDive !== 'undefined');
+            deepDiveBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const label = btn.dataset.strategy;
+                    console.log('[DeepDive] Button clicked, label:', label);
                     let data;
                     if (label.includes('Your Plan')) data = this._strategyData.smart;
                     else if (label.includes('Advisor')) data = this._strategyData.advisor;
                     else data = this._strategyData.optimized;
+                    console.log('[DeepDive] Data found:', !!data, 'DeepDive:', typeof DeepDive);
                     if (data && typeof DeepDive !== 'undefined') {
-                        DeepDive.show(data.results, data.inputs, label.replace(/[📋👔🎯]\s*/g, '').trim());
+                        try {
+                            DeepDive.show(data.results, data.inputs, label.replace(/[📋👔🎯]\s*/g, '').trim());
+                            console.log('[DeepDive] show() completed');
+                        } catch(e) {
+                            console.error('[DeepDive] show() ERROR:', e.message, e.stack);
+                            alert('Deep Dive error: ' + e.message);
+                        }
+                    } else {
+                        console.error('[DeepDive] Missing data or DeepDive module');
+                        alert('Deep Dive not available: data=' + !!data + ' module=' + (typeof DeepDive));
                     }
                 });
             });
@@ -1918,6 +2031,7 @@ const AppV4 = {
         // Auto-update previews when entering certain steps
         if (step === 'contributions') {
             this._updateContributionGrounding();
+            this._updateContributionRoomEstimate();
         }
         if (step === 'retirement') {
             this._updateSpendingRecommendation();
@@ -2126,6 +2240,40 @@ const AppV4 = {
             <strong>💡 Quick math:</strong> To reach $500K by 65 (${yearsToRetire} years), you'd need ~<strong>$${Math.max(0, recommended).toLocaleString()}/month</strong> at 6% return
             <br><small style="opacity: 0.8;">Canadian median savings rate: 15% of income | Average monthly: $500-800</small>
         `;
+    },
+
+    _updateContributionRoomEstimate() {
+        const rrspInput = document.getElementById('rrsp-room-override');
+        const tfsaInput = document.getElementById('tfsa-room-override');
+        if (!rrspInput || !tfsaInput) return;
+        
+        const age = parseInt(document.getElementById('current-age')?.value) || 35;
+        const income = parseFloat(document.getElementById('annual-income')?.value) || 70000;
+        const rrspBal = parseFloat(document.getElementById('rrsp')?.value) || 0;
+        const tfsaBal = parseFloat(document.getElementById('tfsa')?.value) || 0;
+        
+        // TFSA room estimate
+        const currentYear = new Date().getFullYear();
+        const birthYear = currentYear - age;
+        const tfsaFrom = Math.max(2009, birthYear + 18);
+        const TFSA_LIMITS = {2009:5000,2010:5000,2011:5000,2012:5000,2013:5500,2014:5500,2015:10000,2016:5500,2017:5500,2018:5500,2019:6000,2020:6000,2021:6000,2022:6000,2023:6500,2024:7000,2025:7000};
+        let tfsaTotal = 0;
+        for (let yr = tfsaFrom; yr <= currentYear; yr++) tfsaTotal += TFSA_LIMITS[yr] || 7000;
+        const tfsaRoom = Math.max(0, tfsaTotal - tfsaBal);
+        
+        // RRSP room estimate  
+        const workStart = 22;
+        const yearsWorked = Math.max(0, age - workStart);
+        let rrspTotal = 0;
+        for (let i = 0; i < yearsWorked; i++) {
+            const estIncome = income / Math.pow(1.03, yearsWorked - i);
+            rrspTotal += Math.min(estIncome * 0.18, 31560);
+        }
+        const rrspRoom = Math.max(0, rrspTotal - (rrspBal / 1.5));
+        
+        const fmt = (v) => '$' + Math.round(v).toLocaleString();
+        rrspInput.placeholder = fmt(Math.round(rrspRoom));
+        tfsaInput.placeholder = fmt(Math.round(tfsaRoom));
     },
 
     _updateRetirementGrounding() {
