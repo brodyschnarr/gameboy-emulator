@@ -3686,15 +3686,14 @@ input:focus {
     position: relative;
 }
 .step5-dropdown {
-    position: absolute;
-    bottom: 100%;
+    position: relative;
     left: 0; right: 0;
     background: white;
     border: 1px solid var(--border);
     border-radius: 8px;
-    box-shadow: 0 -4px 16px rgba(0,0,0,0.12);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
     z-index: 50;
-    margin-bottom: 4px;
+    margin-top: 4px;
     overflow: hidden;
 }
 .step5-dropdown.hidden { display: none; }
