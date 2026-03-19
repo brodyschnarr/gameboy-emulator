@@ -261,6 +261,48 @@ const DeepDive = {
         }
         html += `</div></div>`;
 
+        // Year-by-year expandable
+        html += `<details class="dd-year-detail">
+            <summary class="dd-year-detail-toggle">📅 Year-by-Year Tax Detail</summary>
+            <div class="dd-year-table">
+                <div class="dd-year-header">
+                    <span>Age</span><span>Income</span><span>Tax</span><span>Rate</span><span>From</span>
+                </div>`;
+        for (const y of retire) {
+            const income = y.taxableIncome || y.grossIncome || 0;
+            const tax = y.taxPaid || 0;
+            const rate = income > 0 ? ((tax / income) * 100).toFixed(1) : '0.0';
+            const wb = y.withdrawalBreakdown || {};
+            // Build source summary
+            const sources = [];
+            if ((wb.rrsp || 0) > 0) sources.push(`RRSP ${fmtK(wb.rrsp)}`);
+            if ((wb.tfsa || 0) > 0) sources.push(`TFSA ${fmtK(wb.tfsa)}`);
+            if ((wb.nonReg || 0) > 0) sources.push(`NR ${fmtK(wb.nonReg)}`);
+            if ((wb.lira || 0) > 0) sources.push(`LIRA ${fmtK(wb.lira)}`);
+            if ((y.cppReceived || 0) > 0) sources.push(`CPP ${fmtK(y.cppReceived)}`);
+            if ((y.oasReceived || 0) > 0) sources.push(`OAS ${fmtK(y.oasReceived)}`);
+            if ((y.gisReceived || 0) > 0) sources.push(`GIS ${fmtK(y.gisReceived)}`);
+            if ((y.additionalIncome || 0) > 0) sources.push(`Other ${fmtK(y.additionalIncome)}`);
+            
+            const clawback = (y.oasClawback || 0) > 0 ? ` <span class="dd-clawback">⚠ -${fmtK(y.oasClawback)} clawback</span>` : '';
+            const rrif = (y.rrifMandatory || 0) > 0 ? ` <span class="dd-rrif-tag">RRIF</span>` : '';
+            
+            html += `<details class="dd-year-row-detail">
+                <summary class="dd-year-row ${tax > avgAnnualTax * 1.5 ? 'high-tax' : ''}">
+                    <span>${y.age}${rrif}</span><span>${fmtK(income)}</span><span>${fmtK(tax)}</span><span>${rate}%</span><span class="dd-source-preview">${sources[0] || ''}</span>
+                </summary>
+                <div class="dd-year-expanded">
+                    <div class="dd-year-sources">${sources.join(' · ')}${clawback}</div>
+                    <div class="dd-year-balances">
+                        💰 Portfolio: ${fmtK(y.totalBalance || 0)}
+                        ${y.rrsp ? `(RRSP ${fmtK(y.rrsp)}, TFSA ${fmtK(y.tfsa)}, NR ${fmtK(y.nonReg)})` : ''}
+                    </div>
+                    <div class="dd-year-spending">🛒 Spending: ${fmtK(y.targetSpending || 0)} · HC: ${fmtK(y.healthcareCost || 0)}</div>
+                </div>
+            </details>`;
+        }
+        html += `</div></details>`;
+
         // Estate tax explanation
         if (estateTax > 0) {
             html += `<div class="dd-callout">

@@ -158,6 +158,7 @@ const RetirementCalcV4 = {
             lifeExpectancy,
             accounts: { rrsp, tfsa, nonReg, other, cash, lira: lira || 0 },
             annualContribution: monthlyContribution * 12,
+            currentIncome: currentIncome || 70000,
             contributionSplit: normalizedSplit,
             contributionGrowthRate: (contributionGrowthRate || 0) / 100,
             baseAnnualSpending: futureAnnualSpending,
@@ -409,6 +410,7 @@ const RetirementCalcV4 = {
             lifeExpectancy,
             accounts,
             annualContribution,
+            currentIncome = 70000,
             contributionSplit,
             contributionGrowthRate,
             baseAnnualSpending,
@@ -488,9 +490,27 @@ const RetirementCalcV4 = {
                 const growthFactor = Math.pow(1 + contributionGrowthRate, yearsFromStart);
                 const thisYearContribution = annualContribution * growthFactor;
 
-                const rrspContrib = thisYearContribution * (contributionSplit.rrsp || 0);
-                const tfsaContrib = thisYearContribution * (contributionSplit.tfsa || 0);
-                const nonRegContrib = thisYearContribution * (contributionSplit.nonReg || 0);
+                // Apply contribution limits (CRA 2025 values, indexed to CPI)
+                const cpiFromToday = Math.pow(1 + inflationRate / 100, age - startAge);
+                const tfsaAnnualLimit = 7000 * cpiFromToday;  // $7K/yr, indexed
+                const rrspAnnualLimit = Math.min(
+                    currentIncome * cpiFromToday * 0.18,
+                    31560 * cpiFromToday  // CRA max, indexed
+                );
+
+                let rrspContrib = thisYearContribution * (contributionSplit.rrsp || 0);
+                let tfsaContrib = thisYearContribution * (contributionSplit.tfsa || 0);
+                let nonRegContrib = thisYearContribution * (contributionSplit.nonReg || 0);
+
+                // Cap TFSA and RRSP, overflow to Non-Reg
+                if (tfsaContrib > tfsaAnnualLimit) {
+                    nonRegContrib += tfsaContrib - tfsaAnnualLimit;
+                    tfsaContrib = tfsaAnnualLimit;
+                }
+                if (rrspContrib > rrspAnnualLimit) {
+                    nonRegContrib += rrspContrib - rrspAnnualLimit;
+                    rrspContrib = rrspAnnualLimit;
+                }
                 
                 balances.rrsp += rrspContrib;
                 balances.tfsa += tfsaContrib;

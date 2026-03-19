@@ -3606,3 +3606,73 @@ input:focus {
     .dd-account-note { margin-left: 0; }
     .dd-tax-phase-stats { flex-direction: column; gap: 2px; }
 }
+
+/* Year-by-Year Tax Detail in Deep Dive */
+.dd-year-detail { margin: 16px 0; }
+.dd-year-detail-toggle {
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 0;
+    color: var(--primary);
+}
+.dd-year-table { margin-top: 8px; }
+.dd-year-header {
+    display: grid;
+    grid-template-columns: 42px 60px 55px 40px 1fr;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    padding: 6px 4px;
+    border-bottom: 2px solid var(--border);
+}
+.dd-year-row {
+    display: grid;
+    grid-template-columns: 42px 60px 55px 40px 1fr;
+    gap: 4px;
+    font-size: 12px;
+    padding: 5px 4px;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    cursor: pointer;
+    list-style: none;
+}
+.dd-year-row:hover { background: rgba(0,0,0,0.02); }
+.dd-year-row.high-tax { color: #dc2626; }
+.dd-year-row-detail[open] .dd-year-row { background: rgba(59,130,246,0.04); }
+.dd-source-preview {
+    font-size: 10px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.dd-year-expanded {
+    padding: 6px 8px 10px;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--text-secondary, #555);
+    background: rgba(0,0,0,0.02);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.dd-year-sources { margin-bottom: 4px; }
+.dd-year-balances { color: var(--text-muted); }
+.dd-year-spending { color: var(--text-muted); }
+.dd-clawback { color: #dc2626; font-weight: 600; }
+.dd-rrif-tag {
+    display: inline-block;
+    font-size: 8px;
+    font-weight: 700;
+    background: #ef4444;
+    color: white;
+    padding: 1px 3px;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin-left: 2px;
+}
+
+/* Hide marker on summary inside details */
+.dd-year-row-detail > summary { list-style: none; }
+.dd-year-row-detail > summary::-webkit-details-marker { display: none; }
