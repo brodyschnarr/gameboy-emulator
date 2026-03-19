@@ -1482,6 +1482,7 @@ const AppV4 = {
                         ${stats.estateAssets > 0 ? `<div class="strategy-stat sub"><span>Other assets</span><span>${fmt(stats.estateAssets)}</span></div>` : ''}
                         ${stats.estateTax > 0 ? `<div class="strategy-stat sub"><span>Deemed disposition</span><span>-${fmt(stats.estateTax)}</span></div>` : ''}
                         <div class="strategy-stat sub"><span>Net to heirs</span><span>${fmt(stats.netEstate)}</span></div>
+                        ${header.includes('Optimized') ? `<div class="strategy-stat sub hint"><span>Optimized prioritizes spending over estate</span></div>` : ''}
                     </details>
                     <div class="strategy-stat"><span>📅 Lasts To</span><span>Age ${stats.lasts}</span></div>
                     ${note ? `<div class="strategy-note">${note}</div>` : ''}

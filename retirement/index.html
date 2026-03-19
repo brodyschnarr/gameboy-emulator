@@ -269,23 +269,22 @@
 
             <details class="step5-section" style="margin-top: 12px;">
                 <summary class="step5-section-header" style="font-size: 13px;">📋 Contribution Room <span class="optional-tag">Optional</span></summary>
-                <div class="step5-section-content">
-                    <p class="section-intro" style="font-size: 12px;">Override the estimated room if you know your actual amounts (check your CRA My Account).</p>
-                    <div class="split-inputs">
+                <div class="step5-section-content" style="padding: 8px 0 4px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div>
-                            <label for="rrsp-room-override">RRSP Room ($)</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span>
-                                <input type="number" id="rrsp-room-override" placeholder="Auto-estimated" min="0" step="1000">
+                            <label for="rrsp-room-override" style="font-size: 11px; font-weight: 600; margin-bottom: 2px; display: block;">RRSP Room</label>
+                            <div class="input-with-prefix" style="height: 36px;"><span class="prefix" style="font-size: 13px;">$</span>
+                                <input type="number" id="rrsp-room-override" placeholder="Auto" min="0" step="1000" style="font-size: 13px; padding: 6px;">
                             </div>
                         </div>
                         <div>
-                            <label for="tfsa-room-override">TFSA Room ($)</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span>
-                                <input type="number" id="tfsa-room-override" placeholder="Auto-estimated" min="0" step="1000">
+                            <label for="tfsa-room-override" style="font-size: 11px; font-weight: 600; margin-bottom: 2px; display: block;">TFSA Room</label>
+                            <div class="input-with-prefix" style="height: 36px;"><span class="prefix" style="font-size: 13px;">$</span>
+                                <input type="number" id="tfsa-room-override" placeholder="Auto" min="0" step="1000" style="font-size: 13px; padding: 6px;">
                             </div>
                         </div>
                     </div>
-                    <small class="input-hint">Leave blank to auto-estimate based on age, income, and current balances</small>
+                    <small class="input-hint" style="font-size: 10px; margin-top: 4px;">Override with your CRA My Account amounts, or leave blank to auto-estimate</small>
                 </div>
             </details>
 
@@ -1124,18 +1123,18 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000045"></script>
-    <script src="cpp-calculator.js?v=17&t=24000045"></script>
-    <script src="benchmarks.js?v=17&t=24000045"></script>
-    <script src="lifestyle-data.js?v=17&t=24000045"></script>
-    <script src="regional-data.js?v=17&t=24000045"></script>
-    <script src="canada-map.js?v=17&t=24000045"></script>
-    <script src="income-sources.js?v=17&t=24000045"></script>
-    <script src="deep-dive.js?v=1&t=24000045"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000045"></script>
-    <script src="scenario-manager.js?v=17&t=24000045"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000045"></script>
-    <script src="calc.js?v=17&t=24000045"></script>
+    <script src="canada-tax.js?v=17&t=24000046"></script>
+    <script src="cpp-calculator.js?v=17&t=24000046"></script>
+    <script src="benchmarks.js?v=17&t=24000046"></script>
+    <script src="lifestyle-data.js?v=17&t=24000046"></script>
+    <script src="regional-data.js?v=17&t=24000046"></script>
+    <script src="canada-map.js?v=17&t=24000046"></script>
+    <script src="income-sources.js?v=17&t=24000046"></script>
+    <script src="deep-dive.js?v=1&t=24000046"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000046"></script>
+    <script src="scenario-manager.js?v=17&t=24000046"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000046"></script>
+    <script src="calc.js?v=17&t=24000046"></script>
     <script src="app-round6-debug.js"></script>
     
     <!-- V5 Advanced Features -->
