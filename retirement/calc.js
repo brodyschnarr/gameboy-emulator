@@ -95,6 +95,7 @@ const RetirementCalcV4 = {
             downsizingProceeds = 0,        // Net proceeds from home sale
             downsizingSpendingChange = 0,  // Monthly change in housing cost (negative = savings)
             categoryInflation,             // { housing, food, healthcare, discretionary } rates
+            estateAssets = [],             // Non-liquid assets: [{name, value, isPrimaryResidence}]
         } = inputs;
 
         const yearsToRetirement = retirementAge - currentAge;
@@ -233,19 +234,33 @@ const RetirementCalcV4 = {
         const portfolioAtRetirement = firstRetirementYear ? firstRetirementYear.totalBalance : 0;
         const onTrack = moneyLastsAge >= lifeExpectancy;
         
-        // Estate tax at death — deemed disposition of RRSP/RRIF + capital gains on non-reg
+        // Estate tax at death — deemed disposition of RRSP/RRIF + capital gains on non-reg + non-liquid assets
         let estateTax = 0;
+        // Non-liquid estate assets (home, property, etc.)
+        const cpiAtDeath = finalYear ? Math.pow(1 + inflationRate / 100, (finalYear.age || lifeExpectancy) - currentAge) : 1;
+        let totalEstateAssets = 0;
+        let estateAssetTax = 0;
+        if (estateAssets && estateAssets.length > 0) {
+            for (const asset of estateAssets) {
+                const appreciatedValue = (asset.value || 0) * cpiAtDeath; // Assume appreciates with inflation
+                totalEstateAssets += appreciatedValue;
+                if (!asset.isPrimaryResidence) {
+                    // Non-primary residence: capital gains on appreciation
+                    const gain = appreciatedValue - (asset.value || 0);
+                    estateAssetTax += gain * 0.5 * 0.25; // 50% inclusion × ~25% avg tax rate
+                }
+                // Primary residence = tax-exempt (principal residence exemption)
+            }
+        }
         if (finalYear && legacyAmount > 0) {
             const rrspAtDeath = finalYear.rrsp || 0;
             const nonRegAtDeath = finalYear.nonReg || 0;
-            // RRSP/RRIF fully taxable at death (deemed disposition)
-            // Non-reg: 50% capital gains inclusion (assume 50% of value is gains)
-            const deemedIncome = rrspAtDeath + (nonRegAtDeath * 0.5 * 0.5); // 50% of non-reg is gain, 50% inclusion
-            const cpiAtDeath = finalYear ? Math.pow(1 + inflationRate / 100, (finalYear.age || lifeExpectancy) - currentAge) : 1;
+            const deemedIncome = rrspAtDeath + (nonRegAtDeath * 0.5 * 0.5);
             const deathTax = CanadianTax.calculateTax(deemedIncome, province, { inflationFactor: cpiAtDeath }).total;
-            estateTax = Math.round(deathTax);
+            estateTax = Math.round(deathTax + estateAssetTax);
         }
-        const netEstate = Math.max(0, Math.round(legacyAmount) - estateTax);
+        const grossEstate = Math.round(legacyAmount) + Math.round(totalEstateAssets);
+        const netEstate = Math.max(0, grossEstate - estateTax);
 
         let legacyDescription = '';
         if (legacyAmount > 1000000) legacyDescription = 'Significant legacy for heirs';
@@ -267,6 +282,8 @@ const RetirementCalcV4 = {
             },
             legacy: {
                 amount: Math.round(legacyAmount),
+                estateAssets: Math.round(totalEstateAssets),
+                grossEstate,
                 description: legacyDescription,
                 estateTax,
                 netEstate
@@ -579,9 +596,26 @@ const RetirementCalcV4 = {
                 const rrspMaxFuture = RRSP_MAX[nextCalYear] || Math.round(31560 * cpiNextYear / 10) * 10;
                 rrspRoom += Math.min(incomeForRRSP * 0.18, rrspMaxFuture);
                 
+                // RRSP tax refund reinvestment: RRSP contributions generate a refund at marginal rate
+                // Estimate marginal rate from income (federal + provincial rough)
+                const estIncome = currentIncome * Math.pow(1 + contributionGrowthRate, age - startAge);
+                let marginalRate = 0.20; // default
+                if (estIncome > 220000) marginalRate = 0.33;
+                else if (estIncome > 155000) marginalRate = 0.29;
+                else if (estIncome > 110000) marginalRate = 0.26;
+                else if (estIncome > 55000) marginalRate = 0.205;
+                else marginalRate = 0.15;
+                marginalRate += 0.05; // Provincial approximation
+
+                const rrspRefund = rrspContrib * marginalRate;
+                // Reinvest refund: split between TFSA (if room) and Non-Reg
+                let refundToTFSA = Math.min(rrspRefund, Math.max(0, tfsaRoom));
+                let refundToNonReg = rrspRefund - refundToTFSA;
+                tfsaRoom -= refundToTFSA;
+
                 balances.rrsp += rrspContrib;
-                balances.tfsa += tfsaContrib;
-                balances.nonReg += nonRegContrib;
+                balances.tfsa += tfsaContrib + refundToTFSA;
+                balances.nonReg += nonRegContrib + refundToNonReg;
 
                 balances.rrsp *= (1 + r);
                 balances.tfsa *= (1 + r);

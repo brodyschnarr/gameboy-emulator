@@ -869,6 +869,41 @@
                 </div>
             </details>
 
+            <!-- ═══ EXPANDABLE: Estate Assets ═══ -->
+            <details class="step5-section">
+                <summary class="step5-section-header">🏠 Estate Assets <span class="optional-tag">Not sold in retirement</span></summary>
+                <div class="step5-section-content">
+                    <p class="section-intro">Assets you plan to keep and pass on — not part of your retirement income.</p>
+                    <div id="estate-assets-list"></div>
+                    <button type="button" class="btn-secondary" id="btn-add-estate-asset">+ Add Asset</button>
+                    <div id="estate-asset-form" class="hidden" style="margin-top: 12px;">
+                        <div class="input-group">
+                            <label for="estate-asset-name">Asset Name</label>
+                            <input type="text" id="estate-asset-name" placeholder="e.g., Primary Home, Cottage, Art Collection">
+                        </div>
+                        <div class="split-inputs" style="margin-bottom: 8px;">
+                            <div>
+                                <label for="estate-asset-value">Current Value</label>
+                                <div class="input-with-prefix"><span class="prefix">$</span>
+                                    <input type="number" id="estate-asset-value" placeholder="500000" min="0" step="10000">
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: flex-end; padding-bottom: 4px;">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="estate-asset-primary" checked>
+                                    Primary residence
+                                </label>
+                            </div>
+                        </div>
+                        <small class="input-hint">Primary residence is tax-exempt. Other properties/assets have capital gains tax on appreciation.</small>
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            <button type="button" class="btn-primary" id="btn-save-estate-asset" style="flex: 1;">Add</button>
+                            <button type="button" class="btn-secondary" id="btn-cancel-estate-asset">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
             <button type="button" class="btn-secondary" id="btn-back-retirement">← Back</button>
             <button type="button" class="btn-primary" id="btn-calculate">Calculate My Plan 🚀</button>
         </section>
@@ -1089,18 +1124,18 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000044"></script>
-    <script src="cpp-calculator.js?v=17&t=24000044"></script>
-    <script src="benchmarks.js?v=17&t=24000044"></script>
-    <script src="lifestyle-data.js?v=17&t=24000044"></script>
-    <script src="regional-data.js?v=17&t=24000044"></script>
-    <script src="canada-map.js?v=17&t=24000044"></script>
-    <script src="income-sources.js?v=17&t=24000044"></script>
-    <script src="deep-dive.js?v=1&t=24000044"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000044"></script>
-    <script src="scenario-manager.js?v=17&t=24000044"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000044"></script>
-    <script src="calc.js?v=17&t=24000044"></script>
+    <script src="canada-tax.js?v=17&t=24000045"></script>
+    <script src="cpp-calculator.js?v=17&t=24000045"></script>
+    <script src="benchmarks.js?v=17&t=24000045"></script>
+    <script src="lifestyle-data.js?v=17&t=24000045"></script>
+    <script src="regional-data.js?v=17&t=24000045"></script>
+    <script src="canada-map.js?v=17&t=24000045"></script>
+    <script src="income-sources.js?v=17&t=24000045"></script>
+    <script src="deep-dive.js?v=1&t=24000045"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000045"></script>
+    <script src="scenario-manager.js?v=17&t=24000045"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000045"></script>
+    <script src="calc.js?v=17&t=24000045"></script>
     <script src="app-round6-debug.js"></script>
     
     <!-- V5 Advanced Features -->

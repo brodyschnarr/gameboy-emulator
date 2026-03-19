@@ -43,6 +43,7 @@ const AppV4 = {
         this._setupPostRetirementWork();
         this._setupHouseSale();
         this._setupWindfalls();
+        this._setupEstateAssets();
         this._setupCalculate();
         this._setupScenarios();
         this._setupModals();
@@ -1232,6 +1233,69 @@ const AppV4 = {
         WindfallManager._attachListeners();
     },
 
+    _setupEstateAssets() {
+        this.estateAssets = [];
+        const addBtn = document.getElementById('btn-add-estate-asset');
+        const form = document.getElementById('estate-asset-form');
+        const saveBtn = document.getElementById('btn-save-estate-asset');
+        const cancelBtn = document.getElementById('btn-cancel-estate-asset');
+
+        if (addBtn && form) {
+            addBtn.addEventListener('click', () => {
+                form.classList.remove('hidden');
+                addBtn.classList.add('hidden');
+            });
+        }
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                form.classList.add('hidden');
+                addBtn?.classList.remove('hidden');
+            });
+        }
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                const name = document.getElementById('estate-asset-name')?.value || 'Asset';
+                const value = parseFloat(document.getElementById('estate-asset-value')?.value) || 0;
+                const isPrimaryResidence = document.getElementById('estate-asset-primary')?.checked || false;
+                if (value > 0) {
+                    this.estateAssets.push({ name, value, isPrimaryResidence });
+                    form.classList.add('hidden');
+                    addBtn?.classList.remove('hidden');
+                    document.getElementById('estate-asset-name').value = '';
+                    document.getElementById('estate-asset-value').value = '';
+                    this._renderEstateAssets();
+                }
+            });
+        }
+    },
+
+    _renderEstateAssets() {
+        const container = document.getElementById('estate-assets-list');
+        if (!container) return;
+        if (this.estateAssets.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        const fmt = (v) => '$' + Math.round(v).toLocaleString();
+        container.innerHTML = this.estateAssets.map((a, i) => `
+            <div class="income-source-item" style="margin-bottom: 8px;">
+                <div class="source-icon">${a.isPrimaryResidence ? '🏠' : '🏢'}</div>
+                <div class="source-details">
+                    <div class="source-name">${a.name}</div>
+                    <div class="source-meta">${fmt(a.value)} • ${a.isPrimaryResidence ? 'Tax-exempt (primary residence)' : 'Capital gains on appreciation'}</div>
+                </div>
+                <button type="button" class="btn-remove-source" data-estate-idx="${i}">✕</button>
+            </div>
+        `).join('');
+        container.querySelectorAll('.btn-remove-source').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.target.closest('[data-estate-idx]').dataset.estateIdx);
+                this.estateAssets.splice(idx, 1);
+                this._renderEstateAssets();
+            });
+        });
+    },
+
     _setupCalculate() {
         const calculateBtn = document.getElementById('btn-calculate');
         if (calculateBtn) {
@@ -1339,7 +1403,7 @@ const AppV4 = {
                 const s = (key) => yrs.reduce((a, y) => a + (y[key] || 0), 0);
                 const lastYear = yrs[yrs.length - 1];
                 const legacy = lastYear ? lastYear.totalBalance : 0;
-                return { tax: s('taxPaid'), cpp: s('cppReceived'), oas: s('oasReceived'), gis: s('gisReceived'), legacy, lasts: results.summary.moneyLastsAge, estateTax: results.legacy?.estateTax || 0, netEstate: results.legacy?.netEstate || 0 };
+                return { tax: s('taxPaid'), cpp: s('cppReceived'), oas: s('oasReceived'), gis: s('gisReceived'), legacy, lasts: results.summary.moneyLastsAge, estateTax: results.legacy?.estateTax || 0, netEstate: results.legacy?.netEstate || 0, estateAssets: results.legacy?.estateAssets || 0, grossEstate: results.legacy?.grossEstate || legacy };
             };
 
             const userStats = getStats(smartResults);
@@ -1413,10 +1477,11 @@ const AppV4 = {
                         <div class="strategy-stat sub hint"><span>Charged on portfolio balance each year</span></div>
                     </details>
                     <details class="strategy-details">
-                        <summary class="strategy-stat"><span>🏠 Estate</span><span>${stats.netEstate > 0 ? fmt(stats.netEstate) : (stats.legacy > 0 ? fmt(stats.legacy) : '$0')}</span></summary>
+                        <summary class="strategy-stat"><span>🏠 Estate</span><span>${fmt(stats.netEstate)}</span></summary>
                         <div class="strategy-stat sub"><span>Portfolio at death</span><span>${fmt(stats.legacy)}</span></div>
+                        ${stats.estateAssets > 0 ? `<div class="strategy-stat sub"><span>Other assets</span><span>${fmt(stats.estateAssets)}</span></div>` : ''}
                         ${stats.estateTax > 0 ? `<div class="strategy-stat sub"><span>Deemed disposition</span><span>-${fmt(stats.estateTax)}</span></div>` : ''}
-                        <div class="strategy-stat sub"><span>Net to heirs</span><span>${fmt(stats.netEstate || stats.legacy)}</span></div>
+                        <div class="strategy-stat sub"><span>Net to heirs</span><span>${fmt(stats.netEstate)}</span></div>
                     </details>
                     <div class="strategy-stat"><span>📅 Lasts To</span><span>Age ${stats.lasts}</span></div>
                     ${note ? `<div class="strategy-note">${note}</div>` : ''}
@@ -2724,6 +2789,9 @@ const AppV4 = {
             contributionGrowthRate: parseFloat(document.getElementById('contribution-growth')?.value) || 0,
             merFee: parseFloat(document.getElementById('mer-fee')?.value) || 0,
             spendingCurve: this.spendingCurve || 'flat',
+
+            // Estate assets (non-liquid, not sold in retirement)
+            estateAssets: this.estateAssets || [],
 
             // Contribution room overrides (optional)
             rrspRoomOverride: document.getElementById('rrsp-room-override')?.value ? parseFloat(document.getElementById('rrsp-room-override').value) : undefined,
