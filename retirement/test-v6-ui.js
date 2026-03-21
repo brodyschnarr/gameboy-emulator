@@ -67,14 +67,6 @@ console.log('\n📊 1. Map Affordability Data');
     assert(CanadaMap._provinceAffordability.MB.tier === 'high', 'MB is affordable');
 }
 
-{
-    // Affordability indicators generate valid SVG text elements
-    const indicators = CanadaMap._getAffordabilityIndicators();
-    assert(typeof indicators === 'string', 'Indicators return string');
-    assert(indicators.includes('<text'), 'Indicators contain SVG text elements');
-    assert((indicators.match(/<text/g) || []).length === 10, 'One indicator per province');
-}
-
 // ════════════════════════════════════════
 console.log('\n📊 2. Map Label Positions');
 // ════════════════════════════════════════
@@ -100,8 +92,8 @@ console.log('\n📊 3. Map SVG Generation');
     assert(svg.includes('<svg'), 'SVG contains svg element');
     assert(svg.includes('province-path'), 'SVG contains province paths');
     assert(svg.includes('province-label'), 'SVG contains province labels');
-    assert(svg.includes('province-indicator'), 'SVG contains affordability indicators');
-    assert(svg.includes('afford-high'), 'SVG references affordability CSS classes');
+    // Affordability is on region buttons now, not SVG
+    assert(!svg.includes('province-indicator'), 'SVG no longer has inline affordability indicators');
     
     // White stroke (fixes gaps)
     assert(svg.includes('stroke: #fff'), 'Provinces use white stroke (fixes gaps)');

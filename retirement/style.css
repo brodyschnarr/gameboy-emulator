@@ -3780,3 +3780,21 @@ input:focus {
     padding-top: 4px;
 }
 .dd-detail-row .negative { color: #ef4444; }
+
+/* ═══ Region Button Affordability Colors ═══ */
+.region-btn.afford-cheap { border-color: #86efac; background: #f0fdf4; }
+.region-btn.afford-below { border-color: #a7f3d0; background: #f0fdf4; }
+.region-btn.afford-above { border-color: #fdba74; background: #fff7ed; }
+.region-btn.afford-expensive { border-color: #fca5a5; background: #fef2f2; }
+.region-btn.active.afford-cheap,
+.region-btn.active.afford-below,
+.region-btn.active.afford-above,
+.region-btn.active.afford-expensive { background: var(--primary); border-color: var(--primary); color: #fff; }
+.region-cost-tag {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+.region-btn.active .region-cost-tag { opacity: 0.9; }

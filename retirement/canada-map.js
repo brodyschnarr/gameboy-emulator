@@ -9,32 +9,33 @@ const CanadaMap = {
     selectedRegion: null,
     onSelect: null,
 
-    // Simplified real province outlines
+    // Simplified province shapes — shared borders, no gaps
+    // Based on a schematic tilemap that reads as "Canada" without cartographic detail
     _paths: {
-            'BC': `M154,767L186,767L186,870L194,877L196,889L209,907L220,916L225,932L142,932L140,925L132,925L134,917L132,921L126,918L126,904L123,911L114,911L120,909L115,910L115,905L108,906L105,900L115,896L108,896L107,900L106,889L111,885L117,890L116,877L107,891L108,875L99,865L103,862L112,868L106,859L100,868L93,862L98,855L90,854L97,837L94,843L94,827L77,817L47,761L30,775L15,756L159,756L154,767ZM124,915L138,919L159,946L146,942L147,933L142,937L139,931L135,932L139,930L126,924L131,919L124,921L122,917L133,921L124,915ZM75,863L78,868L82,860L77,875L70,860L75,863ZM112,882L111,893L107,878L112,882ZM83,878L88,892L75,880L83,878Z`,
-            'AB': `M278,938L240,938L235,922L224,913L211,895L209,884L202,880L201,774L297,774L297,941L278,938Z`,
-            'SK': `M356,938L275,938L275,766L339,766L339,929L356,938Z`,
-            'MB': `M467,821L415,885L415,938L357,938L357,769L421,769L424,798L427,791L436,792L442,814L437,823L453,818L468,825L467,821Z`,
-            'ON': `M551,911L551,955L557,967L578,979L593,977L597,983L582,994L569,995L574,997L555,997L550,1004L556,1007L535,1007L528,1016L525,1011L539,999L540,975L553,982L554,968L524,966L525,958L522,953L514,953L511,944L495,942L496,948L486,951L449,941L445,933L445,885L497,821L511,835L524,840L530,851L543,848L558,853L559,884L575,906L571,912L577,909L582,914L551,911ZM523,978L526,979L521,984L510,982L523,978Z`,
-            'QC': `M685,762L683,783L695,784L686,792L691,796L687,821L695,835L691,846L673,845L664,836L664,845L658,840L656,854L662,861L661,872L665,869L664,881L673,879L680,886L685,863L687,868L680,870L682,877L747,877L747,885L732,887L717,901L659,902L630,930L618,927L631,931L618,949L593,967L596,969L589,964L574,966L554,955L547,942L547,889L550,895L551,878L548,854L541,846L558,838L570,820L569,798L554,782L561,763L564,765L562,744L557,744L563,730L557,725L556,714L568,710L588,718L597,711L615,732L626,733L627,737L632,733L630,752L621,754L630,755L632,772L627,772L643,771L643,782L637,787L647,777L649,784L659,771L663,777L663,769L668,766L666,760L670,762L665,759L669,745L685,762ZM666,951L653,951L649,958L643,958L631,986L596,988L607,983L619,968L633,963L646,947L673,936L690,939L691,946L685,951L666,951ZM710,937L694,933L686,926L696,927L710,937Z`,
-            'NB': `M690,977L664,985L660,983L660,967L650,965L658,956L687,958L691,960L684,969L689,968L692,979L698,979L690,977Z`,
-            'NS': `M687,979L708,978L715,983L686,990L671,1005L667,998L670,991L667,993L682,981L685,985L693,980L679,981L683,975L687,979ZM716,978L720,979L723,973L728,978L713,982L723,964L723,976L716,978Z`,
-            'PE': `M692,972L704,972L696,977L679,967L682,963L683,969L692,972Z`,
-            'NL': `M752,904L752,896L687,896L685,889L692,887L690,882L685,905L678,898L669,900L670,888L666,891L667,880L661,873L663,859L669,864L669,855L678,864L696,865L700,854L692,840L696,815L691,811L700,803L688,802L688,782L698,794L700,801L695,803L702,802L704,806L698,813L708,811L702,819L712,819L715,826L710,828L721,832L724,840L714,837L724,842L723,847L733,848L730,860L739,856L743,858L740,864L748,858L751,864L759,863L764,868L738,881L738,886L759,873L756,872L764,873L764,883L769,879L776,881L777,894L773,895L779,895L779,901L772,908L767,911L752,904ZM766,903L755,917L754,929L759,923L765,926L759,932L766,934L765,940L774,933L782,937L778,949L788,945L781,951L782,957L790,951L788,959L791,955L785,970L785,963L780,967L781,952L772,963L767,963L777,952L736,950L746,940L739,940L747,933L752,916L759,908L769,907L766,903Z`
+        'BC': `M20,50 L70,20 L100,20 L100,50 L100,180 L80,200 L60,210 L40,205 L25,190 L15,170 L10,140 L12,110 L15,80 L20,50Z`,
+        'AB': `M100,20 L150,20 L150,180 L100,180 L100,20Z`,
+        'SK': `M150,20 L200,20 L200,180 L150,180 L150,20Z`,
+        'MB': `M200,20 L250,20 L255,40 L258,60 L255,90 L250,120 L245,150 L240,180 L200,180 L200,20Z`,
+        'ON': `M240,180 L245,150 L250,120 L255,90 L258,60 L265,50 L275,42 L290,38 L300,42 L310,50 L318,65 L322,82 L325,100 L328,120 L330,140 L328,160 L322,175 L315,188 L305,198 L295,208 L285,215 L275,220 L265,218 L255,210 L248,200 L240,180Z`,
+        'QC': `M318,65 L325,55 L335,45 L348,38 L362,35 L378,38 L390,45 L398,55 L402,68 L402,85 L398,100 L392,115 L385,128 L375,140 L365,150 L355,158 L345,165 L335,172 L325,178 L318,185 L310,192 L305,198 L295,208 L285,215 L280,210 L285,200 L295,185 L305,170 L315,155 L322,140 L325,120 L325,100 L322,82 L318,65Z`,
+        'NB': `M365,150 L375,142 L385,140 L392,145 L395,155 L392,165 L385,172 L378,175 L370,172 L365,165 L362,158 L365,150Z`,
+        'NS': `M392,165 L400,158 L410,155 L418,160 L420,170 L416,180 L408,185 L400,182 L395,178 L392,172 L392,165Z`,
+        'PE': `M382,132 L392,128 L398,132 L395,140 L385,142 L382,138 L382,132Z`,
+        'NL': `M410,35 L420,30 L432,35 L438,48 L438,65 L435,80 L428,92 L420,100 L412,105 L405,108 L398,105 L395,98 L398,85 L402,72 L405,58 L408,45 L410,35Z`
     },
 
     // Label positions (centered in each province)
     _labels: {
-        'BC': [120, 851],
-        'AB': [249, 858],
-        'SK': [316, 852],
-        'MB': [412, 854],
-        'ON': [521, 918],
-        'QC': [644, 849],
-        'NB': [674, 970],
-        'NS': [698, 984],
-        'PE': [692, 970],
-        'NL': [726, 876]
+        'BC': [55, 120],
+        'AB': [125, 100],
+        'SK': [175, 100],
+        'MB': [225, 100],
+        'ON': [282, 140],
+        'QC': [358, 100],
+        'NB': [378, 158],
+        'NS': [408, 172],
+        'PE': [390, 135],
+        'NL': [418, 70]
     },
 
     render(containerId) {
@@ -44,14 +45,8 @@ const CanadaMap = {
                 console.error(`[CanadaMap] Container #${containerId} not found`);
                 return;
             }
-            container.innerHTML = this._getMapSVG() + `
-                <div class="map-legend" style="display:flex;gap:12px;justify-content:center;margin-top:6px;font-size:11px;color:#64748b;">
-                    <span><span style="display:inline-block;width:10px;height:10px;background:#d1fae5;border-radius:2px;vertical-align:middle;"></span> Affordable</span>
-                    <span><span style="display:inline-block;width:10px;height:10px;background:#e8edf3;border-radius:2px;vertical-align:middle;"></span> Average</span>
-                    <span><span style="display:inline-block;width:10px;height:10px;background:#fde8e8;border-radius:2px;vertical-align:middle;"></span> Expensive</span>
-                </div>`;
+            container.innerHTML = this._getMapSVG();
             this._attachListeners();
-            this._applyAffordabilityColors();
         } catch (error) {
             console.error('[CanadaMap] Render failed:', error);
         }
@@ -69,8 +64,8 @@ const CanadaMap = {
         }).join('\n');
 
         return `
-            <svg viewBox="0 700 800 330" class="canada-map" xmlns="http://www.w3.org/2000/svg"
-                 style="width:100%;max-width:800px;height:auto">
+            <svg viewBox="0 10 450 230" class="canada-map" xmlns="http://www.w3.org/2000/svg"
+                 style="width:100%;max-width:500px;height:auto;margin:0 auto;display:block"
                 <defs>
                     <style>
                         .province-path {
@@ -90,12 +85,6 @@ const CanadaMap = {
                             stroke: #1e40af;
                             stroke-width: 1.5;
                         }
-                        .province-path.afford-high { fill: #d1fae5; }
-                        .province-path.afford-mid { fill: #e8edf3; }
-                        .province-path.afford-low { fill: #fde8e8; }
-                        .province-path.afford-high:hover { fill: #a7f3d0; }
-                        .province-path.afford-mid:hover { fill: #cbd5e1; }
-                        .province-path.afford-low:hover { fill: #fca5a5; }
                         .province-path.selected { fill: #3b82f6 !important; }
                         .province-label {
                             fill: #334155;
@@ -113,19 +102,11 @@ const CanadaMap = {
                         .province-label.selected-label {
                             fill: #fff;
                         }
-                        .province-indicator {
-                            font-size: 9px;
-                            pointer-events: none;
-                            text-anchor: middle;
-                            dominant-baseline: middle;
-                            font-family: system-ui, sans-serif;
-                            fill: #475569;
-                        }
+                        /* indicators moved to region buttons */
                     </style>
                 </defs>
                 ${pathEls}
                 ${labelEls}
-                ${this._getAffordabilityIndicators()}
             </svg>
         `;
     },
@@ -186,9 +167,20 @@ const CanadaMap = {
         
         regions.forEach(region => {
             const selected = this.selectedRegion === region.id ? 'active' : '';
+            // Get cost of living for this region
+            const regionData = RegionalDataV2[region.code] || RegionalDataV2.getRegion(region.code);
+            const col = regionData?.costOfLivingIndex || 100;
+            let affordClass = 'afford-avg';
+            let affordLabel = '';
+            if (col >= 115) { affordClass = 'afford-expensive'; affordLabel = '💰 Expensive'; }
+            else if (col >= 105) { affordClass = 'afford-above'; affordLabel = '↑ Above avg'; }
+            else if (col <= 90) { affordClass = 'afford-cheap'; affordLabel = '✓ Affordable'; }
+            else if (col <= 95) { affordClass = 'afford-below'; affordLabel = '↓ Below avg'; }
+            
             html += `
-                <button class="region-btn ${selected}" data-region="${region.id}">
+                <button class="region-btn ${selected} ${affordClass}" data-region="${region.id}">
                     ${region.name}
+                    ${affordLabel ? `<span class="region-cost-tag">${affordLabel}</span>` : ''}
                 </button>
             `;
         });
