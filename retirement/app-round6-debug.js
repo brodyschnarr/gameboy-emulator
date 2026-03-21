@@ -1417,6 +1417,8 @@ const AppV4 = {
                     if (type === 'windfall' && (!this.windfalls || this.windfalls.length === 0)) {
                         this._showWindfallForm();
                     }
+                    // Refresh chips so items from other sections stay visible
+                    this._updateStep5AddedItems();
                 }
                 // Close dropdown
                 item.closest('.step5-dropdown').classList.add('hidden');
@@ -1497,6 +1499,16 @@ const AppV4 = {
         if (downProceeds > 0) {
             const downAge = document.getElementById('downsizing-age')?.value || '70';
             incomeHTML += `<div class="step5-added-item"><span class="item-label">🏡 Downsizing</span><span class="item-value">${fmt(downProceeds)} at age ${downAge}</span></div>`;
+        }
+        
+        // Windfalls
+        if (this.windfalls && this.windfalls.length > 0) {
+            this.windfalls.forEach(w => {
+                const wName = w.name || (w.type === 'shares' ? 'Stock / Equity' : 'Windfall');
+                const wAmt = w.type === 'shares' ? (w.currentValue || w.amount || 0) : (w.amount || 0);
+                const wAge = w.type === 'shares' ? (w.sellAge || '?') : (w.year || '?');
+                incomeHTML += `<div class="step5-added-item"><span class="item-label">💰 ${wName}</span><span class="item-value">${fmt(wAmt)} at age ${wAge}</span></div>`;
+            });
         }
         
         // Other income
