@@ -2310,16 +2310,45 @@ const AppV4 = {
         const el = document.getElementById('contribution-grounding');
         if (!el) return;
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
+        const retAge = parseInt(document.getElementById('retirement-age')?.value) || 65;
         const totalSavings = (parseFloat(document.getElementById('rrsp')?.value) || 0)
             + (parseFloat(document.getElementById('tfsa')?.value) || 0)
             + (parseFloat(document.getElementById('nonreg')?.value) || 0)
             + (parseFloat(document.getElementById('other')?.value) || 0);
-        const yearsToRetire = Math.max(1, 65 - age);
-        const recommended = Math.round((500000 - totalSavings) / yearsToRetire / 12);
-        el.innerHTML = `
-            <strong>💡 Quick math:</strong> To reach $500K by 65 (${yearsToRetire} years), you'd need ~<strong>$${Math.max(0, recommended).toLocaleString()}/month</strong> at 6% return
-            <br><small style="opacity: 0.8;">Canadian median savings rate: 15% of income | Average monthly: $500-800</small>
-        `;
+        const yearsToRetire = Math.max(1, retAge - age);
+        const rate = 0.06; // 6% assumed growth
+        
+        // Future value of existing savings with compounding
+        const fvExisting = totalSavings * Math.pow(1 + rate, yearsToRetire);
+        const target = 500000;
+        const gap = Math.max(0, target - fvExisting);
+        
+        // Monthly contribution needed to fill the gap (future value of annuity)
+        let recommended = 0;
+        if (gap > 0) {
+            const monthlyRate = rate / 12;
+            const months = yearsToRetire * 12;
+            // FV of annuity: PMT × ((1+r)^n - 1) / r = gap
+            // PMT = gap × r / ((1+r)^n - 1)
+            const annuityFactor = (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate;
+            recommended = Math.round(gap / annuityFactor);
+        }
+        
+        const fvFormatted = fvExisting >= 1000000 
+            ? `$${(fvExisting/1000000).toFixed(1)}M` 
+            : `$${Math.round(fvExisting/1000).toLocaleString()}K`;
+        
+        if (fvExisting >= target) {
+            el.innerHTML = `
+                <strong>💡 Quick math:</strong> Your $${Math.round(totalSavings/1000).toLocaleString()}K grows to ~<strong>${fvFormatted}</strong> by ${retAge} at 6% return — you're already on track!
+                <br><small style="opacity: 0.8;">Canadian median savings rate: 15% of income | Average monthly: $500-800</small>
+            `;
+        } else {
+            el.innerHTML = `
+                <strong>💡 Quick math:</strong> Your savings grow to ~${fvFormatted} by ${retAge}. To reach $500K, add ~<strong>$${recommended.toLocaleString()}/month</strong>
+                <br><small style="opacity: 0.8;">Canadian median savings rate: 15% of income | Average monthly: $500-800</small>
+            `;
+        }
     },
 
     _updateContributionRoomEstimate() {

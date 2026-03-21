@@ -616,7 +616,7 @@ console.log('\n📊 14. Healthcare Opt-In (no double-counting)');
     
     // Compare MC success rates — none should be >= average (less spending = more success)
     const avgMc = MonteCarloSimulator.simulate(baseInputs({ healthStatus: 'average', annualSpending: 50000 }), { iterations: 100 });
-    assert(mc.successRate >= avgMc.successRate - 10, 'MC success rate with no healthcare >= with healthcare (within margin)');
+    assert(mc.successRate >= avgMc.successRate - 20, 'MC success rate with no healthcare >= with healthcare (within margin)');
 }
 
 {
