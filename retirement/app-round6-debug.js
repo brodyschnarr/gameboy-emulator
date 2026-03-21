@@ -2206,6 +2206,9 @@ const AppV4 = {
         if (this.currentStep === 'savings') {
             this._updateSavingsBenchmark();
         }
+
+        // Update spending recommendation with regional cost of living
+        this._updateSpendingRecommendation();
     },
 
     _updateSavingsBenchmark() {
@@ -2438,6 +2441,12 @@ const AppV4 = {
             html += `<br><small style="opacity: 0.8;">${regionName} retiree ${isSingle ? '' : 'couple '}median: $${regionalMedian.toLocaleString()}/year | Average: $${regionalAverage.toLocaleString()}/year</small>`;
 
             el.innerHTML = html;
+        }
+
+        // Update placeholder to reflect regional average
+        const spendingInput = document.getElementById('annual-spending');
+        if (spendingInput && !spendingInput.value) {
+            spendingInput.placeholder = regionalAverage.toLocaleString();
         }
     },
 
