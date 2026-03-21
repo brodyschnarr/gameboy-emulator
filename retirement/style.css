@@ -1492,6 +1492,13 @@ input:focus {
     font-size: 1.2em;
 }
 
+.region-hint {
+    margin: 4px 0 0;
+    font-size: 0.8em;
+    color: #64748b;
+    font-weight: 400;
+}
+
 /* Region Picker Container */
 #region-picker-container {
     transition: all 0.3s ease;
