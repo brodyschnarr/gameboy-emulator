@@ -136,6 +136,7 @@ const AppV4 = {
     },
 
     _toggleFamilyUI() {
+        this._updateSpendingPresets();
         const isCouple = this.familyStatus === 'couple';
 
         // Show/hide partner age
@@ -253,6 +254,7 @@ const AppV4 = {
         // Manually trigger the callback to ensure state is set
         this.selectedProvince = 'ON';
         this.selectedRegion = 'ON_Toronto';
+        this._updateSpendingPresets();
     },
 
     _setupIncome() {
@@ -817,6 +819,12 @@ const AppV4 = {
             icon = '⚠️';
             amountClass = 'need-to-cut';
             message = `Your plan runs out at age ${moneyLastsAge}. Reduce spending to <strong>${fmt(maxSustainable)}/year</strong> to last until ${lifeExpectancy}.`;
+            // Home value safety net
+            const homeValue = parseFloat(document.getElementById('home-value')?.value) || 0;
+            if (homeValue > 0) {
+                const homeAfterTax = Math.round(homeValue * 0.95); // Principal residence = tax-free, minus selling costs
+                message += `<br><small style="opacity:0.85">🏠 Safety net: Your home (~${fmt(homeAfterTax)} after selling costs) could extend your plan significantly.</small>`;
+            }
             barClass = 'danger';
         } else if (diff > 10000) {
             // Lots of room
@@ -2207,8 +2215,9 @@ const AppV4 = {
             this._updateSavingsBenchmark();
         }
 
-        // Update spending recommendation with regional cost of living
+        // Update spending recommendation and presets with regional cost of living
         this._updateSpendingRecommendation();
+        this._updateSpendingPresets();
     },
 
     _updateSavingsBenchmark() {
@@ -2448,6 +2457,32 @@ const AppV4 = {
         if (spendingInput && !spendingInput.value) {
             spendingInput.placeholder = regionalAverage.toLocaleString();
         }
+    },
+
+    _updateSpendingPresets() {
+        const regionData = this.selectedRegion ? RegionalDataV2.getRegion(this.selectedRegion) : null;
+        const multiplier = regionData ? (regionData.costOfLivingIndex / 100) : 1;
+        const isSingle = this.familyStatus === 'single';
+
+        // Map lifestyle keys to BenchmarksV2 data
+        const lifestyleMap = {
+            modest: isSingle ? 35000 : 48000,
+            average: isSingle ? 48000 : 65000,
+            comfortable: isSingle ? 62000 : 85000,
+            luxury: isSingle ? 95000 : 130000,
+            ultrawealthy: isSingle ? 150000 : 200000
+        };
+
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            const lifestyle = btn.dataset.lifestyle;
+            const base = lifestyleMap[lifestyle] || parseInt(btn.dataset.baseAmount) || 48000;
+            const adjusted = Math.round((base * multiplier) / 1000) * 1000;
+            btn.dataset.amount = adjusted;
+            const amountEl = btn.querySelector('.preset-amount');
+            if (amountEl) {
+                amountEl.textContent = adjusted >= 1000 ? `$${Math.round(adjusted / 1000)}K` : `$${adjusted.toLocaleString()}`;
+            }
+        });
     },
 
     _updateCPPPreview() {
@@ -3014,6 +3049,9 @@ const AppV4 = {
             contributionGrowthRate: parseFloat(document.getElementById('contribution-growth')?.value) || 0,
             merFee: parseFloat(document.getElementById('mer-fee')?.value) || 0,
             spendingCurve: this.spendingCurve || 'flat',
+
+            // Home value (safety net, not counted as retirement savings)
+            homeValue: parseFloat(document.getElementById('home-value')?.value) || 0,
 
             // Estate assets (non-liquid, not sold in retirement)
             estateAssets: this.estateAssets || [],

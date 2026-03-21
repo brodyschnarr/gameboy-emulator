@@ -301,6 +301,16 @@
             </div>
             <div id="total-savings-benchmark"></div>
 
+            <!-- Home Value (safety net) -->
+            <div class="input-group" style="margin-top:16px;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+                <label for="home-value" style="font-size:14px;font-weight:600">🏠 Home Value (optional)</label>
+                <p class="section-intro" style="margin:2px 0 8px;font-size:12px">Not counted as retirement savings — but shown as a safety net if your plan runs short</p>
+                <div class="input-with-prefix">
+                    <span class="input-prefix">$</span>
+                    <input type="number" id="home-value" placeholder="0" min="0" step="10000" style="padding:8px;font-size:14px">
+                </div>
+            </div>
+
             <button type="button" class="btn-secondary" id="btn-back-basic">← Back</button>
             <button type="button" class="btn-primary" id="btn-next-contributions">Continue →</button>
         </section>
@@ -567,23 +577,23 @@
             <div class="input-group">
                 <label>Annual Spending</label>
                 <div class="lifestyle-presets">
-                    <button type="button" class="preset-btn" data-lifestyle="modest" data-amount="35000">
+                    <button type="button" class="preset-btn" data-lifestyle="modest" data-base-amount="35000" data-amount="35000">
                         <div class="preset-name">Modest</div>
                         <div class="preset-amount">$35K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="average" data-amount="48000">
+                    <button type="button" class="preset-btn" data-lifestyle="average" data-base-amount="48000" data-amount="48000">
                         <div class="preset-name">Avg</div>
                         <div class="preset-amount">$48K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-amount="60000">
+                    <button type="button" class="preset-btn" data-lifestyle="comfortable" data-base-amount="60000" data-amount="60000">
                         <div class="preset-name">Comfortable</div>
                         <div class="preset-amount">$60K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="luxury" data-amount="90000">
+                    <button type="button" class="preset-btn" data-lifestyle="luxury" data-base-amount="90000" data-amount="90000">
                         <div class="preset-name">Luxury</div>
                         <div class="preset-amount">$90K</div>
                     </button>
-                    <button type="button" class="preset-btn" data-lifestyle="ultrawealthy" data-amount="150000">
+                    <button type="button" class="preset-btn" data-lifestyle="ultrawealthy" data-base-amount="150000" data-amount="150000">
                         <div class="preset-name">Ultra-Wealthy</div>
                         <div class="preset-amount">$150K</div>
                     </button>
@@ -1170,34 +1180,34 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000058"></script>
-    <script src="cpp-calculator.js?v=17&t=24000058"></script>
-    <script src="benchmarks.js?v=17&t=24000058"></script>
-    <script src="lifestyle-data.js?v=17&t=24000058"></script>
-    <script src="regional-data.js?v=18&t=24000058"></script>
-    <script src="canada-map.js?v=18&t=24000058"></script>
-    <script src="income-sources.js?v=17&t=24000058"></script>
-    <script src="deep-dive.js?v=17&t=24000058"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000058"></script>
-    <script src="scenario-manager.js?v=17&t=24000058"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000058"></script>
-    <script src="calc.js?v=17&t=24000058"></script>
-    <script src="app-round6-debug.js?v=17&t=24000058"></script>
+    <script src="canada-tax.js?v=17&t=24000059"></script>
+    <script src="cpp-calculator.js?v=17&t=24000059"></script>
+    <script src="benchmarks.js?v=17&t=24000059"></script>
+    <script src="lifestyle-data.js?v=17&t=24000059"></script>
+    <script src="regional-data.js?v=18&t=24000059"></script>
+    <script src="canada-map.js?v=18&t=24000059"></script>
+    <script src="income-sources.js?v=17&t=24000059"></script>
+    <script src="deep-dive.js?v=17&t=24000059"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000059"></script>
+    <script src="scenario-manager.js?v=17&t=24000059"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000059"></script>
+    <script src="calc.js?v=17&t=24000059"></script>
+    <script src="app-round6-debug.js?v=17&t=24000059"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000058"></script>
-    <script src="monte-carlo.js?v=17&t=24000058"></script>
-    <script src="tax-optimizer.js?v=17&t=24000058"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000058"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000058"></script>
-    <script src="advanced-charts.js?v=17&t=24000058"></script>
-    <script src="interactive-sliders.js?v=17&t=24000058"></script>
-    <script src="scenario-storage.js?v=17&t=24000058"></script>
-    <script src="windfalls.js?v=17&t=24000058"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000058"></script>
+    <script src="error-handler.js?v=17&t=24000059"></script>
+    <script src="monte-carlo.js?v=17&t=24000059"></script>
+    <script src="tax-optimizer.js?v=17&t=24000059"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000059"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000059"></script>
+    <script src="advanced-charts.js?v=17&t=24000059"></script>
+    <script src="interactive-sliders.js?v=17&t=24000059"></script>
+    <script src="scenario-storage.js?v=17&t=24000059"></script>
+    <script src="windfalls.js?v=17&t=24000059"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000059"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000058"></script>
+    <script src="slider-inputs.js?v=17&t=24000059"></script>
 
     <!-- Diagnostics removed -->
 
