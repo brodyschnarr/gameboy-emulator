@@ -122,6 +122,10 @@ const CanadaMap = {
                 displayEl.classList.remove('hidden');
             }
         } else {
+            // Hide region picker from previous selection
+            const picker = document.getElementById('region-picker-container');
+            if (picker) picker.classList.add('hidden');
+            
             this.selectedRegion = province;
             this._showLocationDisplay(province, province);
             if (this.onSelect) {
