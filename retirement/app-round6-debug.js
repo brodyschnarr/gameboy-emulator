@@ -819,11 +819,14 @@ const AppV4 = {
             icon = '⚠️';
             amountClass = 'need-to-cut';
             message = `Your plan runs out at age ${moneyLastsAge}. Reduce spending to <strong>${fmt(maxSustainable)}/year</strong> to last until ${lifeExpectancy}.`;
-            // Home value safety net
+            // Home value safety net — calculate years extended
             const homeValue = parseFloat(document.getElementById('home-value')?.value) || 0;
             if (homeValue > 0) {
-                const homeAfterTax = Math.round(homeValue * 0.95); // Principal residence = tax-free, minus selling costs
-                message += `<br><small style="opacity:0.85">🏠 Safety net: Your home (~${fmt(homeAfterTax)} after selling costs) could extend your plan significantly.</small>`;
+                const homeNet = Math.round(homeValue * 0.95); // Principal residence tax-free, minus ~5% selling costs
+                const annualNeed = currentSpending || maxSustainable || 50000;
+                const extraYears = Math.floor(homeNet / annualNeed);
+                const extendsTo = Math.min(moneyLastsAge + extraYears, lifeExpectancy + 10);
+                message += `<br><small style="opacity:0.85">🏠 If you sold your home (~${fmt(homeNet)} net), it could fund ~<strong>${extraYears} more years</strong> — lasting to age ~${extendsTo}.</small>`;
             }
             barClass = 'danger';
         } else if (diff > 10000) {
