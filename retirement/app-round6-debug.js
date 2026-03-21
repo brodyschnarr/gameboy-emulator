@@ -1487,18 +1487,51 @@ const AppV4 = {
             }
         }
 
-        // Estate assets + downsizing (separate section)
-        let estateHTML = '';
+        // Downsizing (now in income section)
         const downProceeds = parseFloat(document.getElementById('downsizing-proceeds')?.value) || 0;
         if (downProceeds > 0) {
             const downAge = document.getElementById('downsizing-age')?.value || '70';
-            estateHTML += `<div class="step5-added-item"><span class="item-label">🏡 Downsizing</span><span class="item-value">${fmt(downProceeds)} at age ${downAge}</span></div>`;
+            incomeHTML += `<div class="step5-added-item"><span class="item-label">🏡 Downsizing</span><span class="item-value">${fmt(downProceeds)} at age ${downAge}</span></div>`;
         }
+        
+        // Other income
+        const otherIncomeName = document.getElementById('other-income-name')?.value;
+        const otherIncomeAmt = parseFloat(document.getElementById('other-income-amount')?.value) || 0;
+        if (otherIncomeAmt > 0) {
+            incomeHTML += `<div class="step5-added-item"><span class="item-label">📝 ${otherIncomeName || 'Other'}</span><span class="item-value">${fmt(otherIncomeAmt)}/yr</span></div>`;
+        }
+        
+        // Other expense
+        const otherExpenseName = document.getElementById('other-expense-name')?.value;
+        const otherExpenseAmt = parseFloat(document.getElementById('other-expense-amount')?.value) || 0;
+        if (otherExpenseAmt > 0) {
+            expenseHTML += `<div class="step5-added-item"><span class="item-label">📝 ${otherExpenseName || 'Other'}</span><span class="item-value">${fmt(otherExpenseAmt)}/yr</span></div>`;
+        }
+
+        // Estate assets (separate section)
+        let estateHTML = '';
         // Estate assets from the estate form
         if (this.estateAssets && this.estateAssets.length > 0) {
             this.estateAssets.forEach(a => {
-                estateHTML += `<div class="step5-added-item"><span class="item-label">🏠 ${a.name}</span><span class="item-value">${fmt(a.value)}${a.isPrimaryResidence ? ' (tax-exempt)' : ''}</span></div>`;
+                estateHTML += `<div class="step5-added-item"><span class="item-label">${a.isPrimaryResidence ? '🏠' : '🏢'} ${a.name}</span><span class="item-value">${fmt(a.value)}${a.isPrimaryResidence ? ' (tax-exempt)' : ''}</span></div>`;
             });
+        }
+        // Life insurance
+        const lifeIns = parseFloat(document.getElementById('life-insurance-amount')?.value) || 0;
+        if (lifeIns > 0) {
+            estateHTML += `<div class="step5-added-item"><span class="item-label">🛡️ Life Insurance</span><span class="item-value">${fmt(lifeIns)} (tax-free)</span></div>`;
+        }
+        // Vehicle/collectible
+        const vehicleName = document.getElementById('vehicle-name')?.value;
+        const vehicleVal = parseFloat(document.getElementById('vehicle-value')?.value) || 0;
+        if (vehicleVal > 0) {
+            estateHTML += `<div class="step5-added-item"><span class="item-label">🚗 ${vehicleName || 'Vehicle'}</span><span class="item-value">${fmt(vehicleVal)}</span></div>`;
+        }
+        // Other estate
+        const otherEstateName = document.getElementById('other-estate-name')?.value;
+        const otherEstateVal = parseFloat(document.getElementById('other-estate-value')?.value) || 0;
+        if (otherEstateVal > 0) {
+            estateHTML += `<div class="step5-added-item"><span class="item-label">📝 ${otherEstateName || 'Other'}</span><span class="item-value">${fmt(otherEstateVal)}</span></div>`;
         }
         const estateContainer = document.getElementById('added-estate-items');
         if (estateContainer) estateContainer.innerHTML = estateHTML;
@@ -3162,7 +3195,21 @@ const AppV4 = {
             downsizingAge: parseInt(document.getElementById('downsizing-age')?.value) || undefined,
             downsizingProceeds: parseFloat(document.getElementById('downsizing-proceeds')?.value) || 0,
             downsizingSpendingChange: -(parseFloat(document.getElementById('downsizing-spending-change')?.value) || 0), // Negative = savings
-            categoryInflation: this._getCategoryInflation()
+            categoryInflation: this._getCategoryInflation(),
+
+            // Other income/expense (custom user entries)
+            otherRetirementIncome: parseFloat(document.getElementById('other-income-amount')?.value) || 0,
+            otherRetirementIncomeName: document.getElementById('other-income-name')?.value || 'Other',
+            otherRetirementIncomeTaxable: document.getElementById('other-income-taxable')?.checked !== false,
+            otherRetirementExpense: parseFloat(document.getElementById('other-expense-amount')?.value) || 0,
+            otherRetirementExpenseName: document.getElementById('other-expense-name')?.value || 'Other',
+
+            // Additional estate assets (non-property)
+            lifeInsurance: parseFloat(document.getElementById('life-insurance-amount')?.value) || 0,
+            vehicleValue: parseFloat(document.getElementById('vehicle-value')?.value) || 0,
+            vehicleName: document.getElementById('vehicle-name')?.value || 'Vehicle',
+            otherEstateValue: parseFloat(document.getElementById('other-estate-value')?.value) || 0,
+            otherEstateName: document.getElementById('other-estate-name')?.value || 'Other'
         };
     },
 

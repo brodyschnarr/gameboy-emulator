@@ -717,7 +717,9 @@
                         <button type="button" class="step5-dropdown-item" data-type="post-retirement-work">💼 Post-Retirement Work</button>
                         <button type="button" class="step5-dropdown-item" data-type="windfall">💰 Windfall / Inheritance</button>
                         <button type="button" class="step5-dropdown-item" data-type="annuity">🔒 Annuity Purchase</button>
+                        <button type="button" class="step5-dropdown-item" data-type="downsizing">🏡 Downsizing Plan</button>
                         <button type="button" class="step5-dropdown-item" data-type="dtc">♿ Disability Tax Credit</button>
+                        <button type="button" class="step5-dropdown-item" data-type="other-income">📝 Other Income</button>
                     </div>
                 </div>
             </div>
@@ -787,6 +789,7 @@
                         <button type="button" class="step5-dropdown-item" data-type="debt">💳 Current Debt</button>
                         <button type="button" class="step5-dropdown-item" data-type="healthcare">🏥 Healthcare Costs</button>
                         <button type="button" class="step5-dropdown-item" data-type="ltc">🏥 Long-Term Care</button>
+                        <button type="button" class="step5-dropdown-item" data-type="other-expense">📝 Other Expense</button>
                     </div>
                 </div>
             </div>
@@ -798,7 +801,9 @@
                     <button type="button" class="btn-secondary" id="btn-add-estate-dropdown">+ Add Estate Asset</button>
                     <div class="step5-dropdown hidden" id="estate-dropdown-menu">
                         <button type="button" class="step5-dropdown-item" data-type="estate">🏠 Property (Home, Cottage, Land)</button>
-                        <button type="button" class="step5-dropdown-item" data-type="downsizing">🏡 Downsizing Plan</button>
+                        <button type="button" class="step5-dropdown-item" data-type="life-insurance">🛡️ Life Insurance</button>
+                        <button type="button" class="step5-dropdown-item" data-type="vehicle">🚗 Vehicle / Collectible</button>
+                        <button type="button" class="step5-dropdown-item" data-type="other-estate">📝 Other Asset</button>
                     </div>
                 </div>
             </div>
@@ -950,6 +955,97 @@
                 </div>
             </div>
 
+            <div id="form-other-income" class="step5-form hidden">
+                <div class="step5-form-header">📝 Other Retirement Income</div>
+                <div style="margin-bottom: 6px;">
+                    <label for="other-income-name" style="font-size: 12px;">Description</label>
+                    <input type="text" id="other-income-name" placeholder="e.g., Trust distribution, Royalties">
+                </div>
+                <div>
+                    <label for="other-income-amount" style="font-size: 12px;">Annual Amount</label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="other-income-amount" placeholder="5000" min="0" step="1000">
+                    </div>
+                </div>
+                <label class="checkbox-label" style="font-size: 12px; margin-top: 6px;">
+                    <input type="checkbox" id="other-income-taxable" checked>
+                    Taxable income
+                </label>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="other-income">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="other-income">Cancel</button>
+                </div>
+            </div>
+
+            <div id="form-other-expense" class="step5-form hidden">
+                <div class="step5-form-header">📝 Other Retirement Expense</div>
+                <div style="margin-bottom: 6px;">
+                    <label for="other-expense-name" style="font-size: 12px;">Description</label>
+                    <input type="text" id="other-expense-name" placeholder="e.g., Alimony, Charity giving">
+                </div>
+                <div>
+                    <label for="other-expense-amount" style="font-size: 12px;">Annual Amount</label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="other-expense-amount" placeholder="5000" min="0" step="1000">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="other-expense">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="other-expense">Cancel</button>
+                </div>
+            </div>
+
+            <div id="form-life-insurance" class="step5-form hidden">
+                <div class="step5-form-header">🛡️ Life Insurance</div>
+                <div>
+                    <label for="life-insurance-amount" style="font-size: 12px;">Death Benefit</label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="life-insurance-amount" placeholder="500000" min="0" step="10000">
+                    </div>
+                    <small class="input-hint">Tax-free payout to beneficiaries</small>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="life-insurance">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="life-insurance">Cancel</button>
+                </div>
+            </div>
+
+            <div id="form-vehicle" class="step5-form hidden">
+                <div class="step5-form-header">🚗 Vehicle / Collectible</div>
+                <div style="margin-bottom: 6px;">
+                    <label for="vehicle-name" style="font-size: 12px;">Description</label>
+                    <input type="text" id="vehicle-name" placeholder="e.g., Classic car, Art collection">
+                </div>
+                <div>
+                    <label for="vehicle-value" style="font-size: 12px;">Estimated Value</label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="vehicle-value" placeholder="25000" min="0" step="1000">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="vehicle">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="vehicle">Cancel</button>
+                </div>
+            </div>
+
+            <div id="form-other-estate" class="step5-form hidden">
+                <div class="step5-form-header">📝 Other Estate Asset</div>
+                <div style="margin-bottom: 6px;">
+                    <label for="other-estate-name" style="font-size: 12px;">Description</label>
+                    <input type="text" id="other-estate-name" placeholder="e.g., Jewelry, Business interest">
+                </div>
+                <div>
+                    <label for="other-estate-value" style="font-size: 12px;">Estimated Value</label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="other-estate-value" placeholder="50000" min="0" step="1000">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="other-estate">Save</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="other-estate">Cancel</button>
+                </div>
+            </div>
+
             <div id="form-estate" class="step5-form hidden">
                 <div class="step5-form-header">🏠 Estate Asset</div>
                 <div id="estate-assets-list"></div>
@@ -1024,15 +1120,6 @@
         ═══════════════════════════════════════ -->
         <section id="results" class="hidden">
             
-            <!-- Scenario Tabs -->
-            <div class="scenario-tabs" id="scenario-tabs">
-                <button class="scenario-tab active" data-scenario="base">Your Plan</button>
-                <button class="scenario-tab" data-scenario="retire5early">Retire 5 Years Earlier</button>
-                <button class="scenario-tab" data-scenario="retire5late">Retire 5 Years Later</button>
-                <button class="scenario-tab" data-scenario="spend20less">Spend 20% Less</button>
-                <button class="scenario-tab" data-scenario="spend20more">Spend 20% More</button>
-            </div>
-
             <div id="status-banner" class="card status-banner"></div>
 
             <!-- Scenario Save/Compare -->
@@ -1113,8 +1200,19 @@
 
             <!-- Tax & Withdrawal: removed — info now in year-by-year tooltip -->
 
-            <!-- Scenario Comparison (now handled by tabs above) -->
-            <!-- Removed manual scenario section - use tabs instead -->
+            <!-- What-If Scenarios -->
+            <section class="card">
+                <h2>🔮 What If...?</h2>
+                <p class="section-intro">See how changes affect your plan</p>
+                <div class="scenario-tabs" id="scenario-tabs">
+                    <button class="scenario-tab active" data-scenario="base">Your Plan</button>
+                    <button class="scenario-tab" data-scenario="retire5early">5 Yrs Earlier</button>
+                    <button class="scenario-tab" data-scenario="retire5late">5 Yrs Later</button>
+                    <button class="scenario-tab" data-scenario="spend20less">Spend 20% Less</button>
+                    <button class="scenario-tab" data-scenario="spend20more">Spend 20% More</button>
+                </div>
+                <div id="scenario-compare-result" style="margin-top: 12px;"></div>
+            </section>
 
             <!-- Actions -->
             <div class="button-row">
@@ -1180,34 +1278,34 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000067"></script>
-    <script src="cpp-calculator.js?v=17&t=24000067"></script>
-    <script src="benchmarks.js?v=17&t=24000067"></script>
-    <script src="lifestyle-data.js?v=17&t=24000067"></script>
-    <script src="regional-data.js?v=18&t=24000067"></script>
-    <script src="canada-map.js?v=18&t=24000067"></script>
-    <script src="income-sources.js?v=17&t=24000067"></script>
-    <script src="deep-dive.js?v=17&t=24000067"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000067"></script>
-    <script src="scenario-manager.js?v=17&t=24000067"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000067"></script>
-    <script src="calc.js?v=17&t=24000067"></script>
-    <script src="app-round6-debug.js?v=17&t=24000067"></script>
+    <script src="canada-tax.js?v=17&t=24000068"></script>
+    <script src="cpp-calculator.js?v=17&t=24000068"></script>
+    <script src="benchmarks.js?v=17&t=24000068"></script>
+    <script src="lifestyle-data.js?v=17&t=24000068"></script>
+    <script src="regional-data.js?v=18&t=24000068"></script>
+    <script src="canada-map.js?v=18&t=24000068"></script>
+    <script src="income-sources.js?v=17&t=24000068"></script>
+    <script src="deep-dive.js?v=17&t=24000068"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000068"></script>
+    <script src="scenario-manager.js?v=17&t=24000068"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000068"></script>
+    <script src="calc.js?v=17&t=24000068"></script>
+    <script src="app-round6-debug.js?v=17&t=24000068"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000067"></script>
-    <script src="monte-carlo.js?v=17&t=24000067"></script>
-    <script src="tax-optimizer.js?v=17&t=24000067"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000067"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000067"></script>
-    <script src="advanced-charts.js?v=17&t=24000067"></script>
-    <script src="interactive-sliders.js?v=17&t=24000067"></script>
-    <script src="scenario-storage.js?v=17&t=24000067"></script>
-    <script src="windfalls.js?v=17&t=24000067"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000067"></script>
+    <script src="error-handler.js?v=17&t=24000068"></script>
+    <script src="monte-carlo.js?v=17&t=24000068"></script>
+    <script src="tax-optimizer.js?v=17&t=24000068"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000068"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000068"></script>
+    <script src="advanced-charts.js?v=17&t=24000068"></script>
+    <script src="interactive-sliders.js?v=17&t=24000068"></script>
+    <script src="scenario-storage.js?v=17&t=24000068"></script>
+    <script src="windfalls.js?v=17&t=24000068"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000068"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000067"></script>
+    <script src="slider-inputs.js?v=17&t=24000068"></script>
 
     <!-- Diagnostics removed -->
 

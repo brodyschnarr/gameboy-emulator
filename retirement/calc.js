@@ -96,6 +96,12 @@ const RetirementCalcV4 = {
             downsizingSpendingChange = 0,  // Monthly change in housing cost (negative = savings)
             categoryInflation,             // { housing, food, healthcare, discretionary } rates
             estateAssets = [],             // Non-liquid assets: [{name, value, isPrimaryResidence}]
+            lifeInsurance = 0,             // Life insurance death benefit (tax-free)
+            vehicleValue = 0,              // Vehicle/collectible value
+            otherEstateValue = 0,          // Other estate asset value
+            otherRetirementIncome = 0,     // Custom other income in retirement
+            otherRetirementIncomeTaxable = true,
+            otherRetirementExpense = 0,    // Custom other expense in retirement
         } = inputs;
 
         const yearsToRetirement = retirementAge - currentAge;
@@ -205,6 +211,9 @@ const RetirementCalcV4 = {
             downsizingSpendingChange: downsizingSpendingChange || 0,
             rrspRoomOverride: inputs.rrspRoomOverride,
             tfsaRoomOverride: inputs.tfsaRoomOverride,
+            otherRetirementIncome: otherRetirementIncome || 0,
+            otherRetirementIncomeTaxable: otherRetirementIncomeTaxable !== false,
+            otherRetirementExpense: otherRetirementExpense || 0,
         });
 
         // 5. Calculate probability of success
@@ -261,6 +270,11 @@ const RetirementCalcV4 = {
                 // Primary residence = tax-exempt (principal residence exemption)
             }
         }
+        // Add non-property estate assets
+        totalEstateAssets += lifeInsurance; // Tax-free
+        totalEstateAssets += (vehicleValue || 0) * cpiAtDeath; // Depreciates but rough estimate
+        totalEstateAssets += (otherEstateValue || 0) * cpiAtDeath;
+
         if (finalYear && legacyAmount > 0) {
             const rrspAtDeath = finalYear.rrsp || 0;
             const nonRegAtDeath = finalYear.nonReg || 0;
@@ -471,7 +485,10 @@ const RetirementCalcV4 = {
             downsizingProceeds = 0,
             downsizingSpendingChange = 0,
             rrspRoomOverride,
-            tfsaRoomOverride
+            tfsaRoomOverride,
+            otherRetirementIncome = 0,
+            otherRetirementIncomeTaxable = true,
+            otherRetirementExpense = 0,
         } = params;
 
         const projection = [];
@@ -770,7 +787,8 @@ const RetirementCalcV4 = {
                 // 3. Healthcare costs + spending adjustments
                 const healthcareCost = healthcareByAge.find(h => h.age === age)?.cost || 0;
                 // totalNeed adjusted by downsizing spending change (negative = savings)
-                const totalNeed = Math.max(0, thisYearSpending + healthcareCost + downsizingAdjustment);
+                const otherExpenseInflated = otherRetirementExpense * inflationFactor;
+                const totalNeed = Math.max(0, thisYearSpending + healthcareCost + downsizingAdjustment + otherExpenseInflated);
 
                 // 4. Government income (inflation-indexed, tracked per-person for clawback)
                 let cppP1 = 0, cppP2 = 0;
@@ -807,6 +825,9 @@ const RetirementCalcV4 = {
                         const base = s.annualAmount;
                         return sum + (s.indexed ? base * cpiFromToday : base);
                     }, 0);
+
+                // Other retirement income (custom user entry)
+                const otherIncomeInflated = otherRetirementIncome > 0 ? otherRetirementIncome * cpiFromToday : 0;
 
                 // Employer pension (standalone field — backwards compatible)
                 let pensionIncome = 0;
@@ -887,7 +908,7 @@ const RetirementCalcV4 = {
 
                 // Total non-portfolio income BEFORE clawback
                 const totalOtherIncomePreClawback = cppIncome + oasIncome + additionalIncome + pensionIncome 
-                    + gisEstimate + rentalIncomeThisYear + annuityPayoutThisYear + spouseAllowance;
+                    + gisEstimate + rentalIncomeThisYear + annuityPayoutThisYear + spouseAllowance + otherIncomeInflated;
 
                 // FIX #9: Smart withdrawal — OAS-clawback-aware
                 const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncomePreClawback);
