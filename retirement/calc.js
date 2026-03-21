@@ -155,17 +155,23 @@ const RetirementCalcV4 = {
 
         // 3. Inflation-adjusted spending at retirement
         // Category inflation blends housing/food/healthcare/discretionary if provided
-        let effectiveInflation = inflationRate / 100;
+        // Pre-retirement: use base inflation to project spending to retirement age
+        const baseInflation = inflationRate / 100;
+        const inflationMultiplier = Math.pow(1 + baseInflation, yearsToRetirement);
+        const futureAnnualSpending = annualSpending * inflationMultiplier;
+        
+        // Post-retirement: category inflation applied per-year in _generateProjection
+        // effectiveInflation used for retirement-year spending escalation
+        let effectiveInflation = baseInflation;
         if (categoryInflation && typeof categoryInflation === 'object') {
-            // Typical Canadian spending weights: Housing 30%, Food 15%, Healthcare 15%, Discretionary 40%
+            // Weighted by user's spending breakdown or default weights
+            const weights = categoryInflation._weights || { housing: 0.30, food: 0.15, healthcare: 0.15, discretionary: 0.40 };
             const h = (categoryInflation.housing ?? inflationRate) / 100;
             const f = (categoryInflation.food ?? inflationRate) / 100;
             const hc = (categoryInflation.healthcare ?? healthcareInflation ?? 5) / 100;
             const d = (categoryInflation.discretionary ?? inflationRate) / 100;
-            effectiveInflation = h * 0.30 + f * 0.15 + hc * 0.15 + d * 0.40;
+            effectiveInflation = h * weights.housing + f * weights.food + hc * weights.healthcare + d * weights.discretionary;
         }
-        const inflationMultiplier = Math.pow(1 + effectiveInflation, yearsToRetirement);
-        const futureAnnualSpending = annualSpending * inflationMultiplier;
 
         // 4. Year-by-year projection
         const projection = this._generateProjection({
@@ -750,7 +756,9 @@ const RetirementCalcV4 = {
 
                 // 2. Inflation-adjusted spending with optional spending curve
                 const yearsIntoRetirement = age - retirementAge;
-                const inflationFactor = Math.pow(1 + inf, yearsIntoRetirement);
+                // Use category-weighted inflation for spending, base inflation for everything else
+                const retirementInflationRate = effectiveInflation || inf;
+                const inflationFactor = Math.pow(1 + retirementInflationRate, yearsIntoRetirement);
                 // CRA indexes tax brackets/credits to CPI from today
                 const cpiFromToday = Math.pow(1 + inf, age - startAge);
 
