@@ -188,84 +188,94 @@ const IncomeSources = {
     },
 
     /**
-     * Initialize the add income modal
+     * Initialize the add income dropdown + inline form
      */
     initModal() {
         const btn = document.getElementById('btn-add-income-source');
-        const modal = document.getElementById('income-source-modal');
-        const closeBtn = document.getElementById('close-income-modal');
-        const form = document.getElementById('income-source-form');
-        const typeSelect = document.getElementById('income-source-type');
+        const menu = document.getElementById('income-source-dropdown-menu');
+        const form = document.getElementById('income-source-inline-form');
 
-        if (!btn || !modal) return;
+        if (!btn || !menu) return;
 
-        // Show modal
+        this._selectedType = null;
+
+        // Toggle dropdown
         btn.addEventListener('click', () => {
-            modal.classList.remove('hidden');
-            // Update default "continues" checkbox based on type
-            this._updateModalForType(typeSelect?.value || 'rental');
+            menu.classList.toggle('hidden');
+            form?.classList.add('hidden');
         });
 
-        // Close modal
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                modal.classList.add('hidden');
-                form.reset();
+        // Close dropdown on outside click
+        document.addEventListener('click', (e) => {
+            if (!btn.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        // Dropdown item click → show inline form
+        menu.querySelectorAll('[data-income-type]').forEach(item => {
+            item.addEventListener('click', () => {
+                const type = item.dataset.incomeType;
+                this._selectedType = type;
+                menu.classList.add('hidden');
+                this._showInlineForm(type);
             });
-        }
+        });
 
-        // Update type description
-        if (typeSelect) {
-            const updateTypeUI = (type) => {
-                this._updateModalForType(type);
-            };
-            typeSelect.addEventListener('change', (e) => updateTypeUI(e.target.value));
-            updateTypeUI(typeSelect.value);
-        }
+        // Save
+        document.getElementById('inline-income-save')?.addEventListener('click', () => {
+            const type = this._selectedType || 'other';
+            const amount = parseFloat(document.getElementById('inline-income-amount')?.value);
+            const startAge = parseInt(document.getElementById('inline-income-start-age')?.value);
+            const endAgeVal = document.getElementById('inline-income-end-age')?.value;
+            const endAge = endAgeVal ? parseInt(endAgeVal) : null;
+            const customName = document.getElementById('inline-income-name')?.value;
+            const continues = document.getElementById('inline-income-continues')?.checked || false;
 
-        // Form submission
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                const type = document.getElementById('income-source-type').value;
-                const amount = parseFloat(document.getElementById('income-amount').value);
-                const startAge = parseInt(document.getElementById('income-start-age').value);
-                const endAgeInput = document.getElementById('income-end-age').value;
-                const endAge = endAgeInput ? parseInt(endAgeInput) : null;
-                const customName = document.getElementById('income-custom-name').value;
-                const continuesInRetirement = document.getElementById('income-continues-retirement')?.checked || false;
+            if (amount > 0 && startAge > 0) {
+                this.add(type, amount, startAge, endAge, customName, false, continues);
+                form?.classList.add('hidden');
+                this._resetInlineForm();
+            }
+        });
 
-                if (amount > 0 && startAge > 0) {
-                    this.add(type, amount, startAge, endAge, customName, false, continuesInRetirement);
-                    modal.classList.add('hidden');
-                    form.reset();
-                }
-            });
-        }
+        // Cancel
+        document.getElementById('inline-income-cancel')?.addEventListener('click', () => {
+            form?.classList.add('hidden');
+            this._resetInlineForm();
+        });
     },
 
-    /**
-     * Update modal UI based on selected type
-     */
-    _updateModalForType(type) {
-        const desc = document.getElementById('income-type-description');
-        const continuesCheckbox = document.getElementById('income-continues-retirement');
-        
-        if (desc) {
-            const descriptions = {
-                rental: 'Income from rental properties (after expenses). Fully taxable. Counts for GIS/OAS clawback.',
-                partTime: 'Part-time work, freelancing, or consulting income.',
-                sideGig: 'Side business or self-employment income.',
-                other: 'Any other recurring income source.'
-            };
-            desc.textContent = descriptions[type] || '';
-        }
+    _showInlineForm(type) {
+        const form = document.getElementById('income-source-inline-form');
+        if (!form) return;
+
+        const typeInfo = this.types[type] || this.types.other;
+        const descriptions = {
+            rental: 'Income from rental properties (after expenses). Fully taxable.',
+            partTime: 'Part-time work, freelancing, or consulting income.',
+            sideGig: 'Side business or self-employment income.',
+            other: 'Any other recurring income source.'
+        };
+
+        document.getElementById('inline-income-type-label').textContent = `${typeInfo.icon} ${typeInfo.name}`;
+        document.getElementById('inline-income-type-desc').textContent = descriptions[type] || '';
 
         // Set default "continues" based on type
-        if (continuesCheckbox) {
-            const typeInfo = this.types[type];
-            continuesCheckbox.checked = typeInfo ? typeInfo.defaultContinues : false;
-        }
+        const cb = document.getElementById('inline-income-continues');
+        if (cb) cb.checked = typeInfo.defaultContinues || false;
+
+        form.classList.remove('hidden');
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        document.getElementById('inline-income-amount')?.focus();
+    },
+
+    _resetInlineForm() {
+        ['inline-income-name', 'inline-income-amount', 'inline-income-start-age', 'inline-income-end-age'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        const cb = document.getElementById('inline-income-continues');
+        if (cb) cb.checked = false;
     }
 };

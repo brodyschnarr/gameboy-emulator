@@ -548,16 +548,45 @@ const RetirementCalcV4 = {
             // Process windfalls for this year
             if (windfalls && windfalls.length > 0) {
                 windfalls.forEach(w => {
-                    const targetAge = w.year > 150 ? (w.year - (new Date().getFullYear() - currentAge)) : (w.year || (currentAge + (w.yearsFromNow || 0)));
+                    let targetAge;
+                    if (w.type === 'shares') {
+                        targetAge = w.sellAge || w.year || (currentAge + 5);
+                    } else {
+                        targetAge = w.year > 150 ? (w.year - (new Date().getFullYear() - currentAge)) : (w.year || (currentAge + (w.yearsFromNow || 0)));
+                    }
                     if (targetAge === age && (w.probability === undefined || w.probability >= 100)) {
-                        const amount = w.taxable ? w.amount * 0.7 : w.amount;
-                        if (w.destination === 'rrsp') balances.rrsp += amount;
-                        else if (w.destination === 'tfsa') balances.tfsa += amount;
-                        else if (w.destination === 'nonReg') balances.nonReg += amount;
+                        // Resolve the gross amount
+                        let grossAmount = w.amount || 0;
+                        let costBasis = grossAmount; // default: no gain
+                        if (w.type === 'shares') {
+                            // Shares: grow current value to sell date
+                            const cv = w.currentValue || w.amount || 0;
+                            const gr = (w.growthRate || 6) / 100;
+                            const yearsToSell = Math.max(0, age - currentAge);
+                            grossAmount = cv * Math.pow(1 + gr, yearsToSell);
+                            costBasis = cv; // ACB = original value
+                        }
+
+                        let afterTaxAmount = grossAmount;
+                        if (w.taxable) {
+                            if (w.type === 'shares') {
+                                // Capital gains: only the gain at 50% inclusion rate
+                                const gain = Math.max(0, grossAmount - costBasis);
+                                const taxableGain = gain * 0.5; // 50% inclusion
+                                const marginalRate = 0.30; // approximate
+                                afterTaxAmount = grossAmount - (taxableGain * marginalRate);
+                            } else {
+                                // Other taxable windfalls: approximate marginal rate
+                                afterTaxAmount = grossAmount * 0.7;
+                            }
+                        }
+                        // Inheritances (not taxable) pass through at full value
+                        if (w.destination === 'rrsp') balances.rrsp += afterTaxAmount;
+                        else if (w.destination === 'tfsa') balances.tfsa += afterTaxAmount;
+                        else if (w.destination === 'nonReg') balances.nonReg += afterTaxAmount;
                         else {
-                            // Default: split between TFSA and non-reg
-                            balances.tfsa += amount * 0.5;
-                            balances.nonReg += amount * 0.5;
+                            balances.tfsa += afterTaxAmount * 0.5;
+                            balances.nonReg += afterTaxAmount * 0.5;
                         }
                     }
                 });

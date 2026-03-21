@@ -24,7 +24,7 @@ const WindfallManager = {
             
             const year = updatedProjection[yearIndex];
             const afterTaxAmount = windfall.taxable
-                ? this._calculateAfterTaxAmount(resolved.amount, year.income || 0, inputs.province)
+                ? this._calculateAfterTaxAmount(resolved.amount, year.income || 0, inputs.province, windfall)
                 : resolved.amount;
             
             if (windfall.destination === 'rrsp') {
@@ -105,7 +105,22 @@ const WindfallManager = {
         return { age, amount: windfall.amount };
     },
 
-    _calculateAfterTaxAmount(amount, currentIncome, province) {
+    _calculateAfterTaxAmount(amount, currentIncome, province, windfall) {
+        // Use real tax engine if available
+        if (typeof CanadianTax !== 'undefined') {
+            let taxableAmount = amount;
+            if (windfall && windfall.type === 'shares') {
+                // Capital gains: only the gain portion, at 50% inclusion
+                const costBasis = windfall.costBasis || windfall.currentValue || (amount * 0.5);
+                const gain = Math.max(0, amount - costBasis);
+                taxableAmount = gain * 0.5; // 50% capital gains inclusion
+            }
+            const taxWithout = CanadianTax.calculateTax(currentIncome, province || 'ON').total;
+            const taxWith = CanadianTax.calculateTax(currentIncome + taxableAmount, province || 'ON').total;
+            const marginalTax = taxWith - taxWithout;
+            return amount - marginalTax;
+        }
+        // Fallback
         const totalIncome = currentIncome + amount;
         let taxRate = 0;
         if (totalIncome < 50000) taxRate = 0.20;
@@ -455,11 +470,18 @@ const WindfallManager = {
             if (preview && cv > 0 && sa > 0) {
                 const years = Math.max(1, sa - 31); // approximate current age
                 const fv = cv * Math.pow(1 + gr / 100, years);
-                preview.innerHTML = `<div class="preview-calc">📊 Projected value at sale: <strong>$${Math.round(fv).toLocaleString()}</strong> (${years} years of ${gr}% growth)</div>`;
+                const gain = Math.max(0, fv - cv);
+                const taxableGain = gain * 0.5;
+                const estTax = Math.round(taxableGain * 0.30);
+                const isTaxable = document.getElementById('windfall-taxable')?.value === 'true';
+                let taxNote = isTaxable 
+                    ? `<br>💰 Capital gain: $${Math.round(gain).toLocaleString()} × 50% inclusion = $${Math.round(taxableGain).toLocaleString()} taxable | ~$${estTax.toLocaleString()} tax`
+                    : '';
+                preview.innerHTML = `<div class="preview-calc">📊 Projected value at sale: <strong>$${Math.round(fv).toLocaleString()}</strong> (${years} years of ${gr}% growth)${taxNote}</div>`;
             }
         };
-        ['windfall-current-value', 'windfall-growth-rate', 'windfall-sell-age'].forEach(id => {
-            document.getElementById(id)?.addEventListener('input', updateSharesPreview);
+        ['windfall-current-value', 'windfall-growth-rate', 'windfall-sell-age', 'windfall-taxable'].forEach(id => {
+            document.getElementById(id)?.addEventListener(id === 'windfall-taxable' ? 'change' : 'input', updateSharesPreview);
         });
         updateSharesPreview();
         

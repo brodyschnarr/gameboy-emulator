@@ -148,7 +148,37 @@
                 <h3>Additional Income Sources</h3>
                 <p class="section-intro">Rental income, side gigs, freelancing — anything beyond your salary</p>
                 <div id="income-sources-list"></div>
-                <button type="button" class="btn-secondary" id="btn-add-income-source">+ Add Income Source</button>
+                <div style="position:relative">
+                    <button type="button" class="btn-secondary" id="btn-add-income-source">+ Add Income Source</button>
+                    <div class="step5-dropdown hidden" id="income-source-dropdown-menu">
+                        <button type="button" class="step5-dropdown-item" data-income-type="rental">🏠 Rental Income</button>
+                        <button type="button" class="step5-dropdown-item" data-income-type="partTime">💼 Part-Time Work</button>
+                        <button type="button" class="step5-dropdown-item" data-income-type="sideGig">🏪 Side Business</button>
+                        <button type="button" class="step5-dropdown-item" data-income-type="other">💰 Other Income</button>
+                    </div>
+                </div>
+                <!-- Inline form (hidden until type selected) -->
+                <div id="income-source-inline-form" class="step5-form hidden" style="margin-top:12px">
+                    <div style="font-weight:600;margin-bottom:4px" id="inline-income-type-label"></div>
+                    <p class="section-intro" id="inline-income-type-desc" style="margin:0 0 8px;font-size:13px"></p>
+                    <div class="input-row" style="gap:8px;margin-bottom:8px">
+                        <div style="flex:1"><label style="font-size:13px">Name (optional)</label><input type="text" id="inline-income-name" placeholder="e.g., Airbnb rental" style="padding:8px;font-size:14px"></div>
+                    </div>
+                    <div class="input-row" style="gap:8px;margin-bottom:8px">
+                        <div style="flex:1"><label style="font-size:13px">Annual Amount</label><div class="input-with-prefix"><span class="input-prefix">$</span><input type="number" id="inline-income-amount" placeholder="12000" min="0" step="100"></div></div>
+                        <div style="flex:1"><label style="font-size:13px">Start Age</label><input type="number" id="inline-income-start-age" placeholder="30" min="16" max="100" style="padding:8px;font-size:14px"></div>
+                    </div>
+                    <div class="input-row" style="gap:8px;margin-bottom:8px">
+                        <div style="flex:1"><label style="font-size:13px">End Age (optional)</label><input type="number" id="inline-income-end-age" placeholder="Lifetime" min="16" max="100" style="padding:8px;font-size:14px"></div>
+                        <div style="flex:1;display:flex;align-items:end;padding-bottom:4px">
+                            <label style="font-size:13px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="inline-income-continues"> Continues into retirement</label>
+                        </div>
+                    </div>
+                    <div class="input-row" style="gap:8px">
+                        <button type="button" class="btn-primary" id="inline-income-save" style="flex:1;padding:10px">Save</button>
+                        <button type="button" class="btn-secondary" id="inline-income-cancel" style="flex:1;padding:10px">Cancel</button>
+                    </div>
+                </div>
             </div>
 
             <button type="button" class="btn-primary" id="btn-next-savings">
@@ -688,6 +718,7 @@
                         <button type="button" class="step5-dropdown-item" data-type="windfall">💰 Windfall / Inheritance</button>
                         <button type="button" class="step5-dropdown-item" data-type="downsizing">🏡 Downsizing (Home Sale)</button>
                         <button type="button" class="step5-dropdown-item" data-type="annuity">🔒 Annuity Purchase</button>
+                        <button type="button" class="step5-dropdown-item" data-type="dtc">♿ Disability Tax Credit</button>
                     </div>
                 </div>
             </div>
@@ -757,7 +788,6 @@
                         <button type="button" class="step5-dropdown-item" data-type="debt">💳 Current Debt</button>
                         <button type="button" class="step5-dropdown-item" data-type="healthcare">🏥 Healthcare Costs</button>
                         <button type="button" class="step5-dropdown-item" data-type="ltc">🏥 Long-Term Care</button>
-                        <button type="button" class="step5-dropdown-item" data-type="dtc">♿ Disability Tax Credit</button>
                         <button type="button" class="step5-dropdown-item" data-type="estate">🏠 Estate Asset</button>
                     </div>
                 </div>
@@ -1126,62 +1156,7 @@
          MODALS
     ═══════════════════════════════════════ -->
 
-    <!-- Income Source Modal -->
-    <div id="income-source-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Add Income Source</h3>
-            <form id="income-source-form">
-                <div class="input-group">
-                    <label for="income-source-type">Type</label>
-                    <select id="income-source-type" required>
-                        <option value="rental">Rental Income</option>
-                        <option value="partTime">Part-Time Work</option>
-                        <option value="sideGig">Side Business</option>
-                        <option value="other">Other Income</option>
-                    </select>
-                    <small id="income-type-description" class="input-hint"></small>
-                </div>
-
-                <div class="input-group">
-                    <label for="income-custom-name">Name (optional)</label>
-                    <input type="text" id="income-custom-name" placeholder="e.g., Airbnb rental">
-                </div>
-
-                <div class="input-group">
-                    <label for="income-amount">Annual Amount</label>
-                    <div class="input-with-prefix">
-                        <span class="prefix">$</span>
-                        <input type="number" id="income-amount" placeholder="12000" min="0" step="100" required>
-                    </div>
-                </div>
-
-                <div class="input-row">
-                    <div class="input-group">
-                        <label for="income-start-age">Start Age</label>
-                        <input type="number" id="income-start-age" placeholder="30" min="0" max="110" required>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="income-end-age">End Age (optional)</label>
-                        <input type="number" id="income-end-age" placeholder="Lifetime" min="0" max="110">
-                        <small class="input-hint">Leave blank for lifetime</small>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="income-continues-retirement" checked> Continues into retirement
-                    </label>
-                    <small class="input-hint">If checked, this income carries into your retirement plan (visible in Step 5)</small>
-                </div>
-
-                <div class="button-row">
-                    <button type="button" class="btn-secondary" id="close-income-modal">Cancel</button>
-                    <button type="submit" class="btn-primary">Add Income Source</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- Income Source Modal removed — replaced with inline dropdown form in Step 1 -->
 
     <!-- CPP Details Modal -->
     <div id="cpp-details-modal" class="modal hidden">
@@ -1195,34 +1170,34 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000057"></script>
-    <script src="cpp-calculator.js?v=17&t=24000057"></script>
-    <script src="benchmarks.js?v=17&t=24000057"></script>
-    <script src="lifestyle-data.js?v=17&t=24000057"></script>
-    <script src="regional-data.js?v=18&t=24000057"></script>
-    <script src="canada-map.js?v=18&t=24000057"></script>
-    <script src="income-sources.js?v=17&t=24000057"></script>
-    <script src="deep-dive.js?v=17&t=24000057"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000057"></script>
-    <script src="scenario-manager.js?v=17&t=24000057"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000057"></script>
-    <script src="calc.js?v=17&t=24000057"></script>
-    <script src="app-round6-debug.js?v=17&t=24000057"></script>
+    <script src="canada-tax.js?v=17&t=24000058"></script>
+    <script src="cpp-calculator.js?v=17&t=24000058"></script>
+    <script src="benchmarks.js?v=17&t=24000058"></script>
+    <script src="lifestyle-data.js?v=17&t=24000058"></script>
+    <script src="regional-data.js?v=18&t=24000058"></script>
+    <script src="canada-map.js?v=18&t=24000058"></script>
+    <script src="income-sources.js?v=17&t=24000058"></script>
+    <script src="deep-dive.js?v=17&t=24000058"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000058"></script>
+    <script src="scenario-manager.js?v=17&t=24000058"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000058"></script>
+    <script src="calc.js?v=17&t=24000058"></script>
+    <script src="app-round6-debug.js?v=17&t=24000058"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000057"></script>
-    <script src="monte-carlo.js?v=17&t=24000057"></script>
-    <script src="tax-optimizer.js?v=17&t=24000057"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000057"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000057"></script>
-    <script src="advanced-charts.js?v=17&t=24000057"></script>
-    <script src="interactive-sliders.js?v=17&t=24000057"></script>
-    <script src="scenario-storage.js?v=17&t=24000057"></script>
-    <script src="windfalls.js?v=17&t=24000057"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000057"></script>
+    <script src="error-handler.js?v=17&t=24000058"></script>
+    <script src="monte-carlo.js?v=17&t=24000058"></script>
+    <script src="tax-optimizer.js?v=17&t=24000058"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000058"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000058"></script>
+    <script src="advanced-charts.js?v=17&t=24000058"></script>
+    <script src="interactive-sliders.js?v=17&t=24000058"></script>
+    <script src="scenario-storage.js?v=17&t=24000058"></script>
+    <script src="windfalls.js?v=17&t=24000058"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000058"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000057"></script>
+    <script src="slider-inputs.js?v=17&t=24000058"></script>
 
     <!-- Diagnostics removed -->
 

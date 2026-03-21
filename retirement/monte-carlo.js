@@ -189,9 +189,18 @@ const MonteCarloSimulator = {
                     const resolved = WindfallManager._resolveWindfall(windfall, { currentAge, lifeExpectancy }, true);
                     if (!resolved || resolved.age !== age) return;
                     
-                    const afterTaxAmount = windfall.taxable
-                        ? resolved.amount * 0.7
-                        : resolved.amount;
+                    let afterTaxAmount = resolved.amount;
+                    if (windfall.taxable) {
+                        if (windfall.type === 'shares') {
+                            // Capital gains: only gain at 50% inclusion
+                            const costBasis = windfall.currentValue || (resolved.amount * 0.5);
+                            const gain = Math.max(0, resolved.amount - costBasis);
+                            const taxableGain = gain * 0.5;
+                            afterTaxAmount = resolved.amount - (taxableGain * 0.30);
+                        } else {
+                            afterTaxAmount = resolved.amount * 0.7;
+                        }
+                    }
                     
                     if (windfall.destination === 'rrsp') balances.rrsp += afterTaxAmount;
                     else if (windfall.destination === 'tfsa') balances.tfsa += afterTaxAmount;
