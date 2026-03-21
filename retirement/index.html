@@ -1086,8 +1086,8 @@
                 <div class="step5-section-content">
                     <div class="input-group">
                         <label for="healthcare-inflation" style="font-size: 12px;">Healthcare Inflation (%)</label>
-                        <input type="number" id="healthcare-inflation" placeholder="5" min="0" max="15" step="0.5" value="5" style="font-size: 13px;">
-                        <small class="input-hint">Healthcare costs rise ~5%/yr vs ~2.5% general</small>
+                        <input type="number" id="healthcare-inflation" placeholder="4" min="0" max="15" step="0.5" value="4" style="font-size: 13px;">
+                        <small class="input-hint">Prescriptions & dental rise ~4%/yr vs ~2.5% general</small>
                     </div>
                     <details class="input-group-collapsible" style="margin-top: 8px;">
                         <summary class="collapsible-header" style="font-size: 12px;">📊 Post-Retirement Inflation by Category</summary>
@@ -1096,12 +1096,12 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                                 <div>
                                     <label for="inf-housing" style="font-size: 11px;">🏠 Housing (%/yr)</label>
-                                    <input type="number" id="inf-housing" placeholder="3.0" min="0" max="10" step="0.5" value="3.0" style="font-size: 13px;">
+                                    <input type="number" id="inf-housing" placeholder="2.5" min="0" max="10" step="0.5" value="2.5" style="font-size: 13px;">
                                     <small class="input-hint" style="font-size: 10px;">Property tax, utilities, repairs</small>
                                 </div>
                                 <div>
                                     <label for="inf-food" style="font-size: 11px;">🍎 Food (%/yr)</label>
-                                    <input type="number" id="inf-food" placeholder="3.5" min="0" max="10" step="0.5" value="3.5" style="font-size: 13px;">
+                                    <input type="number" id="inf-food" placeholder="3.0" min="0" max="10" step="0.5" value="3.0" style="font-size: 13px;">
                                     <small class="input-hint" style="font-size: 10px;">Groceries, dining out</small>
                                 </div>
                                 <div>
@@ -1232,12 +1232,12 @@
                 <div class="assumptions-grid">
                     <div class="input-group compact">
                         <label for="return-rate">Return (%)</label>
-                        <span class="input-impact">Balanced portfolio: 6-7%</span>
+                        <span class="input-impact">Balanced portfolio gross return</span>
                         <input type="number" id="return-rate" value="6" min="0" max="20" step="0.5">
                     </div>
                     <div class="input-group compact">
                         <label for="inflation-rate">Inflation (%)</label>
-                        <span class="input-impact">BoC target: 2%</span>
+                        <span class="input-impact">BoC target: 2%, recent avg: 2.5%</span>
                         <input type="number" id="inflation-rate" value="2.5" min="0" max="10" step="0.5">
                     </div>
                     <div class="input-group compact">
@@ -1245,16 +1245,16 @@
                             MER / Fees (%)
                             <button type="button" class="info-btn" data-tooltip="Management Expense Ratio — mutual funds charge 1-2.5%, ETFs charge 0.1-0.5%. Subtracted from your return.">?</button>
                         </label>
-                        <span class="input-impact">0 if return is already net of fees</span>
-                        <input type="number" id="mer-fee" value="0" min="0" max="5" step="0.1">
+                        <span class="input-impact">ETFs ~0.2%, mutual funds ~1.5%</span>
+                        <input type="number" id="mer-fee" value="0.5" min="0" max="5" step="0.1">
                     </div>
                     <div class="input-group compact">
                         <label for="contribution-growth">
-                            Contrib Growth (%)
+                            Contrib Growth (%/yr)
                             <button type="button" class="info-btn" data-tooltip="Increase contributions each year to keep pace with raises. 0% = flat forever.">?</button>
                         </label>
-                        <span class="input-impact">Match to your expected raise</span>
-                        <input type="number" id="contribution-growth" value="0" min="0" max="10" step="0.5">
+                        <span class="input-impact">Match to expected annual raise</span>
+                        <input type="number" id="contribution-growth" value="1" min="0" max="10" step="0.5">
                     </div>
                 </div>
             </div>
@@ -1280,34 +1280,34 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000072"></script>
-    <script src="cpp-calculator.js?v=17&t=24000072"></script>
-    <script src="benchmarks.js?v=17&t=24000072"></script>
-    <script src="lifestyle-data.js?v=17&t=24000072"></script>
-    <script src="regional-data.js?v=18&t=24000072"></script>
-    <script src="canada-map.js?v=18&t=24000072"></script>
-    <script src="income-sources.js?v=17&t=24000072"></script>
-    <script src="deep-dive.js?v=17&t=24000072"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000072"></script>
-    <script src="scenario-manager.js?v=17&t=24000072"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000072"></script>
-    <script src="calc.js?v=17&t=24000072"></script>
-    <script src="app-round6-debug.js?v=17&t=24000072"></script>
+    <script src="canada-tax.js?v=17&t=24000073"></script>
+    <script src="cpp-calculator.js?v=17&t=24000073"></script>
+    <script src="benchmarks.js?v=17&t=24000073"></script>
+    <script src="lifestyle-data.js?v=17&t=24000073"></script>
+    <script src="regional-data.js?v=18&t=24000073"></script>
+    <script src="canada-map.js?v=18&t=24000073"></script>
+    <script src="income-sources.js?v=17&t=24000073"></script>
+    <script src="deep-dive.js?v=17&t=24000073"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000073"></script>
+    <script src="scenario-manager.js?v=17&t=24000073"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000073"></script>
+    <script src="calc.js?v=17&t=24000073"></script>
+    <script src="app-round6-debug.js?v=17&t=24000073"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000072"></script>
-    <script src="monte-carlo.js?v=17&t=24000072"></script>
-    <script src="tax-optimizer.js?v=17&t=24000072"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000072"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000072"></script>
-    <script src="advanced-charts.js?v=17&t=24000072"></script>
-    <script src="interactive-sliders.js?v=17&t=24000072"></script>
-    <script src="scenario-storage.js?v=17&t=24000072"></script>
-    <script src="windfalls.js?v=17&t=24000072"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000072"></script>
+    <script src="error-handler.js?v=17&t=24000073"></script>
+    <script src="monte-carlo.js?v=17&t=24000073"></script>
+    <script src="tax-optimizer.js?v=17&t=24000073"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000073"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000073"></script>
+    <script src="advanced-charts.js?v=17&t=24000073"></script>
+    <script src="interactive-sliders.js?v=17&t=24000073"></script>
+    <script src="scenario-storage.js?v=17&t=24000073"></script>
+    <script src="windfalls.js?v=17&t=24000073"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000073"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000072"></script>
+    <script src="slider-inputs.js?v=17&t=24000073"></script>
 
     <!-- Diagnostics removed -->
 

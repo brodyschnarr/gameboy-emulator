@@ -1616,9 +1616,9 @@ const AppV4 = {
         const el = document.getElementById('blended-inflation-rate');
         if (!el) return;
         const weights = this._getSpendingWeights();
-        const h = parseFloat(document.getElementById('inf-housing')?.value) || 3.0;
-        const f = parseFloat(document.getElementById('inf-food')?.value) || 3.5;
-        const hc = parseFloat(document.getElementById('healthcare-inflation')?.value) || 5;
+        const h = parseFloat(document.getElementById('inf-housing')?.value) || 2.5;
+        const f = parseFloat(document.getElementById('inf-food')?.value) || 3.0;
+        const hc = parseFloat(document.getElementById('healthcare-inflation')?.value) || 4;
         const d = parseFloat(document.getElementById('inf-discretionary')?.value) || 2.0;
         const blended = h * weights.housing + f * weights.food + hc * weights.healthcare + d * weights.discretionary;
         const baseRate = parseFloat(document.getElementById('inflation-rate')?.value) || 2.5;
@@ -2736,10 +2736,11 @@ const AppV4 = {
 
         const breakdownHTML = Object.entries(data.breakdown).map(([category, details]) => {
             const adjMonthly = Math.round(details.monthly * scaleFactor);
+            const adjAnnual = Math.round(details.annual * scaleFactor);
             return `
             <div class="breakdown-item">
                 <div class="breakdown-category">${category.charAt(0).toUpperCase() + category.slice(1)}</div>
-                <div class="breakdown-amount">$${adjMonthly.toLocaleString()}/month</div>
+                <div class="breakdown-amount">$${adjMonthly.toLocaleString()}/mo <span style="color:#64748b; font-size:12px;">($${adjAnnual.toLocaleString()}/yr)</span></div>
                 <div class="breakdown-description">${details.description}</div>
             </div>
         `}).join('');
@@ -3461,9 +3462,9 @@ const AppV4 = {
         // Always compute category inflation with spending-weighted rates
         const weights = this._getSpendingWeights();
         return {
-            housing: parseFloat(document.getElementById('inf-housing')?.value) || 3.0,
-            food: parseFloat(document.getElementById('inf-food')?.value) || 3.5,
-            healthcare: parseFloat(document.getElementById('healthcare-inflation')?.value) || 5,
+            housing: parseFloat(document.getElementById('inf-housing')?.value) || 2.5,
+            food: parseFloat(document.getElementById('inf-food')?.value) || 3.0,
+            healthcare: parseFloat(document.getElementById('healthcare-inflation')?.value) || 4,
             discretionary: parseFloat(document.getElementById('inf-discretionary')?.value) || 2.0,
             _weights: weights
         };
