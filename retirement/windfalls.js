@@ -286,7 +286,7 @@ const WindfallManager = {
                     <label>Type</label>
                     <div class="windfall-type-selector">
                         <button type="button" class="wf-type-btn ${type === 'simple' ? 'active' : ''}" data-type="simple">💰 Fixed Amount</button>
-                        <button type="button" class="wf-type-btn ${type === 'shares' ? 'active' : ''}" data-type="shares">📈 Company Shares</button>
+                        <button type="button" class="wf-type-btn ${type === 'shares' ? 'active' : ''}" data-type="shares">📈 Stock / Equity</button>
                         <button type="button" class="wf-type-btn ${type === 'uncertain' ? 'active' : ''}" data-type="uncertain">🎲 Uncertain</button>
                     </div>
                 </div>
@@ -512,7 +512,7 @@ const WindfallManager = {
             if (currentType === 'shares') {
                 data = {
                     type: 'shares',
-                    name: document.getElementById('windfall-name').value || 'Company Shares',
+                    name: document.getElementById('windfall-name').value || 'Stock / Equity',
                     currentValue: parseFloat(document.getElementById('windfall-current-value').value) || 0,
                     amount: parseFloat(document.getElementById('windfall-current-value').value) || 0,
                     growthRate: parseFloat(document.getElementById('windfall-growth-rate').value) || 6,

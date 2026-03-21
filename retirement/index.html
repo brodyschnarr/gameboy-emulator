@@ -780,6 +780,19 @@
                 </div>
             </div>
 
+            <div id="form-windfall" class="step5-form hidden">
+                <div class="step5-form-header">💰 Windfall / Inheritance</div>
+                <div class="input-group windfalls-container">
+                    <span class="input-impact" style="font-size: 12px;">Inheritance, business sale, severance (can roll into RRSP tax-free)</span>
+                    <div id="windfalls-list"></div>
+                    <div id="windfall-form-container"></div>
+                    <button type="button" class="btn-secondary btn-sm" id="btn-add-windfall">+ Add Windfall</button>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="windfall">Done</button>
+                </div>
+            </div>
+
             <!-- ═══ RETIREMENT EXPENSES (dropdown-based) ═══ -->
             <div class="step5-add-section">
                 <div id="added-expense-items"></div>
@@ -926,19 +939,6 @@
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
                     <button type="button" class="btn-primary btn-sm" data-save="downsizing">Save</button>
                     <button type="button" class="btn-secondary btn-sm" data-cancel="downsizing">Cancel</button>
-                </div>
-            </div>
-
-            <div id="form-windfall" class="step5-form hidden">
-                <div class="step5-form-header">💰 Windfall / Inheritance</div>
-                <div class="input-group windfalls-container">
-                    <span class="input-impact" style="font-size: 12px;">Inheritance, business sale, severance (can roll into RRSP tax-free)</span>
-                    <div id="windfalls-list"></div>
-                    <div id="windfall-form-container"></div>
-                    <button type="button" class="btn-secondary btn-sm" id="btn-add-windfall">+ Add Windfall</button>
-                </div>
-                <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    <button type="button" class="btn-primary btn-sm" data-save="windfall">Done</button>
                 </div>
             </div>
 
@@ -1120,6 +1120,15 @@
         ═══════════════════════════════════════ -->
         <section id="results" class="hidden">
             
+            <!-- Scenario Tabs -->
+            <div class="scenario-tabs" id="scenario-tabs">
+                <button class="scenario-tab active" data-scenario="base">Your Plan</button>
+                <button class="scenario-tab" data-scenario="retire5early">5 Yrs Earlier</button>
+                <button class="scenario-tab" data-scenario="retire5late">5 Yrs Later</button>
+                <button class="scenario-tab" data-scenario="spend20less">Spend 20% Less</button>
+                <button class="scenario-tab" data-scenario="spend20more">Spend 20% More</button>
+            </div>
+
             <div id="status-banner" class="card status-banner"></div>
 
             <!-- Scenario Save/Compare -->
@@ -1200,20 +1209,6 @@
 
             <!-- Tax & Withdrawal: removed — info now in year-by-year tooltip -->
 
-            <!-- What-If Scenarios -->
-            <section class="card">
-                <h2>🔮 What If...?</h2>
-                <p class="section-intro">See how changes affect your plan</p>
-                <div class="scenario-tabs" id="scenario-tabs">
-                    <button class="scenario-tab active" data-scenario="base">Your Plan</button>
-                    <button class="scenario-tab" data-scenario="retire5early">5 Yrs Earlier</button>
-                    <button class="scenario-tab" data-scenario="retire5late">5 Yrs Later</button>
-                    <button class="scenario-tab" data-scenario="spend20less">Spend 20% Less</button>
-                    <button class="scenario-tab" data-scenario="spend20more">Spend 20% More</button>
-                </div>
-                <div id="scenario-compare-result" style="margin-top: 12px;"></div>
-            </section>
-
             <!-- Actions -->
             <div class="button-row">
                 <button type="button" class="btn-secondary" id="btn-edit">✏️ Edit Inputs</button>
@@ -1278,34 +1273,34 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000068"></script>
-    <script src="cpp-calculator.js?v=17&t=24000068"></script>
-    <script src="benchmarks.js?v=17&t=24000068"></script>
-    <script src="lifestyle-data.js?v=17&t=24000068"></script>
-    <script src="regional-data.js?v=18&t=24000068"></script>
-    <script src="canada-map.js?v=18&t=24000068"></script>
-    <script src="income-sources.js?v=17&t=24000068"></script>
-    <script src="deep-dive.js?v=17&t=24000068"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000068"></script>
-    <script src="scenario-manager.js?v=17&t=24000068"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000068"></script>
-    <script src="calc.js?v=17&t=24000068"></script>
-    <script src="app-round6-debug.js?v=17&t=24000068"></script>
+    <script src="canada-tax.js?v=17&t=24000069"></script>
+    <script src="cpp-calculator.js?v=17&t=24000069"></script>
+    <script src="benchmarks.js?v=17&t=24000069"></script>
+    <script src="lifestyle-data.js?v=17&t=24000069"></script>
+    <script src="regional-data.js?v=18&t=24000069"></script>
+    <script src="canada-map.js?v=18&t=24000069"></script>
+    <script src="income-sources.js?v=17&t=24000069"></script>
+    <script src="deep-dive.js?v=17&t=24000069"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000069"></script>
+    <script src="scenario-manager.js?v=17&t=24000069"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000069"></script>
+    <script src="calc.js?v=17&t=24000069"></script>
+    <script src="app-round6-debug.js?v=17&t=24000069"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000068"></script>
-    <script src="monte-carlo.js?v=17&t=24000068"></script>
-    <script src="tax-optimizer.js?v=17&t=24000068"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000068"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000068"></script>
-    <script src="advanced-charts.js?v=17&t=24000068"></script>
-    <script src="interactive-sliders.js?v=17&t=24000068"></script>
-    <script src="scenario-storage.js?v=17&t=24000068"></script>
-    <script src="windfalls.js?v=17&t=24000068"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000068"></script>
+    <script src="error-handler.js?v=17&t=24000069"></script>
+    <script src="monte-carlo.js?v=17&t=24000069"></script>
+    <script src="tax-optimizer.js?v=17&t=24000069"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000069"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000069"></script>
+    <script src="advanced-charts.js?v=17&t=24000069"></script>
+    <script src="interactive-sliders.js?v=17&t=24000069"></script>
+    <script src="scenario-storage.js?v=17&t=24000069"></script>
+    <script src="windfalls.js?v=17&t=24000069"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000069"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000068"></script>
+    <script src="slider-inputs.js?v=17&t=24000069"></script>
 
     <!-- Diagnostics removed -->
 
