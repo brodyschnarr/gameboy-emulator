@@ -878,8 +878,10 @@ const RetirementCalcV4 = {
                 if (age >= effOAS1) {
                     const GIS_MAX_SINGLE = 12780;
                     const GIS_MAX_COUPLE = 7692;
-                    const gisMax = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
+                    // GIS max is CPI-indexed — inflate to match income dollars
+                    const gisMax = (isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2) * cpiFromToday;
                     // Rental + annuity (taxable portion ~50%) count for GIS income test
+                    // All income values are already in future nominal dollars (inflated by cpiFromToday)
                     const annuityTaxable = annuityPayoutThisYear * 0.5; // Prescribed annuity ~50% taxable
                     const gisTestPre = cppIncome + additionalIncome + pensionIncome + rentalIncomeThisYear + annuityTaxable;
                     
@@ -893,10 +895,10 @@ const RetirementCalcV4 = {
                         const nonRegShare = balances.nonReg > 0 ? Math.min(estimatedTaxableWithdrawal, balances.nonReg) : 0;
                         const rrspShare = estimatedTaxableWithdrawal - nonRegShare;
                         const estimatedGISTestIncome = gisTestPre + rrspShare + nonRegShare * 0.5;
-                        gisEstimate = Math.max(0, gisMax - estimatedGISTestIncome * 0.5) * cpiFromToday;
+                        gisEstimate = Math.max(0, gisMax - estimatedGISTestIncome * 0.5);
                     } else {
                         // Only TFSA/cash — GIS unaffected by withdrawals
-                        gisEstimate = Math.max(0, gisMax - gisTestPre * 0.5) * cpiFromToday;
+                        gisEstimate = Math.max(0, gisMax - gisTestPre * 0.5);
                     }
                 }
 
@@ -978,12 +980,12 @@ const RetirementCalcV4 = {
                 
                 // Pass 2: recalculate GIS with actual withdrawals and re-withdraw if short
                 if (age >= effOAS1) {
-                    const GIS_MAX_SINGLE = 12780;
-                    const GIS_MAX_COUPLE = 7692;
-                    const gisMax2 = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
+                    const GIS_MAX_SINGLE2 = 12780;
+                    const GIS_MAX_COUPLE2 = 7692;
+                    const gisMax2 = (isSingle ? GIS_MAX_SINGLE2 : GIS_MAX_COUPLE2 * 2) * cpiFromToday;
                     const gisTestPost = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0) 
                         + additionalIncome + pensionIncome + ((withdrawal.fromNonReg || 0) * 0.5);
-                    const gisActual = Math.max(0, gisMax2 - gisTestPost * 0.5) * cpiFromToday;
+                    const gisActual = Math.max(0, gisMax2 - gisTestPost * 0.5);
                     const shortfall = gisEstimate - gisActual;
                     
                     if (shortfall > 100) {
@@ -1024,15 +1026,16 @@ const RetirementCalcV4 = {
                 // Max ~$12,780/yr (single) or ~$7,692/yr each (couple), claws back at 50% of income
                 let gisIncome = 0;
                 if (age >= effOAS1) {
-                    const GIS_MAX_SINGLE = 12780;
-                    const GIS_MAX_COUPLE = 7692; // per person
+                    const GIS_MAX_SINGLE3 = 12780;
+                    const GIS_MAX_COUPLE3 = 7692; // per person
                     const GIS_CLAWBACK_RATE = 0.50;
-                    const gisMax = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
+                    // GIS max is CPI-indexed — inflate to match income dollars
+                    const gisMax = (isSingle ? GIS_MAX_SINGLE3 : GIS_MAX_COUPLE3 * 2) * cpiFromToday;
                     // GIS income test excludes OAS but includes CPP, RRSP withdrawals, etc.
                     const gisTestIncome = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0) + additionalIncome
                         + pensionIncome + ((withdrawal.fromNonReg || 0) * 0.5); // NonReg at 50% inclusion
                     const gisClawback = gisTestIncome * GIS_CLAWBACK_RATE;
-                    gisIncome = Math.max(0, gisMax - gisClawback) * cpiFromToday;
+                    gisIncome = Math.max(0, gisMax - gisClawback);
                 }
                 
                 const govIncome = cppIncome + actualOAS + gisIncome;

@@ -337,7 +337,8 @@ const MonteCarloSimulator = {
                 if (age >= effOAS1) {
                     const GIS_MAX_SINGLE_MC = 12780;
                     const GIS_MAX_COUPLE_MC = 7692;
-                    const gisMaxMC = isSingle ? GIS_MAX_SINGLE_MC : GIS_MAX_COUPLE_MC * 2;
+                    // GIS max is CPI-indexed — inflate to match income dollars
+                    const gisMaxMC = (isSingle ? GIS_MAX_SINGLE_MC : GIS_MAX_COUPLE_MC * 2) * cpiFromToday;
                     const gisTestPre = cppIncome + additionalIncome + rentalIncomeYr + annuityPayout * 0.5;
                     
                     const hasTaxable = (balances.rrsp > 0 || balances.nonReg > 0);
@@ -347,9 +348,9 @@ const MonteCarloSimulator = {
                         const nonRegPart = Math.min(estTaxable, balances.nonReg);
                         const rrspPart = estTaxable - nonRegPart;
                         const estGISTest = gisTestPre + rrspPart + nonRegPart * 0.5;
-                        gisEstimateMC = Math.max(0, gisMaxMC - estGISTest * 0.5) * cpiFromToday;
+                        gisEstimateMC = Math.max(0, gisMaxMC - estGISTest * 0.5);
                     } else {
-                        gisEstimateMC = Math.max(0, gisMaxMC - gisTestPre * 0.5) * cpiFromToday;
+                        gisEstimateMC = Math.max(0, gisMaxMC - gisTestPre * 0.5);
                     }
                 }
 
@@ -368,10 +369,10 @@ const MonteCarloSimulator = {
                 
                 // Pass 2: check if GIS was overestimated, compensate from TFSA
                 if (age >= effOAS1) {
-                    const gisMax2 = isSingle ? 12780 : 7692 * 2;
+                    const gisMax2MC = (isSingle ? 12780 : 7692 * 2) * cpiFromToday;
                     const gisTestPost = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0)
                         + additionalIncome + ((withdrawal.fromNonReg || 0) * 0.5);
-                    const gisActual = Math.max(0, gisMax2 - gisTestPost * 0.5) * cpiFromToday;
+                    const gisActual = Math.max(0, gisMax2MC - gisTestPost * 0.5);
                     const shortfall = gisEstimateMC - gisActual;
                     if (shortfall > 100) {
                         const remainTFSA = Math.max(0, balances.tfsa - withdrawal.fromTFSA);
@@ -391,13 +392,13 @@ const MonteCarloSimulator = {
                 // GIS for low-income OAS recipients (post-withdrawal estimate)
                 let gisIncome = 0;
                 if (age >= effOAS1) {
-                    const GIS_MAX_SINGLE = 12780;
-                    const GIS_MAX_COUPLE = 7692;
-                    const gisMax = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
+                    const GIS_MAX_SINGLE_F = 12780;
+                    const GIS_MAX_COUPLE_F = 7692;
+                    const gisMaxF = (isSingle ? GIS_MAX_SINGLE_F : GIS_MAX_COUPLE_F * 2) * cpiFromToday;
                     const gisTestIncome = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0)
                         + ((withdrawal.fromNonReg || 0) * 0.5) + additionalIncome;
                     const gisClawback = gisTestIncome * 0.50;
-                    gisIncome = Math.max(0, gisMax - gisClawback) * cpiFromToday;
+                    gisIncome = Math.max(0, gisMaxF - gisClawback);
                 }
                 
                 yearData.withdrawal = withdrawal.total;
