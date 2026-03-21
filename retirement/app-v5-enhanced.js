@@ -283,7 +283,7 @@ const AppV5Enhanced = {
                 <div class="stat-card">
                     <div class="stat-label">Expected Final Balance</div>
                     <div class="stat-value">$${(mc.finalBalance.p50 / 1000).toFixed(0)}K</div>
-                    <div class="stat-note">Median outcome (50th percentile)</div>
+                    <div class="stat-note">Median portfolio balance (50th percentile)${baseResults?.legacy?.estateAssets > 0 ? `<br>+ ${fmtMoney(baseResults.legacy.estateAssets)} in property/assets` : ''}</div>
                 </div>
                 
                 <div class="stat-card">

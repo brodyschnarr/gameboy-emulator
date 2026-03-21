@@ -272,10 +272,10 @@ const RetirementCalcV4 = {
         const netEstate = Math.max(0, grossEstate - estateTax);
 
         let legacyDescription = '';
-        if (legacyAmount > 1000000) legacyDescription = 'Significant legacy for heirs';
-        else if (legacyAmount > 500000) legacyDescription = 'Comfortable legacy';
-        else if (legacyAmount > 100000) legacyDescription = 'Modest legacy';
-        else if (legacyAmount > 0) legacyDescription = 'Small legacy';
+        if (netEstate > 1000000) legacyDescription = 'Significant legacy for heirs';
+        else if (netEstate > 500000) legacyDescription = 'Comfortable legacy';
+        else if (netEstate > 100000) legacyDescription = 'Modest legacy';
+        else if (netEstate > 0) legacyDescription = 'Small legacy';
         else legacyDescription = 'No legacy remaining';
 
         return {

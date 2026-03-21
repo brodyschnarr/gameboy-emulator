@@ -3466,10 +3466,18 @@ const AppV4 = {
             }
         }
 
-        // Legacy
-        document.getElementById('legacy-amount').textContent = fmtMoney(results.legacy.amount);
-        document.getElementById('legacy-description').textContent =
-            results.legacy.description;
+        // Legacy — show gross estate (portfolio + property/assets) minus estate tax
+        const estateTotal = results.legacy.netEstate || results.legacy.amount || 0;
+        const estateAssetVal = results.legacy.estateAssets || 0;
+        document.getElementById('legacy-amount').textContent = fmtMoney(estateTotal);
+        let estateDesc = results.legacy.description;
+        if (estateAssetVal > 0) {
+            estateDesc += ` (includes ${fmtMoney(estateAssetVal)} in property/assets)`;
+        }
+        if (results.legacy.estateTax > 0) {
+            estateDesc += ` — after ${fmtMoney(results.legacy.estateTax)} estate tax`;
+        }
+        document.getElementById('legacy-description').textContent = estateDesc;
 
         // Charts
         try {
@@ -3706,6 +3714,18 @@ const AppV4 = {
         canvas.addEventListener('touchmove', canvas._tooltipHandler, { passive: false });
         canvas.addEventListener('touchstart', canvas._tooltipHandler, { passive: false });
         canvas.addEventListener('mouseleave', canvas._tooltipLeave);
+        
+        // Close tooltip when tapping anywhere outside the chart
+        if (!canvas._tooltipOutsideHandler) {
+            canvas._tooltipOutsideHandler = (e) => {
+                if (!canvas.contains(e.target) && !tooltip.contains(e.target)) {
+                    tooltip.style.display = 'none';
+                    this._renderChartBase(yearByYear, retirementAge);
+                }
+            };
+            document.addEventListener('touchstart', canvas._tooltipOutsideHandler, { passive: true });
+            document.addEventListener('click', canvas._tooltipOutsideHandler);
+        }
     },
 
     _drawYearBreakdown(yearByYear, retirementAge) {
