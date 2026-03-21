@@ -383,6 +383,67 @@ const RegionalDataV2 = {
         costOfLivingIndex: 90
     },
 
+    // === Territories ===
+    YT: {
+        name: 'Yukon (Whitehorse)',
+        province: 'YT',
+        incomeMultiplier: 1.10,
+        savingsMultiplier: 0.90,
+        housingCostMultiplier: 1.15,
+        averageIncome: 68000,
+        medianIncome: 60000,
+        medianHome: 520000,
+        costOfLivingIndex: 118
+    },
+
+    NT_Yellowknife: {
+        name: 'Yellowknife',
+        province: 'NT',
+        incomeMultiplier: 1.20,
+        savingsMultiplier: 0.95,
+        housingCostMultiplier: 1.25,
+        averageIncome: 75000,
+        medianIncome: 65000,
+        medianHome: 450000,
+        costOfLivingIndex: 125
+    },
+
+    NT_Rest: {
+        name: 'Rest of NWT',
+        province: 'NT',
+        incomeMultiplier: 1.05,
+        savingsMultiplier: 0.80,
+        housingCostMultiplier: 1.10,
+        averageIncome: 65000,
+        medianIncome: 55000,
+        medianHome: 380000,
+        costOfLivingIndex: 130
+    },
+
+    NU_Iqaluit: {
+        name: 'Iqaluit',
+        province: 'NU',
+        incomeMultiplier: 1.25,
+        savingsMultiplier: 0.85,
+        housingCostMultiplier: 1.50,
+        averageIncome: 78000,
+        medianIncome: 68000,
+        medianHome: 550000,
+        costOfLivingIndex: 145
+    },
+
+    NU_Rest: {
+        name: 'Rest of Nunavut',
+        province: 'NU',
+        incomeMultiplier: 1.10,
+        savingsMultiplier: 0.70,
+        housingCostMultiplier: 1.40,
+        averageIncome: 65000,
+        medianIncome: 55000,
+        medianHome: 480000,
+        costOfLivingIndex: 150
+    },
+
     /**
      * Get regional data by code
      */
