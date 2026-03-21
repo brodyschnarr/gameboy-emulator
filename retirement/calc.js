@@ -721,7 +721,6 @@ const RetirementCalcV4 = {
                 const inflationFactor = Math.pow(1 + inf, yearsIntoRetirement);
                 // CRA indexes tax brackets/credits to CPI from today
                 const cpiFromToday = Math.pow(1 + inf, age - startAge);
-                const cpiFromRetirement = Math.pow(1 + inf, yearsIntoRetirement);
 
                 // Downsizing: add proceeds at sell age, adjust spending afterward
                 let downsizingAdjustment = 0;
@@ -732,7 +731,7 @@ const RetirementCalcV4 = {
                     balances.nonReg += (downsizingProceeds - toTFSA);
                 }
                 if (downsizingAge && age >= downsizingAge && downsizingSpendingChange !== 0) {
-                    downsizingAdjustment = downsizingSpendingChange * 12 * cpiFromRetirement;
+                    downsizingAdjustment = downsizingSpendingChange * 12 * cpiFromToday;
                 }
 
                 // Spending curve: "Go-Go / Slow-Go / No-Go" pattern
@@ -761,10 +760,10 @@ const RetirementCalcV4 = {
                 // 4. Government income (inflation-indexed, tracked per-person for clawback)
                 let cppP1 = 0, cppP2 = 0;
                 if (age >= cppStartAge) {
-                    cppP1 = govBenefits.cpp1 * cpiFromRetirement;
+                    cppP1 = govBenefits.cpp1 * cpiFromToday;
                 }
                 if (!isSingle && age >= (cppStartAgeP2 || cppStartAge)) {
-                    cppP2 = govBenefits.cpp2 * cpiFromRetirement;
+                    cppP2 = govBenefits.cpp2 * cpiFromToday;
                 }
                 const cppIncome = cppP1 + cppP2;
                 
@@ -773,10 +772,10 @@ const RetirementCalcV4 = {
                 const effOAS2 = govBenefits.oasStartAgeP2 || effOAS1;
                 let oasP1 = 0, oasP2 = 0;
                 if (age >= effOAS1) {
-                    oasP1 = (govBenefits.oasPerPerson1 || govBenefits.oasPerPerson) * cpiFromRetirement;
+                    oasP1 = (govBenefits.oasPerPerson1 || govBenefits.oasPerPerson) * cpiFromToday;
                 }
                 if (!isSingle && age >= effOAS2) {
-                    oasP2 = (govBenefits.oasPerPerson2 || govBenefits.oasPerPerson) * cpiFromRetirement;
+                    oasP2 = (govBenefits.oasPerPerson2 || govBenefits.oasPerPerson) * cpiFromToday;
                 }
                 const oasIncome = oasP1 + oasP2;
 
@@ -791,7 +790,7 @@ const RetirementCalcV4 = {
                     })
                     .reduce((sum, s) => {
                         const base = s.annualAmount;
-                        return sum + (s.indexed ? base * cpiFromRetirement : base);
+                        return sum + (s.indexed ? base * cpiFromToday : base);
                     }, 0);
 
                 // Employer pension (standalone field — backwards compatible)
@@ -799,7 +798,7 @@ const RetirementCalcV4 = {
                 if (employerPension > 0 && age >= employerPensionStartAge) {
                     pensionIncome = employerPension * 12;
                     if (employerPensionIndexed) {
-                        pensionIncome *= cpiFromRetirement;
+                        pensionIncome *= cpiFromToday;
                     }
                 }
                 
@@ -821,7 +820,7 @@ const RetirementCalcV4 = {
                     }
                 }
                 if (annuityMonthlyPayout > 0 && age >= annuityPurchaseAge) {
-                    annuityPayoutThisYear = annuityMonthlyPayout * 12 * cpiFromRetirement;
+                    annuityPayoutThisYear = annuityMonthlyPayout * 12 * cpiFromToday;
                 }
 
                 // Check if any additional income is pension-type (for pension credit)
@@ -850,10 +849,10 @@ const RetirementCalcV4 = {
                         const nonRegShare = balances.nonReg > 0 ? Math.min(estimatedTaxableWithdrawal, balances.nonReg) : 0;
                         const rrspShare = estimatedTaxableWithdrawal - nonRegShare;
                         const estimatedGISTestIncome = gisTestPre + rrspShare + nonRegShare * 0.5;
-                        gisEstimate = Math.max(0, gisMax - estimatedGISTestIncome * 0.5) * cpiFromRetirement;
+                        gisEstimate = Math.max(0, gisMax - estimatedGISTestIncome * 0.5) * cpiFromToday;
                     } else {
                         // Only TFSA/cash — GIS unaffected by withdrawals
-                        gisEstimate = Math.max(0, gisMax - gisTestPre * 0.5) * cpiFromRetirement;
+                        gisEstimate = Math.max(0, gisMax - gisTestPre * 0.5) * cpiFromToday;
                     }
                 }
 
@@ -867,7 +866,7 @@ const RetirementCalcV4 = {
                     const partnerAgeThisYear = partnerAgeNow + (age - startAge);
                     if (partnerAgeThisYear >= 60 && partnerAgeThisYear < 65) {
                         const combinedIncome = cppIncome + additionalIncome + pensionIncome + rentalIncomeThisYear;
-                        spouseAllowance = Math.max(0, ALLOWANCE_MAX - combinedIncome * 0.5) * cpiFromRetirement;
+                        spouseAllowance = Math.max(0, ALLOWANCE_MAX - combinedIncome * 0.5) * cpiFromToday;
                     }
                 }
 
@@ -940,7 +939,7 @@ const RetirementCalcV4 = {
                     const gisMax2 = isSingle ? GIS_MAX_SINGLE : GIS_MAX_COUPLE * 2;
                     const gisTestPost = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0) 
                         + additionalIncome + pensionIncome + ((withdrawal.fromNonReg || 0) * 0.5);
-                    const gisActual = Math.max(0, gisMax2 - gisTestPost * 0.5) * cpiFromRetirement;
+                    const gisActual = Math.max(0, gisMax2 - gisTestPost * 0.5) * cpiFromToday;
                     const shortfall = gisEstimate - gisActual;
                     
                     if (shortfall > 100) {
@@ -989,7 +988,7 @@ const RetirementCalcV4 = {
                     const gisTestIncome = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0) + additionalIncome
                         + pensionIncome + ((withdrawal.fromNonReg || 0) * 0.5); // NonReg at 50% inclusion
                     const gisClawback = gisTestIncome * GIS_CLAWBACK_RATE;
-                    gisIncome = Math.max(0, gisMax - gisClawback) * cpiFromRetirement;
+                    gisIncome = Math.max(0, gisMax - gisClawback) * cpiFromToday;
                 }
                 
                 const govIncome = cppIncome + actualOAS + gisIncome;

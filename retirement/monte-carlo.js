@@ -277,7 +277,7 @@ const MonteCarloSimulator = {
                 const thisYearSpending = futureAnnualSpending * inflationFactor * spendingCurveMultiplier;
                 
                 const healthcareCost = healthcareCosts.byYear.find(h => h.age === age)?.cost || 0;
-                const cpiFromRetirement = Math.pow(1 + inf, yearsIntoRetirement);
+                // cpiFromToday already defined above (line 268)
 
                 // Downsizing
                 if (downsizingAge && age === downsizingAge && downsizingProceeds > 0) {
@@ -285,7 +285,7 @@ const MonteCarloSimulator = {
                     balances.tfsa += Math.min(downsizingProceeds, tfsaRoom);
                     balances.nonReg += Math.max(0, downsizingProceeds - tfsaRoom);
                 }
-                let downsizingAdj = (downsizingAge && age >= downsizingAge) ? (downsizingSpendingChange * 12 * cpiFromRetirement) : 0;
+                let downsizingAdj = (downsizingAge && age >= downsizingAge) ? (downsizingSpendingChange * 12 * cpiFromToday) : 0;
                 const totalNeed = Math.max(0, thisYearSpending + healthcareCost + downsizingAdj);
 
                 // Annuity purchase
@@ -297,25 +297,25 @@ const MonteCarloSimulator = {
                         balances.nonReg *= (1 - ratio); balances.other *= (1 - ratio); balances.cash *= (1 - ratio);
                     }
                 }
-                const annuityPayout = (annuityMonthlyPayout > 0 && age >= (annuityPurchaseAge || retirementAge)) ? annuityMonthlyPayout * 12 * cpiFromRetirement : 0;
+                const annuityPayout = (annuityMonthlyPayout > 0 && age >= (annuityPurchaseAge || retirementAge)) ? annuityMonthlyPayout * 12 * cpiFromToday : 0;
                 const rentalIncomeYr = 0; // Rental now flows through additionalIncomeSources
                 
                 let cppP1 = 0, cppP2 = 0;
                 if (age >= (cppStartAge || 65)) {
-                    cppP1 = govBenefits.cpp1 * cpiFromRetirement;
+                    cppP1 = govBenefits.cpp1 * cpiFromToday;
                 }
                 if (!isSingle && age >= (cppStartAgeP2 || cppStartAge || 65)) {
-                    cppP2 = govBenefits.cpp2 * cpiFromRetirement;
+                    cppP2 = govBenefits.cpp2 * cpiFromToday;
                 }
                 const cppIncome = cppP1 + cppP2;
                 
                 // FIX #3: OAS with deferral (per-person for clawback)
                 let oasP1 = 0, oasP2 = 0;
                 if (age >= effOAS1) {
-                    oasP1 = (govBenefits.oasPerPerson1 || govBenefits.oasPerPerson) * cpiFromRetirement;
+                    oasP1 = (govBenefits.oasPerPerson1 || govBenefits.oasPerPerson) * cpiFromToday;
                 }
                 if (!isSingle && age >= effOAS2) {
-                    oasP2 = (govBenefits.oasPerPerson2 || govBenefits.oasPerPerson) * cpiFromRetirement;
+                    oasP2 = (govBenefits.oasPerPerson2 || govBenefits.oasPerPerson) * cpiFromToday;
                 }
                 const oasIncome = oasP1 + oasP2;
                 
@@ -326,7 +326,7 @@ const MonteCarloSimulator = {
                         if (age >= retirementAge && s.continuesInRetirement === false) return false;
                         return true;
                     })
-                    .reduce((sum, s) => sum + (s.indexed ? s.annualAmount * cpiFromRetirement : s.annualAmount), 0);
+                    .reduce((sum, s) => sum + (s.indexed ? s.annualAmount * cpiFromToday : s.annualAmount), 0);
                 
                 // GIS pre-estimate — account for taxable withdrawals
                 let gisEstimateMC = 0;
@@ -343,9 +343,9 @@ const MonteCarloSimulator = {
                         const nonRegPart = Math.min(estTaxable, balances.nonReg);
                         const rrspPart = estTaxable - nonRegPart;
                         const estGISTest = gisTestPre + rrspPart + nonRegPart * 0.5;
-                        gisEstimateMC = Math.max(0, gisMaxMC - estGISTest * 0.5) * cpiFromRetirement;
+                        gisEstimateMC = Math.max(0, gisMaxMC - estGISTest * 0.5) * cpiFromToday;
                     } else {
-                        gisEstimateMC = Math.max(0, gisMaxMC - gisTestPre * 0.5) * cpiFromRetirement;
+                        gisEstimateMC = Math.max(0, gisMaxMC - gisTestPre * 0.5) * cpiFromToday;
                     }
                 }
 
@@ -367,7 +367,7 @@ const MonteCarloSimulator = {
                     const gisMax2 = isSingle ? 12780 : 7692 * 2;
                     const gisTestPost = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0)
                         + additionalIncome + ((withdrawal.fromNonReg || 0) * 0.5);
-                    const gisActual = Math.max(0, gisMax2 - gisTestPost * 0.5) * cpiFromRetirement;
+                    const gisActual = Math.max(0, gisMax2 - gisTestPost * 0.5) * cpiFromToday;
                     const shortfall = gisEstimateMC - gisActual;
                     if (shortfall > 100) {
                         const remainTFSA = Math.max(0, balances.tfsa - withdrawal.fromTFSA);
@@ -393,7 +393,7 @@ const MonteCarloSimulator = {
                     const gisTestIncome = cppIncome + (withdrawal.fromRRSP || 0) + (withdrawal.fromOther || 0)
                         + ((withdrawal.fromNonReg || 0) * 0.5) + additionalIncome;
                     const gisClawback = gisTestIncome * 0.50;
-                    gisIncome = Math.max(0, gisMax - gisClawback) * cpiFromRetirement;
+                    gisIncome = Math.max(0, gisMax - gisClawback) * cpiFromToday;
                 }
                 
                 yearData.withdrawal = withdrawal.total;
