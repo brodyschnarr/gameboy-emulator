@@ -132,16 +132,20 @@ const RetirementCalcV4 = {
         });
 
         // 2. Calculate healthcare costs (with healthcare-specific inflation + LTC)
+        // If healthStatus === 'none', user's spending already includes healthcare — skip add-on
+        const skipHealthcare = (healthStatus === 'none');
         const healthcareInfRate = (healthcareInflation || 5) / 100;
         const ltcOpts = ltcMonthly > 0 ? { monthlyAmount: ltcMonthly, startAge: ltcStartAge || 80 } : null;
-        const healthcareCosts = HealthcareEstimator.projectTotal(
-            retirementAge,
-            lifeExpectancy,
-            province,
-            healthStatus || 'average',
-            healthcareInfRate,
-            ltcOpts
-        );
+        const healthcareCosts = skipHealthcare
+            ? { total: 0, averageAnnual: 0, byYear: [], breakdown: { prescriptions: 0, dental: 0, vision: 0, other: 0 } }
+            : HealthcareEstimator.projectTotal(
+                retirementAge,
+                lifeExpectancy,
+                province,
+                healthStatus || 'average',
+                healthcareInfRate,
+                ltcOpts
+            );
 
         // 3. Inflation-adjusted spending at retirement
         // Category inflation blends housing/food/healthcare/discretionary if provided

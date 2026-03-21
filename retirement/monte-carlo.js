@@ -142,16 +142,19 @@ const MonteCarloSimulator = {
             cppOverrideP2: cppOverrideP2 || null
         });
         
-        // Healthcare costs
+        // Healthcare costs — skip if user's spending already includes healthcare
+        const skipHealthcare = (healthStatus === 'none');
         const ltcOpts = ltcMonthly > 0 ? { monthlyAmount: ltcMonthly, startAge: ltcStartAge || 80 } : null;
-        const healthcareCosts = HealthcareEstimator.projectTotal(
-            retirementAge,
-            lifeExpectancy,
-            province,
-            healthStatus || 'average',
-            (healthcareInflation || 5) / 100,
-            ltcOpts
-        );
+        const healthcareCosts = skipHealthcare
+            ? { total: 0, averageAnnual: 0, byYear: [], breakdown: { prescriptions: 0, dental: 0, vision: 0, other: 0 } }
+            : HealthcareEstimator.projectTotal(
+                retirementAge,
+                lifeExpectancy,
+                province,
+                healthStatus || 'average',
+                (healthcareInflation || 5) / 100,
+                ltcOpts
+            );
         
         // Inflation-adjusted spending at retirement
         const inflationMultiplier = Math.pow(1 + inflationRate / 100, yearsToRetirement);

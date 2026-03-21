@@ -15,6 +15,7 @@ const AppV4 = {
     selectedProvince: null,
     selectedRegion: null,
     healthStatus: 'average',
+    healthcareExplicitlyAdded: false,
     cppStartAge: 65,
     cppStartAgeP1: 65,
     cppStartAgeP2: 65,
@@ -1387,6 +1388,7 @@ const AppV4 = {
         document.querySelectorAll('[data-save]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const type = btn.dataset.save;
+                if (type === 'healthcare') this.healthcareExplicitlyAdded = true;
                 const form = document.getElementById('form-' + type);
                 if (form) form.classList.add('hidden');
                 this._updateStep5AddedItems();
@@ -1449,10 +1451,12 @@ const AppV4 = {
             expenseHTML += `<div class="step5-added-item"><span class="item-label">💳 Debt</span><span class="item-value">${fmt(debt)}</span></div>`;
         }
         
-        // Healthcare
-        const hcCost = document.getElementById('healthcare-annual')?.textContent || '';
-        if (hcCost && hcCost !== '$0') {
-            expenseHTML += `<div class="step5-added-item"><span class="item-label">🏥 Healthcare</span><span class="item-value">${hcCost}/yr</span></div>`;
+        // Healthcare (only if user explicitly added it)
+        if (this.healthcareExplicitlyAdded) {
+            const hcCost = document.getElementById('healthcare-annual')?.textContent || '';
+            if (hcCost && hcCost !== '$0') {
+                expenseHTML += `<div class="step5-added-item"><span class="item-label">🏥 Healthcare</span><span class="item-value">${hcCost}/yr extra</span></div>`;
+            }
         }
         
         incomeContainer.innerHTML = incomeHTML;
@@ -2583,17 +2587,28 @@ const AppV4 = {
         const data = LifestyleData[lifestyle];
         if (!data) return;
 
+        // Scale for couple + region
+        const isSingle = this.familyStatus === 'single';
+        const regionData = this.selectedRegion ? RegionalDataV2.getRegion(this.selectedRegion) : null;
+        const regionMultiplier = regionData ? (regionData.costOfLivingIndex / 100) : 1;
+        // LifestyleData has single values; couple presets in _updateSpendingPresets use different base
+        const activeBtn = document.querySelector(`.preset-btn[data-lifestyle="${lifestyle}"]`);
+        const adjustedAnnual = activeBtn ? parseInt(activeBtn.dataset.amount) : Math.round(data.annual * regionMultiplier);
+        const scaleFactor = adjustedAnnual / data.annual;
+
         document.getElementById('lifestyle-detail-title').textContent =
-            `${data.name} Lifestyle - $${data.annual.toLocaleString()}/year`;
+            `${data.name} Lifestyle - $${adjustedAnnual.toLocaleString()}/year`;
         document.getElementById('lifestyle-detail-tagline').textContent = data.tagline;
 
-        const breakdownHTML = Object.entries(data.breakdown).map(([category, details]) => `
+        const breakdownHTML = Object.entries(data.breakdown).map(([category, details]) => {
+            const adjMonthly = Math.round(details.monthly * scaleFactor);
+            return `
             <div class="breakdown-item">
                 <div class="breakdown-category">${category.charAt(0).toUpperCase() + category.slice(1)}</div>
-                <div class="breakdown-amount">$${details.monthly.toLocaleString()}/month</div>
+                <div class="breakdown-amount">$${adjMonthly.toLocaleString()}/month</div>
                 <div class="breakdown-description">${details.description}</div>
             </div>
-        `).join('');
+        `}).join('');
         document.getElementById('lifestyle-breakdown').innerHTML = breakdownHTML;
 
         const examplesHTML = data.examples.map(ex => `<li>${ex}</li>`).join('');
@@ -3029,7 +3044,7 @@ const AppV4 = {
             },
 
             annualSpending: parseFloat(document.getElementById('annual-spending')?.value),
-            healthStatus: this.healthStatus,
+            healthStatus: this.healthcareExplicitlyAdded ? this.healthStatus : 'none',
 
             currentDebt: parseFloat(document.getElementById('current-debt')?.value) || 0,
             debtPayoffAge: parseInt(document.getElementById('debt-payoff-age')?.value) || 65,
