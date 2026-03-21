@@ -662,10 +662,25 @@ const RetirementCalcV4 = {
                 balances.lira *= (1 + r);
                 balances.cash *= (1 + CASH_RATE);
 
-                // Pay down debt
+                // Pay down debt — deduct payments from non-registered first, then TFSA
                 if (debt > 0 && age < debtPayoffAge) {
                     const yearsRemaining = debtPayoffAge - age;
-                    const annualPayment = debt / yearsRemaining;
+                    const annualPayment = Math.min(debt, debt / yearsRemaining);
+                    // Deduct from accounts (non-reg → TFSA → RRSP as last resort)
+                    let remaining = annualPayment;
+                    const fromNonReg = Math.min(remaining, balances.nonReg);
+                    balances.nonReg -= fromNonReg;
+                    remaining -= fromNonReg;
+                    if (remaining > 0) {
+                        const fromTFSA = Math.min(remaining, balances.tfsa);
+                        balances.tfsa -= fromTFSA;
+                        remaining -= fromTFSA;
+                    }
+                    if (remaining > 0) {
+                        const fromRRSP = Math.min(remaining, balances.rrsp);
+                        balances.rrsp -= fromRRSP;
+                        remaining -= fromRRSP;
+                    }
                     debt = Math.max(0, debt - annualPayment);
                 } else if (age >= debtPayoffAge) {
                     debt = 0;

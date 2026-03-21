@@ -250,7 +250,11 @@ const MonteCarloSimulator = {
                 
                 if (debt > 0 && age < debtPayoffAge) {
                     const yearsLeft = debtPayoffAge - age;
-                    const annualPayment = debt / yearsLeft;
+                    const annualPayment = Math.min(debt, debt / yearsLeft);
+                    let rem = annualPayment;
+                    const dNR = Math.min(rem, balances.nonReg); balances.nonReg -= dNR; rem -= dNR;
+                    if (rem > 0) { const dT = Math.min(rem, balances.tfsa); balances.tfsa -= dT; rem -= dT; }
+                    if (rem > 0) { const dR = Math.min(rem, balances.rrsp); balances.rrsp -= dR; rem -= dR; }
                     debt = Math.max(0, debt - annualPayment);
                     yearData.debtPayment = annualPayment;
                 }

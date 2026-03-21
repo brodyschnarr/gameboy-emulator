@@ -703,6 +703,122 @@ console.log('\n📊 16. Estate asset (home value removal)');
     assert(r && r.yearByYear, 'Calculation works with homeValue=500000');
 }
 
+// ════════════════════════════════════════
+console.log('\n📊 17. Debt deduction from accounts');
+// ════════════════════════════════════════
+
+{
+    const rDebt = RetirementCalcV4.calculate(baseInputs({ currentDebt: 50000, debtPayoffAge: 45 }));
+    const rNone = RetirementCalcV4.calculate(baseInputs({ currentDebt: 0 }));
+    const y65d = rDebt.yearByYear.find(y => y.age === 65);
+    const y65n = rNone.yearByYear.find(y => y.age === 65);
+    assert(y65d.totalBalance < y65n.totalBalance, 'Debt reduces portfolio at retirement ($' + y65d.totalBalance + ' < $' + y65n.totalBalance + ')');
+}
+
+{
+    // Small debt should have small impact
+    const rSmall = RetirementCalcV4.calculate(baseInputs({ currentDebt: 5000, debtPayoffAge: 40 }));
+    const rBig = RetirementCalcV4.calculate(baseInputs({ currentDebt: 100000, debtPayoffAge: 55 }));
+    const y65s = rSmall.yearByYear.find(y => y.age === 65);
+    const y65b = rBig.yearByYear.find(y => y.age === 65);
+    assert(y65s.totalBalance > y65b.totalBalance, 'Bigger debt = smaller portfolio');
+}
+
+{
+    // MC also handles debt
+    const mc = MonteCarloSimulator.simulate(baseInputs({ currentDebt: 50000, debtPayoffAge: 45 }), { iterations: 10 });
+    assert(mc && !isNaN(mc.successRate), 'MC runs with debt');
+}
+
+// ════════════════════════════════════════
+console.log('\n📊 18. Additional income sources (rental)');
+// ════════════════════════════════════════
+
+{
+    const r = RetirementCalcV4.calculate(baseInputs({ 
+        additionalIncomeSources: [{ type: 'rental', label: 'Rental', annualAmount: 12000, continuesInRetirement: true, indexed: true, startAge: 35, endAge: null }]
+    }));
+    const y65 = r.yearByYear.find(y => y.age === 65);
+    assert(y65.additionalIncome > 0, 'Rental income flows to retirement: $' + y65.additionalIncome);
+    // Should be inflation-indexed from today
+    const expected = Math.round(12000 * Math.pow(1.025, 30));
+    assert(Math.abs(y65.additionalIncome - expected) < 100, 'Rental inflation-indexed: $' + y65.additionalIncome + ' ≈ $' + expected);
+}
+
+{
+    // Non-indexed income stays flat
+    const r = RetirementCalcV4.calculate(baseInputs({ 
+        additionalIncomeSources: [{ type: 'other', label: 'Side gig', annualAmount: 10000, continuesInRetirement: true, indexed: false, startAge: 35, endAge: null }]
+    }));
+    const y65 = r.yearByYear.find(y => y.age === 65);
+    assert(y65.additionalIncome === 10000, 'Non-indexed income stays flat: $' + y65.additionalIncome);
+}
+
+{
+    // Income that doesn't continue into retirement
+    const r = RetirementCalcV4.calculate(baseInputs({ 
+        additionalIncomeSources: [{ type: 'partTime', label: 'Part time', annualAmount: 20000, continuesInRetirement: false, indexed: false, startAge: 35, endAge: null }]
+    }));
+    const y65 = r.yearByYear.find(y => y.age === 65);
+    assert(y65.additionalIncome === 0, 'Non-continuing income stops at retirement: $' + y65.additionalIncome);
+}
+
+// ════════════════════════════════════════
+console.log('\n📊 19. CPP/OAS inflation indexing validation');
+// ════════════════════════════════════════
+
+{
+    // CPP in today's dollars should match the base CPP estimate
+    const r = RetirementCalcV4.calculate(baseInputs());
+    const y65 = r.yearByYear.find(y => y.age === 65);
+    const cpiAt65 = Math.pow(1.025, 30);
+    const cppToday = (y65.cppReceived || 0) / cpiAt65;
+    // CPP at $80K income should be near max ($16,375)
+    assert(cppToday > 12000 && cppToday < 18000, 'CPP in today$ reasonable: $' + Math.round(cppToday));
+    const oasToday = (y65.oasReceived || 0) / cpiAt65;
+    assert(oasToday > 8000 && oasToday < 10000, 'OAS in today$ reasonable: $' + Math.round(oasToday));
+}
+
+{
+    // Gov benefits should cover >40% of spending for typical scenario
+    const r = RetirementCalcV4.calculate(baseInputs());
+    const y65 = r.yearByYear.find(y => y.age === 65);
+    const govTotal = (y65.cppReceived || 0) + (y65.oasReceived || 0) + (y65.gisReceived || 0);
+    const govPct = govTotal / y65.targetSpending * 100;
+    assert(govPct > 40, 'Gov covers ' + Math.round(govPct) + '% of spending (should be >40%)');
+}
+
+{
+    // Young person retiring far in future: CPP/OAS should scale up massively
+    const r = RetirementCalcV4.calculate(baseInputs({ currentAge: 25, retirementAge: 65 }));
+    const y65 = r.yearByYear.find(y => y.age === 65);
+    const cpiAt65 = Math.pow(1.025, 40);
+    const cppNominal = y65.cppReceived || 0;
+    // Nominal CPP at 40 years out should be much higher than today's $16K
+    assert(cppNominal > 30000, 'CPP nominal at 40 years out: $' + Math.round(cppNominal) + ' (should be >$30K)');
+}
+
+// ════════════════════════════════════════
+console.log('\n📊 20. Provincial tax differences');
+// ════════════════════════════════════════
+
+{
+    // At same income, ON and AB produce different tax amounts
+    const rON = RetirementCalcV4.calculate(baseInputs({ province: 'ON' }));
+    const rAB = RetirementCalcV4.calculate(baseInputs({ province: 'AB' }));
+    const y70on = rON.yearByYear.find(y => y.age === 70);
+    const y70ab = rAB.yearByYear.find(y => y.age === 70);
+    // Just verify both run and produce different taxes (not necessarily one lower)
+    assert(y70on.taxPaid !== y70ab.taxPaid, 'ON and AB produce different tax: $' + y70on.taxPaid + ' vs $' + y70ab.taxPaid);
+}
+
+{
+    // Low income: AB should have lower tax than ON
+    const taxON = CanadianTax.calculateTax(30000, 'ON');
+    const taxAB = CanadianTax.calculateTax(30000, 'AB');
+    assert(taxAB.total < taxON.total, 'AB lower tax at $30K: $' + Math.round(taxAB.total) + ' < $' + Math.round(taxON.total));
+}
+
 // ══════════════════════════════════════════════════
 console.log('\n══════════════════════════════════════════════════');
 console.log(`Results: ${passed} passed, ${failed} failed`);
