@@ -50,6 +50,7 @@ const AppV4 = {
         this._setupScenarios();
         this._setupModals();
         this._setupAdvancedToggle();
+        this._setupCategoryInflation();
         this._setupSpendingCurve();
         this._restoreFormState();
         this._setupFormAutosave();
@@ -1601,6 +1602,29 @@ const AppV4 = {
                 }
             });
         }
+    },
+
+    _setupCategoryInflation() {
+        const inputs = ['inf-housing', 'inf-food', 'inf-discretionary', 'healthcare-inflation'];
+        inputs.forEach(id => {
+            document.getElementById(id)?.addEventListener('input', () => this._updateBlendedRate());
+        });
+        this._updateBlendedRate();
+    },
+
+    _updateBlendedRate() {
+        const el = document.getElementById('blended-inflation-rate');
+        if (!el) return;
+        const weights = this._getSpendingWeights();
+        const h = parseFloat(document.getElementById('inf-housing')?.value) || 3.0;
+        const f = parseFloat(document.getElementById('inf-food')?.value) || 3.5;
+        const hc = parseFloat(document.getElementById('healthcare-inflation')?.value) || 5;
+        const d = parseFloat(document.getElementById('inf-discretionary')?.value) || 2.0;
+        const blended = h * weights.housing + f * weights.food + hc * weights.healthcare + d * weights.discretionary;
+        const baseRate = parseFloat(document.getElementById('inflation-rate')?.value) || 2.5;
+        const diff = blended - baseRate;
+        const diffStr = diff >= 0 ? `+${diff.toFixed(1)}%` : `${diff.toFixed(1)}%`;
+        el.innerHTML = `📊 Blended retirement inflation: <strong>${blended.toFixed(1)}%</strong> (${diffStr} vs base ${baseRate}%) — weighted by your spending: Housing ${(weights.housing*100).toFixed(0)}%, Food ${(weights.food*100).toFixed(0)}%, Healthcare ${(weights.healthcare*100).toFixed(0)}%, Other ${(weights.discretionary*100).toFixed(0)}%`;
     },
 
     _setupSpendingCurve() {
@@ -3434,20 +3458,65 @@ const AppV4 = {
     },
 
     _getCategoryInflation() {
-        const h = document.getElementById('inf-housing')?.value;
-        const f = document.getElementById('inf-food')?.value;
-        const d = document.getElementById('inf-discretionary')?.value;
-        const hc = document.getElementById('healthcare-inflation')?.value;
-        // Only return object if user customized at least one field
-        if (h || f || d) {
-            return {
-                housing: parseFloat(h) || 3,
-                food: parseFloat(f) || 3,
-                healthcare: parseFloat(hc) || 5,
-                discretionary: parseFloat(d) || 2
+        // Always compute category inflation with spending-weighted rates
+        const weights = this._getSpendingWeights();
+        return {
+            housing: parseFloat(document.getElementById('inf-housing')?.value) || 3.0,
+            food: parseFloat(document.getElementById('inf-food')?.value) || 3.5,
+            healthcare: parseFloat(document.getElementById('healthcare-inflation')?.value) || 5,
+            discretionary: parseFloat(document.getElementById('inf-discretionary')?.value) || 2.0,
+            _weights: weights
+        };
+    },
+
+    _getSpendingWeights() {
+        // Get actual spending breakdown from lifestyle preset or custom inputs
+        const spending = parseFloat(document.getElementById('annual-spending')?.value) || 48000;
+        const activePreset = document.querySelector('.preset-btn.active');
+        const presetKey = activePreset?.dataset.lifestyle;
+        
+        let breakdown;
+        if (presetKey && typeof LifestyleData !== 'undefined' && LifestyleData[presetKey]) {
+            const data = LifestyleData[presetKey];
+            // Scale by actual spending vs preset base
+            const scale = spending / data.annual;
+            breakdown = {};
+            for (const [cat, vals] of Object.entries(data.breakdown)) {
+                breakdown[cat] = vals.annual * scale;
+            }
+        } else {
+            // Default proportions for Canadian retirees
+            breakdown = {
+                housing: spending * 0.30,
+                food: spending * 0.15,
+                transportation: spending * 0.10,
+                healthcare: spending * 0.06,
+                travel: spending * 0.10,
+                entertainment: spending * 0.12,
+                misc: spending * 0.17
             };
         }
-        return null;
+        
+        // Map 7 categories → 4 inflation buckets
+        // Housing = housing
+        // Food = food
+        // Healthcare = healthcare
+        // Discretionary = transportation + travel + entertainment + misc
+        const housingAmt = breakdown.housing || 0;
+        const foodAmt = breakdown.food || 0;
+        const healthcareAmt = breakdown.healthcare || 0;
+        const discretionaryAmt = (breakdown.transportation || 0) + (breakdown.travel || 0) 
+            + (breakdown.entertainment || 0) + (breakdown.misc || 0);
+        const total = housingAmt + foodAmt + healthcareAmt + discretionaryAmt;
+        
+        if (total <= 0) return { housing: 0.30, food: 0.15, healthcare: 0.15, discretionary: 0.40 };
+        
+        return {
+            housing: housingAmt / total,
+            food: foodAmt / total,
+            healthcare: healthcareAmt / total,
+            discretionary: discretionaryAmt / total
+        };
     },
 
     _displayResults(results, inputs) {

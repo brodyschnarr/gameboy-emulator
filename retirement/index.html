@@ -1090,23 +1090,27 @@
                         <small class="input-hint">Healthcare costs rise ~5%/yr vs ~2.5% general</small>
                     </div>
                     <details class="input-group-collapsible" style="margin-top: 8px;">
-                        <summary class="collapsible-header" style="font-size: 12px;">📊 Post-Retirement Category Inflation</summary>
+                        <summary class="collapsible-header" style="font-size: 12px;">📊 Post-Retirement Inflation by Category</summary>
                         <div class="collapsible-content">
-                            <small class="input-hint" style="margin-bottom: 6px; display: block;">How fast each spending category rises <strong>after you retire</strong>. Pre-retirement uses the base rate.</small>
+                            <small class="input-hint" style="margin-bottom: 6px; display: block;">How fast each spending category rises <strong>after you retire</strong>. Weighted by your actual spending breakdown.</small>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                                 <div>
-                                    <label for="inf-housing" style="font-size: 11px;">Housing (%/yr)</label>
-                                    <input type="number" id="inf-housing" placeholder="3" min="0" max="10" step="0.5" style="font-size: 13px;">
+                                    <label for="inf-housing" style="font-size: 11px;">🏠 Housing (%/yr)</label>
+                                    <input type="number" id="inf-housing" placeholder="3.0" min="0" max="10" step="0.5" value="3.0" style="font-size: 13px;">
+                                    <small class="input-hint" style="font-size: 10px;">Property tax, utilities, repairs</small>
                                 </div>
                                 <div>
-                                    <label for="inf-food" style="font-size: 11px;">Food (%/yr)</label>
-                                    <input type="number" id="inf-food" placeholder="3" min="0" max="10" step="0.5" style="font-size: 13px;">
+                                    <label for="inf-food" style="font-size: 11px;">🍎 Food (%/yr)</label>
+                                    <input type="number" id="inf-food" placeholder="3.5" min="0" max="10" step="0.5" value="3.5" style="font-size: 13px;">
+                                    <small class="input-hint" style="font-size: 10px;">Groceries, dining out</small>
                                 </div>
                                 <div>
-                                    <label for="inf-discretionary" style="font-size: 11px;">Discretionary (%/yr)</label>
-                                    <input type="number" id="inf-discretionary" placeholder="2" min="0" max="10" step="0.5" style="font-size: 13px;">
+                                    <label for="inf-discretionary" style="font-size: 11px;">🎭 Other (%/yr)</label>
+                                    <input type="number" id="inf-discretionary" placeholder="2.0" min="0" max="10" step="0.5" value="2.0" style="font-size: 13px;">
+                                    <small class="input-hint" style="font-size: 10px;">Travel, hobbies, transport</small>
                                 </div>
                             </div>
+                            <div id="blended-inflation-rate" style="margin-top: 8px; padding: 6px 10px; background: #f0f9ff; border-radius: 6px; font-size: 12px; color: #334155;"></div>
                         </div>
                     </details>
                 </div>
@@ -1276,34 +1280,34 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000071"></script>
-    <script src="cpp-calculator.js?v=17&t=24000071"></script>
-    <script src="benchmarks.js?v=17&t=24000071"></script>
-    <script src="lifestyle-data.js?v=17&t=24000071"></script>
-    <script src="regional-data.js?v=18&t=24000071"></script>
-    <script src="canada-map.js?v=18&t=24000071"></script>
-    <script src="income-sources.js?v=17&t=24000071"></script>
-    <script src="deep-dive.js?v=17&t=24000071"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000071"></script>
-    <script src="scenario-manager.js?v=17&t=24000071"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000071"></script>
-    <script src="calc.js?v=17&t=24000071"></script>
-    <script src="app-round6-debug.js?v=17&t=24000071"></script>
+    <script src="canada-tax.js?v=17&t=24000072"></script>
+    <script src="cpp-calculator.js?v=17&t=24000072"></script>
+    <script src="benchmarks.js?v=17&t=24000072"></script>
+    <script src="lifestyle-data.js?v=17&t=24000072"></script>
+    <script src="regional-data.js?v=18&t=24000072"></script>
+    <script src="canada-map.js?v=18&t=24000072"></script>
+    <script src="income-sources.js?v=17&t=24000072"></script>
+    <script src="deep-dive.js?v=17&t=24000072"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000072"></script>
+    <script src="scenario-manager.js?v=17&t=24000072"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000072"></script>
+    <script src="calc.js?v=17&t=24000072"></script>
+    <script src="app-round6-debug.js?v=17&t=24000072"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000071"></script>
-    <script src="monte-carlo.js?v=17&t=24000071"></script>
-    <script src="tax-optimizer.js?v=17&t=24000071"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000071"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000071"></script>
-    <script src="advanced-charts.js?v=17&t=24000071"></script>
-    <script src="interactive-sliders.js?v=17&t=24000071"></script>
-    <script src="scenario-storage.js?v=17&t=24000071"></script>
-    <script src="windfalls.js?v=17&t=24000071"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000071"></script>
+    <script src="error-handler.js?v=17&t=24000072"></script>
+    <script src="monte-carlo.js?v=17&t=24000072"></script>
+    <script src="tax-optimizer.js?v=17&t=24000072"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000072"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000072"></script>
+    <script src="advanced-charts.js?v=17&t=24000072"></script>
+    <script src="interactive-sliders.js?v=17&t=24000072"></script>
+    <script src="scenario-storage.js?v=17&t=24000072"></script>
+    <script src="windfalls.js?v=17&t=24000072"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000072"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000071"></script>
+    <script src="slider-inputs.js?v=17&t=24000072"></script>
 
     <!-- Diagnostics removed -->
 
