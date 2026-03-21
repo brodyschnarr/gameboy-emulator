@@ -1129,7 +1129,7 @@ const AppV4 = {
         this.postRetirementWorkItems = [];
         
         const addBtn = document.getElementById('btn-add-post-retirement-work');
-        const form = document.getElementById('post-retirement-work-form');
+        const form = document.getElementById('form-post-retirement-work');
         const saveBtn = document.getElementById('btn-save-prt-work');
         const cancelBtn = document.getElementById('btn-cancel-prt-work');
         const whoSelect = document.getElementById('prt-who');
@@ -2219,6 +2219,10 @@ const AppV4 = {
             this._updateCPPPreview();
             if (this.familyStatus === 'couple') this._updateCPPPreviewCouple();
             this._updateRetirementGrounding();
+        }
+        
+        if (step === 'healthcare') {
+            this._updateStep5AddedItems();
         }
         
         // Update progress indicator
@@ -3708,7 +3712,7 @@ const AppV4 = {
         ctx.font = '14px sans-serif';
         ctx.fillText(`Age ${minAge}`, padding - 10, h - padding + 25);
         ctx.fillText(`Age ${maxAge}`, w - padding - 35, h - padding + 25);
-        ctx.fillText(`$${(maxBalance / 1000).toFixed(0)}K`, 5, padding + 5);
+        ctx.fillText(maxBalance >= 1000000 ? `$${(maxBalance / 1000000).toFixed(1)}M` : `$${(maxBalance / 1000).toFixed(0)}K`, 5, padding + 5);
 
         ctx.fillStyle = '#f59e0b';
         ctx.fillText('Retirement', retireX - 35, padding - 10);

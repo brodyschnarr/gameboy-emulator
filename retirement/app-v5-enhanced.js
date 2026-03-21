@@ -7,6 +7,13 @@
 if (typeof fmtMoney === 'undefined') {
     var fmtMoney = (amount) => '$' + Math.round(amount).toLocaleString();
 }
+// Smart format: $1.2M for millions, $356K for thousands
+var fmtSmart = (amount) => {
+    const abs = Math.abs(amount);
+    if (abs >= 1000000) return '$' + (amount / 1000000).toFixed(1) + 'M';
+    if (abs >= 1000) return '$' + Math.round(amount / 1000).toLocaleString() + 'K';
+    return '$' + Math.round(amount).toLocaleString();
+};
 
 console.log('[AppV5] Loading enhanced features...');
 
@@ -282,19 +289,19 @@ const AppV5Enhanced = {
                 
                 <div class="stat-card">
                     <div class="stat-label">Expected Final Balance</div>
-                    <div class="stat-value">$${(mc.finalBalance.p50 / 1000).toFixed(0)}K</div>
+                    <div class="stat-value">${fmtSmart(mc.finalBalance.p50)}</div>
                     <div class="stat-note">Median portfolio balance (50th percentile)${baseResults?.legacy?.estateAssets > 0 ? `<br>+ ${fmtMoney(baseResults.legacy.estateAssets)} in property/assets` : ''}</div>
                 </div>
                 
                 <div class="stat-card">
                     <div class="stat-label">Worst Case (10th %ile)</div>
-                    <div class="stat-value">$${(mc.finalBalance.p10 / 1000).toFixed(0)}K</div>
+                    <div class="stat-value">${fmtSmart(mc.finalBalance.p10)}</div>
                     <div class="stat-note">Still ends at age ${mc.moneyLastsAge.p10}</div>
                 </div>
                 
                 <div class="stat-card">
                     <div class="stat-label">Tax Savings Available</div>
-                    <div class="stat-value">$${(tax.taxSavings / 1000).toFixed(0)}K</div>
+                    <div class="stat-value">${fmtSmart(tax.taxSavings)}</div>
                     <div class="stat-note">vs naive withdrawal strategy</div>
                 </div>
             </div>
@@ -328,9 +335,9 @@ const AppV5Enhanced = {
                 <h4>💡 Key Insights</h4>
                 <ul>
                     <li><strong>Probability:</strong> ${mc.successRate}% chance your money lasts until age ${baseResults.summary.moneyLastsAge || 90}</li>
-                    <li><strong>Range:</strong> In 80% of scenarios, you'll have between $${(mc.finalBalance.p10 / 1000).toFixed(0)}K and $${(mc.finalBalance.p90 / 1000).toFixed(0)}K at the end</li>
+                    <li><strong>Range:</strong> In 80% of scenarios, you'll have between ${fmtSmart(mc.finalBalance.p10)} and ${fmtSmart(mc.finalBalance.p90)} at the end</li>
                     <li><strong>Government Support:</strong> CPP (${fmtMoney(baseResults.govBenefits.cppTotal || 0)}) + OAS (${fmtMoney(baseResults.govBenefits.oasMax || 0)}) = ${fmtMoney(baseResults.govBenefits.total || 0)}/year reduces portfolio stress</li>
-                    <li><strong>Tax Efficiency:</strong> Optimized withdrawal strategy saves $${(tax.taxSavings / 1000).toFixed(0)}K over your lifetime</li>
+                    <li><strong>Tax Efficiency:</strong> Optimized withdrawal strategy saves ${fmtSmart(tax.taxSavings)} over your lifetime</li>
                 </ul>
             </div>
         `;
@@ -517,7 +524,7 @@ const AppV5Enhanced = {
                 <h5>${scenario.name}</h5>
                 <p class="scenario-desc">${scenario.description}</p>
                 <div class="scenario-stats">
-                    <div>Portfolio: $${(result.summary.portfolioAtRetirement / 1000).toFixed(0)}K</div>
+                    <div>Portfolio: ${fmtSmart(result.summary.portfolioAtRetirement)}</div>
                     <div>Lasts: Age ${result.summary.moneyLastsAge}</div>
                     <div>Success: ${result.probability}%</div>
                 </div>
@@ -676,12 +683,12 @@ const AppV5Enhanced = {
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Total Amount</div>
-                        <div class="stat-value">$${(summary.totalAmount / 1000).toFixed(0)}K</div>
+                        <div class="stat-value">${fmtSmart(summary.totalAmount)}</div>
                         <div class="stat-note">If all occur</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Expected Value</div>
-                        <div class="stat-value">$${(summary.expectedValue / 1000).toFixed(0)}K</div>
+                        <div class="stat-value">${fmtSmart(summary.expectedValue)}</div>
                         <div class="stat-note">Probability-weighted</div>
                     </div>
                     <div class="stat-card">
@@ -694,7 +701,7 @@ const AppV5Enhanced = {
                     ${windfalls.map(w => `
                         <div class="windfall-item-summary">
                             <span class="windfall-name-summary">${w.name}</span>
-                            <span class="windfall-amount-summary">$${(w.amount / 1000).toFixed(0)}K</span>
+                            <span class="windfall-amount-summary">${fmtSmart(w.amount)}</span>
                             <span class="windfall-prob-summary">${w.probability}% likely</span>
                             <span class="windfall-year-summary">Age ${w.year || '?'}</span>
                         </div>

@@ -135,7 +135,7 @@ const AdvancedCharts = {
         for (let i = 0; i <= 4; i++) {
             const balance = (maxBalance / 4) * i;
             const y = scaleY(balance);
-            ctx.fillText('$' + (balance / 1000).toFixed(0) + 'K', padding - 10, y + 5);
+            ctx.fillText((balance >= 1000000 ? "$" + (balance/1000000).toFixed(1) + "M" : "$" + (balance/1000).toFixed(0) + "K"), padding - 10, y + 5);
         }
         
         // Legend
@@ -371,7 +371,7 @@ const AdvancedCharts = {
         for (let i = 0; i <= 4; i++) {
             const balance = minBalance + (maxBalance - minBalance) * (i / 4);
             const x = padding + ((w - 2 * padding) * i / 4);
-            ctx.fillText('$' + (balance / 1000).toFixed(0) + 'K', x, h - padding + 20);
+            ctx.fillText((balance >= 1000000 ? "$" + (balance/1000000).toFixed(1) + "M" : "$" + (balance/1000).toFixed(0) + "K"), x, h - padding + 20);
         }
         
         // Y-axis (frequency)
@@ -394,9 +394,10 @@ const AdvancedCharts = {
         const p10 = finalBalances[Math.floor(finalBalances.length * 0.1)];
         const p90 = finalBalances[Math.floor(finalBalances.length * 0.9)];
         
-        ctx.fillText(`10th: $${(p10 / 1000).toFixed(0)}K`, 20, h - 10);
-        ctx.fillText(`Median: $${(median / 1000).toFixed(0)}K`, w / 2 - 80, h - 10);
-        ctx.fillText(`90th: $${(p90 / 1000).toFixed(0)}K`, w - 120, h - 10);
+        const _fs = (v) => v >= 1000000 ? `$${(v/1000000).toFixed(1)}M` : `$${(v/1000).toFixed(0)}K`;
+        ctx.fillText(`10th: ${_fs(p10)}`, 20, h - 10);
+        ctx.fillText(`Median: ${_fs(median)}`, w / 2 - 80, h - 10);
+        ctx.fillText(`90th: ${_fs(p90)}`, w - 120, h - 10);
     },
     
     /**
@@ -516,7 +517,7 @@ const AdvancedCharts = {
         for (let i = 0; i <= 4; i++) {
             const amount = (maxWithdrawal / 4) * i;
             const y = scaleY(amount);
-            ctx.fillText('$' + (amount / 1000).toFixed(0) + 'K', padding - 10, y + 5);
+            ctx.fillText((amount >= 1000000 ? "$" + (amount/1000000).toFixed(1) + "M" : "$" + (amount/1000).toFixed(0) + "K"), padding - 10, y + 5);
         }
         
         // Legend
