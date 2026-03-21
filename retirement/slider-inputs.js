@@ -15,29 +15,29 @@
     // ═══════════════════════════════════════
     const SLIDER_CONFIG = [
         // Step 1: Income
-        { id: 'current-income',   min: 0, max: 300000, step: 5000,  format: 'currency', label: null },
-        { id: 'income-person1',   min: 0, max: 300000, step: 5000,  format: 'currency', label: null },
-        { id: 'income-person2',   min: 0, max: 300000, step: 5000,  format: 'currency', label: null },
+        { id: 'current-income',   min: 0, max: 300000, step: 1000,  format: 'currency', label: null },
+        { id: 'income-person1',   min: 0, max: 300000, step: 1000,  format: 'currency', label: null },
+        { id: 'income-person2',   min: 0, max: 300000, step: 1000,  format: 'currency', label: null },
 
         // Step 2: Savings
-        { id: 'rrsp',             min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
-        { id: 'tfsa',             min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
-        { id: 'nonreg',           min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
-        { id: 'lira',             min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
-        { id: 'employer-pension', min: 0, max: 10000,   step: 100,   format: 'currency', label: null },
-        { id: 'other',            min: 0, max: 1000000, step: 5000,  format: 'currency', label: null },
+        { id: 'rrsp',             min: 0, max: 1000000, step: 1000,  format: 'currency', label: null },
+        { id: 'tfsa',             min: 0, max: 1000000, step: 1000,  format: 'currency', label: null },
+        { id: 'nonreg',           min: 0, max: 1000000, step: 1000,  format: 'currency', label: null },
+        { id: 'lira',             min: 0, max: 1000000, step: 1000,  format: 'currency', label: null },
+        { id: 'employer-pension', min: 0, max: 10000,   step: 50,    format: 'currency', label: null },
+        { id: 'other',            min: 0, max: 1000000, step: 1000,  format: 'currency', label: null },
         { id: 'cash',             min: 0, max: 500000,  step: 1000,  format: 'currency', label: null },
 
         // Step 3: Contributions
-        { id: 'monthly-contribution', min: 0, max: 10000, step: 100, format: 'currency', label: null },
+        { id: 'monthly-contribution', min: 0, max: 10000, step: 50, format: 'currency', label: null },
 
         // Step 4: Retirement
         { id: 'retirement-age',   min: 50, max: 80,  step: 1, format: 'number', label: null },
         { id: 'life-expectancy',  min: 65, max: 110, step: 1, format: 'number', label: null },
-        { id: 'annual-spending',  min: 20000, max: 200000, step: 5000, format: 'currency', label: null },
+        { id: 'annual-spending',  min: 20000, max: 200000, step: 1000, format: 'currency', label: null },
 
         // Step 5: Debt
-        { id: 'current-debt',     min: 0, max: 1000000, step: 5000, format: 'currency', label: null },
+        { id: 'current-debt',     min: 0, max: 1000000, step: 1000, format: 'currency', label: null },
 
         // Post-retirement work
         { id: 'prt-income',          min: 0, max: 100000, step: 1000, format: 'currency', label: null },
