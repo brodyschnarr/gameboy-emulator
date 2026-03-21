@@ -1412,6 +1412,10 @@ const AppV4 = {
                     document.querySelectorAll('.step5-form').forEach(f => f.classList.add('hidden'));
                     form.classList.remove('hidden');
                     form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    // Auto-open windfall add form
+                    if (type === 'windfall' && (!this.windfalls || this.windfalls.length === 0)) {
+                        this._showWindfallForm();
+                    }
                 }
                 // Close dropdown
                 item.closest('.step5-dropdown').classList.add('hidden');
