@@ -815,26 +815,59 @@ const AppV4 = {
         const diff = maxSustainable - currentSpending;
         const pctOfMax = Math.min(100, (currentSpending / (maxSustainable || 1)) * 100);
         
+        // Calculate savings guidance: how much more/less monthly savings to close the gap
+        const currentContrib = inputs.monthlyContribution || 0;
+        const yearsToRetire = Math.max(1, inputs.retirementAge - inputs.currentAge);
+        let savingsGuidance = '';
+
+        if (moneyLastsAge < lifeExpectancy) {
+            // Binary search: find monthly contribution that makes plan last to lifeExpectancy
+            let lo = currentContrib, hi = currentContrib + 5000;
+            for (let i = 0; i < 20; i++) {
+                const mid = Math.round((lo + hi) / 2);
+                const test = RetirementCalcV4.calculate({ ...inputs, monthlyContribution: mid });
+                if (test.summary.moneyLastsAge >= lifeExpectancy) {
+                    hi = mid;
+                } else {
+                    lo = mid + 1;
+                }
+            }
+            const extraNeeded = Math.max(0, hi - currentContrib);
+            if (extraNeeded > 0) {
+                savingsGuidance = `<br><small style="opacity:0.85">💰 Or save <strong>${fmt(extraNeeded)}/month</strong> more (${fmt(currentContrib + extraNeeded)}/mo total) to keep ${fmt(currentSpending)}/year.</small>`;
+            }
+        }
+
         if (moneyLastsAge < lifeExpectancy) {
             // Money runs out — need to cut
             icon = '⚠️';
             amountClass = 'need-to-cut';
             message = `Your plan runs out at age ${moneyLastsAge}. Reduce spending to <strong>${fmt(maxSustainable)}/year</strong> to last until ${lifeExpectancy}.`;
-            // Home value safety net — calculate years extended
-            const homeValue = parseFloat(document.getElementById('home-value')?.value) || 0;
-            if (homeValue > 0) {
-                const homeNet = Math.round(homeValue * 0.95); // Principal residence tax-free, minus ~5% selling costs
-                const annualNeed = currentSpending || maxSustainable || 50000;
-                const extraYears = Math.floor(homeNet / annualNeed);
-                const extendsTo = Math.min(moneyLastsAge + extraYears, lifeExpectancy + 10);
-                message += `<br><small style="opacity:0.85">🏠 If you sold your home (~${fmt(homeNet)} net), it could fund ~<strong>${extraYears} more years</strong> — lasting to age ~${extendsTo}.</small>`;
-            }
+            message += savingsGuidance;
             barClass = 'danger';
         } else if (diff > 10000) {
-            // Lots of room
+            // Lots of room — show how much less they could save
+            let savingsNote = '';
+            if (currentContrib > 0) {
+                let lo = 0, hi = currentContrib;
+                for (let i = 0; i < 20; i++) {
+                    const mid = Math.round((lo + hi) / 2);
+                    const test = RetirementCalcV4.calculate({ ...inputs, monthlyContribution: mid });
+                    if (test.summary.moneyLastsAge >= lifeExpectancy) {
+                        hi = mid;
+                    } else {
+                        lo = mid + 1;
+                    }
+                }
+                const canSaveLess = Math.max(0, currentContrib - hi);
+                if (canSaveLess > 0) {
+                    savingsNote = `<br><small style="opacity:0.85">💰 You could save <strong>${fmt(canSaveLess)}/month less</strong> (${fmt(hi)}/mo) and still sustain ${fmt(currentSpending)}/year.</small>`;
+                }
+            }
             icon = '🎉';
             amountClass = 'can-spend-more';
             message = `You're well-funded! You could spend up to <strong>${fmt(maxSustainable)}/year</strong> and still last to age ${lifeExpectancy}.`;
+            message += savingsNote;
             barClass = 'safe';
         } else if (diff > 0) {
             // Small room — still safe
@@ -1352,6 +1385,7 @@ const AppV4 = {
 
         setupDropdown('btn-add-income-dropdown', 'income-dropdown-menu');
         setupDropdown('btn-add-expense-dropdown', 'expense-dropdown-menu');
+        setupDropdown('btn-add-estate-dropdown', 'estate-dropdown-menu');
         setupDropdown('btn-add-account-dropdown', 'account-dropdown-menu');
         
         // Account dropdown items show hidden account fields
@@ -1433,16 +1467,10 @@ const AppV4 = {
             expenseHTML += `<div class="step5-added-item"><span class="item-label">🔒 Annuity</span><span class="item-value">${fmt(annuity)} lump sum</span></div>`;
         }
         
-        // Downsizing
-        const downProceeds = parseFloat(document.getElementById('downsizing-proceeds')?.value) || 0;
-        if (downProceeds > 0) {
-            expenseHTML += `<div class="step5-added-item"><span class="item-label">🏡 Downsizing</span><span class="item-value">${fmt(downProceeds)} proceeds</span></div>`;
-        }
-        
         // DTC
         const dtc = document.getElementById('dtc-checkbox')?.checked;
         if (dtc) {
-            expenseHTML += `<div class="step5-added-item"><span class="item-label">♿ DTC</span><span class="item-value">~$1,900/yr savings</span></div>`;
+            incomeHTML += `<div class="step5-added-item"><span class="item-label">♿ DTC</span><span class="item-value">~$1,900/yr savings</span></div>`;
         }
         
         // Debt
@@ -1458,6 +1486,22 @@ const AppV4 = {
                 expenseHTML += `<div class="step5-added-item"><span class="item-label">🏥 Healthcare</span><span class="item-value">${hcCost}/yr extra</span></div>`;
             }
         }
+
+        // Estate assets + downsizing (separate section)
+        let estateHTML = '';
+        const downProceeds = parseFloat(document.getElementById('downsizing-proceeds')?.value) || 0;
+        if (downProceeds > 0) {
+            const downAge = document.getElementById('downsizing-age')?.value || '70';
+            estateHTML += `<div class="step5-added-item"><span class="item-label">🏡 Downsizing</span><span class="item-value">${fmt(downProceeds)} at age ${downAge}</span></div>`;
+        }
+        // Estate assets from the estate form
+        if (this.estateAssets && this.estateAssets.length > 0) {
+            this.estateAssets.forEach(a => {
+                estateHTML += `<div class="step5-added-item"><span class="item-label">🏠 ${a.name}</span><span class="item-value">${fmt(a.value)}${a.isPrimaryResidence ? ' (tax-exempt)' : ''}</span></div>`;
+            });
+        }
+        const estateContainer = document.getElementById('added-estate-items');
+        if (estateContainer) estateContainer.innerHTML = estateHTML;
         
         incomeContainer.innerHTML = incomeHTML;
         expenseContainer.innerHTML = expenseHTML;

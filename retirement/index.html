@@ -716,7 +716,6 @@
                         <button type="button" class="step5-dropdown-item" data-type="employer-pension">🏢 Employer Pension</button>
                         <button type="button" class="step5-dropdown-item" data-type="post-retirement-work">💼 Post-Retirement Work</button>
                         <button type="button" class="step5-dropdown-item" data-type="windfall">💰 Windfall / Inheritance</button>
-                        <button type="button" class="step5-dropdown-item" data-type="downsizing">🏡 Downsizing (Home Sale)</button>
                         <button type="button" class="step5-dropdown-item" data-type="annuity">🔒 Annuity Purchase</button>
                         <button type="button" class="step5-dropdown-item" data-type="dtc">♿ Disability Tax Credit</button>
                     </div>
@@ -788,12 +787,21 @@
                         <button type="button" class="step5-dropdown-item" data-type="debt">💳 Current Debt</button>
                         <button type="button" class="step5-dropdown-item" data-type="healthcare">🏥 Healthcare Costs</button>
                         <button type="button" class="step5-dropdown-item" data-type="ltc">🏥 Long-Term Care</button>
-                        <button type="button" class="step5-dropdown-item" data-type="estate">🏠 Estate Asset (Home, Property, etc.)</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Home Value removed — now part of Estate Asset in expense dropdown -->
+            <!-- ═══ ESTATE ASSETS ═══ -->
+            <div class="step5-add-section">
+                <div id="added-estate-items"></div>
+                <div class="step5-add-wrapper">
+                    <button type="button" class="btn-secondary" id="btn-add-estate-dropdown">+ Add Estate Asset</button>
+                    <div class="step5-dropdown hidden" id="estate-dropdown-menu">
+                        <button type="button" class="step5-dropdown-item" data-type="estate">🏠 Property (Home, Cottage, Land)</button>
+                        <button type="button" class="step5-dropdown-item" data-type="downsizing">🏡 Downsizing Plan</button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Hidden forms for each expense type -->
             <div id="form-debt" class="step5-form hidden">
@@ -1172,34 +1180,34 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000064"></script>
-    <script src="cpp-calculator.js?v=17&t=24000064"></script>
-    <script src="benchmarks.js?v=17&t=24000064"></script>
-    <script src="lifestyle-data.js?v=17&t=24000064"></script>
-    <script src="regional-data.js?v=18&t=24000064"></script>
-    <script src="canada-map.js?v=18&t=24000064"></script>
-    <script src="income-sources.js?v=17&t=24000064"></script>
-    <script src="deep-dive.js?v=17&t=24000064"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000064"></script>
-    <script src="scenario-manager.js?v=17&t=24000064"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000064"></script>
-    <script src="calc.js?v=17&t=24000064"></script>
-    <script src="app-round6-debug.js?v=17&t=24000064"></script>
+    <script src="canada-tax.js?v=17&t=24000065"></script>
+    <script src="cpp-calculator.js?v=17&t=24000065"></script>
+    <script src="benchmarks.js?v=17&t=24000065"></script>
+    <script src="lifestyle-data.js?v=17&t=24000065"></script>
+    <script src="regional-data.js?v=18&t=24000065"></script>
+    <script src="canada-map.js?v=18&t=24000065"></script>
+    <script src="income-sources.js?v=17&t=24000065"></script>
+    <script src="deep-dive.js?v=17&t=24000065"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000065"></script>
+    <script src="scenario-manager.js?v=17&t=24000065"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000065"></script>
+    <script src="calc.js?v=17&t=24000065"></script>
+    <script src="app-round6-debug.js?v=17&t=24000065"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000064"></script>
-    <script src="monte-carlo.js?v=17&t=24000064"></script>
-    <script src="tax-optimizer.js?v=17&t=24000064"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000064"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000064"></script>
-    <script src="advanced-charts.js?v=17&t=24000064"></script>
-    <script src="interactive-sliders.js?v=17&t=24000064"></script>
-    <script src="scenario-storage.js?v=17&t=24000064"></script>
-    <script src="windfalls.js?v=17&t=24000064"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000064"></script>
+    <script src="error-handler.js?v=17&t=24000065"></script>
+    <script src="monte-carlo.js?v=17&t=24000065"></script>
+    <script src="tax-optimizer.js?v=17&t=24000065"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000065"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000065"></script>
+    <script src="advanced-charts.js?v=17&t=24000065"></script>
+    <script src="interactive-sliders.js?v=17&t=24000065"></script>
+    <script src="scenario-storage.js?v=17&t=24000065"></script>
+    <script src="windfalls.js?v=17&t=24000065"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000065"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000064"></script>
+    <script src="slider-inputs.js?v=17&t=24000065"></script>
 
     <!-- Diagnostics removed -->
 
