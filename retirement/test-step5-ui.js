@@ -110,21 +110,27 @@ const showStepMatch = appJS.match(/_showStep[\s\S]{0,500}healthcare[\s\S]{0,200}
 // Alternative: search for the call near healthcare step
 assert(appJS.includes("_updateStep5AddedItems"), 'Chip updater called');
 
-// ═══ Adjuster Tests ═══
-console.log('\n═══ Adjuster Tests ═══\n');
+// ═══ What-If Tab Tests ═══
+console.log('\n═══ What-If Tab Tests ═══\n');
 
-assert(indexHTML.includes('results-adjusters'), 'Adjusters container exists');
-assert(indexHTML.includes('adjuster-spending'), 'Spending adjuster display exists');
-assert(indexHTML.includes('adjuster-savings'), 'Savings adjuster display exists');
-assert(indexHTML.includes('data-adjust="spend"'), 'Spend adjuster buttons exist');
-assert(indexHTML.includes('data-adjust="save"'), 'Save adjuster buttons exist');
-assert(indexHTML.includes('data-dir="-1"'), 'Minus buttons exist');
-assert(indexHTML.includes('data-dir="1"'), 'Plus buttons exist');
+assert(indexHTML.includes('whatif-tabs'), 'What-if tabs container exists');
+assert(indexHTML.includes('data-whatif="spending"'), 'Spending tab exists');
+assert(indexHTML.includes('data-whatif="savings"'), 'Savings tab exists');
+assert(indexHTML.includes('data-whatif="retire-age"'), 'Retire age tab exists');
+assert(indexHTML.includes('data-whatif="none"'), 'Your Plan tab exists');
+assert(indexHTML.includes('whatif-control'), 'What-if control bar exists');
+assert(indexHTML.includes('whatif-minus'), 'Minus button exists');
+assert(indexHTML.includes('whatif-plus'), 'Plus button exists');
+assert(indexHTML.includes('whatif-reset'), 'Reset button exists');
+assert(indexHTML.includes('whatif-value'), 'Value display exists');
+
 assert(appJS.includes('_setupAdjusters'), 'Adjuster setup method exists');
 assert(appJS.includes('_applyAdjustments'), 'Apply adjustments method exists');
-assert(appJS.includes('_updateAdjusterDisplay'), 'Adjuster display update method exists');
-assert(appJS.includes('_spendAdjust'), 'Spend adjustment tracked');
-assert(appJS.includes('_saveAdjust'), 'Save adjustment tracked');
+assert(appJS.includes('_adjustWhatif'), 'Adjust what-if method exists');
+assert(appJS.includes('_updateWhatifDisplay'), 'What-if display update exists');
+assert(appJS.includes('_whatifMode'), 'What-if mode tracked');
+assert(appJS.includes('_whatifAdjust'), 'What-if adjustments tracked');
+assert(appJS.includes('retireAge'), 'Retire age adjustment supported');
 assert(appJS.includes('_baseInputs'), 'Base inputs stored for adjustments');
 
 // Edit button
@@ -155,6 +161,26 @@ console.log('\n═══ V5 Enhanced Fix ═══\n');
 assert(v5JS.includes('v5-enhanced-analysis'), 'Enhanced analysis has unique class');
 assert(v5JS.includes("querySelector('.v5-enhanced-analysis')"), 'Checks for existing before appending');
 assert(v5JS.includes('existing') && v5JS.includes('remove()'), 'Removes existing before appending');
+
+// ═══ Icon Standardization ═══
+console.log('\n═══ Icon Standardization ═══\n');
+
+// All "Other" items use ➕
+assert(indexHTML.includes('data-income-type="other">➕'), 'Step 1 Other Income uses ➕');
+assert(indexHTML.includes('data-type="other-income">➕'), 'Step 5 Other Income uses ➕');
+assert(indexHTML.includes('data-type="other-expense">➕'), 'Step 5 Other Expense uses ➕');
+assert(indexHTML.includes('data-type="other-estate">➕'), 'Step 5 Other Asset uses ➕');
+
+// LIRA uses 🔐 (not 🔒 which is Annuity)
+assert(indexHTML.includes('data-account="lira">🔐'), 'LIRA uses 🔐');
+assert(indexHTML.includes('data-type="annuity">🔒'), 'Annuity uses 🔒');
+
+// LTC uses 🏠 (not 🏥 which is Healthcare)
+assert(indexHTML.includes('data-type="ltc">🏠'), 'LTC uses 🏠 (distinct from Healthcare 🏥)');
+assert(indexHTML.includes('data-type="healthcare">🏥'), 'Healthcare uses 🏥');
+
+// Sticky bar uses -webkit-sticky for Safari
+assert(cssFile.includes('-webkit-sticky'), 'Uses -webkit-sticky for Safari');
 
 // ═══ Summary ═══
 console.log(`\n═══════════════════════════════`);

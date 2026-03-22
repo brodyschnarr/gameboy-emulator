@@ -1614,69 +1614,108 @@ const AppV4 = {
     },
 
     _setupAdjusters() {
-        // Track adjustments relative to base
-        this._spendAdjust = 0;
-        this._saveAdjust = 0;
+        this._whatifMode = 'none'; // 'none' | 'spending' | 'savings' | 'retire-age'
+        this._whatifAdjust = { spending: 0, savings: 0, retireAge: 0 };
         
-        document.querySelectorAll('.adjuster-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const type = btn.dataset.adjust;
-                const dir = parseInt(btn.dataset.dir);
+        // Tab switching
+        document.querySelectorAll('.whatif-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const mode = tab.dataset.whatif;
+                document.querySelectorAll('.whatif-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                this._whatifMode = mode;
                 
-                if (type === 'spend') {
-                    // Adjust by 10% of base spending
-                    const step = Math.round((this._baseInputs?.annualSpending || 50000) * 0.1);
-                    this._spendAdjust += dir * step;
-                } else if (type === 'save') {
-                    // Adjust by $250/mo
-                    this._saveAdjust += dir * 250;
+                const control = document.getElementById('whatif-control');
+                if (mode === 'none') {
+                    control?.classList.add('hidden');
+                    // Reset all adjustments when going back to "Your Plan"
+                    this._whatifAdjust = { spending: 0, savings: 0, retireAge: 0 };
+                    this._applyAdjustments();
+                } else {
+                    control?.classList.remove('hidden');
+                    this._updateWhatifDisplay();
                 }
-                
-                this._applyAdjustments();
             });
+        });
+        
+        // +/- buttons
+        document.getElementById('whatif-minus')?.addEventListener('click', () => {
+            this._adjustWhatif(-1);
+        });
+        document.getElementById('whatif-plus')?.addEventListener('click', () => {
+            this._adjustWhatif(1);
+        });
+        
+        // Reset
+        document.getElementById('whatif-reset')?.addEventListener('click', () => {
+            this._whatifAdjust[this._whatifMode === 'retire-age' ? 'retireAge' : this._whatifMode] = 0;
+            this._applyAdjustments();
         });
     },
     
+    _adjustWhatif(dir) {
+        if (this._whatifMode === 'spending') {
+            const step = Math.round((this._baseInputs?.annualSpending || 50000) * 0.1);
+            this._whatifAdjust.spending += dir * step;
+        } else if (this._whatifMode === 'savings') {
+            this._whatifAdjust.savings += dir * 250;
+        } else if (this._whatifMode === 'retire-age') {
+            this._whatifAdjust.retireAge += dir * 1;
+            // Clamp
+            const base = this._baseInputs?.retirementAge || 65;
+            const newAge = base + this._whatifAdjust.retireAge;
+            if (newAge < (this._baseInputs?.currentAge || 30) + 1 || newAge > 80) {
+                this._whatifAdjust.retireAge -= dir * 1;
+                return;
+            }
+        }
+        this._applyAdjustments();
+    },
+    
+    _updateWhatifDisplay() {
+        const el = document.getElementById('whatif-value');
+        if (!el || !this._baseInputs) return;
+        
+        const fmt = v => '$' + Math.round(Math.abs(v)).toLocaleString();
+        
+        if (this._whatifMode === 'spending') {
+            const total = this._baseInputs.annualSpending + this._whatifAdjust.spending;
+            el.textContent = fmt(total) + '/yr';
+            el.style.color = this._whatifAdjust.spending === 0 ? '#1e293b' : (this._whatifAdjust.spending > 0 ? '#dc2626' : '#059669');
+        } else if (this._whatifMode === 'savings') {
+            const total = Math.max(0, this._baseInputs.monthlyContribution + this._whatifAdjust.savings);
+            el.textContent = fmt(total) + '/mo';
+            el.style.color = this._whatifAdjust.savings === 0 ? '#1e293b' : (this._whatifAdjust.savings > 0 ? '#059669' : '#dc2626');
+        } else if (this._whatifMode === 'retire-age') {
+            const total = this._baseInputs.retirementAge + this._whatifAdjust.retireAge;
+            el.textContent = 'Age ' + total;
+            el.style.color = this._whatifAdjust.retireAge === 0 ? '#1e293b' : (this._whatifAdjust.retireAge < 0 ? '#059669' : '#dc2626');
+        }
+    },
+    
     _updateAdjusterDisplay() {
-        const fmt = v => '$' + Math.abs(Math.round(v)).toLocaleString();
-        const baseSpend = this._baseInputs?.annualSpending || 0;
-        const baseSave = this._baseInputs?.monthlyContribution || 0;
-        
-        const spendEl = document.getElementById('adjuster-spending');
-        const saveEl = document.getElementById('adjuster-savings');
-        
-        if (spendEl) {
-            const total = baseSpend + this._spendAdjust;
-            spendEl.textContent = '$' + Math.round(total).toLocaleString() + '/yr';
-            spendEl.style.color = this._spendAdjust === 0 ? '#1e293b' : (this._spendAdjust > 0 ? '#dc2626' : '#059669');
-        }
-        if (saveEl) {
-            const total = Math.max(0, baseSave + this._saveAdjust);
-            saveEl.textContent = '$' + Math.round(total).toLocaleString() + '/mo';
-            saveEl.style.color = this._saveAdjust === 0 ? '#1e293b' : (this._saveAdjust > 0 ? '#059669' : '#dc2626');
-        }
+        this._updateWhatifDisplay();
     },
     
     _applyAdjustments() {
         if (!this._baseInputs) return;
         
-        this._updateAdjusterDisplay();
+        this._updateWhatifDisplay();
         
-        // Recalculate with adjusted values
+        const adj = this._whatifAdjust;
         const adjustedInputs = {
             ...this._baseInputs,
             windfalls: [...(this._baseInputs.windfalls || [])],
-            annualSpending: Math.max(0, this._baseInputs.annualSpending + this._spendAdjust),
-            monthlyContribution: Math.max(0, this._baseInputs.monthlyContribution + this._saveAdjust)
+            annualSpending: Math.max(0, this._baseInputs.annualSpending + (adj.spending || 0)),
+            monthlyContribution: Math.max(0, this._baseInputs.monthlyContribution + (adj.savings || 0)),
+            retirementAge: Math.max(this._baseInputs.currentAge + 1, this._baseInputs.retirementAge + (adj.retireAge || 0))
         };
         
-        // Recalculate
         const results = RetirementCalcV4.calculate(adjustedInputs);
         this._lastCalcResults = results;
         this._lastCalcInputs = adjustedInputs;
         this._displayResults(results, adjustedInputs);
         
-        // Re-run MC in background
         if (typeof AppV5Enhanced !== 'undefined') {
             AppV5Enhanced.runEnhancedAnalysis(adjustedInputs, results);
         }
