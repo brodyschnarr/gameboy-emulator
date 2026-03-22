@@ -301,7 +301,9 @@ const AppV4 = {
 
     _setupBenchmarks() {
         // Savings inputs
-        ['rrsp', 'tfsa', 'nonreg', 'lira', 'other'].forEach(id => {
+        ['rrsp', 'tfsa', 'nonreg', 'lira', 'other', 'cash',
+         'rrsp-p1', 'tfsa-p1', 'nonreg-p1', 'lira-p1', 'other-p1', 'cash-p1',
+         'rrsp-p2', 'tfsa-p2', 'nonreg-p2', 'lira-p2', 'other-p2', 'cash-p2'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', () => {
@@ -1370,6 +1372,18 @@ const AppV4 = {
             // Show combined inputs, hide separate
             document.querySelectorAll('#step-savings > .input-group').forEach(g => g.classList.remove('hidden'));
             document.getElementById('separate-accounts-section')?.classList.add('hidden');
+            // Show combined extra accounts that were added, hide per-person
+            ['lira', 'other', 'cash'].forEach(acct => {
+                const p1 = document.getElementById(acct + '-p1-group');
+                const p2 = document.getElementById(acct + '-p2-group');
+                const combined = document.getElementById(acct + '-group');
+                if (p1 && !p1.classList.contains('hidden')) {
+                    // Was visible in separate mode — show combined instead
+                    if (combined) combined.classList.remove('hidden');
+                }
+                if (p1) p1.classList.add('hidden');
+                if (p2) p2.classList.add('hidden');
+            });
             this.accountMode = 'joint';
         });
         document.getElementById('accounts-separate')?.addEventListener('click', () => {
@@ -1381,6 +1395,17 @@ const AppV4 = {
                 if (el) el.closest('.input-group')?.classList.add('hidden');
             });
             document.getElementById('separate-accounts-section')?.classList.remove('hidden');
+            // Migrate visible extra accounts to per-person fields
+            ['lira', 'other', 'cash'].forEach(acct => {
+                const combined = document.getElementById(acct + '-group');
+                if (combined && !combined.classList.contains('hidden')) {
+                    combined.classList.add('hidden');
+                    const p1 = document.getElementById(acct + '-p1-group');
+                    const p2 = document.getElementById(acct + '-p2-group');
+                    if (p1) p1.classList.remove('hidden');
+                    if (p2) p2.classList.remove('hidden');
+                }
+            });
             this.accountMode = 'separate';
         });
 
@@ -1393,10 +1418,19 @@ const AppV4 = {
         document.querySelectorAll('[data-account]').forEach(item => {
             item.addEventListener('click', () => {
                 const acct = item.dataset.account;
-                const group = document.getElementById(acct + '-group');
-                if (group) {
-                    group.classList.remove('hidden');
-                    group.querySelector('input')?.focus();
+                // In separate mode, show per-person fields; in joint mode, show combined
+                if (this.accountMode === 'separate') {
+                    const p1 = document.getElementById(acct + '-p1-group');
+                    const p2 = document.getElementById(acct + '-p2-group');
+                    if (p1) p1.classList.remove('hidden');
+                    if (p2) p2.classList.remove('hidden');
+                    if (p1) p1.querySelector('input')?.focus();
+                } else {
+                    const group = document.getElementById(acct + '-group');
+                    if (group) {
+                        group.classList.remove('hidden');
+                        group.querySelector('input')?.focus();
+                    }
                 }
                 item.closest('.step5-dropdown').classList.add('hidden');
                 item.style.display = 'none'; // Hide from dropdown once added
@@ -2659,13 +2693,25 @@ const AppV4 = {
     },
 
     _updateTotalSavings() {
-        const rrsp = parseFloat(document.getElementById('rrsp')?.value) || 0;
-        const tfsa = parseFloat(document.getElementById('tfsa')?.value) || 0;
-        const nonreg = parseFloat(document.getElementById('nonreg')?.value) || 0;
-        const lira = parseFloat(document.getElementById('lira')?.value) || 0;
-        const other = parseFloat(document.getElementById('other')?.value) || 0;
+        const pv = (id) => parseFloat(document.getElementById(id)?.value) || 0;
+        let rrsp, tfsa, nonreg, lira, other, cash;
+        if (this.accountMode === 'separate') {
+            rrsp = pv('rrsp-p1') + pv('rrsp-p2');
+            tfsa = pv('tfsa-p1') + pv('tfsa-p2');
+            nonreg = pv('nonreg-p1') + pv('nonreg-p2');
+            lira = pv('lira-p1') + pv('lira-p2');
+            other = pv('other-p1') + pv('other-p2');
+            cash = pv('cash-p1') + pv('cash-p2');
+        } else {
+            rrsp = pv('rrsp');
+            tfsa = pv('tfsa');
+            nonreg = pv('nonreg');
+            lira = pv('lira');
+            other = pv('other');
+            cash = pv('cash');
+        }
 
-        const total = rrsp + tfsa + nonreg + lira + other;
+        const total = rrsp + tfsa + nonreg + lira + other + cash;
 
         const display = document.getElementById('total-savings-display');
         if (display) {
@@ -3491,8 +3537,15 @@ const AppV4 = {
             nonReg: this.accountMode === 'separate'
                 ? (parseFloat(document.getElementById('nonreg-p1')?.value) || 0) + (parseFloat(document.getElementById('nonreg-p2')?.value) || 0)
                 : (parseFloat(document.getElementById('nonreg')?.value) || 0),
-            lira: parseFloat(document.getElementById('lira')?.value) || 0,
-            other: parseFloat(document.getElementById('other')?.value) || 0,
+            lira: this.accountMode === 'separate'
+                ? (parseFloat(document.getElementById('lira-p1')?.value) || 0) + (parseFloat(document.getElementById('lira-p2')?.value) || 0)
+                : (parseFloat(document.getElementById('lira')?.value) || 0),
+            other: this.accountMode === 'separate'
+                ? (parseFloat(document.getElementById('other-p1')?.value) || 0) + (parseFloat(document.getElementById('other-p2')?.value) || 0)
+                : (parseFloat(document.getElementById('other')?.value) || 0),
+            cash: this.accountMode === 'separate'
+                ? (parseFloat(document.getElementById('cash-p1')?.value) || 0) + (parseFloat(document.getElementById('cash-p2')?.value) || 0)
+                : (parseFloat(document.getElementById('cash')?.value) || 0),
 
             monthlyContribution: parseFloat(document.getElementById('monthly-contribution')?.value) || 0,
             contributionSplit: {
@@ -4035,6 +4088,8 @@ const AppV4 = {
         'retirement-age', 'life-expectancy', 'annual-spending',
         'current-debt', 'debt-payoff-age',
         'return-rate', 'inflation-rate', 'mer-fee', 'contribution-growth',
+        'rrsp-p1', 'tfsa-p1', 'nonreg-p1', 'lira-p1', 'other-p1', 'cash-p1',
+        'rrsp-p2', 'tfsa-p2', 'nonreg-p2', 'lira-p2', 'other-p2', 'cash-p2',
         'employer-pension', 'pension-start-age',
         'annuity-lump-sum', 'annuity-purchase-age', 'annuity-monthly-payout',
         'downsizing-age', 'downsizing-proceeds', 'downsizing-spending-change',
