@@ -49,7 +49,7 @@
 }
 [data-theme="dark"] .btn-secondary {
     background: #334155;
-    color: var(--border);
+    color: #e2e8f0;
     border-color: #475569;
 }
 [data-theme="dark"] .nav-bar {
@@ -1876,18 +1876,20 @@ input:focus {
 
 .benchmark-content p {
     margin: 8px 0;
-    color: #1e293b;
+    color: var(--text);
     line-height: 1.6;
 }
 
 .benchmark-highlight {
-    color: #2563eb;
+    color: var(--primary);
     font-size: 1.05em;
 }
 
 .benchmark-highlight strong {
-    color: #1e40af;
+    color: var(--primary-hover);
 }
+[data-theme="dark"] .benchmark-highlight { color: #60a5fa; }
+[data-theme="dark"] .benchmark-highlight strong { color: #93c5fd; }
 
 /* Region Display */
 #region-display {
