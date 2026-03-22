@@ -711,6 +711,10 @@
             <div class="step5-add-section">
                 <div id="retirement-income-from-step1"></div>
                 <div id="added-income-items"></div>
+                <div class="dtc-inline-toggle" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;">
+                    <input type="checkbox" id="dtc-checkbox" style="width:18px;height:18px;margin:0;cursor:pointer;">
+                    <label for="dtc-checkbox" style="font-size:14px;cursor:pointer;margin:0;flex:1;">♿ Disability Tax Credit <span style="font-size:12px;color:var(--text-secondary);">~$1,900/yr savings</span></label>
+                </div>
                 <div class="step5-add-wrapper">
                     <button type="button" class="btn-secondary" id="btn-add-income-dropdown">+ Add Retirement Income</button>
                     <div class="step5-dropdown hidden" id="income-dropdown-menu">
@@ -720,7 +724,6 @@
                         <button type="button" class="step5-dropdown-item" data-type="stock-options">📈 Stock / Equity Options</button>
                         <button type="button" class="step5-dropdown-item" data-type="annuity">🔒 Annuity Purchase</button>
                         <button type="button" class="step5-dropdown-item" data-type="downsizing">🏡 Home Sale / Downsizing</button>
-                        <button type="button" class="step5-dropdown-item" data-type="dtc">♿ Disability Tax Credit</button>
                         <button type="button" class="step5-dropdown-item" data-type="other-income">➕ Other Income</button>
                     </div>
                 </div>
@@ -977,18 +980,7 @@
                 </div>
             </div>
 
-            <div id="form-dtc" class="step5-form hidden">
-                <div class="step5-form-header">♿ Disability Tax Credit</div>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="dtc-checkbox">
-                    I qualify for DTC
-                </label>
-                <small class="input-hint">$9,428 federal credit — saves ~$1,900/yr. Requires CRA Form T2201.</small>
-                <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    <button type="button" class="btn-primary btn-sm" data-save="dtc">Add</button>
-                    <button type="button" class="btn-secondary btn-sm" data-cancel="dtc">Cancel</button>
-                </div>
-            </div>
+            <!-- DTC moved to inline toggle above dropdown -->
 
             <div id="form-other-income" class="step5-form hidden">
                 <div class="step5-form-header">➕ Other Retirement Income</div>
@@ -1354,37 +1346,37 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000095"></script>
-    <script src="cpp-calculator.js?v=17&t=24000095"></script>
-    <script src="benchmarks.js?v=17&t=24000095"></script>
-    <script src="lifestyle-data.js?v=17&t=24000095"></script>
-    <script src="regional-data.js?v=18&t=24000095"></script>
-    <script src="canada-map.js?v=18&t=24000095"></script>
-    <script src="income-sources.js?v=17&t=24000095"></script>
-    <script src="deep-dive.js?v=17&t=24000095"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000095"></script>
-    <script src="scenario-manager.js?v=17&t=24000095"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000095"></script>
-    <script src="calc.js?v=17&t=24000095"></script>
-    <script src="app-round6-debug.js?v=17&t=24000095"></script>
+    <script src="canada-tax.js?v=17&t=24000096"></script>
+    <script src="cpp-calculator.js?v=17&t=24000096"></script>
+    <script src="benchmarks.js?v=17&t=24000096"></script>
+    <script src="lifestyle-data.js?v=17&t=24000096"></script>
+    <script src="regional-data.js?v=18&t=24000096"></script>
+    <script src="canada-map.js?v=18&t=24000096"></script>
+    <script src="income-sources.js?v=17&t=24000096"></script>
+    <script src="deep-dive.js?v=17&t=24000096"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000096"></script>
+    <script src="scenario-manager.js?v=17&t=24000096"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000096"></script>
+    <script src="calc.js?v=17&t=24000096"></script>
+    <script src="app-round6-debug.js?v=17&t=24000096"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000095"></script>
-    <script src="monte-carlo.js?v=17&t=24000095"></script>
-    <script src="tax-optimizer.js?v=17&t=24000095"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000095"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000095"></script>
-    <script src="advanced-charts.js?v=17&t=24000095"></script>
-    <script src="interactive-sliders.js?v=17&t=24000095"></script>
-    <script src="scenario-storage.js?v=17&t=24000095"></script>
-    <script src="windfalls.js?v=17&t=24000095"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000095"></script>
+    <script src="error-handler.js?v=17&t=24000096"></script>
+    <script src="monte-carlo.js?v=17&t=24000096"></script>
+    <script src="tax-optimizer.js?v=17&t=24000096"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000096"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000096"></script>
+    <script src="advanced-charts.js?v=17&t=24000096"></script>
+    <script src="interactive-sliders.js?v=17&t=24000096"></script>
+    <script src="scenario-storage.js?v=17&t=24000096"></script>
+    <script src="windfalls.js?v=17&t=24000096"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000096"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=18&t=24000095"></script>
+    <script src="slider-inputs.js?v=18&t=24000096"></script>
 
     <!-- Shareable links -->
-    <script src="share-link.js?v=1&t=24000095"></script>
+    <script src="share-link.js?v=1&t=24000096"></script>
 
     <!-- Dark mode toggle + share link auto-load -->
     <script>

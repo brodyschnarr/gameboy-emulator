@@ -1431,6 +1431,11 @@ const AppV4 = {
             });
         });
 
+        // DTC inline toggle — update chips live
+        document.getElementById('dtc-checkbox')?.addEventListener('change', () => {
+            this._updateStep5AddedItems();
+        });
+
         // Wire save/cancel buttons on all forms
         document.querySelectorAll('[data-save]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1524,7 +1529,7 @@ const AppV4 = {
             'ltc': () => { document.getElementById('ltc-monthly').value = ''; document.getElementById('ltc-start-age').value = '80'; },
             'annuity': () => { document.getElementById('annuity-lump-sum').value = ''; document.getElementById('annuity-purchase-age').value = ''; document.getElementById('annuity-monthly-payout').value = ''; },
             'downsizing': () => { document.getElementById('downsizing-age').value = ''; document.getElementById('downsizing-proceeds').value = ''; document.getElementById('downsizing-spending-change').value = ''; },
-            'dtc': () => { document.getElementById('dtc-checkbox').checked = false; },
+            'dtc': () => { document.getElementById('dtc-checkbox').checked = false; this._updateStep5AddedItems(); },
             // other-income and other-expense handled via indexed delete below
             'life-insurance': () => { document.getElementById('life-insurance-amount').value = ''; },
             'vehicle': () => { document.getElementById('vehicle-name').value = ''; document.getElementById('vehicle-value').value = ''; },
