@@ -76,12 +76,7 @@ const ShareLink = {
         dsprc:  { id: 'downsizing-proceeds', type: 'float' },
         dssc:   { id: 'downsizing-spending-change', type: 'float' },
 
-        // Other income/expense
-        oiamt:  { id: 'other-income-amount', type: 'float' },
-        oinm:   { id: 'other-income-name', type: 'string' },
-        oitax:  { id: 'other-income-taxable', type: 'bool' },
-        oeamt:  { id: 'other-expense-amount', type: 'float' },
-        oenm:   { id: 'other-expense-name', type: 'string' },
+        // Other income/expense now uses oi/oe JSON arrays (see generate/loadFromURL)
 
         // Estate
         liins:  { id: 'life-insurance-amount', type: 'float' },
@@ -144,6 +139,14 @@ const ShareLink = {
         // Estate assets
         if (AppV4.estateAssets && AppV4.estateAssets.length > 0) {
             params.set('ea', JSON.stringify(AppV4.estateAssets));
+        }
+
+        // Other income/expense items (multi-add)
+        if (AppV4.otherIncomeItems && AppV4.otherIncomeItems.length > 0) {
+            params.set('oi', JSON.stringify(AppV4.otherIncomeItems));
+        }
+        if (AppV4.otherExpenseItems && AppV4.otherExpenseItems.length > 0) {
+            params.set('oe', JSON.stringify(AppV4.otherExpenseItems));
         }
 
         const base = window.location.origin + window.location.pathname;
@@ -247,9 +250,13 @@ const ShareLink = {
 
         // Estate assets
         if (params.has('ea')) {
-            try {
-                AppV4.estateAssets = JSON.parse(params.get('ea'));
-            } catch (e) { /* ignore */ }
+            try { AppV4.estateAssets = JSON.parse(params.get('ea')); } catch (e) {}
+        }
+        if (params.has('oi')) {
+            try { AppV4.otherIncomeItems = JSON.parse(params.get('oi')); } catch (e) {}
+        }
+        if (params.has('oe')) {
+            try { AppV4.otherExpenseItems = JSON.parse(params.get('oe')); } catch (e) {}
         }
 
         // Sync sliders after all values set

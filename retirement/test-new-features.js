@@ -424,8 +424,68 @@ test('Windfall/estate indexed delete works', () => {
 });
 
 // Re-run summary
-const total2 = passed + failed;
+console.log('\n📝 Multi-Add Other Income/Expense Tests\n');
+
+test('AppV4 has otherIncomeItems array', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes('otherIncomeItems: []'), 'otherIncomeItems initialized');
+    assert(code.includes('otherExpenseItems: []'), 'otherExpenseItems initialized');
+});
+
+test('Other income save pushes to array', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes("this.otherIncomeItems.push({"), 'Pushes to otherIncomeItems');
+});
+
+test('Other expense save pushes to array', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes("this.otherExpenseItems.push({"), 'Pushes to otherExpenseItems');
+});
+
+test('_gatherInputs sums other income items', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes("otherIncomeItems || []).reduce((s, i) => s + (i.amount || 0), 0)"), 'Sums income items');
+});
+
+test('_gatherInputs sums other expense items', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes("otherExpenseItems || []).reduce((s, i) => s + (i.amount || 0), 0)"), 'Sums expense items');
+});
+
+test('Chips render with indexed delete for other items', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes("`oi-${i}`"), 'Uses oi-N for income chip keys');
+    assert(code.includes("`oe-${i}`"), 'Uses oe-N for expense chip keys');
+});
+
+test('Delete handler splices other income/expense arrays', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes("type.startsWith('oi-')"), 'Handles oi- prefix');
+    assert(code.includes("type.startsWith('oe-')"), 'Handles oe- prefix');
+    assert(code.includes("this.otherIncomeItems.splice(idx, 1)"), 'Splices income');
+    assert(code.includes("this.otherExpenseItems.splice(idx, 1)"), 'Splices expense');
+});
+
+test('Other income/expense always visible in dropdown (multi-add)', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(!code.includes("'other-income': () => (parseFloat"), 'No single-use check for other-income');
+    assert(!code.includes("'other-expense': () => (parseFloat"), 'No single-use check for other-expense');
+});
+
+test('ShareLink serializes other income/expense arrays', () => {
+    const code = fs.readFileSync(__dirname + '/share-link.js', 'utf8');
+    assert(code.includes("params.set('oi',"), 'Serializes other income');
+    assert(code.includes("params.set('oe',"), 'Serializes other expense');
+});
+
+test('Form clears after adding other income', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes("document.getElementById('other-income-name').value = ''"), 'Clears name');
+    assert(code.includes("document.getElementById('other-income-amount').value = ''"), 'Clears amount');
+});
+
+const total3 = passed + failed;
 console.log(`\n═══════════════════════════════════════════`);
-console.log(`  Total: ${total2} | ✅ ${passed} | ❌ ${failed}`);
+console.log(`  Total: ${total3} | ✅ ${passed} | ❌ ${failed}`);
 console.log(`═══════════════════════════════════════════\n`);
 process.exit(failed > 0 ? 1 : 0);

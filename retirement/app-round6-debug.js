@@ -38,6 +38,8 @@ const AppV4 = {
     scenarioResults: {},
     currentScenario: 'base',
     windfalls: [],
+    otherIncomeItems: [],   // Multi-add: [{name, amount, taxable}]
+    otherExpenseItems: [],  // Multi-add: [{name, amount}]
 
     init() {
         this._setupNavigation();
@@ -1435,6 +1437,30 @@ const AppV4 = {
                 const type = btn.dataset.save;
                 if (type === 'healthcare') this.healthcareExplicitlyAdded = true;
                 
+                // Other income — multi-add to array
+                if (type === 'other-income') {
+                    const name = document.getElementById('other-income-name')?.value || 'Other Income';
+                    const amount = parseFloat(document.getElementById('other-income-amount')?.value) || 0;
+                    const taxable = document.getElementById('other-income-taxable')?.checked !== false;
+                    if (amount > 0) {
+                        this.otherIncomeItems.push({ name, amount, taxable });
+                        document.getElementById('other-income-name').value = '';
+                        document.getElementById('other-income-amount').value = '';
+                        document.getElementById('other-income-taxable').checked = true;
+                    }
+                }
+
+                // Other expense — multi-add to array
+                if (type === 'other-expense') {
+                    const name = document.getElementById('other-expense-name')?.value || 'Other Expense';
+                    const amount = parseFloat(document.getElementById('other-expense-amount')?.value) || 0;
+                    if (amount > 0) {
+                        this.otherExpenseItems.push({ name, amount });
+                        document.getElementById('other-expense-name').value = '';
+                        document.getElementById('other-expense-amount').value = '';
+                    }
+                }
+
                 // Stock options — add as windfall of type 'shares'
                 if (type === 'stock-options') {
                     const currentValue = parseFloat(document.getElementById('stock-current-value')?.value) || 0;
@@ -1499,8 +1525,7 @@ const AppV4 = {
             'annuity': () => { document.getElementById('annuity-lump-sum').value = ''; document.getElementById('annuity-purchase-age').value = ''; document.getElementById('annuity-monthly-payout').value = ''; },
             'downsizing': () => { document.getElementById('downsizing-age').value = ''; document.getElementById('downsizing-proceeds').value = ''; document.getElementById('downsizing-spending-change').value = ''; },
             'dtc': () => { document.getElementById('dtc-checkbox').checked = false; },
-            'other-income': () => { document.getElementById('other-income-name').value = ''; document.getElementById('other-income-amount').value = ''; },
-            'other-expense': () => { document.getElementById('other-expense-name').value = ''; document.getElementById('other-expense-amount').value = ''; },
+            // other-income and other-expense handled via indexed delete below
             'life-insurance': () => { document.getElementById('life-insurance-amount').value = ''; },
             'vehicle': () => { document.getElementById('vehicle-name').value = ''; document.getElementById('vehicle-value').value = ''; },
             'other-estate': () => { document.getElementById('other-estate-name').value = ''; document.getElementById('other-estate-value').value = ''; },
@@ -1521,8 +1546,7 @@ const AppV4 = {
             'annuity': () => (parseFloat(document.getElementById('annuity-lump-sum')?.value) || 0) > 0,
             'downsizing': () => (parseFloat(document.getElementById('downsizing-proceeds')?.value) || 0) > 0,
             'dtc': () => document.getElementById('dtc-checkbox')?.checked,
-            'other-income': () => (parseFloat(document.getElementById('other-income-amount')?.value) || 0) > 0,
-            'other-expense': () => (parseFloat(document.getElementById('other-expense-amount')?.value) || 0) > 0,
+            // other-income and other-expense are multi-add, always visible in dropdown
             'life-insurance': () => (parseFloat(document.getElementById('life-insurance-amount')?.value) || 0) > 0,
             'vehicle': () => (parseFloat(document.getElementById('vehicle-value')?.value) || 0) > 0,
             'other-estate': () => (parseFloat(document.getElementById('other-estate-value')?.value) || 0) > 0,
@@ -1605,18 +1629,18 @@ const AppV4 = {
             });
         }
         
-        // Other income
-        const otherIncomeName = document.getElementById('other-income-name')?.value;
-        const otherIncomeAmt = parseFloat(document.getElementById('other-income-amount')?.value) || 0;
-        if (otherIncomeAmt > 0) {
-            incomeHTML += this._makeChip('📝', otherIncomeName || 'Other', `${fmt(otherIncomeAmt)}/yr`, 'other-income', true);
+        // Other income (multi-add)
+        if (this.otherIncomeItems && this.otherIncomeItems.length > 0) {
+            this.otherIncomeItems.forEach((item, i) => {
+                incomeHTML += this._makeChip('📝', item.name, `${fmt(item.amount)}/yr${item.taxable ? '' : ' (non-tax)'}`, `oi-${i}`, true);
+            });
         }
         
-        // Other expense
-        const otherExpenseName = document.getElementById('other-expense-name')?.value;
-        const otherExpenseAmt = parseFloat(document.getElementById('other-expense-amount')?.value) || 0;
-        if (otherExpenseAmt > 0) {
-            expenseHTML += this._makeChip('📝', otherExpenseName || 'Other', `${fmt(otherExpenseAmt)}/yr`, 'other-expense', true);
+        // Other expense (multi-add)
+        if (this.otherExpenseItems && this.otherExpenseItems.length > 0) {
+            this.otherExpenseItems.forEach((item, i) => {
+                expenseHTML += this._makeChip('📝', item.name, `${fmt(item.amount)}/yr`, `oe-${i}`, true);
+            });
         }
 
         // Estate assets (separate section)
@@ -1682,6 +1706,14 @@ const AppV4 = {
                 } else if (type.startsWith('estate-')) {
                     const idx = parseInt(type.split('-')[1]);
                     if (this.estateAssets) this.estateAssets.splice(idx, 1);
+                    this._updateStep5AddedItems();
+                } else if (type.startsWith('oi-')) {
+                    const idx = parseInt(type.split('-')[1]);
+                    this.otherIncomeItems.splice(idx, 1);
+                    this._updateStep5AddedItems();
+                } else if (type.startsWith('oe-')) {
+                    const idx = parseInt(type.split('-')[1]);
+                    this.otherExpenseItems.splice(idx, 1);
                     this._updateStep5AddedItems();
                 } else {
                     this._removeItem(type);
@@ -3509,12 +3541,14 @@ const AppV4 = {
             downsizingSpendingChange: -(parseFloat(document.getElementById('downsizing-spending-change')?.value) || 0), // Negative = savings
             categoryInflation: this._getCategoryInflation(),
 
-            // Other income/expense (custom user entries)
-            otherRetirementIncome: parseFloat(document.getElementById('other-income-amount')?.value) || 0,
-            otherRetirementIncomeName: document.getElementById('other-income-name')?.value || 'Other',
-            otherRetirementIncomeTaxable: document.getElementById('other-income-taxable')?.checked !== false,
-            otherRetirementExpense: parseFloat(document.getElementById('other-expense-amount')?.value) || 0,
-            otherRetirementExpenseName: document.getElementById('other-expense-name')?.value || 'Other',
+            // Other income/expense (multi-add arrays, summed for calc engine)
+            otherRetirementIncome: (this.otherIncomeItems || []).reduce((s, i) => s + (i.amount || 0), 0),
+            otherRetirementIncomeName: (this.otherIncomeItems || []).map(i => i.name).join(', ') || 'Other',
+            otherRetirementIncomeTaxable: (this.otherIncomeItems || []).every(i => i.taxable !== false),
+            otherRetirementExpense: (this.otherExpenseItems || []).reduce((s, i) => s + (i.amount || 0), 0),
+            otherRetirementExpenseName: (this.otherExpenseItems || []).map(i => i.name).join(', ') || 'Other',
+            otherIncomeItems: this.otherIncomeItems || [],
+            otherExpenseItems: this.otherExpenseItems || [],
 
             // Additional estate assets (non-property)
             lifeInsurance: parseFloat(document.getElementById('life-insurance-amount')?.value) || 0,
