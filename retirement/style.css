@@ -4386,3 +4386,208 @@ input:focus {
     color: var(--border);
     border-color: #475569;
 }
+
+/* ═══════════════════════════════════════════════
+   DARK MODE — Comprehensive catch-all overrides
+   ═══════════════════════════════════════════════ */
+
+/* Combined CPP/OAS totals (green banners) */
+[data-theme="dark"] .cpp-combined-total {
+    background: #0f2918;
+    border-color: #22c55e;
+    color: #a7f3d0;
+}
+
+/* CPP/OAS couple blocks */
+[data-theme="dark"] .cpp-couple-block {
+    background: #1e293b;
+    border-color: var(--border);
+}
+
+/* Budget/spending summary boxes */
+[data-theme="dark"] .budget-summary,
+[data-theme="dark"] .canadian-avg-callout {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+/* Status banners */
+[data-theme="dark"] .status-banner.on-track {
+    background: #0f2918 !important;
+    border-color: #22c55e;
+    color: #34d399;
+}
+[data-theme="dark"] .status-banner.needs-work {
+    background: #2a1a05 !important;
+    border-color: #f59e0b;
+    color: #fbbf24;
+}
+
+/* Benchmark cards */
+[data-theme="dark"] .benchmark-card {
+    background: #1e293b;
+    border-color: var(--border);
+    color: #e2e8f0;
+}
+
+/* Tax notes, examples */
+[data-theme="dark"] .tax-note,
+[data-theme="dark"] .examples-section,
+[data-theme="dark"] .note {
+    background: #1e293b;
+    color: #cbd5e1;
+}
+
+/* Region display */
+[data-theme="dark"] #region-display {
+    background: #1e293b !important;
+    border-color: #3b82f6;
+    color: #e2e8f0;
+}
+[data-theme="dark"] #region-display * {
+    color: #e2e8f0 !important;
+}
+
+/* Optimizer insights */
+[data-theme="dark"] .optimizer-age-insight {
+    background: #0f2918;
+    color: #a7f3d0;
+}
+[data-theme="dark"] .optimizer-age-insight.warning {
+    background: #2a1a05;
+    color: #fde68a;
+}
+
+/* House sale comparison columns */
+[data-theme="dark"] .comparison-column.keep-home,
+[data-theme="dark"] .comparison-column.sell-home {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+[data-theme="dark"] .comparison-verdict.sell-wins,
+[data-theme="dark"] .comparison-verdict.positive {
+    background: #0f2918 !important;
+    color: #34d399 !important;
+}
+[data-theme="dark"] .comparison-verdict.keep-wins,
+[data-theme="dark"] .comparison-verdict.close-call {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+/* Strategy advisor column */
+[data-theme="dark"] .strategy-col.advisor {
+    background: #1e293b !important;
+    border-color: #475569;
+}
+
+/* Savings split labels */
+[data-theme="dark"] .pct-label.rrsp-color,
+[data-theme="dark"] .pct-label.tfsa-color,
+[data-theme="dark"] .pct-label.nonreg-color {
+    color: #e2e8f0;
+}
+
+/* Optimal row highlight */
+[data-theme="dark"] .optimal-row {
+    background: #0f2918;
+    color: #a7f3d0;
+}
+
+/* Mode/expand/preset buttons */
+[data-theme="dark"] .mode-btn:hover,
+[data-theme="dark"] .expand-btn:hover,
+[data-theme="dark"] .preset-btn:hover {
+    background: #334155;
+}
+
+/* Lifestyle cards */
+[data-theme="dark"] .lifestyle-card,
+[data-theme="dark"] .lifestyle-card:hover,
+[data-theme="dark"] .lifestyle-card.active {
+    background: #1e293b;
+    border-color: var(--border);
+    color: #e2e8f0;
+}
+[data-theme="dark"] .lifestyle-card.active {
+    border-color: #3b82f6;
+}
+
+/* Slider track */
+[data-theme="dark"] .slider-container input[type="range"] {
+    background: #334155;
+}
+
+/* Windfall/scenario cards (style-v5) */
+[data-theme="dark"] .windfall-item,
+[data-theme="dark"] .windfall-item:hover,
+[data-theme="dark"] .scenario-item,
+[data-theme="dark"] .scenario-item:hover {
+    background: #1e293b;
+    border-color: var(--border);
+    color: #e2e8f0;
+}
+[data-theme="dark"] .windfalls-summary {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+[data-theme="dark"] .windfall-badge.shares { background: #1e3a5f; color: #93c5fd; }
+[data-theme="dark"] .windfall-badge.uncertain { background: #2a1a05; color: #fde68a; }
+[data-theme="dark"] .windfall-badge.simple { background: #0f2918; color: #a7f3d0; }
+[data-theme="dark"] .windfall-impact-card,
+[data-theme="dark"] .preview-calc {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-color: var(--border);
+}
+
+/* Comparison table/display */
+[data-theme="dark"] .comparison-display,
+[data-theme="dark"] .comparison-table tr:hover,
+[data-theme="dark"] .comparison-table tr.highlight {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+/* Recommendation cards */
+[data-theme="dark"] .recommendation-card,
+[data-theme="dark"] .scenario-card {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-color: var(--border);
+}
+
+/* Withdrawal/slider (v5) */
+[data-theme="dark"] .withdrawal-amount {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+[data-theme="dark"] .slider { background: #334155; }
+
+/* Delete/clear buttons */
+[data-theme="dark"] .btn-delete,
+[data-theme="dark"] .btn-delete-windfall,
+[data-theme="dark"] .btn-clear-all,
+[data-theme="dark"] .btn-remove-source {
+    color: #f87171;
+}
+[data-theme="dark"] .btn-delete:hover,
+[data-theme="dark"] .btn-delete-windfall:hover,
+[data-theme="dark"] .btn-clear-all:hover,
+[data-theme="dark"] .btn-remove-source:hover {
+    background: #2a0a0a;
+}
+
+/* Strategy verdict */
+[data-theme="dark"] .strategy-verdict.positive {
+    background: #0f2918 !important;
+    color: #34d399 !important;
+    border-color: #22c55e !important;
+}
+
+/* Any remaining hardcoded color text in dark mode */
+[data-theme="dark"] [style*="color: #64748b"],
+[data-theme="dark"] [style*="color: #334155"],
+[data-theme="dark"] [style*="color: #1e293b"] {
+    color: #94a3b8 !important;
+}
