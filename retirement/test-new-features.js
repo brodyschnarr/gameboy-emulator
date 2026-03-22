@@ -361,8 +361,71 @@ test('share-link.js loaded in index.html', () => {
 // ═══════════════════════════════════════
 // Summary
 // ═══════════════════════════════════════
-console.log(`\n═══════════════════════════════════════════`);
-console.log(`  Total: ${passed + failed} | ✅ ${passed} | ❌ ${failed}`);
-console.log(`═══════════════════════════════════════════\n`);
+// ═══════════════════════════════════════
+// Step 5 UX Tests
+// ═══════════════════════════════════════
+console.log('\n🔧 Step 5 UX Tests\n');
 
+test('All Step 5 form buttons say "Add" not "Save"', () => {
+    const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
+    // Find all data-save buttons in step 5 area
+    const step5Section = html.split('id="step-healthcare"')[1]?.split('</section>')[0] || '';
+    const saveButtons = step5Section.match(/data-save="[^"]*">Save</g) || [];
+    assert(saveButtons.length === 0, `Found ${saveButtons.length} "Save" buttons, expected all "Add": ${saveButtons.join(', ')}`);
+});
+
+test('Windfall auto-opens form regardless of existing items', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    // Should NOT have the old conditional
+    assert(!code.includes("type === 'windfall' && (!this.windfalls || this.windfalls.length === 0)"), 'Old conditional removed');
+    assert(code.includes("type === 'windfall'") && code.includes('_showWindfallForm'), 'Auto-opens windfall form');
+});
+
+test('Chips have delete buttons', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes('chip-delete'), 'Has chip-delete class');
+    assert(code.includes('_removeItem'), 'Has _removeItem method');
+});
+
+test('Chip delete CSS exists', () => {
+    const css = fs.readFileSync(__dirname + '/style.css', 'utf8');
+    assert(css.includes('.chip-delete'), 'Delete button styled');
+    assert(css.includes('.chip-delete:hover'), 'Delete hover state');
+});
+
+test('_updateDropdownVisibility hides added single-use items', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes('_updateDropdownVisibility'), 'Method exists');
+    assert(code.includes("item.style.display = singleUseChecks[type]() ? 'none' : ''"), 'Hides added items');
+});
+
+test('_removeItem clears form fields for each type', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes('_removeItem'), 'Method exists');
+    assert(code.includes("'employer-pension':"), 'Handles employer-pension');
+    assert(code.includes("'debt':"), 'Handles debt');
+    assert(code.includes("'healthcare':"), 'Handles healthcare');
+    assert(code.includes("'annuity':"), 'Handles annuity');
+    assert(code.includes("'downsizing':"), 'Handles downsizing');
+});
+
+test('Chips are tappable for re-editing', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes('data-edit-type'), 'Chips have edit type');
+    assert(code.includes("chip.addEventListener('click'"), 'Click handler on chips');
+});
+
+test('Windfall/estate indexed delete works', () => {
+    const code = fs.readFileSync(__dirname + '/app-round6-debug.js', 'utf8');
+    assert(code.includes("type.startsWith('windfall-')"), 'Handles windfall index delete');
+    assert(code.includes("type.startsWith('estate-')"), 'Handles estate index delete');
+    assert(code.includes('this.windfalls.splice(idx, 1)'), 'Splices windfall array');
+    assert(code.includes('this.estateAssets.splice(idx, 1)'), 'Splices estate array');
+});
+
+// Re-run summary
+const total2 = passed + failed;
+console.log(`\n═══════════════════════════════════════════`);
+console.log(`  Total: ${total2} | ✅ ${passed} | ❌ ${failed}`);
+console.log(`═══════════════════════════════════════════\n`);
 process.exit(failed > 0 ? 1 : 0);

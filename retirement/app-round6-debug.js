@@ -1411,8 +1411,8 @@ const AppV4 = {
                     document.querySelectorAll('.step5-form').forEach(f => f.classList.add('hidden'));
                     form.classList.remove('hidden');
                     form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    // Auto-open windfall add form
-                    if (type === 'windfall' && (!this.windfalls || this.windfalls.length === 0)) {
+                    // Auto-open windfall add form (always, skip the intermediate step)
+                    if (type === 'windfall') {
                         this._showWindfallForm();
                     }
                     // Auto-populate post-retirement work ages
@@ -1471,6 +1471,70 @@ const AppV4 = {
         });
     },
 
+    _makeChip(icon, label, value, editType, deleteCallback) {
+        const deleteBtn = deleteCallback ? `<button type="button" class="chip-delete" data-delete="${editType}" title="Remove">×</button>` : '';
+        return `<div class="step5-added-item" data-edit-type="${editType}" style="cursor:pointer;">
+            <span class="item-label">${icon} ${label}</span>
+            <span class="item-value">${value}</span>
+            ${deleteBtn}
+        </div>`;
+    },
+
+    _clearFormFields(formId) {
+        const form = document.getElementById(formId);
+        if (!form) return;
+        form.querySelectorAll('input[type="number"], input[type="text"]').forEach(el => { el.value = ''; });
+        form.querySelectorAll('input[type="checkbox"]').forEach(el => { 
+            // Reset to default (checked for pension-indexed, unchecked for others)
+            el.checked = el.id === 'pension-indexed';
+        });
+    },
+
+    _removeItem(type) {
+        const clearMap = {
+            'employer-pension': () => { document.getElementById('employer-pension').value = ''; document.getElementById('pension-start-age').value = '65'; },
+            'debt': () => { document.getElementById('current-debt').value = ''; document.getElementById('debt-payoff-age').value = '65'; },
+            'healthcare': () => { this.healthcareExplicitlyAdded = false; },
+            'ltc': () => { document.getElementById('ltc-monthly').value = ''; document.getElementById('ltc-start-age').value = '80'; },
+            'annuity': () => { document.getElementById('annuity-lump-sum').value = ''; document.getElementById('annuity-purchase-age').value = ''; document.getElementById('annuity-monthly-payout').value = ''; },
+            'downsizing': () => { document.getElementById('downsizing-age').value = ''; document.getElementById('downsizing-proceeds').value = ''; document.getElementById('downsizing-spending-change').value = ''; },
+            'dtc': () => { document.getElementById('dtc-checkbox').checked = false; },
+            'other-income': () => { document.getElementById('other-income-name').value = ''; document.getElementById('other-income-amount').value = ''; },
+            'other-expense': () => { document.getElementById('other-expense-name').value = ''; document.getElementById('other-expense-amount').value = ''; },
+            'life-insurance': () => { document.getElementById('life-insurance-amount').value = ''; },
+            'vehicle': () => { document.getElementById('vehicle-name').value = ''; document.getElementById('vehicle-value').value = ''; },
+            'other-estate': () => { document.getElementById('other-estate-name').value = ''; document.getElementById('other-estate-value').value = ''; },
+        };
+        if (clearMap[type]) clearMap[type]();
+        // Sync sliders after clearing
+        if (typeof window.syncAllSliders === 'function') window.syncAllSliders();
+        this._updateStep5AddedItems();
+    },
+
+    _updateDropdownVisibility() {
+        // Hide single-use dropdown items that are already added
+        const singleUseChecks = {
+            'employer-pension': () => (parseFloat(document.getElementById('employer-pension')?.value) || 0) > 0,
+            'debt': () => (parseFloat(document.getElementById('current-debt')?.value) || 0) > 0,
+            'healthcare': () => this.healthcareExplicitlyAdded,
+            'ltc': () => (parseFloat(document.getElementById('ltc-monthly')?.value) || 0) > 0,
+            'annuity': () => (parseFloat(document.getElementById('annuity-lump-sum')?.value) || 0) > 0,
+            'downsizing': () => (parseFloat(document.getElementById('downsizing-proceeds')?.value) || 0) > 0,
+            'dtc': () => document.getElementById('dtc-checkbox')?.checked,
+            'other-income': () => (parseFloat(document.getElementById('other-income-amount')?.value) || 0) > 0,
+            'other-expense': () => (parseFloat(document.getElementById('other-expense-amount')?.value) || 0) > 0,
+            'life-insurance': () => (parseFloat(document.getElementById('life-insurance-amount')?.value) || 0) > 0,
+            'vehicle': () => (parseFloat(document.getElementById('vehicle-value')?.value) || 0) > 0,
+            'other-estate': () => (parseFloat(document.getElementById('other-estate-value')?.value) || 0) > 0,
+        };
+        document.querySelectorAll('.step5-dropdown-item').forEach(item => {
+            const type = item.dataset.type;
+            if (singleUseChecks[type]) {
+                item.style.display = singleUseChecks[type]() ? 'none' : '';
+            }
+        });
+    },
+
     _updateStep5AddedItems() {
         // Show summary chips of added items
         const incomeContainer = document.getElementById('added-income-items');
@@ -1485,39 +1549,40 @@ const AppV4 = {
         const pension = parseFloat(document.getElementById('employer-pension')?.value) || 0;
         if (pension > 0) {
             const age = document.getElementById('pension-start-age')?.value || '65';
-            incomeHTML += `<div class="step5-added-item"><span class="item-label">🏢 Employer Pension</span><span class="item-value">${fmt(pension)}/mo from age ${age}</span></div>`;
+            incomeHTML += this._makeChip('🏢', 'Employer Pension', `${fmt(pension)}/mo from age ${age}`, 'employer-pension', true);
         }
         
         // LTC
         const ltc = parseFloat(document.getElementById('ltc-monthly')?.value) || 0;
         if (ltc > 0) {
             const age = document.getElementById('ltc-start-age')?.value || '80';
-            expenseHTML += `<div class="step5-added-item"><span class="item-label">🏥 Long-Term Care</span><span class="item-value">${fmt(ltc)}/mo from age ${age}</span></div>`;
+            expenseHTML += this._makeChip('🏠', 'Long-Term Care', `${fmt(ltc)}/mo from age ${age}`, 'ltc', true);
         }
         
         // Annuity
         const annuity = parseFloat(document.getElementById('annuity-lump-sum')?.value) || 0;
         if (annuity > 0) {
-            expenseHTML += `<div class="step5-added-item"><span class="item-label">🔒 Annuity</span><span class="item-value">${fmt(annuity)} lump sum</span></div>`;
+            const payout = parseFloat(document.getElementById('annuity-monthly-payout')?.value) || 0;
+            incomeHTML += this._makeChip('🔒', 'Annuity', `${fmt(annuity)} → ${fmt(payout)}/mo`, 'annuity', true);
         }
         
         // DTC
         const dtc = document.getElementById('dtc-checkbox')?.checked;
         if (dtc) {
-            incomeHTML += `<div class="step5-added-item"><span class="item-label">♿ DTC</span><span class="item-value">~$1,900/yr savings</span></div>`;
+            incomeHTML += this._makeChip('♿', 'DTC', '~$1,900/yr savings', 'dtc', true);
         }
         
         // Debt
         const debt = parseFloat(document.getElementById('current-debt')?.value) || 0;
         if (debt > 0) {
-            expenseHTML += `<div class="step5-added-item"><span class="item-label">💳 Debt</span><span class="item-value">${fmt(debt)}</span></div>`;
+            expenseHTML += this._makeChip('💳', 'Debt', fmt(debt), 'debt', true);
         }
         
         // Healthcare (only if user explicitly added it)
         if (this.healthcareExplicitlyAdded) {
             const hcCost = document.getElementById('healthcare-annual')?.textContent || '';
             if (hcCost && hcCost !== '$0') {
-                expenseHTML += `<div class="step5-added-item"><span class="item-label">🏥 Healthcare</span><span class="item-value">${hcCost}/yr extra</span></div>`;
+                expenseHTML += this._makeChip('🏥', 'Healthcare', `${hcCost}/yr extra`, 'healthcare', true);
             }
         }
 
@@ -1525,18 +1590,18 @@ const AppV4 = {
         const downProceeds = parseFloat(document.getElementById('downsizing-proceeds')?.value) || 0;
         if (downProceeds > 0) {
             const downAge = document.getElementById('downsizing-age')?.value || '70';
-            incomeHTML += `<div class="step5-added-item"><span class="item-label">🏡 Downsizing</span><span class="item-value">${fmt(downProceeds)} at age ${downAge}</span></div>`;
+            incomeHTML += this._makeChip('🏡', 'Downsizing', `${fmt(downProceeds)} at age ${downAge}`, 'downsizing', true);
         }
         
         // Windfalls & Stock Options
         if (this.windfalls && this.windfalls.length > 0) {
-            this.windfalls.forEach(w => {
+            this.windfalls.forEach((w, i) => {
                 const isStock = w.type === 'shares';
                 const icon = isStock ? '📈' : '💰';
                 const wName = w.name || (isStock ? 'Stock / Equity' : 'Windfall');
                 const wAmt = isStock ? (w.currentValue || w.amount || 0) : (w.amount || 0);
                 const wAge = isStock ? (w.sellAge || '?') : (w.year || '?');
-                incomeHTML += `<div class="step5-added-item"><span class="item-label">${icon} ${wName}</span><span class="item-value">${fmt(wAmt)} at age ${wAge}</span></div>`;
+                incomeHTML += this._makeChip(icon, wName, `${fmt(wAmt)} at age ${wAge}`, `windfall-${i}`, true);
             });
         }
         
@@ -1544,46 +1609,85 @@ const AppV4 = {
         const otherIncomeName = document.getElementById('other-income-name')?.value;
         const otherIncomeAmt = parseFloat(document.getElementById('other-income-amount')?.value) || 0;
         if (otherIncomeAmt > 0) {
-            incomeHTML += `<div class="step5-added-item"><span class="item-label">📝 ${otherIncomeName || 'Other'}</span><span class="item-value">${fmt(otherIncomeAmt)}/yr</span></div>`;
+            incomeHTML += this._makeChip('📝', otherIncomeName || 'Other', `${fmt(otherIncomeAmt)}/yr`, 'other-income', true);
         }
         
         // Other expense
         const otherExpenseName = document.getElementById('other-expense-name')?.value;
         const otherExpenseAmt = parseFloat(document.getElementById('other-expense-amount')?.value) || 0;
         if (otherExpenseAmt > 0) {
-            expenseHTML += `<div class="step5-added-item"><span class="item-label">📝 ${otherExpenseName || 'Other'}</span><span class="item-value">${fmt(otherExpenseAmt)}/yr</span></div>`;
+            expenseHTML += this._makeChip('📝', otherExpenseName || 'Other', `${fmt(otherExpenseAmt)}/yr`, 'other-expense', true);
         }
 
         // Estate assets (separate section)
         let estateHTML = '';
-        // Estate assets from the estate form
         if (this.estateAssets && this.estateAssets.length > 0) {
-            this.estateAssets.forEach(a => {
-                estateHTML += `<div class="step5-added-item"><span class="item-label">${a.isPrimaryResidence ? '🏠' : '🏢'} ${a.name}</span><span class="item-value">${fmt(a.value)}${a.isPrimaryResidence ? ' (tax-exempt)' : ''}</span></div>`;
+            this.estateAssets.forEach((a, i) => {
+                estateHTML += this._makeChip(a.isPrimaryResidence ? '🏠' : '🏢', a.name, `${fmt(a.value)}${a.isPrimaryResidence ? ' (tax-exempt)' : ''}`, `estate-${i}`, true);
             });
         }
-        // Life insurance
         const lifeIns = parseFloat(document.getElementById('life-insurance-amount')?.value) || 0;
         if (lifeIns > 0) {
-            estateHTML += `<div class="step5-added-item"><span class="item-label">🛡️ Life Insurance</span><span class="item-value">${fmt(lifeIns)} (tax-free)</span></div>`;
+            estateHTML += this._makeChip('🛡️', 'Life Insurance', `${fmt(lifeIns)} (tax-free)`, 'life-insurance', true);
         }
-        // Vehicle/collectible
         const vehicleName = document.getElementById('vehicle-name')?.value;
         const vehicleVal = parseFloat(document.getElementById('vehicle-value')?.value) || 0;
         if (vehicleVal > 0) {
-            estateHTML += `<div class="step5-added-item"><span class="item-label">🚗 ${vehicleName || 'Vehicle'}</span><span class="item-value">${fmt(vehicleVal)}</span></div>`;
+            estateHTML += this._makeChip('🚗', vehicleName || 'Vehicle', fmt(vehicleVal), 'vehicle', true);
         }
-        // Other estate
         const otherEstateName = document.getElementById('other-estate-name')?.value;
         const otherEstateVal = parseFloat(document.getElementById('other-estate-value')?.value) || 0;
         if (otherEstateVal > 0) {
-            estateHTML += `<div class="step5-added-item"><span class="item-label">📝 ${otherEstateName || 'Other'}</span><span class="item-value">${fmt(otherEstateVal)}</span></div>`;
+            estateHTML += this._makeChip('📝', otherEstateName || 'Other', fmt(otherEstateVal), 'other-estate', true);
         }
         const estateContainer = document.getElementById('added-estate-items');
         if (estateContainer) estateContainer.innerHTML = estateHTML;
         
         incomeContainer.innerHTML = incomeHTML;
         expenseContainer.innerHTML = expenseHTML;
+
+        // Update dropdown visibility (hide added single-use items)
+        this._updateDropdownVisibility();
+
+        // Wire chip click handlers (edit + delete)
+        document.querySelectorAll('.step5-added-item').forEach(chip => {
+            const editType = chip.dataset.editType;
+            if (!editType) return;
+            
+            // Tap chip to re-edit
+            chip.addEventListener('click', (e) => {
+                if (e.target.classList.contains('chip-delete')) return; // Let delete handle itself
+                // For windfall/estate indexed items, just open the parent form
+                let formType = editType;
+                if (editType.startsWith('windfall-')) formType = 'windfall';
+                else if (editType.startsWith('estate-')) formType = 'estate';
+                const form = document.getElementById('form-' + formType);
+                if (form) {
+                    document.querySelectorAll('.step5-form').forEach(f => f.classList.add('hidden'));
+                    form.classList.remove('hidden');
+                    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+        });
+
+        // Wire delete buttons
+        document.querySelectorAll('.chip-delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const type = btn.dataset.delete;
+                if (type.startsWith('windfall-')) {
+                    const idx = parseInt(type.split('-')[1]);
+                    if (this.windfalls) this.windfalls.splice(idx, 1);
+                    this._updateStep5AddedItems();
+                } else if (type.startsWith('estate-')) {
+                    const idx = parseInt(type.split('-')[1]);
+                    if (this.estateAssets) this.estateAssets.splice(idx, 1);
+                    this._updateStep5AddedItems();
+                } else {
+                    this._removeItem(type);
+                }
+            });
+        });
     },
 
     _setupCalculate() {
