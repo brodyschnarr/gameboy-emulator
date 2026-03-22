@@ -107,6 +107,97 @@
     color: white;
 }
 
+/* Dark mode — region buttons */
+[data-theme="dark"] .region-btn {
+    color: var(--text);
+    background: var(--card-bg);
+}
+[data-theme="dark"] .region-btn:hover {
+    background: #1e3a5f;
+}
+[data-theme="dark"] .region-btn.afford-cheap,
+[data-theme="dark"] .region-btn.afford-below {
+    background: #0f2918;
+    border-color: #22c55e;
+    color: #86efac;
+}
+[data-theme="dark"] .region-btn.afford-above {
+    background: #2a1a05;
+    border-color: #f97316;
+    color: #fdba74;
+}
+[data-theme="dark"] .region-btn.afford-expensive {
+    background: #2a0a0a;
+    border-color: #ef4444;
+    color: #fca5a5;
+}
+[data-theme="dark"] .region-btn.active {
+    background: #3b82f6 !important;
+    color: white !important;
+}
+
+/* Dark mode — light blue backgrounds */
+[data-theme="dark"] .income-benchmark,
+[data-theme="dark"] .benchmark-info,
+[data-theme="dark"] .info-card {
+    background: #1e293b;
+    color: var(--text);
+}
+
+/* Dark mode — misc elements with hardcoded colors */
+[data-theme="dark"] .collapsible-header {
+    color: var(--text);
+}
+[data-theme="dark"] .hint,
+[data-theme="dark"] .field-hint,
+[data-theme="dark"] .tagline {
+    color: #94a3b8;
+}
+[data-theme="dark"] .household-income-display {
+    background: var(--card-bg);
+    color: var(--text);
+}
+[data-theme="dark"] .region-picker {
+    background: var(--card-bg);
+    border-color: var(--border);
+}
+[data-theme="dark"] .region-picker h3 {
+    color: var(--text);
+}
+[data-theme="dark"] .chart-container {
+    background: var(--card-bg);
+}
+[data-theme="dark"] .modal-content {
+    background: var(--card-bg);
+    color: var(--text);
+}
+[data-theme="dark"] .spending-check {
+    color: var(--text);
+}
+[data-theme="dark"] .year-row {
+    border-color: var(--border);
+    color: var(--text);
+}
+[data-theme="dark"] .year-row:hover {
+    background: #1e293b;
+}
+[data-theme="dark"] .year-detail {
+    background: #0f172a;
+    color: #cbd5e1;
+}
+[data-theme="dark"] .step5-form-inline {
+    background: #1e293b;
+    border-color: var(--border);
+}
+[data-theme="dark"] .lifestyle-tier-card {
+    background: var(--card-bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+[data-theme="dark"] .canada-map-container {
+    background: var(--card-bg);
+}
+
 /* Dark mode toggle button */
 .theme-toggle {
     position: absolute;
