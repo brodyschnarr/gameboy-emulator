@@ -1588,28 +1588,40 @@ const AppV4 = {
         }
 
         // Email report modal
-        const emailBtn = document.getElementById('btn-email-report');
         const emailModal = document.getElementById('email-modal');
         const cancelEmail = document.getElementById('btn-cancel-email');
         const sendReport = document.getElementById('btn-send-report');
         
-        if (emailBtn && emailModal) {
-            emailBtn.addEventListener('click', () => emailModal.classList.remove('hidden'));
-            cancelEmail?.addEventListener('click', () => emailModal.classList.add('hidden'));
-            emailModal.addEventListener('click', (e) => { if (e.target === emailModal) emailModal.classList.add('hidden'); });
-            sendReport?.addEventListener('click', () => this._sendEmailReport());
-        }
+        document.getElementById('btn-email-report')?.addEventListener('click', () => emailModal?.classList.remove('hidden'));
+        cancelEmail?.addEventListener('click', () => emailModal?.classList.add('hidden'));
+        emailModal?.addEventListener('click', (e) => { if (e.target === emailModal) emailModal.classList.add('hidden'); });
+        sendReport?.addEventListener('click', () => this._sendEmailReport());
         
         // Edit button → back to inputs
-        const editBtn = document.getElementById('btn-edit-inputs');
-        if (editBtn) {
-            editBtn.addEventListener('click', () => {
-                document.getElementById('results')?.classList.add('hidden');
-                this._showStep('basic');
-            });
-        }
+        document.getElementById('btn-edit-inputs')?.addEventListener('click', () => {
+            document.getElementById('results')?.classList.add('hidden');
+            document.getElementById('email-fixed-bar').style.display = 'none';
+            this._showStep('basic');
+        });
         
-        // Spending/Savings adjusters
+        // Plan/Tweak tabs
+        document.querySelectorAll('.plan-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const mode = tab.dataset.planTab;
+                document.querySelectorAll('.plan-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const tweakPanel = document.getElementById('tweak-panel');
+                if (mode === 'tweak') {
+                    tweakPanel?.classList.remove('hidden');
+                    this._updateTweakDisplay();
+                } else {
+                    tweakPanel?.classList.add('hidden');
+                }
+            });
+        });
+        
+        // Spending/Savings/Age adjusters
         this._setupAdjusters();
     },
 
@@ -2979,6 +2991,12 @@ const AppV4 = {
                 document.getElementById(`step-${s}`)?.classList.add('hidden');
             });
             document.getElementById('results')?.classList.remove('hidden');
+            document.getElementById('email-fixed-bar').style.display = 'block';
+            
+            // Reset tweak tab to "Your Plan"
+            document.querySelectorAll('.plan-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.plan-tab[data-plan-tab="plan"]')?.classList.add('active');
+            document.getElementById('tweak-panel')?.classList.add('hidden');
 
             // NOW display results (charts will draw to visible parent)
             this.currentScenario = 'base';

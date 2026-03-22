@@ -1125,55 +1125,50 @@
         ═══════════════════════════════════════ -->
         <section id="results" class="hidden">
             
+            <!-- Plan/Tweak tabs -->
+            <div class="plan-tabs" id="plan-tabs">
+                <button class="plan-tab active" data-plan-tab="plan">Your Plan</button>
+                <button class="plan-tab" data-plan-tab="tweak">Tweak</button>
+            </div>
+
+            <!-- Tweak panel (hidden by default, shown when Tweak tab active) -->
+            <div class="card tweak-panel hidden" id="tweak-panel">
+                <div class="tweak-row">
+                    <label class="tweak-label">Retirement Spending</label>
+                    <div class="tweak-control">
+                        <button class="tweak-btn" data-tweak="spending" data-dir="-1">−</button>
+                        <span class="tweak-value" id="tweak-spending">$0/yr</span>
+                        <button class="tweak-btn" data-tweak="spending" data-dir="1">+</button>
+                    </div>
+                </div>
+                <div class="tweak-row">
+                    <label class="tweak-label">Monthly Savings</label>
+                    <div class="tweak-control">
+                        <button class="tweak-btn" data-tweak="savings" data-dir="-1">−</button>
+                        <span class="tweak-value" id="tweak-savings">$0/mo</span>
+                        <button class="tweak-btn" data-tweak="savings" data-dir="1">+</button>
+                    </div>
+                </div>
+                <div class="tweak-row">
+                    <label class="tweak-label">Retirement Age</label>
+                    <div class="tweak-control">
+                        <button class="tweak-btn" data-tweak="retireAge" data-dir="-1">−</button>
+                        <span class="tweak-value" id="tweak-retire-age">65</span>
+                        <button class="tweak-btn" data-tweak="retireAge" data-dir="1">+</button>
+                    </div>
+                </div>
+                <div class="tweak-actions">
+                    <button type="button" class="btn-primary btn-sm" id="btn-tweak-apply">Apply</button>
+                    <button type="button" class="btn-link btn-sm" id="btn-tweak-reset">Reset</button>
+                    <button type="button" class="btn-link btn-sm" id="btn-edit-inputs" style="margin-left:auto;">✏️ Edit full plan</button>
+                </div>
+            </div>
+
             <div id="status-banner" class="card status-banner"></div>
 
-            <!-- Spending Optimizer (top of results) -->
+            <!-- Spending Optimizer -->
             <section class="card hidden" id="spending-optimizer">
                 <div id="spending-optimizer-content"></div>
-            </section>
-
-            <!-- Actions: Email + Tweak -->
-            <div class="results-actions-bar">
-                <button type="button" class="btn-email-inline" id="btn-email-report">📧 Get Your Report (PDF)</button>
-            </div>
-            
-            <section class="card tweak-section" id="tweak-section">
-                <details id="tweak-details">
-                    <summary class="tweak-summary">🔧 Tweak Your Plan</summary>
-                    <div class="tweak-content">
-                        <div class="tweak-row">
-                            <label class="tweak-label">Retirement Spending</label>
-                            <div class="tweak-control">
-                                <button class="tweak-btn" data-tweak="spending" data-dir="-1">−</button>
-                                <span class="tweak-value" id="tweak-spending">$0/yr</span>
-                                <button class="tweak-btn" data-tweak="spending" data-dir="1">+</button>
-                            </div>
-                        </div>
-                        <div class="tweak-row">
-                            <label class="tweak-label">Monthly Savings</label>
-                            <div class="tweak-control">
-                                <button class="tweak-btn" data-tweak="savings" data-dir="-1">−</button>
-                                <span class="tweak-value" id="tweak-savings">$0/mo</span>
-                                <button class="tweak-btn" data-tweak="savings" data-dir="1">+</button>
-                            </div>
-                        </div>
-                        <div class="tweak-row">
-                            <label class="tweak-label">Retirement Age</label>
-                            <div class="tweak-control">
-                                <button class="tweak-btn" data-tweak="retireAge" data-dir="-1">−</button>
-                                <span class="tweak-value" id="tweak-retire-age">65</span>
-                                <button class="tweak-btn" data-tweak="retireAge" data-dir="1">+</button>
-                            </div>
-                        </div>
-                        <div class="tweak-actions">
-                            <button type="button" class="btn-primary btn-sm" id="btn-tweak-apply">Apply Changes</button>
-                            <button type="button" class="btn-link btn-sm" id="btn-tweak-reset">Reset</button>
-                        </div>
-                        <div class="tweak-edit-link">
-                            <button type="button" class="btn-link" id="btn-edit-inputs">✏️ Edit full plan details</button>
-                        </div>
-                    </div>
-                </details>
             </section>
 
             <!-- Retirement Narrative -->
@@ -1244,7 +1239,10 @@
 
             <!-- Tax & Withdrawal: removed — info now in year-by-year tooltip -->
 
-            <!-- Email CTA moved to after spending check -->
+            <!-- Fixed email button at bottom -->
+            <div class="email-fixed-bar" id="email-fixed-bar">
+                <button type="button" class="btn-email-fixed" id="btn-email-report">📧 Get Your Report (PDF)</button>
+            </div>
             
             <!-- Email modal -->
             <div id="email-modal" class="modal hidden">
@@ -1354,34 +1352,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000084"></script>
-    <script src="cpp-calculator.js?v=17&t=24000084"></script>
-    <script src="benchmarks.js?v=17&t=24000084"></script>
-    <script src="lifestyle-data.js?v=17&t=24000084"></script>
-    <script src="regional-data.js?v=18&t=24000084"></script>
-    <script src="canada-map.js?v=18&t=24000084"></script>
-    <script src="income-sources.js?v=17&t=24000084"></script>
-    <script src="deep-dive.js?v=17&t=24000084"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000084"></script>
-    <script src="scenario-manager.js?v=17&t=24000084"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000084"></script>
-    <script src="calc.js?v=17&t=24000084"></script>
-    <script src="app-round6-debug.js?v=17&t=24000084"></script>
+    <script src="canada-tax.js?v=17&t=24000085"></script>
+    <script src="cpp-calculator.js?v=17&t=24000085"></script>
+    <script src="benchmarks.js?v=17&t=24000085"></script>
+    <script src="lifestyle-data.js?v=17&t=24000085"></script>
+    <script src="regional-data.js?v=18&t=24000085"></script>
+    <script src="canada-map.js?v=18&t=24000085"></script>
+    <script src="income-sources.js?v=17&t=24000085"></script>
+    <script src="deep-dive.js?v=17&t=24000085"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000085"></script>
+    <script src="scenario-manager.js?v=17&t=24000085"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000085"></script>
+    <script src="calc.js?v=17&t=24000085"></script>
+    <script src="app-round6-debug.js?v=17&t=24000085"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000084"></script>
-    <script src="monte-carlo.js?v=17&t=24000084"></script>
-    <script src="tax-optimizer.js?v=17&t=24000084"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000084"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000084"></script>
-    <script src="advanced-charts.js?v=17&t=24000084"></script>
-    <script src="interactive-sliders.js?v=17&t=24000084"></script>
-    <script src="scenario-storage.js?v=17&t=24000084"></script>
-    <script src="windfalls.js?v=17&t=24000084"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000084"></script>
+    <script src="error-handler.js?v=17&t=24000085"></script>
+    <script src="monte-carlo.js?v=17&t=24000085"></script>
+    <script src="tax-optimizer.js?v=17&t=24000085"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000085"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000085"></script>
+    <script src="advanced-charts.js?v=17&t=24000085"></script>
+    <script src="interactive-sliders.js?v=17&t=24000085"></script>
+    <script src="scenario-storage.js?v=17&t=24000085"></script>
+    <script src="windfalls.js?v=17&t=24000085"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000085"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000084"></script>
+    <script src="slider-inputs.js?v=17&t=24000085"></script>
 
     <!-- Diagnostics removed -->
 

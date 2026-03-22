@@ -3806,55 +3806,43 @@ input:focus {
 }
 .region-btn.active .region-cost-tag { opacity: 0.9; }
 
-/* ═══ Results Actions Bar ═══ */
-.results-actions-bar {
-    text-align: center;
+/* ═══ Plan/Tweak Tabs ═══ */
+.plan-tabs {
+    display: flex;
+    gap: 0;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 3px;
     margin-bottom: 12px;
 }
-.btn-email-inline {
-    background: #3b82f6;
-    color: white;
+.plan-tab {
+    flex: 1;
+    padding: 8px 12px;
     border: none;
-    padding: 10px 24px;
-    border-radius: 8px;
+    background: transparent;
+    color: #64748b;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    width: 100%;
-    transition: background 0.2s;
+    border-radius: 6px;
+    transition: all 0.15s;
 }
-.btn-email-inline:active {
-    background: #2563eb;
+.plan-tab.active {
+    background: white;
+    color: #1e293b;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* ═══ Tweak Your Plan ═══ */
-.tweak-section {
+/* ═══ Tweak Panel ═══ */
+.tweak-panel {
     margin-bottom: 12px;
 }
-.tweak-summary {
-    font-size: 15px;
-    font-weight: 600;
-    color: #334155;
-    cursor: pointer;
-    padding: 4px 0;
-    list-style: none;
-}
-.tweak-summary::-webkit-details-marker { display: none; }
-.tweak-summary::after {
-    content: ' ▸';
-    color: #94a3b8;
-}
-details[open] .tweak-summary::after {
-    content: ' ▾';
-}
-.tweak-content {
-    margin-top: 12px;
-}
+.tweak-panel.hidden { display: none; }
 .tweak-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 0;
+    padding: 10px 0;
     border-bottom: 1px solid #f1f5f9;
 }
 .tweak-row:last-of-type { border-bottom: none; }
@@ -3866,11 +3854,11 @@ details[open] .tweak-summary::after {
 .tweak-control {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 .tweak-btn {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     border: 1.5px solid #cbd5e1;
     background: white;
@@ -3890,25 +3878,51 @@ details[open] .tweak-summary::after {
     transform: scale(0.93);
 }
 .tweak-value {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     color: #1e293b;
-    min-width: 80px;
+    min-width: 85px;
     text-align: center;
 }
 .tweak-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     margin-top: 12px;
-    padding-top: 8px;
+    padding-top: 10px;
     border-top: 1px solid #e2e8f0;
 }
-.tweak-edit-link {
-    text-align: center;
-    margin-top: 8px;
+
+/* ═══ Fixed Email Bar ═══ */
+.email-fixed-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 10px 16px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+    display: none;
 }
-.tweak-edit-link .btn-link {
-    font-size: 13px;
-    color: #64748b;
+.btn-email-fixed {
+    display: block;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-email-fixed:active {
+    background: #2563eb;
 }

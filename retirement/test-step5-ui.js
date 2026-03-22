@@ -110,12 +110,13 @@ const showStepMatch = appJS.match(/_showStep[\s\S]{0,500}healthcare[\s\S]{0,200}
 // Alternative: search for the call near healthcare step
 assert(appJS.includes("_updateStep5AddedItems"), 'Chip updater called');
 
-// ═══ Tweak Your Plan Tests ═══
-console.log('\n═══ Tweak Your Plan Tests ═══\n');
+// ═══ Plan/Tweak Tab Tests ═══
+console.log('\n═══ Plan/Tweak Tab Tests ═══\n');
 
-assert(indexHTML.includes('tweak-section'), 'Tweak section exists');
-assert(indexHTML.includes('tweak-details'), 'Tweak uses details/summary');
-assert(indexHTML.includes('Tweak Your Plan'), 'Tweak title present');
+assert(indexHTML.includes('plan-tabs'), 'Plan tabs container exists');
+assert(indexHTML.includes('data-plan-tab="plan"'), 'Your Plan tab exists');
+assert(indexHTML.includes('data-plan-tab="tweak"'), 'Tweak tab exists');
+assert(indexHTML.includes('tweak-panel'), 'Tweak panel exists');
 assert(indexHTML.includes('data-tweak="spending"'), 'Spending tweak buttons exist');
 assert(indexHTML.includes('data-tweak="savings"'), 'Savings tweak buttons exist');
 assert(indexHTML.includes('data-tweak="retireAge"'), 'Retire age tweak buttons exist');
@@ -133,28 +134,30 @@ assert(appJS.includes('_tweakAdj'), 'Tweak adjustments tracked');
 assert(appJS.includes('_runSpendingOptimizer'), 'Spending optimizer re-runs on tweak');
 assert(appJS.includes('_baseInputs'), 'Base inputs stored for adjustments');
 
-// Email after spending check
-assert(indexHTML.includes('btn-email-inline'), 'Inline email button ID');
-assert(indexHTML.includes('results-actions-bar'), 'Actions bar exists');
-assert(cssFile.includes('btn-email-inline'), 'Email button styled');
+// Fixed email bar
+assert(indexHTML.includes('email-fixed-bar'), 'Fixed email bar exists');
+assert(indexHTML.includes('btn-email-fixed'), 'Fixed email button class');
+assert(cssFile.includes('position: fixed'), 'Email bar uses position: fixed');
+assert(cssFile.includes('email-fixed-bar'), 'Email bar styled');
+assert(appJS.includes("email-fixed-bar"), 'Email bar shown/hidden in JS');
 
 // Edit button goes back to inputs
 assert(appJS.includes('btn-edit-inputs'), 'Edit button wired in JS');
 
-// No old scenario tabs or sticky top bar
-assert(!indexHTML.includes('results-top-bar'), 'Old top bar removed');
-assert(!indexHTML.includes('data-scenario="save500more"'), 'Old scenario tabs removed');
+// Tab switching wired
+assert(appJS.includes('plan-tab'), 'Plan tab switching in JS');
+assert(appJS.includes('tweak-panel'), 'Tweak panel toggled in JS');
 
 // ═══ Floating Email CTA ═══
 console.log('\n═══ Email Report Tests ═══\n');
 
-assert(indexHTML.includes('results-actions-bar'), 'Results actions bar exists');
+assert(indexHTML.includes('email-fixed-bar'), 'Fixed email bar in HTML');
 assert(indexHTML.includes('btn-email-report'), 'Email button exists');
 assert(indexHTML.includes('email-modal'), 'Email modal exists');
 assert(indexHTML.includes('report-email'), 'Email input exists');
 assert(indexHTML.includes('btn-send-report'), 'Send report button exists');
-assert(cssFile.includes('btn-email-inline'), 'Email button styled');
-assert(cssFile.includes('results-actions-bar'), 'Actions bar styled');
+assert(cssFile.includes('btn-email-fixed'), 'Email button styled');
+assert(cssFile.includes('.email-fixed-bar'), 'Email bar styled');
 assert(appJS.includes('_sendEmailReport'), 'Send email report method exists');
 assert(appJS.includes('_generatePDF'), 'PDF generation method exists');
 assert(appJS.includes('jsPDF'), 'Uses jsPDF library');
@@ -183,8 +186,8 @@ assert(indexHTML.includes('data-type="annuity">🔒'), 'Annuity uses 🔒');
 assert(indexHTML.includes('data-type="ltc">🏠'), 'LTC uses 🏠 (distinct from Healthcare 🏥)');
 assert(indexHTML.includes('data-type="healthcare">🏥'), 'Healthcare uses 🏥');
 
-// Tweak section styling
-assert(cssFile.includes('.tweak-section'), 'Tweak section styled');
+// Tweak panel styling
+assert(cssFile.includes('.tweak-panel'), 'Tweak panel styled');
 assert(cssFile.includes('.tweak-btn'), 'Tweak buttons styled');
 
 // ═══ Summary ═══
