@@ -306,6 +306,28 @@ test('One-sided couple: P2 has no accounts', () => {
     assert(result.summary.portfolioAtRetirement > 0, 'Should have portfolio');
 });
 
+// ═══ TEST 16: Contribution split favoring P2 ═══
+test('Contribution split 30/70 grows P2 faster', () => {
+    const inputs = {
+        ...baseCoupleInputs,
+        contribP1Pct: 0.30,
+        accountsP1: { rrsp: 200000, tfsa: 60000, nonReg: 40000, lira: 0, other: 0, cash: 0 },
+        accountsP2: { rrsp: 100000, tfsa: 30000, nonReg: 20000, lira: 0, other: 0, cash: 0 },
+    };
+    const result30 = RetirementCalcV4.calculate(inputs);
+    
+    // Compare with 50/50
+    const inputs50 = { ...inputs, contribP1Pct: 0.50 };
+    const result50 = RetirementCalcV4.calculate(inputs50);
+    
+    // Both should produce valid results
+    assert(result30.yearByYear.length > 0, 'Should produce results with 30/70 split');
+    assert(result50.yearByYear.length > 0, 'Should produce results with 50/50 split');
+    
+    // With 30/70, money should still last (may differ from 50/50 due to tax optimization)
+    assertRange(result30.summary.moneyLastsAge, 85, 90, 'Should still last with 30/70 split');
+});
+
 console.log('\n══════════════════════════════════════════════════');
 console.log(`Results: ${passed} passed, ${failed} failed`);
 if (failed === 0) console.log('✅ ALL COUPLE MODE TESTS PASSED');

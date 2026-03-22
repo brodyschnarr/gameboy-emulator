@@ -1385,6 +1385,7 @@ const AppV4 = {
                 if (p2) p2.classList.add('hidden');
             });
             this.accountMode = 'joint';
+            document.getElementById('couple-contrib-split')?.classList.add('hidden');
         });
         document.getElementById('accounts-separate')?.addEventListener('click', () => {
             document.getElementById('accounts-separate').classList.add('active');
@@ -1407,6 +1408,24 @@ const AppV4 = {
                 }
             });
             this.accountMode = 'separate';
+            document.getElementById('couple-contrib-split')?.classList.remove('hidden');
+        });
+        
+        // Equalize button: set contribution split to favor the partner with less savings
+        document.getElementById('btn-equalize-contrib')?.addEventListener('click', () => {
+            const pv = (id) => parseFloat(document.getElementById(id)?.value) || 0;
+            const p1Total = pv('rrsp-p1') + pv('tfsa-p1') + pv('nonreg-p1') + pv('lira-p1') + pv('other-p1') + pv('cash-p1');
+            const p2Total = pv('rrsp-p2') + pv('tfsa-p2') + pv('nonreg-p2') + pv('lira-p2') + pv('other-p2') + pv('cash-p2');
+            const total = p1Total + p2Total;
+            if (total <= 0) { 
+                document.getElementById('contrib-p1-pct').value = 50;
+                document.getElementById('contrib-p2-pct').value = 50;
+                return;
+            }
+            // Give more to the person with less
+            const p1Share = total > 0 ? Math.round((1 - p1Total / total) * 100) : 50;
+            document.getElementById('contrib-p1-pct').value = Math.max(10, Math.min(90, p1Share));
+            document.getElementById('contrib-p2-pct').value = 100 - Math.max(10, Math.min(90, p1Share));
         });
 
         setupDropdown('btn-add-income-dropdown', 'income-dropdown-menu');
@@ -2385,6 +2404,8 @@ const AppV4 = {
                     </div>
                 </div>
 
+                ${this._getCoupleOptimizationCallout(inputs, comparison)}
+
                 <details class="tax-explainer">
                     <summary>How does this work?</summary>
                     <div class="explainer-content">
@@ -2396,6 +2417,38 @@ const AppV4 = {
         } catch (e) {
             section.classList.add('hidden');
         }
+    },
+
+    _getCoupleOptimizationCallout(inputs, comparison) {
+        if (!inputs.accountsP1 || !inputs.accountsP2) return '';
+        try {
+            // Compare separate vs pooled
+            const pooledInputs = { ...inputs, accountsP1: undefined, accountsP2: undefined };
+            const pooledComparison = RetirementCalcV4.compareTaxStrategies(pooledInputs);
+            
+            const sepTax = comparison.smart.totalTax;
+            const poolTax = pooledComparison.smart.totalTax;
+            const sepOAS = comparison.smart.totalOAS;
+            const poolOAS = pooledComparison.smart.totalOAS;
+            
+            const taxSaved = poolTax - sepTax;
+            const oasSaved = sepOAS - poolOAS;
+            const totalBenefit = taxSaved + oasSaved;
+            
+            if (totalBenefit < 500) return '';
+            
+            const fmt = (v) => '$' + Math.abs(Math.round(v)).toLocaleString();
+            const items = [];
+            if (taxSaved > 500) items.push(`💰 <strong>${fmt(taxSaved)}</strong> less tax by splitting withdrawals`);
+            if (oasSaved > 500) items.push(`🏛️ <strong>${fmt(oasSaved)}</strong> more OAS preserved`);
+            
+            return `
+                <div class="couple-optimization-callout" style="margin-top:12px;padding:12px 14px;background:var(--bg);border:2px solid var(--success);border-radius:10px;">
+                    <div style="font-weight:700;font-size:15px;margin-bottom:6px;">👫 Couple Optimization: ${fmt(totalBenefit)} saved</div>
+                    <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">By tracking accounts separately and optimizing who withdraws what:</div>
+                    <div style="font-size:13px;">${items.join('<br>')}</div>
+                </div>`;
+        } catch(e) { return ''; }
     },
 
     _generateRetirementNarrative(inputs, results) {
@@ -3547,6 +3600,11 @@ const AppV4 = {
                 ? (parseFloat(document.getElementById('cash-p1')?.value) || 0) + (parseFloat(document.getElementById('cash-p2')?.value) || 0)
                 : (parseFloat(document.getElementById('cash')?.value) || 0),
 
+            // Partner contribution split
+            contribP1Pct: this.accountMode === 'separate' 
+                ? (parseFloat(document.getElementById('contrib-p1-pct')?.value) || 50) / 100
+                : undefined,
+
             // Per-person accounts for couple separate tracking
             accountsP1: this.accountMode === 'separate' ? {
                 rrsp: parseFloat(document.getElementById('rrsp-p1')?.value) || 0,
@@ -4108,6 +4166,7 @@ const AppV4 = {
         'return-rate', 'inflation-rate', 'mer-fee', 'contribution-growth',
         'rrsp-p1', 'tfsa-p1', 'nonreg-p1', 'lira-p1', 'other-p1', 'cash-p1',
         'rrsp-p2', 'tfsa-p2', 'nonreg-p2', 'lira-p2', 'other-p2', 'cash-p2',
+        'contrib-p1-pct', 'contrib-p2-pct',
         'employer-pension', 'pension-start-age',
         'annuity-lump-sum', 'annuity-purchase-age', 'annuity-monthly-payout',
         'downsizing-age', 'downsizing-proceeds', 'downsizing-spending-change',

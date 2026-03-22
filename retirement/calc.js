@@ -106,6 +106,7 @@ const RetirementCalcV4 = {
             // Per-person accounts (couple mode separate tracking)
             accountsP1,  // { rrsp, tfsa, nonReg, lira, other, cash }
             accountsP2,  // { rrsp, tfsa, nonReg, lira, other, cash }
+            contribP1Pct,  // 0-1, how much of contributions go to P1
         } = inputs;
 
         const yearsToRetirement = retirementAge - currentAge;
@@ -226,6 +227,7 @@ const RetirementCalcV4 = {
             otherRetirementExpense: otherRetirementExpense || 0,
             accountsP1: accountsP1 || null,
             accountsP2: accountsP2 || null,
+            contribP1Pct: contribP1Pct,
         });
 
         // 5. Calculate probability of success
@@ -503,6 +505,7 @@ const RetirementCalcV4 = {
             otherRetirementExpense = 0,
             accountsP1 = null,
             accountsP2 = null,
+            contribP1Pct,
         } = params;
 
         // Couple separate accounts mode
@@ -710,14 +713,12 @@ const RetirementCalcV4 = {
                 balances.tfsa += tfsaContrib + refundToTFSA;
                 balances.nonReg += nonRegContrib + refundToNonReg;
 
-                // In couple mode, split contributions proportionally to existing balances
-                // (or 50/50 if both are zero)
+                // In couple mode, split contributions between partners
                 if (coupleMode) {
+                    const p1Ratio = contribP1Pct !== undefined ? contribP1Pct : 0.5;
                     const splitContrib = (amount, acctKey) => {
-                        const total = balP1[acctKey] + balP2[acctKey];
-                        const ratio = total > 0 ? balP1[acctKey] / total : 0.5;
-                        balP1[acctKey] += amount * ratio;
-                        balP2[acctKey] += amount * (1 - ratio);
+                        balP1[acctKey] += amount * p1Ratio;
+                        balP2[acctKey] += amount * (1 - p1Ratio);
                     };
                     splitContrib(rrspContrib, 'rrsp');
                     splitContrib(tfsaContrib + refundToTFSA, 'tfsa');
