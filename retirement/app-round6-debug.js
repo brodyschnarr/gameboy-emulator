@@ -1128,7 +1128,6 @@ const AppV4 = {
     _setupPostRetirementWork() {
         this.postRetirementWorkItems = [];
         
-        const addBtn = document.getElementById('btn-add-post-retirement-work');
         const form = document.getElementById('form-post-retirement-work');
         const saveBtn = document.getElementById('btn-save-prt-work');
         const cancelBtn = document.getElementById('btn-cancel-prt-work');
@@ -1140,21 +1139,9 @@ const AppV4 = {
             if (partnerOpt) partnerOpt.style.display = 'none';
         }
         
-        if (addBtn && form) {
-            addBtn.addEventListener('click', () => {
-                form.classList.remove('hidden');
-                addBtn.classList.add('hidden');
-                // Default ages based on retirement age
-                const retAge = parseInt(document.getElementById('retirement-age')?.value) || 65;
-                document.getElementById('prt-start').value = retAge;
-                document.getElementById('prt-end').value = retAge + 5;
-            });
-        }
-        
-        if (cancelBtn && form && addBtn) {
+        if (cancelBtn && form) {
             cancelBtn.addEventListener('click', () => {
                 form.classList.add('hidden');
-                addBtn.classList.remove('hidden');
             });
         }
         
@@ -1180,7 +1167,6 @@ const AppV4 = {
                 
                 // Reset form
                 form.classList.add('hidden');
-                document.getElementById('btn-add-post-retirement-work').classList.remove('hidden');
                 document.getElementById('prt-income').value = '';
                 
                 this._renderPostRetirementWork();
@@ -1417,6 +1403,12 @@ const AppV4 = {
                     if (type === 'windfall' && (!this.windfalls || this.windfalls.length === 0)) {
                         this._showWindfallForm();
                     }
+                    // Auto-populate post-retirement work ages
+                    if (type === 'post-retirement-work') {
+                        const retAge = parseInt(document.getElementById('retirement-age')?.value) || 65;
+                        if (!document.getElementById('prt-start')?.value) document.getElementById('prt-start').value = retAge;
+                        if (!document.getElementById('prt-end')?.value) document.getElementById('prt-end').value = retAge + 5;
+                    }
                     // Refresh chips so items from other sections stay visible
                     this._updateStep5AddedItems();
                 }
@@ -1430,6 +1422,29 @@ const AppV4 = {
             btn.addEventListener('click', () => {
                 const type = btn.dataset.save;
                 if (type === 'healthcare') this.healthcareExplicitlyAdded = true;
+                
+                // Stock options — add as windfall of type 'shares'
+                if (type === 'stock-options') {
+                    const currentValue = parseFloat(document.getElementById('stock-current-value')?.value) || 0;
+                    const costBasis = parseFloat(document.getElementById('stock-cost-basis')?.value) || 0;
+                    const sellAge = parseInt(document.getElementById('stock-sell-age')?.value) || 55;
+                    const growth = parseFloat(document.getElementById('stock-growth')?.value) || 8;
+                    if (currentValue > 0) {
+                        if (!this.windfalls) this.windfalls = [];
+                        this.windfalls.push({
+                            name: 'Stock / Equity Options',
+                            type: 'shares',
+                            currentValue, costBasis, sellAge,
+                            growthRate: growth / 100,
+                            amount: currentValue
+                        });
+                        // Reset form
+                        document.getElementById('stock-current-value').value = '';
+                        document.getElementById('stock-cost-basis').value = '';
+                        document.getElementById('stock-sell-age').value = '';
+                    }
+                }
+                
                 const form = document.getElementById('form-' + type);
                 if (form) form.classList.add('hidden');
                 this._updateStep5AddedItems();
@@ -1501,13 +1516,15 @@ const AppV4 = {
             incomeHTML += `<div class="step5-added-item"><span class="item-label">🏡 Downsizing</span><span class="item-value">${fmt(downProceeds)} at age ${downAge}</span></div>`;
         }
         
-        // Windfalls
+        // Windfalls & Stock Options
         if (this.windfalls && this.windfalls.length > 0) {
             this.windfalls.forEach(w => {
-                const wName = w.name || (w.type === 'shares' ? 'Stock / Equity' : 'Windfall');
-                const wAmt = w.type === 'shares' ? (w.currentValue || w.amount || 0) : (w.amount || 0);
-                const wAge = w.type === 'shares' ? (w.sellAge || '?') : (w.year || '?');
-                incomeHTML += `<div class="step5-added-item"><span class="item-label">💰 ${wName}</span><span class="item-value">${fmt(wAmt)} at age ${wAge}</span></div>`;
+                const isStock = w.type === 'shares';
+                const icon = isStock ? '📈' : '💰';
+                const wName = w.name || (isStock ? 'Stock / Equity' : 'Windfall');
+                const wAmt = isStock ? (w.currentValue || w.amount || 0) : (w.amount || 0);
+                const wAge = isStock ? (w.sellAge || '?') : (w.year || '?');
+                incomeHTML += `<div class="step5-added-item"><span class="item-label">${icon} ${wName}</span><span class="item-value">${fmt(wAmt)} at age ${wAge}</span></div>`;
             });
         }
         
@@ -3039,8 +3056,18 @@ const AppV4 = {
             },
             spend20more: {
                 ...baseInputs,
-                windfalls: [...(baseInputs.windfalls || [])], // Deep clone windfalls
+                windfalls: [...(baseInputs.windfalls || [])],
                 annualSpending: Math.round(baseInputs.annualSpending * 1.2)
+            },
+            save500more: {
+                ...baseInputs,
+                windfalls: [...(baseInputs.windfalls || [])],
+                monthlyContribution: baseInputs.monthlyContribution + 500
+            },
+            save500less: {
+                ...baseInputs,
+                windfalls: [...(baseInputs.windfalls || [])],
+                monthlyContribution: Math.max(0, baseInputs.monthlyContribution - 500)
             }
         };
 

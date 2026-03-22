@@ -715,7 +715,8 @@
                     <div class="step5-dropdown hidden" id="income-dropdown-menu">
                         <button type="button" class="step5-dropdown-item" data-type="employer-pension">🏢 Employer Pension</button>
                         <button type="button" class="step5-dropdown-item" data-type="post-retirement-work">💼 Post-Retirement Work</button>
-                        <button type="button" class="step5-dropdown-item" data-type="windfall">💰 Windfall / Inheritance</button>
+                        <button type="button" class="step5-dropdown-item" data-type="windfall">💰 Windfall / Inheritance / Severance</button>
+                        <button type="button" class="step5-dropdown-item" data-type="stock-options">📈 Stock / Equity Options</button>
                         <button type="button" class="step5-dropdown-item" data-type="annuity">🔒 Annuity Purchase</button>
                         <button type="button" class="step5-dropdown-item" data-type="downsizing">🏡 Downsizing Plan</button>
                         <button type="button" class="step5-dropdown-item" data-type="dtc">♿ Disability Tax Credit</button>
@@ -790,6 +791,39 @@
                 </div>
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
                     <button type="button" class="btn-primary btn-sm" data-save="windfall">Done</button>
+                </div>
+            </div>
+
+            <div id="form-stock-options" class="step5-form hidden">
+                <div class="step5-form-header">📈 Stock / Equity Options</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label for="stock-current-value" style="font-size: 12px;">Current Value</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="stock-current-value" placeholder="100000" min="0" step="1000">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="stock-cost-basis" style="font-size: 12px;">Cost Basis</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="stock-cost-basis" placeholder="20000" min="0" step="1000">
+                        </div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
+                    <div>
+                        <label for="stock-sell-age" style="font-size: 12px;">Sell at Age</label>
+                        <input type="number" id="stock-sell-age" placeholder="55" min="18" max="100">
+                    </div>
+                    <div>
+                        <label for="stock-growth" style="font-size: 12px;">Growth (%/yr)</label>
+                        <input type="number" id="stock-growth" placeholder="8" min="0" max="30" step="1" value="8">
+                    </div>
+                </div>
+                <small class="input-hint">Capital gains taxed at 50% inclusion rate on the gain (value minus cost basis).</small>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="stock-options">Add</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="stock-options">Cancel</button>
                 </div>
             </div>
 
@@ -1098,6 +1132,8 @@
                 <button class="scenario-tab" data-scenario="retire5late">5 Yrs Later</button>
                 <button class="scenario-tab" data-scenario="spend20less">Spend 20% Less</button>
                 <button class="scenario-tab" data-scenario="spend20more">Spend 20% More</button>
+                <button class="scenario-tab" data-scenario="save500more">Save $500 More/mo</button>
+                <button class="scenario-tab" data-scenario="save500less">Save $500 Less/mo</button>
             </div>
 
             <div id="status-banner" class="card status-banner"></div>
@@ -1177,9 +1213,9 @@
 
             <!-- Tax & Withdrawal: removed — info now in year-by-year tooltip -->
 
-            <!-- Export actions -->
-            <div class="button-row">
-                <button type="button" class="btn-primary" id="btn-email-report">📧 Email My Report</button>
+            <!-- Floating email CTA (sticky at top of results) -->
+            <div class="floating-email-cta" id="floating-email-cta">
+                <button type="button" class="btn-email-floating" id="btn-email-report">📧 Get Your Report (PDF)</button>
             </div>
             
             <!-- Email modal -->
@@ -1290,34 +1326,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000080"></script>
-    <script src="cpp-calculator.js?v=17&t=24000080"></script>
-    <script src="benchmarks.js?v=17&t=24000080"></script>
-    <script src="lifestyle-data.js?v=17&t=24000080"></script>
-    <script src="regional-data.js?v=18&t=24000080"></script>
-    <script src="canada-map.js?v=18&t=24000080"></script>
-    <script src="income-sources.js?v=17&t=24000080"></script>
-    <script src="deep-dive.js?v=17&t=24000080"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000080"></script>
-    <script src="scenario-manager.js?v=17&t=24000080"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000080"></script>
-    <script src="calc.js?v=17&t=24000080"></script>
-    <script src="app-round6-debug.js?v=17&t=24000080"></script>
+    <script src="canada-tax.js?v=17&t=24000081"></script>
+    <script src="cpp-calculator.js?v=17&t=24000081"></script>
+    <script src="benchmarks.js?v=17&t=24000081"></script>
+    <script src="lifestyle-data.js?v=17&t=24000081"></script>
+    <script src="regional-data.js?v=18&t=24000081"></script>
+    <script src="canada-map.js?v=18&t=24000081"></script>
+    <script src="income-sources.js?v=17&t=24000081"></script>
+    <script src="deep-dive.js?v=17&t=24000081"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000081"></script>
+    <script src="scenario-manager.js?v=17&t=24000081"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000081"></script>
+    <script src="calc.js?v=17&t=24000081"></script>
+    <script src="app-round6-debug.js?v=17&t=24000081"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000080"></script>
-    <script src="monte-carlo.js?v=17&t=24000080"></script>
-    <script src="tax-optimizer.js?v=17&t=24000080"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000080"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000080"></script>
-    <script src="advanced-charts.js?v=17&t=24000080"></script>
-    <script src="interactive-sliders.js?v=17&t=24000080"></script>
-    <script src="scenario-storage.js?v=17&t=24000080"></script>
-    <script src="windfalls.js?v=17&t=24000080"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000080"></script>
+    <script src="error-handler.js?v=17&t=24000081"></script>
+    <script src="monte-carlo.js?v=17&t=24000081"></script>
+    <script src="tax-optimizer.js?v=17&t=24000081"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000081"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000081"></script>
+    <script src="advanced-charts.js?v=17&t=24000081"></script>
+    <script src="interactive-sliders.js?v=17&t=24000081"></script>
+    <script src="scenario-storage.js?v=17&t=24000081"></script>
+    <script src="windfalls.js?v=17&t=24000081"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000081"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000080"></script>
+    <script src="slider-inputs.js?v=17&t=24000081"></script>
 
     <!-- Diagnostics removed -->
 
