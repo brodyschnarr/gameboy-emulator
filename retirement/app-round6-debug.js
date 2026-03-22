@@ -3004,7 +3004,7 @@ const AppV4 = {
                 document.getElementById(`step-${s}`)?.classList.add('hidden');
             });
             document.getElementById('results')?.classList.remove('hidden');
-            document.getElementById('email-fixed-bar').style.display = 'block';
+            document.getElementById('email-fixed-bar').style.display = 'flex';
             
             // Reset tweak tab to "Your Plan"
             document.querySelectorAll('.plan-tab').forEach(t => t.classList.remove('active'));

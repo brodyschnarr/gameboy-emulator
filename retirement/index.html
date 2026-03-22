@@ -17,10 +17,11 @@
 </head>
 <body>
     
-    <header class="header">
+    <header class="header" style="position: relative;">
         <a href="hub.html" class="back-link">← Back to Hub</a>
         <h1>Retirement Planner</h1>
         <p class="tagline">Plan your Canadian retirement in 5 simple steps</p>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
     </header>
 
     <main>
@@ -1242,6 +1243,7 @@
             <!-- Fixed email button at bottom -->
             <div class="email-fixed-bar" id="email-fixed-bar">
                 <button type="button" class="btn-email-fixed" id="btn-email-report">📧 Get Your Report (PDF)</button>
+                <button type="button" class="btn-share-fixed" id="btn-share-link" onclick="ShareLink.copyToClipboard()">🔗 Share Plan</button>
             </div>
             
             <!-- Email modal -->
@@ -1352,34 +1354,71 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000086"></script>
-    <script src="cpp-calculator.js?v=17&t=24000086"></script>
-    <script src="benchmarks.js?v=17&t=24000086"></script>
-    <script src="lifestyle-data.js?v=17&t=24000086"></script>
-    <script src="regional-data.js?v=18&t=24000086"></script>
-    <script src="canada-map.js?v=18&t=24000086"></script>
-    <script src="income-sources.js?v=17&t=24000086"></script>
-    <script src="deep-dive.js?v=17&t=24000086"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000086"></script>
-    <script src="scenario-manager.js?v=17&t=24000086"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000086"></script>
-    <script src="calc.js?v=17&t=24000086"></script>
-    <script src="app-round6-debug.js?v=17&t=24000086"></script>
+    <script src="canada-tax.js?v=17&t=24000087"></script>
+    <script src="cpp-calculator.js?v=17&t=24000087"></script>
+    <script src="benchmarks.js?v=17&t=24000087"></script>
+    <script src="lifestyle-data.js?v=17&t=24000087"></script>
+    <script src="regional-data.js?v=18&t=24000087"></script>
+    <script src="canada-map.js?v=18&t=24000087"></script>
+    <script src="income-sources.js?v=17&t=24000087"></script>
+    <script src="deep-dive.js?v=17&t=24000087"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000087"></script>
+    <script src="scenario-manager.js?v=17&t=24000087"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000087"></script>
+    <script src="calc.js?v=17&t=24000087"></script>
+    <script src="app-round6-debug.js?v=17&t=24000087"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000086"></script>
-    <script src="monte-carlo.js?v=17&t=24000086"></script>
-    <script src="tax-optimizer.js?v=17&t=24000086"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000086"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000086"></script>
-    <script src="advanced-charts.js?v=17&t=24000086"></script>
-    <script src="interactive-sliders.js?v=17&t=24000086"></script>
-    <script src="scenario-storage.js?v=17&t=24000086"></script>
-    <script src="windfalls.js?v=17&t=24000086"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000086"></script>
+    <script src="error-handler.js?v=17&t=24000087"></script>
+    <script src="monte-carlo.js?v=17&t=24000087"></script>
+    <script src="tax-optimizer.js?v=17&t=24000087"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000087"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000087"></script>
+    <script src="advanced-charts.js?v=17&t=24000087"></script>
+    <script src="interactive-sliders.js?v=17&t=24000087"></script>
+    <script src="scenario-storage.js?v=17&t=24000087"></script>
+    <script src="windfalls.js?v=17&t=24000087"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000087"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000086"></script>
+    <script src="slider-inputs.js?v=18&t=24000087"></script>
+
+    <!-- Shareable links -->
+    <script src="share-link.js?v=1&t=24000087"></script>
+
+    <!-- Dark mode toggle + share link auto-load -->
+    <script>
+    // Dark mode
+    (function() {
+        const toggle = document.getElementById('theme-toggle');
+        const saved = localStorage.getItem('retirement_theme');
+        if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            if (toggle) toggle.textContent = '☀️';
+        }
+        if (toggle) {
+            toggle.addEventListener('click', function() {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    toggle.textContent = '🌙';
+                    localStorage.setItem('retirement_theme', 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    toggle.textContent = '☀️';
+                    localStorage.setItem('retirement_theme', 'dark');
+                }
+            });
+        }
+    })();
+
+    // Auto-load shared plan from URL
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof ShareLink !== 'undefined') {
+            ShareLink.loadFromURL();
+        }
+    });
+    </script>
 
     <!-- Diagnostics removed -->
 

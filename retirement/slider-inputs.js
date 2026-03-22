@@ -116,7 +116,27 @@
         labels.className = 'enhanced-slider-labels';
         labels.innerHTML = `<span>${formatValue(config.min, config.format)}</span><span>${formatValue(config.max, config.format)}</span>`;
 
-        wrapper.appendChild(display);
+        // Create +/- stepper buttons
+        const stepperRow = document.createElement('div');
+        stepperRow.className = 'enhanced-slider-stepper';
+
+        const btnMinus = document.createElement('button');
+        btnMinus.type = 'button';
+        btnMinus.className = 'stepper-btn stepper-minus';
+        btnMinus.textContent = '−';
+        btnMinus.setAttribute('aria-label', 'Decrease');
+
+        const btnPlus = document.createElement('button');
+        btnPlus.type = 'button';
+        btnPlus.className = 'stepper-btn stepper-plus';
+        btnPlus.textContent = '+';
+        btnPlus.setAttribute('aria-label', 'Increase');
+
+        stepperRow.appendChild(btnMinus);
+        stepperRow.appendChild(display);
+        stepperRow.appendChild(btnPlus);
+
+        wrapper.appendChild(stepperRow);
         wrapper.appendChild(slider);
         wrapper.appendChild(labels);
 
@@ -137,6 +157,28 @@
             slider.style.setProperty('--slider-pct', pct + '%');
         }
         updateTrackFill();
+
+        // ── Stepper buttons ──
+        function stepValue(direction) {
+            const current = parseFloat(input.value) || 0;
+            const newVal = current + (config.step * direction);
+            const clamped = Math.max(config.min, Math.min(config.max, newVal));
+            input.value = clamped;
+            slider.value = clamped;
+            display.textContent = formatValue(clamped, config.format);
+            updateTrackFill();
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        btnMinus.addEventListener('click', function(e) {
+            e.preventDefault();
+            stepValue(-1);
+        });
+        btnPlus.addEventListener('click', function(e) {
+            e.preventDefault();
+            stepValue(1);
+        });
 
         slider.addEventListener('input', function() {
             const val = parseFloat(this.value);
