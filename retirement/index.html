@@ -1107,11 +1107,6 @@
                 <div id="spending-optimizer-content"></div>
             </section>
 
-            <!-- Scenario Save/Compare -->
-            <div class="scenario-save-bar" id="scenario-save-bar">
-                <button type="button" class="btn-secondary btn-sm" id="btn-save-scenario">💾 Save Scenario</button>
-                <button type="button" class="btn-link btn-sm" id="btn-compare-scenarios" style="display:none;">📊 Compare Saved</button>
-            </div>
             <div id="scenario-compare-panel" class="hidden"></div>
 
             <!-- Retirement Narrative -->
@@ -1182,9 +1177,26 @@
 
             <!-- Tax & Withdrawal: removed — info now in year-by-year tooltip -->
 
-            <!-- Edit button only (Save via scenario) -->
+            <!-- Export actions -->
             <div class="button-row">
-                <button type="button" class="btn-secondary" id="btn-edit">✏️ Edit Inputs</button>
+                <button type="button" class="btn-primary" id="btn-email-report">📧 Email My Report</button>
+            </div>
+            
+            <!-- Email modal -->
+            <div id="email-modal" class="modal hidden">
+                <div class="modal-content" style="max-width: 400px;">
+                    <h3>📧 Email Your Retirement Report</h3>
+                    <p style="font-size: 14px; color: #64748b; margin-bottom: 16px;">We'll send a detailed PDF with your strategy comparison, projections, and personalized recommendations.</p>
+                    <div class="input-group">
+                        <label for="report-email">Email Address</label>
+                        <input type="email" id="report-email" placeholder="you@example.com" style="font-size: 16px;">
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 16px;">
+                        <button type="button" class="btn-primary" id="btn-send-report" style="flex: 1;">Send Report</button>
+                        <button type="button" class="btn-secondary" id="btn-cancel-email">Cancel</button>
+                    </div>
+                    <div id="email-status" style="margin-top: 12px; font-size: 13px; display: none;"></div>
+                </div>
             </div>
         </section>
 
@@ -1275,34 +1287,34 @@
     <!-- Scenario Modal removed - now using auto-run tabs -->
 
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000078"></script>
-    <script src="cpp-calculator.js?v=17&t=24000078"></script>
-    <script src="benchmarks.js?v=17&t=24000078"></script>
-    <script src="lifestyle-data.js?v=17&t=24000078"></script>
-    <script src="regional-data.js?v=18&t=24000078"></script>
-    <script src="canada-map.js?v=18&t=24000078"></script>
-    <script src="income-sources.js?v=17&t=24000078"></script>
-    <script src="deep-dive.js?v=17&t=24000078"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000078"></script>
-    <script src="scenario-manager.js?v=17&t=24000078"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000078"></script>
-    <script src="calc.js?v=17&t=24000078"></script>
-    <script src="app-round6-debug.js?v=17&t=24000078"></script>
+    <script src="canada-tax.js?v=17&t=24000079"></script>
+    <script src="cpp-calculator.js?v=17&t=24000079"></script>
+    <script src="benchmarks.js?v=17&t=24000079"></script>
+    <script src="lifestyle-data.js?v=17&t=24000079"></script>
+    <script src="regional-data.js?v=18&t=24000079"></script>
+    <script src="canada-map.js?v=18&t=24000079"></script>
+    <script src="income-sources.js?v=17&t=24000079"></script>
+    <script src="deep-dive.js?v=17&t=24000079"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000079"></script>
+    <script src="scenario-manager.js?v=17&t=24000079"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000079"></script>
+    <script src="calc.js?v=17&t=24000079"></script>
+    <script src="app-round6-debug.js?v=17&t=24000079"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000078"></script>
-    <script src="monte-carlo.js?v=17&t=24000078"></script>
-    <script src="tax-optimizer.js?v=17&t=24000078"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000078"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000078"></script>
-    <script src="advanced-charts.js?v=17&t=24000078"></script>
-    <script src="interactive-sliders.js?v=17&t=24000078"></script>
-    <script src="scenario-storage.js?v=17&t=24000078"></script>
-    <script src="windfalls.js?v=17&t=24000078"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000078"></script>
+    <script src="error-handler.js?v=17&t=24000079"></script>
+    <script src="monte-carlo.js?v=17&t=24000079"></script>
+    <script src="tax-optimizer.js?v=17&t=24000079"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000079"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000079"></script>
+    <script src="advanced-charts.js?v=17&t=24000079"></script>
+    <script src="interactive-sliders.js?v=17&t=24000079"></script>
+    <script src="scenario-storage.js?v=17&t=24000079"></script>
+    <script src="windfalls.js?v=17&t=24000079"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000079"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000078"></script>
+    <script src="slider-inputs.js?v=17&t=24000079"></script>
 
     <!-- Diagnostics removed -->
 

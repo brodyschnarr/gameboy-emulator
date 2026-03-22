@@ -224,7 +224,7 @@ const AppV5Enhanced = {
         if (!resultsDiv) return;
         
         let html = `
-            <div class="card">
+            <div class="card v5-enhanced-analysis">
                 <h2>📊 Advanced Analysis Results</h2>
                 
                 <!-- Tabs for different views -->
@@ -258,6 +258,10 @@ const AppV5Enhanced = {
                 </div>
             </div>
         `;
+        
+        // Remove any previous enhanced analysis section to prevent duplicates
+        const existing = resultsDiv.querySelector('.v5-enhanced-analysis');
+        if (existing) existing.remove();
         
         // CRITICAL: Do NOT use innerHTML += here!
         // innerHTML += serializes the entire DOM, destroying canvas bitmap data.

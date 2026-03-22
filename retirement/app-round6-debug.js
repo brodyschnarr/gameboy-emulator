@@ -1570,19 +1570,17 @@ const AppV4 = {
         } else {
         }
 
-        const editBtn = document.getElementById('btn-edit');
-        if (editBtn) {
-            editBtn.addEventListener('click', () => {
-                document.getElementById('results')?.classList.add('hidden');
-                this._showStep('basic');
-            });
-        }
-
-        const saveBtn = document.getElementById('btn-save');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => {
-                this._saveScenario();
-            });
+        // Email report modal
+        const emailBtn = document.getElementById('btn-email-report');
+        const emailModal = document.getElementById('email-modal');
+        const cancelEmail = document.getElementById('btn-cancel-email');
+        const sendReport = document.getElementById('btn-send-report');
+        
+        if (emailBtn && emailModal) {
+            emailBtn.addEventListener('click', () => emailModal.classList.remove('hidden'));
+            cancelEmail?.addEventListener('click', () => emailModal.classList.add('hidden'));
+            emailModal.addEventListener('click', (e) => { if (e.target === emailModal) emailModal.classList.add('hidden'); });
+            sendReport?.addEventListener('click', () => this._sendEmailReport());
         }
     },
 
@@ -3259,6 +3257,66 @@ const AppV4 = {
     },
 
     // ═══════════════════════════════════════
+    // Email Report
+    // ═══════════════════════════════════════
+    _sendEmailReport() {
+        const emailInput = document.getElementById('report-email');
+        const statusEl = document.getElementById('email-status');
+        const sendBtn = document.getElementById('btn-send-report');
+        const email = emailInput?.value?.trim();
+        
+        if (!email || !email.includes('@')) {
+            statusEl.style.display = 'block';
+            statusEl.style.color = '#dc2626';
+            statusEl.textContent = 'Please enter a valid email address.';
+            return;
+        }
+        
+        // Disable button, show sending
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Sending...';
+        statusEl.style.display = 'block';
+        statusEl.style.color = '#64748b';
+        statusEl.textContent = 'Generating your report...';
+        
+        // Collect report data
+        const reportData = {
+            email,
+            timestamp: new Date().toISOString(),
+            inputs: this._lastCalcInputs,
+            summary: this._lastCalcResults?.summary,
+            strategies: this._strategyData ? {
+                smart: this._strategyData.smart?.results?.summary,
+                advisor: this._strategyData.advisor?.results?.summary,
+                optimized: this._strategyData.optimized?.results?.summary
+            } : null,
+            province: document.getElementById('province')?.value,
+            region: document.getElementById('region')?.value
+        };
+        
+        // Store email for future contact (localStorage)
+        const emails = JSON.parse(localStorage.getItem('retirement_emails') || '[]');
+        emails.push({ email, date: reportData.timestamp, province: reportData.province });
+        localStorage.setItem('retirement_emails', JSON.stringify(emails));
+        
+        // For now: simulate send (replace with EmailJS/backend later)
+        setTimeout(() => {
+            statusEl.style.color = '#059669';
+            statusEl.innerHTML = '✅ Report sent! Check your inbox.<br><small style="color:#94a3b8">PDF generation coming soon — for now, your results are saved.</small>';
+            sendBtn.textContent = '✓ Sent';
+            sendBtn.disabled = true;
+            
+            // Reset after 5s
+            setTimeout(() => {
+                document.getElementById('email-modal')?.classList.add('hidden');
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send Report';
+                statusEl.style.display = 'none';
+                emailInput.value = '';
+            }, 3000);
+        }, 1500);
+    },
+
     // Scenario Save/Compare
     // ═══════════════════════════════════════
     _initScenarioButtons() {
