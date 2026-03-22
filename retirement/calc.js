@@ -242,7 +242,7 @@ const RetirementCalcV4 = {
             // Also check if portfolio couldn't meet spending need
             // (withdrawal + govt income significantly short of target spending)
             if (p.targetSpending > 0) {
-                const totalIncome = (p.withdrawal || 0) + (p.governmentIncome || 0) + (p.additionalIncome || 0) + (p.pensionIncome || 0) + (p.rentalIncome || 0) + (p.annuityIncome || 0) + (p.spouseAllowance || 0);
+                const totalIncome = (p.withdrawal || 0) + (p.governmentIncome || 0) + (p.additionalIncome || 0) + (p.pensionIncome || 0) + (p.rentalIncome || 0) + (p.annuityIncome || 0) + (p.spouseAllowance || 0) + (p.otherIncome || 0);
                 const shortfall = p.targetSpending - totalIncome;
                 if (shortfall > p.targetSpending * 0.1) return true; // >10% short = can't sustain
             }
@@ -1074,14 +1074,15 @@ const RetirementCalcV4 = {
                     spouseAllowance: Math.round(spouseAllowance),
                     taxableIncome: withdrawal.taxableIncome,
                     taxPaid: withdrawal.taxPaid,
-                    grossIncome: withdrawal.total + govIncome + additionalIncome + pensionIncome + rentalIncomeThisYear + annuityPayoutThisYear + spouseAllowance,
-                    afterTaxIncome: withdrawal.afterTax + govIncome + additionalIncome + pensionIncome + rentalIncomeThisYear + annuityPayoutThisYear + spouseAllowance,
+                    otherIncome: Math.round(otherIncomeInflated),
+                    grossIncome: withdrawal.total + govIncome + additionalIncome + pensionIncome + rentalIncomeThisYear + annuityPayoutThisYear + spouseAllowance + otherIncomeInflated,
+                    afterTaxIncome: withdrawal.afterTax + govIncome + additionalIncome + pensionIncome + rentalIncomeThisYear + annuityPayoutThisYear + spouseAllowance + otherIncomeInflated,
                     targetSpending: Math.round(totalNeed),
                     healthcareCost: Math.round(healthcareCost)
                 });
 
                 // Continue projecting even after depletion if there's government income
-                if (totalBalance <= 0 && govIncome + additionalIncome + pensionIncome + rentalIncomeThisYear + annuityPayoutThisYear <= 0) break;
+                if (totalBalance <= 0 && govIncome + additionalIncome + pensionIncome + rentalIncomeThisYear + annuityPayoutThisYear + otherIncomeInflated <= 0) break;
             }
         }
 
