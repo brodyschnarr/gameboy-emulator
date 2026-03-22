@@ -7,6 +7,18 @@ function fmtMoney(amount) {
     return '$' + Math.round(amount).toLocaleString();
 }
 
+// Format money with millions shorthand: $1.2M, $450K, $1,234
+function fmtCompact(amount) {
+    const n = Math.round(Math.abs(amount));
+    const sign = amount < 0 ? '-' : '';
+    if (n >= 1000000) {
+        const m = n / 1000000;
+        return sign + '$' + (m >= 10 ? Math.round(m) + 'M' : m.toFixed(1).replace(/\.0$/, '') + 'M');
+    }
+    if (n >= 10000) return sign + '$' + Math.round(n / 1000) + 'K';
+    return sign + '$' + n.toLocaleString();
+}
+
 // Check dependencies
 
 const AppV4 = {
@@ -1050,7 +1062,7 @@ const AppV4 = {
         
         section.classList.remove('hidden');
         
-        const fmt = (v) => '$' + Math.round(v).toLocaleString();
+        const fmt = (v) => fmtCompact(v);
         const keepLegacy = keepResults.summary.legacyAmount;
         const sellLegacy = sellResults.summary.legacyAmount;
         const diff = sellLegacy - keepLegacy;
@@ -1843,6 +1855,7 @@ const AppV4 = {
             const optMax = findMaxSpend({ cppStartAge:optParams.cppAge, oasStartAge:optParams.oasAge, cppStartAgeP2:optParams.cppAge, oasStartAgeP2:optParams.oasAge, _withdrawalStrategy:optParams.strategy });
 
             const fmt = (v) => '$' + Math.round(Math.abs(v)).toLocaleString();
+            const fmtC = (v) => fmtCompact(Math.abs(v));
 
             // Winner = highest max sustainable spending (the real question: "how much can I spend?")
             const allPlans = [
@@ -1874,29 +1887,29 @@ const AppV4 = {
                     <div class="strategy-col-header">${header}</div>
                     ${maxSpend ? `<div class="strategy-stat highlight"><span>Max Spending</span><span>${fmt(maxSpend)}/yr</span></div>` : ''}
                     <details class="strategy-details">
-                        <summary class="strategy-stat"><span>💰 Lifetime Tax</span><span>${fmt(thisLifetimeTax)}</span></summary>
-                        <div class="strategy-stat sub"><span>Income tax</span><span>${fmt(stats.tax)}</span></div>
+                        <summary class="strategy-stat"><span>💰 Lifetime Tax</span><span>${fmtC(thisLifetimeTax)}</span></summary>
+                        <div class="strategy-stat sub"><span>Income tax</span><span>${fmtC(stats.tax)}</span></div>
                         <div class="strategy-stat sub"><span>Avg/yr</span><span>${fmt(avgAnnualTax)}/yr</span></div>
-                        <div class="strategy-stat sub"><span>Estate tax</span><span>${fmt(stats.estateTax || 0)}</span></div>
+                        <div class="strategy-stat sub"><span>Estate tax</span><span>${fmtC(stats.estateTax || 0)}</span></div>
                     </details>
                     <details class="strategy-details">
-                        <summary class="strategy-stat"><span>🏛️ Gov Benefits</span><span>${fmt(govTotal)}</span></summary>
-                        <div class="strategy-stat sub"><span>CPP</span><span>${fmt(stats.cpp)}</span></div>
-                        <div class="strategy-stat sub"><span>OAS</span><span>${fmt(stats.oas)}</span></div>
-                        ${stats.gis > 0 ? `<div class="strategy-stat sub"><span>GIS</span><span>${fmt(stats.gis)}</span></div>` : ''}
+                        <summary class="strategy-stat"><span>🏛️ Gov Benefits</span><span>${fmtC(govTotal)}</span></summary>
+                        <div class="strategy-stat sub"><span>CPP</span><span>${fmtC(stats.cpp)}</span></div>
+                        <div class="strategy-stat sub"><span>OAS</span><span>${fmtC(stats.oas)}</span></div>
+                        ${stats.gis > 0 ? `<div class="strategy-stat sub"><span>GIS</span><span>${fmtC(stats.gis)}</span></div>` : ''}
                     </details>
                     <details class="strategy-details">
-                        <summary class="strategy-stat"><span>📋 Fees</span><span>${merFees !== undefined ? fmt(merFees) : '$0'}</span></summary>
+                        <summary class="strategy-stat"><span>📋 Fees</span><span>${merFees !== undefined ? fmtC(merFees) : '$0'}</span></summary>
                         <div class="strategy-stat sub"><span>MER rate</span><span>${merRate || '0'}%</span></div>
                         <div class="strategy-stat sub"><span>Avg/yr</span><span>${fmt(avgAnnualFee)}/yr</span></div>
                         <div class="strategy-stat sub hint"><span>Charged on portfolio balance each year</span></div>
                     </details>
                     <details class="strategy-details">
-                        <summary class="strategy-stat"><span>🏠 Estate</span><span>${fmt(stats.netEstate)}</span></summary>
-                        <div class="strategy-stat sub"><span>Portfolio at death</span><span>${fmt(stats.legacy)}</span></div>
-                        ${stats.estateAssets > 0 ? `<div class="strategy-stat sub"><span>Other assets</span><span>${fmt(stats.estateAssets)}</span></div>` : ''}
-                        ${stats.estateTax > 0 ? `<div class="strategy-stat sub"><span>Deemed disposition</span><span>-${fmt(stats.estateTax)}</span></div>` : ''}
-                        <div class="strategy-stat sub"><span>Net to heirs</span><span>${fmt(stats.netEstate)}</span></div>
+                        <summary class="strategy-stat"><span>🏠 Estate</span><span>${fmtC(stats.netEstate)}</span></summary>
+                        <div class="strategy-stat sub"><span>Portfolio at death</span><span>${fmtC(stats.legacy)}</span></div>
+                        ${stats.estateAssets > 0 ? `<div class="strategy-stat sub"><span>Other assets</span><span>${fmtC(stats.estateAssets)}</span></div>` : ''}
+                        ${stats.estateTax > 0 ? `<div class="strategy-stat sub"><span>Deemed disposition</span><span>-${fmtC(stats.estateTax)}</span></div>` : ''}
+                        <div class="strategy-stat sub"><span>Net to heirs</span><span>${fmtC(stats.netEstate)}</span></div>
                         ${header.includes('Optimized') ? `<div class="strategy-stat sub hint"><span>Optimized prioritizes spending over estate</span></div>` : ''}
                     </details>
                     <div class="strategy-stat"><span>📅 Lasts To</span><span>Age ${stats.lasts}</span></div>
@@ -3831,12 +3844,12 @@ const AppV4 = {
                         <span>Lasts to</span><strong>Age ${s.results.moneyLastsAge}</strong>
                     </div>
                     <div class="scenario-compare-stat">
-                        <span>Portfolio</span><strong>${fmt(s.results.portfolioAtRetirement)}</strong>
+                        <span>Portfolio</span><strong>${fmtCompact(s.results.portfolioAtRetirement)}</strong>
                     </div>
                     <div class="scenario-compare-stat">
-                        <span>Estate</span><strong>${fmt(s.results.legacyAmount)}</strong>
+                        <span>Estate</span><strong>${fmtCompact(s.results.legacyAmount)}</strong>
                     </div>
-                    ${s.results.estateTax > 0 ? `<div class="scenario-compare-stat sub"><span>Net to heirs</span><strong>${fmt(s.results.netEstate)}</strong></div>` : ''}
+                    ${s.results.estateTax > 0 ? `<div class="scenario-compare-stat sub"><span>Net to heirs</span><strong>${fmtCompact(s.results.netEstate)}</strong></div>` : ''}
                 </div>
             `;
         }).join('');
@@ -4033,8 +4046,8 @@ const AppV4 = {
         }
 
 
-        document.getElementById('stat-portfolio').textContent = fmtMoney(portfolio);
-        document.getElementById('stat-income').textContent = fmtMoney(income);
+        document.getElementById('stat-portfolio').textContent = fmtCompact(portfolio);
+        document.getElementById('stat-income').textContent = fmtCompact(income);
         document.getElementById('stat-lasts').textContent =
             `Age ${lastsAge}`;
         document.getElementById('stat-probability').textContent =
@@ -4422,7 +4435,7 @@ const AppV4 = {
 
             const balance = year.totalBalance || 0;
             const balanceLine = balance > 0 
-                ? `<div class="year-balance-note">💰 Portfolio: ${fmt(balance)}</div>`
+                ? `<div class="year-balance-note">💰 Portfolio: ${fmtCompact(balance)}</div>`
                 : balance <= 0 && year.age > retirementAge 
                     ? `<div class="year-balance-note depleted">💰 Portfolio: depleted</div>`
                     : '';
