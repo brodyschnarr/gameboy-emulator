@@ -110,27 +110,41 @@ const showStepMatch = appJS.match(/_showStep[\s\S]{0,500}healthcare[\s\S]{0,200}
 // Alternative: search for the call near healthcare step
 assert(appJS.includes("_updateStep5AddedItems"), 'Chip updater called');
 
-// ═══ Scenario Tests ═══
-console.log('\n═══ Scenario Tests ═══\n');
+// ═══ Adjuster Tests ═══
+console.log('\n═══ Adjuster Tests ═══\n');
 
-assert(indexHTML.includes('data-scenario="save500more"'), 'Save $500 more tab exists');
-assert(indexHTML.includes('data-scenario="save500less"'), 'Save $500 less tab exists');
-assert(appJS.includes('save500more'), 'save500more scenario calculated');
-assert(appJS.includes('save500less'), 'save500less scenario calculated');
-assert(appJS.includes('monthlyContribution + 500'), 'save500more adds $500/mo');
-assert(appJS.includes('monthlyContribution - 500'), 'save500less subtracts $500/mo');
-assert(appJS.includes('Math.max(0, baseInputs.monthlyContribution - 500)'), 'save500less floors at 0');
+assert(indexHTML.includes('results-adjusters'), 'Adjusters container exists');
+assert(indexHTML.includes('adjuster-spending'), 'Spending adjuster display exists');
+assert(indexHTML.includes('adjuster-savings'), 'Savings adjuster display exists');
+assert(indexHTML.includes('data-adjust="spend"'), 'Spend adjuster buttons exist');
+assert(indexHTML.includes('data-adjust="save"'), 'Save adjuster buttons exist');
+assert(indexHTML.includes('data-dir="-1"'), 'Minus buttons exist');
+assert(indexHTML.includes('data-dir="1"'), 'Plus buttons exist');
+assert(appJS.includes('_setupAdjusters'), 'Adjuster setup method exists');
+assert(appJS.includes('_applyAdjustments'), 'Apply adjustments method exists');
+assert(appJS.includes('_updateAdjusterDisplay'), 'Adjuster display update method exists');
+assert(appJS.includes('_spendAdjust'), 'Spend adjustment tracked');
+assert(appJS.includes('_saveAdjust'), 'Save adjustment tracked');
+assert(appJS.includes('_baseInputs'), 'Base inputs stored for adjustments');
+
+// Edit button
+assert(indexHTML.includes('btn-edit-inputs'), 'Edit button in top bar');
+assert(appJS.includes('btn-edit-inputs'), 'Edit button wired in JS');
+
+// No old scenario tabs
+assert(!indexHTML.includes('data-scenario="save500more"'), 'Old save500more tab removed');
+assert(!indexHTML.includes('data-scenario="retire5early"'), 'Old retire5early tab removed');
 
 // ═══ Floating Email CTA ═══
 console.log('\n═══ Email Report Tests ═══\n');
 
-assert(indexHTML.includes('floating-email-cta'), 'Floating CTA container exists');
+assert(indexHTML.includes('results-top-bar'), 'Results top bar exists');
 assert(indexHTML.includes('btn-email-report'), 'Email button exists');
 assert(indexHTML.includes('email-modal'), 'Email modal exists');
 assert(indexHTML.includes('report-email'), 'Email input exists');
 assert(indexHTML.includes('btn-send-report'), 'Send report button exists');
-assert(cssFile.includes('floating-email-cta'), 'Floating CTA styled');
-assert(cssFile.includes('position: sticky'), 'CTA is sticky positioned');
+assert(cssFile.includes('results-top-bar'), 'Top bar styled');
+assert(cssFile.includes('position: sticky'), 'Top bar is sticky positioned');
 assert(appJS.includes('_sendEmailReport'), 'Send email report method exists');
 assert(appJS.includes('_generatePDF'), 'PDF generation method exists');
 assert(appJS.includes('jsPDF'), 'Uses jsPDF library');

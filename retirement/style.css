@@ -3806,32 +3806,99 @@ input:focus {
 }
 .region-btn.active .region-cost-tag { opacity: 0.9; }
 
-/* ═══ Floating Email CTA ═══ */
-.floating-email-cta {
+/* ═══ Results Top Bar (sticky) ═══ */
+.results-top-bar {
     position: sticky;
     top: 0;
     z-index: 100;
     background: rgba(255,255,255,0.95);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    padding: 8px 16px;
+    padding: 10px 16px;
     margin: -16px -16px 12px -16px;
     border-bottom: 1px solid #e2e8f0;
-    text-align: center;
+}
+.results-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
 }
 .btn-email-floating {
     background: #3b82f6;
     color: white;
     border: none;
-    padding: 8px 20px;
+    padding: 7px 16px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+    box-shadow: 0 2px 6px rgba(59,130,246,0.25);
     transition: all 0.2s;
 }
 .btn-email-floating:hover {
     background: #2563eb;
-    box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+}
+.btn-edit-floating {
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-edit-floating:hover {
+    color: #334155;
+    border-color: #cbd5e1;
+}
+.results-adjusters {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+.adjuster-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.adjuster-label {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 52px;
+}
+.adjuster-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #334155;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+}
+.adjuster-btn:active {
+    background: #f1f5f9;
+    transform: scale(0.93);
+}
+.adjuster-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    min-width: 68px;
+    text-align: center;
 }

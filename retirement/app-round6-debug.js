@@ -1599,10 +1599,91 @@ const AppV4 = {
             emailModal.addEventListener('click', (e) => { if (e.target === emailModal) emailModal.classList.add('hidden'); });
             sendReport?.addEventListener('click', () => this._sendEmailReport());
         }
+        
+        // Edit button → back to inputs
+        const editBtn = document.getElementById('btn-edit-inputs');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                document.getElementById('results')?.classList.add('hidden');
+                this._showStep('basic');
+            });
+        }
+        
+        // Spending/Savings adjusters
+        this._setupAdjusters();
+    },
+
+    _setupAdjusters() {
+        // Track adjustments relative to base
+        this._spendAdjust = 0;
+        this._saveAdjust = 0;
+        
+        document.querySelectorAll('.adjuster-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.adjust;
+                const dir = parseInt(btn.dataset.dir);
+                
+                if (type === 'spend') {
+                    // Adjust by 10% of base spending
+                    const step = Math.round((this._baseInputs?.annualSpending || 50000) * 0.1);
+                    this._spendAdjust += dir * step;
+                } else if (type === 'save') {
+                    // Adjust by $250/mo
+                    this._saveAdjust += dir * 250;
+                }
+                
+                this._applyAdjustments();
+            });
+        });
+    },
+    
+    _updateAdjusterDisplay() {
+        const fmt = v => '$' + Math.abs(Math.round(v)).toLocaleString();
+        const baseSpend = this._baseInputs?.annualSpending || 0;
+        const baseSave = this._baseInputs?.monthlyContribution || 0;
+        
+        const spendEl = document.getElementById('adjuster-spending');
+        const saveEl = document.getElementById('adjuster-savings');
+        
+        if (spendEl) {
+            const total = baseSpend + this._spendAdjust;
+            spendEl.textContent = '$' + Math.round(total).toLocaleString() + '/yr';
+            spendEl.style.color = this._spendAdjust === 0 ? '#1e293b' : (this._spendAdjust > 0 ? '#dc2626' : '#059669');
+        }
+        if (saveEl) {
+            const total = Math.max(0, baseSave + this._saveAdjust);
+            saveEl.textContent = '$' + Math.round(total).toLocaleString() + '/mo';
+            saveEl.style.color = this._saveAdjust === 0 ? '#1e293b' : (this._saveAdjust > 0 ? '#059669' : '#dc2626');
+        }
+    },
+    
+    _applyAdjustments() {
+        if (!this._baseInputs) return;
+        
+        this._updateAdjusterDisplay();
+        
+        // Recalculate with adjusted values
+        const adjustedInputs = {
+            ...this._baseInputs,
+            windfalls: [...(this._baseInputs.windfalls || [])],
+            annualSpending: Math.max(0, this._baseInputs.annualSpending + this._spendAdjust),
+            monthlyContribution: Math.max(0, this._baseInputs.monthlyContribution + this._saveAdjust)
+        };
+        
+        // Recalculate
+        const results = RetirementCalcV4.calculate(adjustedInputs);
+        this._lastCalcResults = results;
+        this._lastCalcInputs = adjustedInputs;
+        this._displayResults(results, adjustedInputs);
+        
+        // Re-run MC in background
+        if (typeof AppV5Enhanced !== 'undefined') {
+            AppV5Enhanced.runEnhancedAnalysis(adjustedInputs, results);
+        }
     },
 
     _setupScenarios() {
-        // Scenarios now auto-run on calculate - see _autoCalculateScenarios
+        // Scenarios now auto-run on calculate - see _autoCalculateScenarios  
     },
 
     _setupModals() {
@@ -2880,7 +2961,10 @@ const AppV4 = {
             this.currentScenario = 'base';
             this._lastCalcInputs = inputs;
             this._lastCalcResults = baseResults;
-            this._initScenarioButtons();
+            this._baseInputs = { ...inputs, windfalls: [...(inputs.windfalls || [])] };
+            this._spendAdjust = 0;
+            this._saveAdjust = 0;
+            this._updateAdjusterDisplay();
             this._displayResults(baseResults, inputs);
 
             // House sale comparison (if enabled)

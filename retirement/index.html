@@ -718,7 +718,7 @@
                         <button type="button" class="step5-dropdown-item" data-type="windfall">💰 Windfall / Inheritance / Severance</button>
                         <button type="button" class="step5-dropdown-item" data-type="stock-options">📈 Stock / Equity Options</button>
                         <button type="button" class="step5-dropdown-item" data-type="annuity">🔒 Annuity Purchase</button>
-                        <button type="button" class="step5-dropdown-item" data-type="downsizing">🏡 Downsizing Plan</button>
+                        <button type="button" class="step5-dropdown-item" data-type="downsizing">🏡 Home Sale / Downsizing</button>
                         <button type="button" class="step5-dropdown-item" data-type="dtc">♿ Disability Tax Credit</button>
                         <button type="button" class="step5-dropdown-item" data-type="other-income">📝 Other Income</button>
                     </div>
@@ -1125,15 +1125,26 @@
         ═══════════════════════════════════════ -->
         <section id="results" class="hidden">
             
-            <!-- Scenario Tabs -->
-            <div class="scenario-tabs" id="scenario-tabs">
-                <button class="scenario-tab active" data-scenario="base">Your Plan</button>
-                <button class="scenario-tab" data-scenario="retire5early">5 Yrs Earlier</button>
-                <button class="scenario-tab" data-scenario="retire5late">5 Yrs Later</button>
-                <button class="scenario-tab" data-scenario="spend20less">Spend 20% Less</button>
-                <button class="scenario-tab" data-scenario="spend20more">Spend 20% More</button>
-                <button class="scenario-tab" data-scenario="save500more">Save $500 More/mo</button>
-                <button class="scenario-tab" data-scenario="save500less">Save $500 Less/mo</button>
+            <!-- Floating top bar: email + edit + adjusters -->
+            <div class="results-top-bar" id="results-top-bar">
+                <div class="results-top-row">
+                    <button type="button" class="btn-email-floating" id="btn-email-report">📧 Get Your Report</button>
+                    <button type="button" class="btn-edit-floating" id="btn-edit-inputs">✏️ Edit</button>
+                </div>
+                <div class="results-adjusters" id="results-adjusters">
+                    <div class="adjuster-group">
+                        <span class="adjuster-label">Spending</span>
+                        <button class="adjuster-btn" data-adjust="spend" data-dir="-1">−</button>
+                        <span class="adjuster-value" id="adjuster-spending">$0/yr</span>
+                        <button class="adjuster-btn" data-adjust="spend" data-dir="1">+</button>
+                    </div>
+                    <div class="adjuster-group">
+                        <span class="adjuster-label">Savings</span>
+                        <button class="adjuster-btn" data-adjust="save" data-dir="-1">−</button>
+                        <span class="adjuster-value" id="adjuster-savings">$0/mo</span>
+                        <button class="adjuster-btn" data-adjust="save" data-dir="1">+</button>
+                    </div>
+                </div>
             </div>
 
             <div id="status-banner" class="card status-banner"></div>
@@ -1143,7 +1154,7 @@
                 <div id="spending-optimizer-content"></div>
             </section>
 
-            <div id="scenario-compare-panel" class="hidden"></div>
+            <!-- Scenario compare removed -->
 
             <!-- Retirement Narrative -->
             <!-- Tax comparison removed — covered by strategy comparison -->
@@ -1213,10 +1224,7 @@
 
             <!-- Tax & Withdrawal: removed — info now in year-by-year tooltip -->
 
-            <!-- Floating email CTA (sticky at top of results) -->
-            <div class="floating-email-cta" id="floating-email-cta">
-                <button type="button" class="btn-email-floating" id="btn-email-report">📧 Get Your Report (PDF)</button>
-            </div>
+            <!-- Email CTA moved to results-top-bar -->
             
             <!-- Email modal -->
             <div id="email-modal" class="modal hidden">
@@ -1326,34 +1334,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000081"></script>
-    <script src="cpp-calculator.js?v=17&t=24000081"></script>
-    <script src="benchmarks.js?v=17&t=24000081"></script>
-    <script src="lifestyle-data.js?v=17&t=24000081"></script>
-    <script src="regional-data.js?v=18&t=24000081"></script>
-    <script src="canada-map.js?v=18&t=24000081"></script>
-    <script src="income-sources.js?v=17&t=24000081"></script>
-    <script src="deep-dive.js?v=17&t=24000081"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000081"></script>
-    <script src="scenario-manager.js?v=17&t=24000081"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000081"></script>
-    <script src="calc.js?v=17&t=24000081"></script>
-    <script src="app-round6-debug.js?v=17&t=24000081"></script>
+    <script src="canada-tax.js?v=17&t=24000082"></script>
+    <script src="cpp-calculator.js?v=17&t=24000082"></script>
+    <script src="benchmarks.js?v=17&t=24000082"></script>
+    <script src="lifestyle-data.js?v=17&t=24000082"></script>
+    <script src="regional-data.js?v=18&t=24000082"></script>
+    <script src="canada-map.js?v=18&t=24000082"></script>
+    <script src="income-sources.js?v=17&t=24000082"></script>
+    <script src="deep-dive.js?v=17&t=24000082"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000082"></script>
+    <script src="scenario-manager.js?v=17&t=24000082"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000082"></script>
+    <script src="calc.js?v=17&t=24000082"></script>
+    <script src="app-round6-debug.js?v=17&t=24000082"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000081"></script>
-    <script src="monte-carlo.js?v=17&t=24000081"></script>
-    <script src="tax-optimizer.js?v=17&t=24000081"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000081"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000081"></script>
-    <script src="advanced-charts.js?v=17&t=24000081"></script>
-    <script src="interactive-sliders.js?v=17&t=24000081"></script>
-    <script src="scenario-storage.js?v=17&t=24000081"></script>
-    <script src="windfalls.js?v=17&t=24000081"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000081"></script>
+    <script src="error-handler.js?v=17&t=24000082"></script>
+    <script src="monte-carlo.js?v=17&t=24000082"></script>
+    <script src="tax-optimizer.js?v=17&t=24000082"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000082"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000082"></script>
+    <script src="advanced-charts.js?v=17&t=24000082"></script>
+    <script src="interactive-sliders.js?v=17&t=24000082"></script>
+    <script src="scenario-storage.js?v=17&t=24000082"></script>
+    <script src="windfalls.js?v=17&t=24000082"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000082"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=17&t=24000081"></script>
+    <script src="slider-inputs.js?v=17&t=24000082"></script>
 
     <!-- Diagnostics removed -->
 
