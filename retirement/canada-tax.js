@@ -146,6 +146,31 @@ const CanadianTax = {
             provincialTax -= ((PROV_DTC[province] || 9428) * cpi) * provLowestRate;
         }
 
+        // Medical Expense Tax Credit (METC)
+        if (options.metcAnnual && options.metcAnnual > 0) {
+            const medExpenses = options.metcAnnual * cpi;
+            const threshold = Math.min(2635 * cpi, income * 0.03);
+            const claimable = Math.max(0, medExpenses - threshold);
+            if (claimable > 0) {
+                federalTax -= claimable * 0.15;
+                provincialTax -= claimable * provLowestRate;
+            }
+        }
+
+        // Home Accessibility Tax Credit (HATC) — seniors 65+ or DTC eligible
+        if (options.hatc && (options.age >= 65 || options.dtc)) {
+            const HATC_MAX = 20000 * cpi;
+            federalTax -= Math.min(HATC_MAX, 20000 * cpi) * 0.15; // Max $3,000 federal credit
+            provincialTax -= Math.min(HATC_MAX, 20000 * cpi) * provLowestRate;
+        }
+
+        // Canada Caregiver Credit
+        if (options.caregiverCredit) {
+            const CCC_AMOUNT = 7999 * cpi;
+            federalTax -= CCC_AMOUNT * 0.15; // ~$1,200/yr
+            provincialTax -= CCC_AMOUNT * provLowestRate;
+        }
+
         federalTax = Math.max(0, federalTax);
         provincialTax = Math.max(0, provincialTax);
 

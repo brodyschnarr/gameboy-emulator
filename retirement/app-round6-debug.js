@@ -1484,10 +1484,18 @@ const AppV4 = {
             });
         });
 
-        // DTC inline toggle — update chips live
-        document.getElementById('dtc-checkbox')?.addEventListener('change', () => {
-            this._updateStep5AddedItems();
+        // Tax credit toggles — update chips live
+        ['dtc-checkbox', 'metc-checkbox', 'hatc-checkbox', 'caregiver-checkbox'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', () => {
+                // Show/hide METC amount field
+                if (id === 'metc-checkbox') {
+                    const metcGroup = document.getElementById('metc-amount-group');
+                    if (metcGroup) metcGroup.classList.toggle('hidden', !document.getElementById('metc-checkbox').checked);
+                }
+                this._updateStep5AddedItems();
+            });
         });
+        document.getElementById('metc-annual')?.addEventListener('input', () => this._updateStep5AddedItems());
 
         // Wire save/cancel buttons on all forms
         document.querySelectorAll('[data-save]').forEach(btn => {
@@ -1583,6 +1591,9 @@ const AppV4 = {
             'annuity': () => { document.getElementById('annuity-lump-sum').value = ''; document.getElementById('annuity-purchase-age').value = ''; document.getElementById('annuity-monthly-payout').value = ''; },
             'downsizing': () => { document.getElementById('downsizing-age').value = ''; document.getElementById('downsizing-proceeds').value = ''; document.getElementById('downsizing-spending-change').value = ''; },
             'dtc': () => { document.getElementById('dtc-checkbox').checked = false; this._updateStep5AddedItems(); },
+            'metc': () => { document.getElementById('metc-checkbox').checked = false; document.getElementById('metc-amount-group')?.classList.add('hidden'); this._updateStep5AddedItems(); },
+            'hatc': () => { document.getElementById('hatc-checkbox').checked = false; this._updateStep5AddedItems(); },
+            'caregiver': () => { document.getElementById('caregiver-checkbox').checked = false; this._updateStep5AddedItems(); },
             // other-income and other-expense handled via indexed delete below
             'life-insurance': () => { document.getElementById('life-insurance-amount').value = ''; },
             'vehicle': () => { document.getElementById('vehicle-name').value = ''; document.getElementById('vehicle-value').value = ''; },
@@ -1648,10 +1659,23 @@ const AppV4 = {
             incomeHTML += this._makeChip('🔒', 'Annuity', `${fmt(annuity)} → ${fmt(payout)}/mo`, 'annuity', true);
         }
         
-        // DTC
+        // Tax Credits
         const dtc = document.getElementById('dtc-checkbox')?.checked;
         if (dtc) {
             incomeHTML += this._makeChip('♿', 'DTC', '~$1,900/yr savings', 'dtc', true);
+        }
+        const metc = document.getElementById('metc-checkbox')?.checked;
+        if (metc) {
+            const metcAmt = parseFloat(document.getElementById('metc-annual')?.value) || 0;
+            incomeHTML += this._makeChip('💊', 'Medical Expenses', metcAmt > 0 ? `$${metcAmt.toLocaleString()}/yr` : 'Enabled', 'metc', true);
+        }
+        const hatc = document.getElementById('hatc-checkbox')?.checked;
+        if (hatc) {
+            incomeHTML += this._makeChip('🏠', 'Home Accessibility', 'Up to $3,000/yr', 'hatc', true);
+        }
+        const caregiver = document.getElementById('caregiver-checkbox')?.checked;
+        if (caregiver) {
+            incomeHTML += this._makeChip('🤝', 'Caregiver Credit', '~$1,200/yr', 'caregiver', true);
         }
         
         // Debt
@@ -2435,7 +2459,10 @@ const AppV4 = {
             const oasSaved = sepOAS - poolOAS;
             const totalBenefit = taxSaved + oasSaved;
             
-            if (totalBenefit < 500) return '';
+            if (totalBenefit < 100) return `
+                <div class="couple-optimization-callout" style="margin-top:12px;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+                    <div style="font-size:13px;color:var(--text-muted);">👫 Separate account tracking active — accounts are balanced enough that per-person optimization has minimal tax impact.</div>
+                </div>`;
             
             const fmt = (v) => '$' + Math.abs(Math.round(v)).toLocaleString();
             const items = [];
@@ -3673,6 +3700,9 @@ const AppV4 = {
             annuityPurchaseAge: parseInt(document.getElementById('annuity-purchase-age')?.value) || undefined,
             annuityMonthlyPayout: parseFloat(document.getElementById('annuity-monthly-payout')?.value) || 0,
             dtc: document.getElementById('dtc-checkbox')?.checked || false,
+            metcAnnual: document.getElementById('metc-checkbox')?.checked ? (parseFloat(document.getElementById('metc-annual')?.value) || 0) : 0,
+            hatc: document.getElementById('hatc-checkbox')?.checked || false,
+            caregiverCredit: document.getElementById('caregiver-checkbox')?.checked || false,
             downsizingAge: parseInt(document.getElementById('downsizing-age')?.value) || undefined,
             downsizingProceeds: parseFloat(document.getElementById('downsizing-proceeds')?.value) || 0,
             downsizingSpendingChange: -(parseFloat(document.getElementById('downsizing-spending-change')?.value) || 0), // Negative = savings
@@ -4167,6 +4197,7 @@ const AppV4 = {
         'rrsp-p1', 'tfsa-p1', 'nonreg-p1', 'lira-p1', 'other-p1', 'cash-p1',
         'rrsp-p2', 'tfsa-p2', 'nonreg-p2', 'lira-p2', 'other-p2', 'cash-p2',
         'contrib-p1-pct', 'contrib-p2-pct',
+        'metc-annual',
         'employer-pension', 'pension-start-age',
         'annuity-lump-sum', 'annuity-purchase-age', 'annuity-monthly-payout',
         'downsizing-age', 'downsizing-proceeds', 'downsizing-spending-change',
@@ -4186,8 +4217,9 @@ const AppV4 = {
             if (el) el.addEventListener('input', save);
         });
         // Checkboxes
-        document.getElementById('dtc-checkbox')?.addEventListener('change', save);
-        document.getElementById('pension-indexed')?.addEventListener('change', save);
+        ['dtc-checkbox', 'metc-checkbox', 'hatc-checkbox', 'caregiver-checkbox', 'pension-indexed'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', save);
+        });
     },
 
     _saveFormState() {
@@ -4197,10 +4229,10 @@ const AppV4 = {
             if (el && el.value) state[id] = el.value;
         });
         // Checkboxes
-        const dtc = document.getElementById('dtc-checkbox');
-        if (dtc) state['dtc-checkbox'] = dtc.checked;
-        const pi = document.getElementById('pension-indexed');
-        if (pi) state['pension-indexed'] = pi.checked;
+        ['dtc-checkbox', 'metc-checkbox', 'hatc-checkbox', 'caregiver-checkbox', 'pension-indexed'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) state[id] = el.checked;
+        });
         // Select fields
         const fs = document.getElementById('family-status');
         if (fs) state['family-status'] = fs.value;
@@ -4218,10 +4250,12 @@ const AppV4 = {
                 if (el && state[id] !== undefined) el.value = state[id];
             });
             // Checkboxes
-            const dtc = document.getElementById('dtc-checkbox');
-            if (dtc && state['dtc-checkbox'] !== undefined) dtc.checked = state['dtc-checkbox'];
-            const pi = document.getElementById('pension-indexed');
-            if (pi && state['pension-indexed'] !== undefined) pi.checked = state['pension-indexed'];
+            ['dtc-checkbox', 'metc-checkbox', 'hatc-checkbox', 'caregiver-checkbox', 'pension-indexed'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && state[id] !== undefined) el.checked = state[id];
+            });
+            // Show METC amount if checked
+            if (state['metc-checkbox']) document.getElementById('metc-amount-group')?.classList.remove('hidden');
             // Family status select
             const fs = document.getElementById('family-status');
             if (fs && state['family-status']) {

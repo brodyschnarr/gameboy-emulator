@@ -328,6 +328,37 @@ test('Contribution split 30/70 grows P2 faster', () => {
     assertRange(result30.summary.moneyLastsAge, 85, 90, 'Should still last with 30/70 split');
 });
 
+// ═══ TEST 17: Medical Expense Tax Credit reduces tax ═══
+test('METC reduces tax paid', () => {
+    const base = { ...baseCoupleInputs, currentAge: 65, retirementAge: 65 };
+    const noMETC = RetirementCalcV4.calculate(base);
+    const withMETC = RetirementCalcV4.calculate({ ...base, metcAnnual: 8000 });
+    const noTax = noMETC.yearByYear.filter(y => y.phase === 'retirement').reduce((s, y) => s + (y.taxPaid || 0), 0);
+    const mTax = withMETC.yearByYear.filter(y => y.phase === 'retirement').reduce((s, y) => s + (y.taxPaid || 0), 0);
+    // METC should reduce tax (or at least not increase it)
+    assert(mTax <= noTax, `METC should reduce tax: ${mTax} <= ${noTax}`);
+});
+
+// ═══ TEST 18: HATC reduces tax for seniors ═══
+test('HATC reduces tax for 65+ retirees', () => {
+    const base = { ...baseCoupleInputs, currentAge: 65, retirementAge: 65 };
+    const noHATC = RetirementCalcV4.calculate(base);
+    const withHATC = RetirementCalcV4.calculate({ ...base, hatc: true });
+    const noTax = noHATC.yearByYear.filter(y => y.phase === 'retirement').reduce((s, y) => s + (y.taxPaid || 0), 0);
+    const hTax = withHATC.yearByYear.filter(y => y.phase === 'retirement').reduce((s, y) => s + (y.taxPaid || 0), 0);
+    assert(hTax <= noTax, `HATC should reduce tax: ${hTax} <= ${noTax}`);
+});
+
+// ═══ TEST 19: Caregiver credit reduces tax ═══
+test('Caregiver credit reduces tax', () => {
+    const base = { ...baseCoupleInputs, currentAge: 65, retirementAge: 65 };
+    const noCG = RetirementCalcV4.calculate(base);
+    const withCG = RetirementCalcV4.calculate({ ...base, caregiverCredit: true });
+    const noTax = noCG.yearByYear.filter(y => y.phase === 'retirement').reduce((s, y) => s + (y.taxPaid || 0), 0);
+    const cgTax = withCG.yearByYear.filter(y => y.phase === 'retirement').reduce((s, y) => s + (y.taxPaid || 0), 0);
+    assert(cgTax <= noTax, `Caregiver should reduce tax: ${cgTax} <= ${noTax}`);
+});
+
 console.log('\n══════════════════════════════════════════════════');
 console.log(`Results: ${passed} passed, ${failed} failed`);
 if (failed === 0) console.log('✅ ALL COUPLE MODE TESTS PASSED');

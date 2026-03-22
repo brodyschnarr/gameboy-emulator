@@ -751,10 +751,6 @@
             <div class="step5-add-section">
                 <div id="retirement-income-from-step1"></div>
                 <div id="added-income-items"></div>
-                <div class="dtc-inline-toggle" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;">
-                    <input type="checkbox" id="dtc-checkbox" style="width:18px;height:18px;margin:0;cursor:pointer;">
-                    <label for="dtc-checkbox" style="font-size:14px;cursor:pointer;margin:0;flex:1;">♿ Disability Tax Credit <span style="font-size:12px;color:var(--text-secondary);">~$1,900/yr savings</span></label>
-                </div>
                 <div class="step5-add-wrapper">
                     <button type="button" class="btn-secondary" id="btn-add-income-dropdown">+ Add Retirement Income</button>
                     <div class="step5-dropdown hidden" id="income-dropdown-menu">
@@ -1020,7 +1016,48 @@
                 </div>
             </div>
 
-            <!-- DTC moved to inline toggle above dropdown -->
+            <!-- ═══ TAX CREDITS ═══ -->
+            <div class="step5-add-section" style="margin-top:16px;">
+                <label style="font-size:15px;font-weight:700;margin-bottom:8px;display:block;">🧾 Tax Credits</label>
+                <span class="input-impact" style="display:block;margin-bottom:10px;">Claim credits that reduce your tax bill in retirement</span>
+                <div id="tax-credits-container" style="display:flex;flex-direction:column;gap:8px;">
+                    <label class="tax-credit-toggle" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" id="dtc-checkbox" style="width:18px;height:18px;margin:0;cursor:pointer;">
+                        <div style="flex:1;">
+                            <div style="font-size:14px;font-weight:500;">♿ Disability Tax Credit</div>
+                            <div style="font-size:11px;color:var(--text-muted);">~$1,900/yr savings. Requires CRA Form T2201.</div>
+                        </div>
+                    </label>
+                    <label class="tax-credit-toggle" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" id="metc-checkbox" style="width:18px;height:18px;margin:0;cursor:pointer;">
+                        <div style="flex:1;">
+                            <div style="font-size:14px;font-weight:500;">💊 Medical Expense Tax Credit</div>
+                            <div style="font-size:11px;color:var(--text-muted);">For costs exceeding $2,635 or 3% of income (drugs, dental, physio)</div>
+                        </div>
+                    </label>
+                    <div id="metc-amount-group" class="hidden" style="padding:0 12px 8px;">
+                        <label for="metc-annual" style="font-size:12px;">Annual Medical Expenses</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="metc-annual" placeholder="0" min="0" step="500">
+                        </div>
+                        <small class="input-hint">Total annual out-of-pocket medical expenses</small>
+                    </div>
+                    <label class="tax-credit-toggle" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" id="hatc-checkbox" style="width:18px;height:18px;margin:0;cursor:pointer;">
+                        <div style="flex:1;">
+                            <div style="font-size:14px;font-weight:500;">🏠 Home Accessibility Tax Credit</div>
+                            <div style="font-size:11px;color:var(--text-muted);">15% on up to $20K of reno expenses for seniors (65+). Up to $3,000/yr.</div>
+                        </div>
+                    </label>
+                    <label class="tax-credit-toggle" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" id="caregiver-checkbox" style="width:18px;height:18px;margin:0;cursor:pointer;">
+                        <div style="flex:1;">
+                            <div style="font-size:14px;font-weight:500;">🤝 Canada Caregiver Credit</div>
+                            <div style="font-size:11px;color:var(--text-muted);">~$1,200/yr if supporting a dependent with physical/mental impairment</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
 
             <div id="form-other-income" class="step5-form hidden">
                 <div class="step5-form-header">➕ Other Retirement Income</div>
@@ -1386,37 +1423,37 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000100"></script>
-    <script src="cpp-calculator.js?v=17&t=24000100"></script>
-    <script src="benchmarks.js?v=17&t=24000100"></script>
-    <script src="lifestyle-data.js?v=17&t=24000100"></script>
-    <script src="regional-data.js?v=18&t=24000100"></script>
-    <script src="canada-map.js?v=18&t=24000100"></script>
-    <script src="income-sources.js?v=17&t=24000100"></script>
-    <script src="deep-dive.js?v=17&t=24000100"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000100"></script>
-    <script src="scenario-manager.js?v=17&t=24000100"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000100"></script>
-    <script src="calc.js?v=17&t=24000100"></script>
-    <script src="app-round6-debug.js?v=17&t=24000100"></script>
+    <script src="canada-tax.js?v=17&t=24000101"></script>
+    <script src="cpp-calculator.js?v=17&t=24000101"></script>
+    <script src="benchmarks.js?v=17&t=24000101"></script>
+    <script src="lifestyle-data.js?v=17&t=24000101"></script>
+    <script src="regional-data.js?v=18&t=24000101"></script>
+    <script src="canada-map.js?v=18&t=24000101"></script>
+    <script src="income-sources.js?v=17&t=24000101"></script>
+    <script src="deep-dive.js?v=17&t=24000101"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000101"></script>
+    <script src="scenario-manager.js?v=17&t=24000101"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000101"></script>
+    <script src="calc.js?v=17&t=24000101"></script>
+    <script src="app-round6-debug.js?v=17&t=24000101"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000100"></script>
-    <script src="monte-carlo.js?v=17&t=24000100"></script>
-    <script src="tax-optimizer.js?v=17&t=24000100"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000100"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000100"></script>
-    <script src="advanced-charts.js?v=17&t=24000100"></script>
-    <script src="interactive-sliders.js?v=17&t=24000100"></script>
-    <script src="scenario-storage.js?v=17&t=24000100"></script>
-    <script src="windfalls.js?v=17&t=24000100"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000100"></script>
+    <script src="error-handler.js?v=17&t=24000101"></script>
+    <script src="monte-carlo.js?v=17&t=24000101"></script>
+    <script src="tax-optimizer.js?v=17&t=24000101"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000101"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000101"></script>
+    <script src="advanced-charts.js?v=17&t=24000101"></script>
+    <script src="interactive-sliders.js?v=17&t=24000101"></script>
+    <script src="scenario-storage.js?v=17&t=24000101"></script>
+    <script src="windfalls.js?v=17&t=24000101"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000101"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=18&t=24000100"></script>
+    <script src="slider-inputs.js?v=18&t=24000101"></script>
 
     <!-- Shareable links -->
-    <script src="share-link.js?v=1&t=24000100"></script>
+    <script src="share-link.js?v=1&t=24000101"></script>
 
     <!-- Dark mode toggle + share link auto-load -->
     <script>

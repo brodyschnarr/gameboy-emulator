@@ -91,6 +91,9 @@ const RetirementCalcV4 = {
             annuityPurchaseAge,            // Age to buy annuity
             annuityMonthlyPayout = 0,      // Monthly annuity payout
             dtc = false,                   // Disability Tax Credit
+            metcAnnual = 0,                // Medical Expense Tax Credit annual amount
+            hatc = false,                  // Home Accessibility Tax Credit
+            caregiverCredit = false,       // Canada Caregiver Credit
             downsizingAge,                 // Age to sell home
             downsizingProceeds = 0,        // Net proceeds from home sale
             downsizingSpendingChange = 0,  // Monthly change in housing cost (negative = savings)
@@ -217,6 +220,9 @@ const RetirementCalcV4 = {
             annuityPurchaseAge: annuityPurchaseAge || retirementAge,
             annuityMonthlyPayout: annuityMonthlyPayout || 0,
             dtc: dtc || false,
+            metcAnnual: metcAnnual || 0,
+            hatc: hatc || false,
+            caregiverCredit: caregiverCredit || false,
             downsizingAge: downsizingAge || null,
             downsizingProceeds: downsizingProceeds || 0,
             downsizingSpendingChange: downsizingSpendingChange || 0,
@@ -495,6 +501,9 @@ const RetirementCalcV4 = {
             annuityPurchaseAge = retirementAge,
             annuityMonthlyPayout = 0,
             dtc = false,
+            metcAnnual = 0,
+            hatc = false,
+            caregiverCredit = false,
             downsizingAge = null,
             downsizingProceeds = 0,
             downsizingSpendingChange = 0,
@@ -1064,13 +1073,13 @@ const RetirementCalcV4 = {
                         balP1, p1Need, province,
                         p1NonOASTaxable + rrifP1 + lifP1m,
                         oasP1, age >= effOAS1,
-                        { cppP1, cppP2: 0, oasP1, oasP2: 0, additionalIncome: addlPerPerson, isSingle: true, age: p1Age, cpiFromToday, dtc }
+                        { cppP1, cppP2: 0, oasP1, oasP2: 0, additionalIncome: addlPerPerson, isSingle: true, age: p1Age, cpiFromToday, dtc, metcAnnual, hatc, caregiverCredit }
                     );
                     const w2 = this._withdrawSmartOptimal(
                         balP2, p2Need, province,
                         p2NonOASTaxable + rrifP2 + lifP2m,
                         oasP2, age >= effOAS2,
-                        { cppP1: cppP2, cppP2: 0, oasP1: oasP2, oasP2: 0, additionalIncome: addlPerPerson, isSingle: true, age: p2Age, cpiFromToday, dtc }
+                        { cppP1: cppP2, cppP2: 0, oasP1: oasP2, oasP2: 0, additionalIncome: addlPerPerson, isSingle: true, age: p2Age, cpiFromToday, dtc, metcAnnual, hatc, caregiverCredit }
                     );
                     
                     // Merge withdrawal results
@@ -1097,7 +1106,8 @@ const RetirementCalcV4 = {
                         cppIncome + additionalIncome + pensionIncome + totalMandatory + rentalIncomeThisYear,
                         age,
                         cpiFromToday,
-                        dtc
+                        dtc,
+                        { metcAnnual, hatc, caregiverCredit }
                     );
                 } else {
                     withdrawal = this._withdrawSmartOptimal(
@@ -1107,7 +1117,7 @@ const RetirementCalcV4 = {
                         cppIncome + additionalIncome + pensionIncome + totalMandatory,
                         oasIncome,
                         age >= effOAS1,
-                        { cppP1, cppP2, oasP1, oasP2, additionalIncome: additionalIncome + pensionIncome + rentalIncomeThisYear, isSingle, age, cpiFromToday, dtc }
+                        { cppP1, cppP2, oasP1, oasP2, additionalIncome: additionalIncome + pensionIncome + rentalIncomeThisYear, isSingle, age, cpiFromToday, dtc, metcAnnual, hatc, caregiverCredit }
                     );
                 }
 
@@ -1275,7 +1285,13 @@ const RetirementCalcV4 = {
     _withdrawSmartOptimal(balances, neededAfterTax, province, nonOASTaxableIncome, oasAmount, oasActive, perPerson) {
         const cpi = (perPerson && perPerson.cpiFromToday) || 1.0;
         const hasDTC = perPerson && perPerson.dtc;
-        const taxOpts = { inflationFactor: cpi, dtc: hasDTC };
+        const taxOpts = { 
+            inflationFactor: cpi, dtc: hasDTC, 
+            metcAnnual: perPerson?.metcAnnual || 0,
+            hatc: perPerson?.hatc || false,
+            caregiverCredit: perPerson?.caregiverCredit || false,
+            age: perPerson?.age || 0
+        };
         const OAS_CLAWBACK_START = 93454 * cpi;
         const OAS_CLAWBACK_RATE = 0.15;
 
@@ -1538,8 +1554,9 @@ const RetirementCalcV4 = {
         const totalTaxableForCalc = cumulativeTaxableIncome + (oasActive ? actualOAS : 0);
         const currentAge = perPerson.age || 0;
         const eligiblePensionIncome = fromRRSP + (perPerson.additionalIncome || 0); // RRIF + DB pension
+        const extraCredits = { metcAnnual: perPerson?.metcAnnual || 0, hatc: perPerson?.hatc || false, caregiverCredit: perPerson?.caregiverCredit || false };
         const seniorTaxOpts = currentAge >= 65 
-            ? { age: currentAge, pensionIncome: eligiblePensionIncome, inflationFactor: cpi, dtc: hasDTC } 
+            ? { age: currentAge, pensionIncome: eligiblePensionIncome, inflationFactor: cpi, dtc: hasDTC, ...extraCredits } 
             : { inflationFactor: cpi, dtc: hasDTC };
 
         let totalTax;
@@ -1547,7 +1564,7 @@ const RetirementCalcV4 = {
             const splitAmount = eligiblePensionIncome * 0.5;
             const p1Taxable = totalTaxableForCalc - splitAmount;
             const p2Taxable = splitAmount;
-            const p1Tax = CanadianTax.calculateTax(Math.max(0, p1Taxable), province, { age: currentAge, pensionIncome: eligiblePensionIncome - splitAmount, inflationFactor: cpi, dtc: hasDTC }).total;
+            const p1Tax = CanadianTax.calculateTax(Math.max(0, p1Taxable), province, { age: currentAge, pensionIncome: eligiblePensionIncome - splitAmount, inflationFactor: cpi, dtc: hasDTC, ...extraCredits }).total;
             const p2Tax = CanadianTax.calculateTax(p2Taxable, province, { age: currentAge, pensionIncome: splitAmount, inflationFactor: cpi, dtc: hasDTC }).total;
             const baseTax = CanadianTax.calculateTax(nonOASTaxableIncome, province, seniorTaxOpts).total;
             totalTax = (p1Tax + p2Tax) - baseTax;
@@ -1859,12 +1876,12 @@ const RetirementCalcV4 = {
     // - Standard CPP/OAS at 65 timing
     // This is realistic — not a strawman. The difference vs "optimized" is timing
     // (CPP/OAS age) and meltdown aggressiveness, not basic competence.
-    _withdrawNaive(balances, neededAfterTax, province, taxableIncome, age, cpiFromToday, dtcFlag) {
+    _withdrawNaive(balances, neededAfterTax, province, taxableIncome, age, cpiFromToday, dtcFlag, extraCredits = {}) {
         let stillNeed = neededAfterTax;
         let fromRRSP = 0, fromNonReg = 0, fromTFSA = 0, fromOther = 0, fromCash = 0, fromLIRA = 0;
         let cumTaxable = taxableIncome;
         const cpi = cpiFromToday || 1.0;
-        const taxOpts = { inflationFactor: cpi, dtc: dtcFlag };
+        const taxOpts = { inflationFactor: cpi, dtc: dtcFlag, age, ...extraCredits };
         
         const FIRST_BRACKET_CEILING = 55867 * cpi;
         const OAS_CLAWBACK_START = 93454 * cpi;
@@ -1940,8 +1957,8 @@ const RetirementCalcV4 = {
         
         const totalGross = fromRRSP + fromNonReg + fromTFSA + fromOther + fromCash + fromLIRA;
         const finalTaxOpts = age >= 65 
-            ? { age, pensionIncome: fromRRSP + fromLIRA, inflationFactor: cpi, dtc: dtcFlag } 
-            : { inflationFactor: cpi, dtc: dtcFlag };
+            ? { age, pensionIncome: fromRRSP + fromLIRA, inflationFactor: cpi, dtc: dtcFlag, ...extraCredits } 
+            : { inflationFactor: cpi, dtc: dtcFlag, age, ...extraCredits };
         const totalTax = CanadianTax.calculateTax(cumTaxable, province, finalTaxOpts).total 
             - CanadianTax.calculateTax(taxableIncome, province, finalTaxOpts).total;
         
