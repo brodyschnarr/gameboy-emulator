@@ -4283,8 +4283,9 @@ const AppV4 = {
         const padding = 60;
 
         // Clear and set background
+        const isDark = document.documentElement.dataset.theme === 'dark';
         ctx.clearRect(0, 0, w, h);
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = isDark ? '#1e1e2e' : '#ffffff';
         ctx.fillRect(0, 0, w, h);
 
         if (!yearByYear || yearByYear.length === 0) {
@@ -4310,7 +4311,7 @@ const AppV4 = {
         const maxAge = yearByYear[yearByYear.length - 1].age;
 
         // Draw axes
-        ctx.strokeStyle = '#e5e7eb';
+        ctx.strokeStyle = isDark ? '#374151' : '#e5e7eb';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(padding, h - padding);
@@ -4358,6 +4359,7 @@ const AppV4 = {
     _setupChartTooltip(yearByYear, retirementAge) {
         const canvas = document.getElementById('projection-chart');
         if (!canvas) return;
+        const isDark = document.documentElement.dataset.theme === 'dark';
 
         const w = canvas.width;
         const h = canvas.height;
@@ -4456,7 +4458,7 @@ const AppV4 = {
             ctx2.beginPath();
             ctx2.arc(x, y2, 6, 0, Math.PI * 2);
             ctx2.fill();
-            ctx2.strokeStyle = '#fff';
+            ctx2.strokeStyle = isDark ? '#1e1e2e' : '#fff';
             ctx2.lineWidth = 2;
             ctx2.stroke();
         };

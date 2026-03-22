@@ -68,7 +68,7 @@ const CanadaMap = {
                 <defs>
                     <style>
                         .province-path {
-                            stroke: #fff;
+                            stroke: var(--card-bg, #fff);
                             stroke-width: 1.5;
                             stroke-linejoin: round;
                             cursor: pointer;
