@@ -1857,8 +1857,11 @@ const AppV4 = {
         this._lastCalcInputs = adjustedInputs;
         this._displayResults(results, adjustedInputs);
         
-        // Re-run spending optimizer
+        // Re-run all result sections
         this._runSpendingOptimizer(adjustedInputs, results);
+        this._buildStrategyComparison(adjustedInputs, results);
+        this._generateRetirementNarrative(adjustedInputs, results);
+        this._runHouseSaleComparison(adjustedInputs, results);
         
         if (typeof AppV5Enhanced !== 'undefined') {
             AppV5Enhanced.runEnhancedAnalysis(adjustedInputs, results);
