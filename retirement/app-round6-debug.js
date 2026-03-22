@@ -2284,7 +2284,7 @@ const AppV4 = {
 
         // Spending curve narrative
         if (isFrontLoaded) {
-            narrative += `<div style="margin: 12px 0; padding: 10px 12px; background: #f0f9ff; border-radius: 8px; border-left: 3px solid #3b82f6;">`;
+            narrative += `<div class="narrative-info-box" style="margin: 12px 0; padding: 10px 12px; border-radius: 8px; border-left: 3px solid #3b82f6;">`;
             narrative += `<strong>🎢 Your spending curve:</strong><br>`;
             narrative += `<strong>Go-Go years</strong> (${retireAge}–${retireAge + 9}): ${fmt(goGoSpending)}/yr — travel, hobbies, bucket list items<br>`;
             narrative += `<strong>Slow-Go years</strong> (${retireAge + 10}–${retireAge + 19}): ${fmt(annualSpending)}/yr — settling into routine<br>`;
@@ -2294,7 +2294,7 @@ const AppV4 = {
 
         // Extra room / what it means
         if (isOnTrack && extraRoom > 1000) {
-            narrative += `<div style="margin: 12px 0; padding: 10px 12px; background: #ecfdf5; border-radius: 8px; border-left: 3px solid #10b981;">`;
+            narrative += `<div class="narrative-success-box" style="margin: 12px 0; padding: 10px 12px; border-radius: 8px; border-left: 3px solid #10b981;">`;
             narrative += `<strong>💰 You have room:</strong> You could spend up to <strong>${fmt(maxSustainable)}/year</strong> and still be funded to ${lifeExp}. `;
             narrative += `That extra <strong>${fmt(extraRoom)}/year</strong> (${fmt(extraMonthly)}/month) could mean:`;
             narrative += `<ul style="margin: 6px 0 0; padding-left: 20px; font-size: 14px;">`;

@@ -1170,3 +1170,123 @@ canvas {
         width: 100%;
     }
 }
+
+/* ═══════════════════════════════════════
+   DARK MODE OVERRIDES — style-v5.css
+   ═══════════════════════════════════════ */
+
+/* Insight box */
+[data-theme="dark"] .insight-box {
+    background: linear-gradient(135deg, #1e293b 0%, #1e3a5f 100%);
+    border-color: #3b82f6;
+}
+[data-theme="dark"] .insight-box h4 { color: #60a5fa; }
+[data-theme="dark"] .insight-box li { color: #cbd5e1; }
+[data-theme="dark"] .insight-box strong { color: #f1f5f9; }
+
+/* Result cards (status, stat boxes) */
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .result-stat {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-color: var(--border);
+}
+[data-theme="dark"] .stat-label { color: #94a3b8; }
+[data-theme="dark"] .stat-value { color: #f1f5f9; }
+
+/* Stat sections/highlights */
+[data-theme="dark"] .stats-grid .stat-box,
+[data-theme="dark"] .result-card {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+/* Status banner (on-track/off-track) */
+[data-theme="dark"] .status-banner.on-track,
+[data-theme="dark"] .status-on-track {
+    background: linear-gradient(135deg, #0f2918 0%, #052e16 100%) !important;
+    color: #34d399 !important;
+    border-color: #22c55e !important;
+}
+[data-theme="dark"] .status-banner.off-track,
+[data-theme="dark"] .status-off-track {
+    background: linear-gradient(135deg, #2a0a0a 0%, #450a0a 100%) !important;
+    color: #f87171 !important;
+    border-color: #ef4444 !important;
+}
+
+/* MC chart area */
+[data-theme="dark"] .chart-wrapper,
+[data-theme="dark"] .confidence-chart-wrap {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+/* Strategy verdict/comparison */
+[data-theme="dark"] .comparison-grid .comparison-column {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+[data-theme="dark"] .comparison-stat { color: #cbd5e1; }
+[data-theme="dark"] .comparison-stat strong { color: #f1f5f9; }
+
+/* Tax/fee breakdown gradients */
+[data-theme="dark"] .gradient-row-danger { background: #2a0a0a !important; }
+[data-theme="dark"] .gradient-row-warning { background: #2a1a05 !important; }
+[data-theme="dark"] .gradient-row-info { background: #0f172a !important; }
+[data-theme="dark"] .gradient-row-success { background: #0f2918 !important; }
+[data-theme="dark"] .gradient-row-danger *,
+[data-theme="dark"] .gradient-row-warning *,
+[data-theme="dark"] .gradient-row-info *,
+[data-theme="dark"] .gradient-row-success * { color: #e2e8f0 !important; }
+
+/* Range display */
+[data-theme="dark"] .range-display { background: #1e293b; color: #e2e8f0; }
+
+/* Separator/divider */
+[data-theme="dark"] .section-divider,
+[data-theme="dark"] hr {
+    border-color: #334155;
+}
+
+/* Optimizer section */
+[data-theme="dark"] .optimizer-section,
+[data-theme="dark"] .optimizer-result {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+/* Year-by-year expandable rows */
+[data-theme="dark"] .year-expandable {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+/* Deep Dive modal/section */
+[data-theme="dark"] .deep-dive-section {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-color: #334155;
+}
+[data-theme="dark"] .deep-dive-section h3,
+[data-theme="dark"] .deep-dive-section h4 { color: #f1f5f9; }
+
+/* Toggle/checkbox labels */
+[data-theme="dark"] .toggle-label { color: #cbd5e1; }
+
+/* Spending breakdown card */
+[data-theme="dark"] .spending-card,
+[data-theme="dark"] .category-card {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+/* Progress bar backgrounds */
+[data-theme="dark"] .progress-bg { background: #334155; }
+
+/* Benchmark progress bars */
+[data-theme="dark"] .benchmark-progress { background: #334155; }

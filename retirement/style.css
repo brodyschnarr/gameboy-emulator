@@ -198,6 +198,235 @@
     background: var(--card-bg);
 }
 
+/* Dark mode — comprehensive overrides for light backgrounds */
+[data-theme="dark"] .cpp-preview,
+[data-theme="dark"] .oas-preview,
+[data-theme="dark"] .cpp-person-card,
+[data-theme="dark"] .oas-person-card,
+[data-theme="dark"] .combined-cpp-banner,
+[data-theme="dark"] .combined-oas-banner,
+[data-theme="dark"] .cpp-combined,
+[data-theme="dark"] .oas-combined {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: var(--border) !important;
+}
+[data-theme="dark"] .cpp-preview *,
+[data-theme="dark"] .oas-preview *,
+[data-theme="dark"] .cpp-person-card *,
+[data-theme="dark"] .oas-person-card *,
+[data-theme="dark"] .combined-cpp-banner *,
+[data-theme="dark"] .combined-oas-banner * {
+    color: #e2e8f0 !important;
+}
+[data-theme="dark"] .cpp-preview .amount,
+[data-theme="dark"] .oas-preview .amount,
+[data-theme="dark"] .cpp-person-card .amount {
+    color: #60a5fa !important;
+}
+
+/* Dark mode — lifestyle modal / "What this looks like" */
+[data-theme="dark"] .lifestyle-modal,
+[data-theme="dark"] .lifestyle-detail,
+[data-theme="dark"] .lifestyle-preview {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+[data-theme="dark"] .lifestyle-modal *,
+[data-theme="dark"] .lifestyle-detail *,
+[data-theme="dark"] .lifestyle-preview * {
+    color: #cbd5e1 !important;
+}
+
+/* Dark mode — all light blue/green/yellow info boxes */
+[data-theme="dark"] [style*="background: #f0f9ff"],
+[data-theme="dark"] [style*="background: #ecfdf5"],
+[data-theme="dark"] [style*="background: #fef3c7"],
+[data-theme="dark"] [style*="background: #fef2f2"],
+[data-theme="dark"] [style*="background: #eff6ff"],
+[data-theme="dark"] [style*="background: #f0fdf4"] {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+/* Dark mode — step 5 dropdown buttons (invisible grey on dark) */
+[data-theme="dark"] .step5-dropdown-btn,
+[data-theme="dark"] .btn-add-dropdown {
+    background: #334155;
+    color: #e2e8f0;
+    border-color: #475569;
+}
+
+/* Dark mode — strategy cards */
+[data-theme="dark"] .strategy-col,
+[data-theme="dark"] .strategy-col:not(.loser),
+[data-theme="dark"] .strategy-col.loser,
+[data-theme="dark"] .strategy-col.advisor {
+    background: #1e293b !important;
+    color: #e2e8f0;
+    border-color: #475569;
+}
+[data-theme="dark"] .strategy-col:not(.loser) {
+    border-color: #22c55e;
+}
+[data-theme="dark"] .strategy-col-header {
+    color: #f1f5f9 !important;
+}
+[data-theme="dark"] .strategy-stat {
+    color: #e2e8f0;
+    border-color: #334155;
+}
+[data-theme="dark"] .strategy-stat.highlight {
+    background: #0f2918;
+    color: #34d399;
+}
+[data-theme="dark"] .strategy-stat.highlight span {
+    color: #34d399 !important;
+}
+[data-theme="dark"] .strategy-stat span {
+    color: #cbd5e1;
+}
+[data-theme="dark"] .strategy-stat.sub span {
+    color: #94a3b8;
+}
+[data-theme="dark"] .deep-dive-btn {
+    color: #60a5fa !important;
+    border-color: #475569;
+    background: transparent;
+}
+
+/* Dark mode — key insights / MC results */
+[data-theme="dark"] .key-insights,
+[data-theme="dark"] .mc-results,
+[data-theme="dark"] .v5-enhanced-analysis {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: var(--border) !important;
+}
+[data-theme="dark"] .key-insights *,
+[data-theme="dark"] .mc-results * {
+    color: #cbd5e1 !important;
+}
+[data-theme="dark"] .key-insights h3,
+[data-theme="dark"] .key-insights strong,
+[data-theme="dark"] .mc-results strong {
+    color: #f1f5f9 !important;
+}
+
+/* Dark mode — verdict banner */
+[data-theme="dark"] .strategy-verdict {
+    background: #0f2918 !important;
+    color: #34d399 !important;
+    border-color: #22c55e !important;
+}
+[data-theme="dark"] .strategy-verdict strong {
+    color: #34d399 !important;
+}
+
+/* Dark mode — chart legend strip */
+[data-theme="dark"] .chart-legend,
+[data-theme="dark"] .legend-strip {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+/* Dark mode — savings/income benchmark bars */
+[data-theme="dark"] .benchmark-bar,
+[data-theme="dark"] .savings-benchmark,
+[data-theme="dark"] .benchmark-display {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+/* Dark mode — Advanced Assumptions header strip */
+[data-theme="dark"] .collapsible {
+    border-color: var(--border);
+}
+[data-theme="dark"] .collapsible summary,
+[data-theme="dark"] .collapsible-header {
+    color: #f1f5f9;
+}
+[data-theme="dark"] .collapsible-body,
+[data-theme="dark"] .assumptions-grid {
+    background: #1e293b;
+    color: #cbd5e1;
+}
+
+/* Dark mode — spending check status bar */
+[data-theme="dark"] .spending-check-pass {
+    background: #0f2918 !important;
+    color: #34d399 !important;
+}
+[data-theme="dark"] .spending-check-fail {
+    background: #2a0a0a !important;
+    color: #f87171 !important;
+}
+[data-theme="dark"] .spending-check-close {
+    background: #2a1a05 !important;
+    color: #fbbf24 !important;
+}
+
+/* Dark mode — plan/tweak tabs */
+[data-theme="dark"] .plan-tabs {
+    background: #1e293b;
+    border-color: var(--border);
+}
+
+/* Dark mode — share button fix (text was invisible) */
+[data-theme="dark"] .btn-share-fixed {
+    background: #334155;
+    color: #e2e8f0;
+    border-color: #475569;
+}
+
+/* Dark mode — narrative sections (inline styles in JS) */
+[data-theme="dark"] .narrative-section,
+[data-theme="dark"] .retirement-narrative {
+    color: #e2e8f0;
+}
+[data-theme="dark"] .retirement-narrative div[style] {
+    background: #1e293b !important;
+    color: #cbd5e1 !important;
+}
+
+/* Dark mode — total display boxes */
+[data-theme="dark"] .total-display,
+[data-theme="dark"] .household-total,
+[data-theme="dark"] .savings-total {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-color: var(--border);
+}
+
+/* Dark mode — nav bar */
+[data-theme="dark"] .nav-btn,
+[data-theme="dark"] .btn-next,
+[data-theme="dark"] .btn-prev {
+    border-color: var(--border);
+}
+
+/* Dark mode — catch-all for any remaining light text on dark */
+[data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4 {
+    color: #f1f5f9;
+}
+[data-theme="dark"] label {
+    color: #e2e8f0;
+}
+[data-theme="dark"] p {
+    color: #cbd5e1;
+}
+[data-theme="dark"] small {
+    color: #94a3b8;
+}
+
+/* Narrative info boxes */
+.narrative-info-box { background: #f0f9ff; }
+.narrative-success-box { background: #ecfdf5; }
+[data-theme="dark"] .narrative-info-box { background: #1e293b !important; color: #cbd5e1; }
+[data-theme="dark"] .narrative-success-box { background: #0f2918 !important; color: #cbd5e1; }
+[data-theme="dark"] .narrative-info-box strong,
+[data-theme="dark"] .narrative-success-box strong { color: #f1f5f9; }
+
 /* Dark mode toggle button */
 .theme-toggle {
     position: absolute;
