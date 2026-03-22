@@ -3547,6 +3547,24 @@ const AppV4 = {
                 ? (parseFloat(document.getElementById('cash-p1')?.value) || 0) + (parseFloat(document.getElementById('cash-p2')?.value) || 0)
                 : (parseFloat(document.getElementById('cash')?.value) || 0),
 
+            // Per-person accounts for couple separate tracking
+            accountsP1: this.accountMode === 'separate' ? {
+                rrsp: parseFloat(document.getElementById('rrsp-p1')?.value) || 0,
+                tfsa: parseFloat(document.getElementById('tfsa-p1')?.value) || 0,
+                nonReg: parseFloat(document.getElementById('nonreg-p1')?.value) || 0,
+                lira: parseFloat(document.getElementById('lira-p1')?.value) || 0,
+                other: parseFloat(document.getElementById('other-p1')?.value) || 0,
+                cash: parseFloat(document.getElementById('cash-p1')?.value) || 0,
+            } : undefined,
+            accountsP2: this.accountMode === 'separate' ? {
+                rrsp: parseFloat(document.getElementById('rrsp-p2')?.value) || 0,
+                tfsa: parseFloat(document.getElementById('tfsa-p2')?.value) || 0,
+                nonReg: parseFloat(document.getElementById('nonreg-p2')?.value) || 0,
+                lira: parseFloat(document.getElementById('lira-p2')?.value) || 0,
+                other: parseFloat(document.getElementById('other-p2')?.value) || 0,
+                cash: parseFloat(document.getElementById('cash-p2')?.value) || 0,
+            } : undefined,
+
             monthlyContribution: parseFloat(document.getElementById('monthly-contribution')?.value) || 0,
             contributionSplit: {
                 rrsp: (parseFloat(document.getElementById('split-rrsp')?.value) || 0) / 100,

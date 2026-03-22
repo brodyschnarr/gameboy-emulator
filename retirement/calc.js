@@ -102,6 +102,10 @@ const RetirementCalcV4 = {
             otherRetirementIncome = 0,     // Custom other income in retirement
             otherRetirementIncomeTaxable = true,
             otherRetirementExpense = 0,    // Custom other expense in retirement
+
+            // Per-person accounts (couple mode separate tracking)
+            accountsP1,  // { rrsp, tfsa, nonReg, lira, other, cash }
+            accountsP2,  // { rrsp, tfsa, nonReg, lira, other, cash }
         } = inputs;
 
         const yearsToRetirement = retirementAge - currentAge;
@@ -220,6 +224,8 @@ const RetirementCalcV4 = {
             otherRetirementIncome: otherRetirementIncome || 0,
             otherRetirementIncomeTaxable: otherRetirementIncomeTaxable !== false,
             otherRetirementExpense: otherRetirementExpense || 0,
+            accountsP1: accountsP1 || null,
+            accountsP2: accountsP2 || null,
         });
 
         // 5. Calculate probability of success
@@ -495,7 +501,12 @@ const RetirementCalcV4 = {
             otherRetirementIncome = 0,
             otherRetirementIncomeTaxable = true,
             otherRetirementExpense = 0,
+            accountsP1 = null,
+            accountsP2 = null,
         } = params;
+
+        // Couple separate accounts mode
+        const coupleMode = !!(accountsP1 && accountsP2 && isFamilyMode);
 
         const projection = [];
         let balances = {
@@ -507,6 +518,27 @@ const RetirementCalcV4 = {
             lira: accounts.lira || 0
         };
         let rrspConvertedToRRIF = false; // Track RRIF conversion at 71
+
+        // Per-person balances for couple separate mode
+        let balP1 = coupleMode ? {
+            rrsp: accountsP1.rrsp || 0, tfsa: accountsP1.tfsa || 0,
+            nonReg: accountsP1.nonReg || 0, other: accountsP1.other || 0,
+            cash: accountsP1.cash || 0, lira: accountsP1.lira || 0
+        } : null;
+        let balP2 = coupleMode ? {
+            rrsp: accountsP2.rrsp || 0, tfsa: accountsP2.tfsa || 0,
+            nonReg: accountsP2.nonReg || 0, other: accountsP2.other || 0,
+            cash: accountsP2.cash || 0, lira: accountsP2.lira || 0
+        } : null;
+        let rrspConvertedP1 = false, rrspConvertedP2 = false;
+        // Helper: sync combined balances from per-person
+        const syncBalances = () => {
+            if (!coupleMode) return;
+            for (const k of ['rrsp', 'tfsa', 'nonReg', 'other', 'cash', 'lira']) {
+                balances[k] = balP1[k] + balP2[k];
+            }
+        };
+        if (coupleMode) syncBalances();
         const CASH_RATE = 0.015; // 1.5% for HISA/GICs
         let debt = currentDebt;
         const r = returnRate / 100;
@@ -678,12 +710,36 @@ const RetirementCalcV4 = {
                 balances.tfsa += tfsaContrib + refundToTFSA;
                 balances.nonReg += nonRegContrib + refundToNonReg;
 
+                // In couple mode, split contributions proportionally to existing balances
+                // (or 50/50 if both are zero)
+                if (coupleMode) {
+                    const splitContrib = (amount, acctKey) => {
+                        const total = balP1[acctKey] + balP2[acctKey];
+                        const ratio = total > 0 ? balP1[acctKey] / total : 0.5;
+                        balP1[acctKey] += amount * ratio;
+                        balP2[acctKey] += amount * (1 - ratio);
+                    };
+                    splitContrib(rrspContrib, 'rrsp');
+                    splitContrib(tfsaContrib + refundToTFSA, 'tfsa');
+                    splitContrib(nonRegContrib + refundToNonReg, 'nonReg');
+                }
+
                 balances.rrsp *= (1 + r);
                 balances.tfsa *= (1 + r);
                 balances.nonReg *= (1 + r);
                 balances.other *= (1 + r);
                 balances.lira *= (1 + r);
                 balances.cash *= (1 + CASH_RATE);
+
+                if (coupleMode) {
+                    for (const k of ['rrsp', 'tfsa', 'nonReg', 'other', 'lira']) {
+                        balP1[k] *= (1 + r);
+                        balP2[k] *= (1 + r);
+                    }
+                    balP1.cash *= (1 + CASH_RATE);
+                    balP2.cash *= (1 + CASH_RATE);
+                    syncBalances();
+                }
 
                 // Pay down debt — deduct payments from non-registered first, then TFSA
                 if (debt > 0 && age < debtPayoffAge) {
@@ -736,22 +792,51 @@ const RetirementCalcV4 = {
                 balances.lira *= (1 + r);
                 balances.cash *= (1 + CASH_RATE);
 
-                // RRIF mandatory conversion at 71
-                if (age >= 71 && !rrspConvertedToRRIF) {
-                    rrspConvertedToRRIF = true;
-                    // RRSP becomes RRIF — balance stays same, just subject to minimum withdrawals now
+                if (coupleMode) {
+                    for (const k of ['rrsp', 'tfsa', 'nonReg', 'other', 'lira']) {
+                        balP1[k] *= (1 + r);
+                        balP2[k] *= (1 + r);
+                    }
+                    balP1.cash *= (1 + CASH_RATE);
+                    balP2.cash *= (1 + CASH_RATE);
+                    syncBalances();
+                }
+
+                // RRIF mandatory conversion at 71 (per-person in couple mode)
+                const p1Age = age;
+                const ageDiff = (params.partnerAge || startAge) - startAge;
+                const p2Age = coupleMode ? age + ageDiff : age; // P2 age based on partner age diff
+                
+                if (!coupleMode) {
+                    if (age >= 71 && !rrspConvertedToRRIF) rrspConvertedToRRIF = true;
+                } else {
+                    if (p1Age >= 71 && !rrspConvertedP1) rrspConvertedP1 = true;
+                    if (p2Age >= 71 && !rrspConvertedP2) rrspConvertedP2 = true;
                 }
 
                 // RRIF mandatory minimum withdrawal (age 71+)
                 let rrifMandatory = 0;
-                if (age >= 71 && balances.rrsp > 0) {
-                    rrifMandatory = RetirementCalcV4._getRRIFMinimum(age, balances.rrsp);
+                if (coupleMode) {
+                    // Per-person RRIF mandatories
+                    const rrifP1 = p1Age >= 71 && balP1.rrsp > 0 ? RetirementCalcV4._getRRIFMinimum(p1Age, balP1.rrsp) : 0;
+                    const rrifP2 = p2Age >= 71 && balP2.rrsp > 0 ? RetirementCalcV4._getRRIFMinimum(p2Age, balP2.rrsp) : 0;
+                    rrifMandatory = rrifP1 + rrifP2;
+                } else {
+                    if (age >= 71 && balances.rrsp > 0) {
+                        rrifMandatory = RetirementCalcV4._getRRIFMinimum(age, balances.rrsp);
+                    }
                 }
 
                 // LIF mandatory minimum (same as RRIF min, age 71+)
                 let lifMandatory = 0;
-                if (age >= 71 && balances.lira > 0) {
-                    lifMandatory = RetirementCalcV4._getLIFMinimum(age, balances.lira);
+                if (coupleMode) {
+                    const lifP1 = p1Age >= 71 && balP1.lira > 0 ? RetirementCalcV4._getLIFMinimum(p1Age, balP1.lira) : 0;
+                    const lifP2 = p2Age >= 71 && balP2.lira > 0 ? RetirementCalcV4._getLIFMinimum(p2Age, balP2.lira) : 0;
+                    lifMandatory = lifP1 + lifP2;
+                } else {
+                    if (age >= 71 && balances.lira > 0) {
+                        lifMandatory = RetirementCalcV4._getLIFMinimum(age, balances.lira);
+                    }
                 }
 
                 // 2. Inflation-adjusted spending with optional spending curve
@@ -861,6 +946,12 @@ const RetirementCalcV4 = {
                         balances.nonReg *= (1 - ratio);
                         balances.other *= (1 - ratio);
                         balances.cash *= (1 - ratio);
+                        if (coupleMode) {
+                            for (const k of ['rrsp', 'tfsa', 'nonReg', 'other', 'cash']) {
+                                balP1[k] *= (1 - ratio);
+                                balP2[k] *= (1 - ratio);
+                            }
+                        }
                     }
                 }
                 if (annuityMonthlyPayout > 0 && age >= annuityPurchaseAge) {
@@ -930,7 +1021,74 @@ const RetirementCalcV4 = {
                 const totalMandatory = rrifMandatory + lifMandatory;
 
                 let withdrawal;
-                if (_withdrawalStrategy === 'naive') {
+                if (coupleMode) {
+                    // ═══ COUPLE MODE: Per-person withdrawals ═══
+                    // Split spending need proportionally: person with more accounts covers more
+                    // Then run independent smart withdrawals for each person
+                    const totalP1 = balP1.rrsp + balP1.tfsa + balP1.nonReg + balP1.other + balP1.cash + balP1.lira;
+                    const totalP2 = balP2.rrsp + balP2.tfsa + balP2.nonReg + balP2.other + balP2.cash + balP2.lira;
+                    const totalBoth = totalP1 + totalP2;
+                    const p1Share = totalBoth > 0 ? totalP1 / totalBoth : 0.5;
+                    
+                    // Each person's non-portfolio income (for tax context)
+                    const addlPerPerson = (additionalIncome + pensionIncome + rentalIncomeThisYear) / 2;
+                    const p1NonOASTaxable = cppP1 + addlPerPerson;
+                    const p2NonOASTaxable = cppP2 + addlPerPerson;
+                    
+                    // RRIF/LIF mandatory per person
+                    const rrifP1 = p1Age >= 71 && balP1.rrsp > 0 ? RetirementCalcV4._getRRIFMinimum(p1Age, balP1.rrsp) : 0;
+                    const rrifP2 = p2Age >= 71 && balP2.rrsp > 0 ? RetirementCalcV4._getRRIFMinimum(p2Age, balP2.rrsp) : 0;
+                    const lifP1m = p1Age >= 71 && balP1.lira > 0 ? RetirementCalcV4._getLIFMinimum(p1Age, balP1.lira) : 0;
+                    const lifP2m = p2Age >= 71 && balP2.lira > 0 ? RetirementCalcV4._getLIFMinimum(p2Age, balP2.lira) : 0;
+                    
+                    // Try to equalize taxable income between spouses for optimal tax
+                    // Strategy: withdraw more from the spouse with lower other income
+                    let p1Need, p2Need;
+                    if (p1NonOASTaxable < p2NonOASTaxable && totalP1 > 0) {
+                        // P1 has more tax room — give them more withdrawal
+                        const extraP1 = Math.min(neededFromPortfolio * 0.65, totalP1);
+                        p1Need = extraP1;
+                        p2Need = Math.max(0, neededFromPortfolio - extraP1);
+                    } else if (p2NonOASTaxable < p1NonOASTaxable && totalP2 > 0) {
+                        const extraP2 = Math.min(neededFromPortfolio * 0.65, totalP2);
+                        p2Need = extraP2;
+                        p1Need = Math.max(0, neededFromPortfolio - extraP2);
+                    } else {
+                        p1Need = neededFromPortfolio * p1Share;
+                        p2Need = neededFromPortfolio * (1 - p1Share);
+                    }
+                    
+                    // Run independent withdrawals for each person
+                    const w1 = this._withdrawSmartOptimal(
+                        balP1, p1Need, province,
+                        p1NonOASTaxable + rrifP1 + lifP1m,
+                        oasP1, age >= effOAS1,
+                        { cppP1, cppP2: 0, oasP1, oasP2: 0, additionalIncome: addlPerPerson, isSingle: true, age: p1Age, cpiFromToday, dtc }
+                    );
+                    const w2 = this._withdrawSmartOptimal(
+                        balP2, p2Need, province,
+                        p2NonOASTaxable + rrifP2 + lifP2m,
+                        oasP2, age >= effOAS2,
+                        { cppP1: cppP2, cppP2: 0, oasP1: oasP2, oasP2: 0, additionalIncome: addlPerPerson, isSingle: true, age: p2Age, cpiFromToday, dtc }
+                    );
+                    
+                    // Merge withdrawal results
+                    withdrawal = {
+                        total: w1.total + w2.total,
+                        fromTFSA: w1.fromTFSA + w2.fromTFSA,
+                        fromNonReg: w1.fromNonReg + w2.fromNonReg,
+                        fromRRSP: w1.fromRRSP + w2.fromRRSP,
+                        fromOther: w1.fromOther + w2.fromOther,
+                        fromCash: (w1.fromCash || 0) + (w2.fromCash || 0),
+                        fromLIRA: (w1.fromLIRA || 0) + (w2.fromLIRA || 0),
+                        taxableIncome: (w1.taxableIncome || 0) + (w2.taxableIncome || 0),
+                        taxPaid: (w1.taxPaid || 0) + (w2.taxPaid || 0),
+                        afterTax: (w1.afterTax || 0) + (w2.afterTax || 0),
+                        actualOAS: (w1.actualOAS !== undefined ? w1.actualOAS : oasP1) + (w2.actualOAS !== undefined ? w2.actualOAS : oasP2),
+                        // Per-person details for deep dive
+                        _p1: w1, _p2: w2
+                    };
+                } else if (_withdrawalStrategy === 'naive') {
                     withdrawal = this._withdrawNaive(
                         balances,
                         neededFromPortfolio,
@@ -953,28 +1111,30 @@ const RetirementCalcV4 = {
                 }
 
                 // Apply mandatory RRIF/LIF withdrawals (on top of smart withdrawal)
-                // These are taxable and must be accounted for in tax calculation
+                // In couple mode, mandatories are already factored into per-person withdrawal context
+                // (passed as part of nonOASTaxableIncome). Skip double-counting.
                 let mandatoryTax = 0;
-                const baseTaxableBeforeMandatory = withdrawal.taxableIncome || (cppIncome + additionalIncome + pensionIncome);
-                if (rrifMandatory > 0) {
-                    const mandatoryRRSP = Math.min(rrifMandatory, balances.rrsp);
-                    const extraRRSP = Math.max(0, mandatoryRRSP - withdrawal.fromRRSP);
-                    withdrawal.fromRRSP += extraRRSP;
-                    withdrawal.total += extraRRSP;
-                    // Tax on mandatory RRSP withdrawal
-                    if (extraRRSP > 0) {
-                        const mTaxOpts = { inflationFactor: cpiFromToday };
-                        mandatoryTax += CanadianTax.calculateTax(baseTaxableBeforeMandatory + extraRRSP, province, mTaxOpts).total
-                            - CanadianTax.calculateTax(baseTaxableBeforeMandatory, province, mTaxOpts).total;
+                if (!coupleMode) {
+                    const baseTaxableBeforeMandatory = withdrawal.taxableIncome || (cppIncome + additionalIncome + pensionIncome);
+                    if (rrifMandatory > 0) {
+                        const mandatoryRRSP = Math.min(rrifMandatory, balances.rrsp);
+                        const extraRRSP = Math.max(0, mandatoryRRSP - withdrawal.fromRRSP);
+                        withdrawal.fromRRSP += extraRRSP;
+                        withdrawal.total += extraRRSP;
+                        if (extraRRSP > 0) {
+                            const mTaxOpts = { inflationFactor: cpiFromToday };
+                            mandatoryTax += CanadianTax.calculateTax(baseTaxableBeforeMandatory + extraRRSP, province, mTaxOpts).total
+                                - CanadianTax.calculateTax(baseTaxableBeforeMandatory, province, mTaxOpts).total;
+                        }
                     }
-                }
-                if (lifMandatory > 0 && balances.lira > 0) {
-                    const mandatoryLIRA = Math.min(lifMandatory, balances.lira);
-                    withdrawal.fromLIRA = mandatoryLIRA;
-                    withdrawal.total += mandatoryLIRA;
-                    const mTaxOpts = { inflationFactor: cpiFromToday };
-                    mandatoryTax += CanadianTax.calculateTax(baseTaxableBeforeMandatory + (withdrawal.fromRRSP || 0) + mandatoryLIRA, province, mTaxOpts).total
-                        - CanadianTax.calculateTax(baseTaxableBeforeMandatory + (withdrawal.fromRRSP || 0), province, mTaxOpts).total;
+                    if (lifMandatory > 0 && balances.lira > 0) {
+                        const mandatoryLIRA = Math.min(lifMandatory, balances.lira);
+                        withdrawal.fromLIRA = mandatoryLIRA;
+                        withdrawal.total += mandatoryLIRA;
+                        const mTaxOpts = { inflationFactor: cpiFromToday };
+                        mandatoryTax += CanadianTax.calculateTax(baseTaxableBeforeMandatory + (withdrawal.fromRRSP || 0) + mandatoryLIRA, province, mTaxOpts).total
+                            - CanadianTax.calculateTax(baseTaxableBeforeMandatory + (withdrawal.fromRRSP || 0), province, mTaxOpts).total;
+                    }
                 }
                 withdrawal.taxPaid = (withdrawal.taxPaid || 0) + mandatoryTax;
                 
@@ -1010,12 +1170,23 @@ const RetirementCalcV4 = {
                 }
 
                 // Update balances
-                balances.tfsa = Math.max(0, balances.tfsa - withdrawal.fromTFSA);
-                balances.nonReg = Math.max(0, balances.nonReg - withdrawal.fromNonReg);
-                balances.rrsp = Math.max(0, balances.rrsp - withdrawal.fromRRSP);
-                balances.other = Math.max(0, balances.other - withdrawal.fromOther);
-                balances.cash = Math.max(0, balances.cash - (withdrawal.fromCash || 0));
-                balances.lira = Math.max(0, balances.lira - (withdrawal.fromLIRA || 0));
+                if (coupleMode) {
+                    // Deduct per-person withdrawals
+                    const w1 = withdrawal._p1 || {};
+                    const w2 = withdrawal._p2 || {};
+                    for (const [key, wKey] of [['tfsa','fromTFSA'],['nonReg','fromNonReg'],['rrsp','fromRRSP'],['other','fromOther'],['cash','fromCash'],['lira','fromLIRA']]) {
+                        balP1[key] = Math.max(0, balP1[key] - (w1[wKey] || 0));
+                        balP2[key] = Math.max(0, balP2[key] - (w2[wKey] || 0));
+                    }
+                    syncBalances();
+                } else {
+                    balances.tfsa = Math.max(0, balances.tfsa - withdrawal.fromTFSA);
+                    balances.nonReg = Math.max(0, balances.nonReg - withdrawal.fromNonReg);
+                    balances.rrsp = Math.max(0, balances.rrsp - withdrawal.fromRRSP);
+                    balances.other = Math.max(0, balances.other - withdrawal.fromOther);
+                    balances.cash = Math.max(0, balances.cash - (withdrawal.fromCash || 0));
+                    balances.lira = Math.max(0, balances.lira - (withdrawal.fromLIRA || 0));
+                }
 
                 const totalBalance = balances.rrsp + balances.tfsa + balances.nonReg + balances.other + balances.cash + balances.lira;
 
