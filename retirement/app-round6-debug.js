@@ -3272,49 +3272,305 @@ const AppV4 = {
             return;
         }
         
-        // Disable button, show sending
         sendBtn.disabled = true;
-        sendBtn.textContent = 'Sending...';
+        sendBtn.textContent = 'Generating PDF...';
         statusEl.style.display = 'block';
         statusEl.style.color = '#64748b';
-        statusEl.textContent = 'Generating your report...';
+        statusEl.textContent = 'Building your retirement report...';
         
-        // Collect report data
-        const reportData = {
-            email,
-            timestamp: new Date().toISOString(),
-            inputs: this._lastCalcInputs,
-            summary: this._lastCalcResults?.summary,
-            strategies: this._strategyData ? {
-                smart: this._strategyData.smart?.results?.summary,
-                advisor: this._strategyData.advisor?.results?.summary,
-                optimized: this._strategyData.optimized?.results?.summary
-            } : null,
-            province: document.getElementById('province')?.value,
-            region: document.getElementById('region')?.value
-        };
-        
-        // Store email for future contact (localStorage)
+        // Store email for future contact
         const emails = JSON.parse(localStorage.getItem('retirement_emails') || '[]');
-        emails.push({ email, date: reportData.timestamp, province: reportData.province });
+        emails.push({ email, date: new Date().toISOString(), province: document.getElementById('province')?.value });
         localStorage.setItem('retirement_emails', JSON.stringify(emails));
         
-        // For now: simulate send (replace with EmailJS/backend later)
-        setTimeout(() => {
+        try {
+            this._generatePDF(email);
             statusEl.style.color = '#059669';
-            statusEl.innerHTML = '✅ Report sent! Check your inbox.<br><small style="color:#94a3b8">PDF generation coming soon — for now, your results are saved.</small>';
-            sendBtn.textContent = '✓ Sent';
-            sendBtn.disabled = true;
-            
-            // Reset after 5s
+            statusEl.textContent = '✅ PDF downloaded!';
+            sendBtn.textContent = '✓ Done';
             setTimeout(() => {
                 document.getElementById('email-modal')?.classList.add('hidden');
                 sendBtn.disabled = false;
                 sendBtn.textContent = 'Send Report';
                 statusEl.style.display = 'none';
-                emailInput.value = '';
-            }, 3000);
-        }, 1500);
+            }, 2000);
+        } catch (e) {
+            console.error('PDF generation error:', e);
+            statusEl.style.color = '#dc2626';
+            statusEl.textContent = 'Error generating PDF: ' + e.message;
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send Report';
+        }
+    },
+
+    _generatePDF(email) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+        const inputs = this._lastCalcInputs;
+        const results = this._lastCalcResults;
+        const summary = results?.summary;
+        if (!summary) throw new Error('No results to export');
+        
+        const fmt = v => '$' + Math.round(v).toLocaleString();
+        const fmtK = v => v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M' : v >= 1000 ? '$' + Math.round(v/1000) + 'K' : '$' + Math.round(v);
+        const pageW = 216; // letter width mm
+        const margin = 20;
+        const contentW = pageW - margin * 2;
+        let y = 20;
+        
+        const addPage = () => { doc.addPage(); y = 20; };
+        const checkPage = (need) => { if (y + need > 260) addPage(); };
+        
+        // ── Header ──
+        doc.setFillColor(15, 23, 42); // slate-900
+        doc.rect(0, 0, pageW, 35, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Retirement Plan Report', margin, 18);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Prepared for: ${email}`, margin, 27);
+        doc.text(`Generated: ${new Date().toLocaleDateString('en-CA')}`, pageW - margin, 27, { align: 'right' });
+        y = 45;
+        
+        // ── Plan Overview ──
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Plan Overview', margin, y); y += 8;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
+        
+        const province = document.getElementById('province')?.selectedOptions?.[0]?.text || inputs.province || '';
+        const overviewRows = [
+            ['Current Age', `${inputs.currentAge}`],
+            ['Retirement Age', `${inputs.retirementAge}`],
+            ['Life Expectancy', `${inputs.lifeExpectancy}`],
+            ['Province', province],
+            ['Annual Income', fmt(inputs.currentIncome || 0)],
+            ['Monthly Savings', fmt(inputs.monthlyContribution || 0)],
+            ['Annual Spending', fmt(inputs.annualSpending || 0)],
+        ];
+        
+        overviewRows.forEach(([label, val]) => {
+            doc.setFont('helvetica', 'normal');
+            doc.text(label, margin, y);
+            doc.setFont('helvetica', 'bold');
+            doc.text(val, margin + 55, y);
+            y += 5.5;
+        });
+        y += 5;
+        
+        // ── Current Savings ──
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Current Savings', margin, y); y += 7;
+        doc.setFontSize(10);
+        doc.setTextColor(71, 85, 105);
+        
+        const savingsRows = [
+            ['RRSP', fmt(inputs.rrsp || 0)],
+            ['TFSA', fmt(inputs.tfsa || 0)],
+            ['Non-Registered', fmt(inputs.nonReg || 0)],
+        ];
+        if (inputs.lira) savingsRows.push(['LIRA', fmt(inputs.lira)]);
+        const totalSavings = (inputs.rrsp || 0) + (inputs.tfsa || 0) + (inputs.nonReg || 0) + (inputs.lira || 0);
+        savingsRows.push(['Total', fmt(totalSavings)]);
+        
+        savingsRows.forEach(([label, val], i) => {
+            if (i === savingsRows.length - 1) {
+                doc.setDrawColor(200, 200, 200);
+                doc.line(margin, y - 1, margin + 80, y - 1);
+                doc.setFont('helvetica', 'bold');
+            } else {
+                doc.setFont('helvetica', 'normal');
+            }
+            doc.text(label, margin, y);
+            doc.text(val, margin + 55, y);
+            y += 5.5;
+        });
+        y += 8;
+        
+        // ── Key Results ──
+        checkPage(50);
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Key Results', margin, y); y += 8;
+        
+        // Result boxes
+        const boxes = [
+            { label: 'Portfolio at Retirement', value: fmtK(summary.portfolioAtRetirement || 0), color: [59, 130, 246] },
+            { label: 'Money Lasts Until', value: `Age ${summary.moneyLastsAge || '?'}`, color: summary.moneyLastsAge >= inputs.lifeExpectancy ? [16, 185, 129] : [239, 68, 68] },
+            { label: 'Max Sustainable Spending', value: fmt(summary.maxSustainableSpending || inputs.annualSpending || 0) + '/yr', color: [139, 92, 246] },
+            { label: 'Estate Value', value: fmtK(summary.legacyAmount || 0), color: [245, 158, 11] },
+        ];
+        
+        const boxW = (contentW - 6) / 2;
+        const boxH = 22;
+        boxes.forEach((box, i) => {
+            const bx = margin + (i % 2) * (boxW + 6);
+            const by = y + Math.floor(i / 2) * (boxH + 4);
+            doc.setFillColor(...box.color);
+            doc.roundedRect(bx, by, boxW, boxH, 3, 3, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(box.label, bx + 4, by + 7);
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text(box.value, bx + 4, by + 17);
+        });
+        y += (boxH + 4) * 2 + 10;
+        
+        // ── Government Benefits ──
+        checkPage(35);
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Government Benefits', margin, y); y += 7;
+        doc.setFontSize(10);
+        doc.setTextColor(71, 85, 105);
+        
+        const gov = results.govBenefits || {};
+        const govRows = [
+            ['CPP', fmt(gov.cppTotal || 0) + '/yr', `Starting age ${gov.cppStartAge || 65}`],
+            ['OAS', fmt(gov.oasMax || 0) + '/yr', `Starting age 65`],
+        ];
+        if (gov.gisReceived > 0) govRows.push(['GIS', fmt(gov.gisReceived) + '/yr', 'Income-tested']);
+        govRows.push(['Total', fmt(gov.total || 0) + '/yr', '']);
+        
+        govRows.forEach(([label, val, note], i) => {
+            if (i === govRows.length - 1) doc.setFont('helvetica', 'bold');
+            else doc.setFont('helvetica', 'normal');
+            doc.text(label, margin, y);
+            doc.text(val, margin + 35, y);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.text(note, margin + 75, y);
+            doc.setFontSize(10);
+            y += 5.5;
+        });
+        y += 8;
+        
+        // ── Strategy Comparison ──
+        if (this._strategyData) {
+            checkPage(60);
+            doc.setTextColor(15, 23, 42);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Strategy Comparison', margin, y); y += 8;
+            
+            const strategies = [
+                { name: 'Your Plan', key: 'smart', icon: '📋' },
+                { name: 'Advisor', key: 'advisor', icon: '👔' },
+                { name: 'Optimized', key: 'optimized', icon: '🎯' },
+            ];
+            
+            // Table header
+            doc.setFillColor(241, 245, 249);
+            doc.rect(margin, y - 3, contentW, 7, 'F');
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(71, 85, 105);
+            const cols = [margin, margin + 45, margin + 85, margin + 120, margin + 150];
+            doc.text('Strategy', cols[0] + 2, y + 1);
+            doc.text('Max Spending', cols[1], y + 1);
+            doc.text('Lasts Until', cols[2], y + 1);
+            doc.text('Estate', cols[3], y + 1);
+            doc.text('Lifetime Tax', cols[4], y + 1);
+            y += 8;
+            
+            strategies.forEach(s => {
+                const data = this._strategyData[s.key];
+                const sum = data?.results?.summary;
+                if (!sum) return;
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(51, 65, 85);
+                doc.text(s.name, cols[0] + 2, y);
+                doc.text(fmt(sum.maxSustainableSpending || inputs.annualSpending || 0), cols[1], y);
+                doc.text(`Age ${sum.moneyLastsAge || '?'}`, cols[2], y);
+                doc.text(fmtK(sum.legacyAmount || 0), cols[3], y);
+                doc.text(fmtK(sum.lifetimeTax || 0), cols[4], y);
+                y += 6;
+            });
+            y += 8;
+        }
+        
+        // ── Year-by-Year Summary (first 10 + last 5) ──
+        const yearByYear = results.yearByYear;
+        if (yearByYear && yearByYear.length > 0) {
+            addPage();
+            doc.setTextColor(15, 23, 42);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Year-by-Year Projection', margin, y); y += 3;
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 116, 139);
+            doc.text('Showing key years from your retirement projection', margin, y); y += 6;
+            
+            // Table header
+            doc.setFillColor(241, 245, 249);
+            doc.rect(margin, y - 3, contentW, 7, 'F');
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(71, 85, 105);
+            const yCols = [margin, margin+14, margin+38, margin+62, margin+86, margin+110, margin+135, margin+155];
+            ['Age', 'Income', 'Spending', 'Tax', 'CPP', 'OAS', 'Withdrawal', 'Balance'].forEach((h, i) => {
+                doc.text(h, yCols[i], y + 1);
+            });
+            y += 7;
+            
+            // Select representative years
+            const retIdx = yearByYear.findIndex(yr => yr.age >= inputs.retirementAge);
+            const retYears = retIdx >= 0 ? yearByYear.slice(retIdx) : yearByYear;
+            const showYears = [];
+            // First 10 retirement years
+            showYears.push(...retYears.slice(0, 10));
+            // Then every 5th year
+            for (let i = 10; i < retYears.length; i += 5) showYears.push(retYears[i]);
+            // Always include last year
+            if (retYears.length > 10 && showYears[showYears.length - 1] !== retYears[retYears.length - 1]) {
+                showYears.push(retYears[retYears.length - 1]);
+            }
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(51, 65, 85);
+            showYears.forEach(yr => {
+                checkPage(6);
+                const vals = [
+                    `${yr.age}`,
+                    fmtK(yr.afterTaxIncome || yr.totalIncome || 0),
+                    fmtK(yr.spending || yr.annualSpending || 0),
+                    fmtK(yr.tax || yr.totalTax || 0),
+                    fmtK(yr.cpp || 0),
+                    fmtK(yr.oas || 0),
+                    fmtK(yr.totalWithdrawal || 0),
+                    fmtK(yr.totalBalance || yr.totalPortfolio || 0),
+                ];
+                vals.forEach((v, i) => doc.text(v, yCols[i], y));
+                y += 5;
+            });
+        }
+        
+        // ── Footer on every page ──
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let p = 1; p <= pageCount; p++) {
+            doc.setPage(p);
+            doc.setFontSize(8);
+            doc.setTextColor(148, 163, 184);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Canadian Retirement Planner — retirementplanner.ca', margin, 270);
+            doc.text(`Page ${p} of ${pageCount}`, pageW - margin, 270, { align: 'right' });
+        }
+        
+        // Save
+        doc.save(`retirement-report-${new Date().toISOString().slice(0,10)}.pdf`);
     },
 
     // Scenario Save/Compare
