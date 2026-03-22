@@ -3806,78 +3806,69 @@ input:focus {
 }
 .region-btn.active .region-cost-tag { opacity: 0.9; }
 
-/* ═══ Results Top Bar (sticky) ═══ */
-.results-top-bar {
-    position: -webkit-sticky;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(255,255,255,0.97);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 8px 12px;
-    margin: 0 0 12px 0;
-    border-bottom: 1px solid #e2e8f0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+/* ═══ Results Actions Bar ═══ */
+.results-actions-bar {
+    text-align: center;
+    margin-bottom: 12px;
 }
-.results-top-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.btn-email-floating {
+.btn-email-inline {
     background: #3b82f6;
     color: white;
     border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
+    width: 100%;
+    transition: background 0.2s;
 }
-.btn-email-floating:active {
+.btn-email-inline:active {
     background: #2563eb;
 }
-.whatif-tabs {
-    display: flex;
-    gap: 2px;
-    background: #f1f5f9;
-    border-radius: 6px;
-    padding: 2px;
-    flex: 1;
-    overflow-x: auto;
+
+/* ═══ Tweak Your Plan ═══ */
+.tweak-section {
+    margin-bottom: 12px;
 }
-.whatif-tab {
-    flex: 1;
-    padding: 5px 6px;
-    border: none;
-    background: transparent;
-    color: #64748b;
-    font-size: 11px;
+.tweak-summary {
+    font-size: 15px;
     font-weight: 600;
+    color: #334155;
     cursor: pointer;
-    border-radius: 4px;
-    white-space: nowrap;
-    transition: all 0.15s;
+    padding: 4px 0;
+    list-style: none;
 }
-.whatif-tab.active {
-    background: white;
-    color: #1e293b;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+.tweak-summary::-webkit-details-marker { display: none; }
+.tweak-summary::after {
+    content: ' ▸';
+    color: #94a3b8;
 }
-.whatif-control {
+details[open] .tweak-summary::after {
+    content: ' ▾';
+}
+.tweak-content {
+    margin-top: 12px;
+}
+.tweak-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 6px;
-    padding-top: 6px;
-    border-top: 1px solid #f1f5f9;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
 }
-.whatif-control.hidden { display: none; }
-.adjuster-btn {
+.tweak-row:last-of-type { border-bottom: none; }
+.tweak-label {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+.tweak-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.tweak-btn {
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -3894,32 +3885,30 @@ input:focus {
     padding: 0;
     line-height: 1;
 }
-.adjuster-btn:active {
+.tweak-btn:active {
     background: #f1f5f9;
     transform: scale(0.93);
 }
-.adjuster-value {
-    font-size: 15px;
-    font-weight: 700;
+.tweak-value {
+    font-size: 14px;
+    font-weight: 600;
     color: #1e293b;
-    min-width: 90px;
+    min-width: 80px;
     text-align: center;
 }
-.whatif-reset {
-    font-size: 11px;
-    color: #94a3b8;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px 8px;
-    text-decoration: underline;
+.tweak-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
 }
-.whatif-edit {
-    font-size: 11px;
-    color: #3b82f6;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px 8px;
-    white-space: nowrap;
+.tweak-edit-link {
+    text-align: center;
+    margin-top: 8px;
+}
+.tweak-edit-link .btn-link {
+    font-size: 13px;
+    color: #64748b;
 }

@@ -1614,95 +1614,76 @@ const AppV4 = {
     },
 
     _setupAdjusters() {
-        this._whatifMode = 'none'; // 'none' | 'spending' | 'savings' | 'retire-age'
-        this._whatifAdjust = { spending: 0, savings: 0, retireAge: 0 };
+        this._tweakAdj = { spending: 0, savings: 0, retireAge: 0 };
         
-        // Tab switching
-        document.querySelectorAll('.whatif-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const mode = tab.dataset.whatif;
-                document.querySelectorAll('.whatif-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                this._whatifMode = mode;
+        // +/- buttons
+        document.querySelectorAll('.tweak-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const field = btn.dataset.tweak;
+                const dir = parseInt(btn.dataset.dir);
                 
-                const control = document.getElementById('whatif-control');
-                if (mode === 'none') {
-                    control?.classList.add('hidden');
-                    // Reset all adjustments when going back to "Your Plan"
-                    this._whatifAdjust = { spending: 0, savings: 0, retireAge: 0 };
-                    this._applyAdjustments();
-                } else {
-                    control?.classList.remove('hidden');
-                    this._updateWhatifDisplay();
+                if (field === 'spending') {
+                    const step = Math.round((this._baseInputs?.annualSpending || 50000) * 0.1);
+                    this._tweakAdj.spending += dir * step;
+                } else if (field === 'savings') {
+                    this._tweakAdj.savings += dir * 250;
+                } else if (field === 'retireAge') {
+                    const base = this._baseInputs?.retirementAge || 65;
+                    const newAge = base + this._tweakAdj.retireAge + dir;
+                    if (newAge < (this._baseInputs?.currentAge || 30) + 1 || newAge > 80) return;
+                    this._tweakAdj.retireAge += dir;
                 }
+                this._updateTweakDisplay();
             });
         });
         
-        // +/- buttons
-        document.getElementById('whatif-minus')?.addEventListener('click', () => {
-            this._adjustWhatif(-1);
-        });
-        document.getElementById('whatif-plus')?.addEventListener('click', () => {
-            this._adjustWhatif(1);
+        // Apply button
+        document.getElementById('btn-tweak-apply')?.addEventListener('click', () => {
+            this._applyTweaks();
         });
         
-        // Reset
-        document.getElementById('whatif-reset')?.addEventListener('click', () => {
-            this._whatifAdjust[this._whatifMode === 'retire-age' ? 'retireAge' : this._whatifMode] = 0;
-            this._applyAdjustments();
+        // Reset button
+        document.getElementById('btn-tweak-reset')?.addEventListener('click', () => {
+            this._tweakAdj = { spending: 0, savings: 0, retireAge: 0 };
+            this._applyTweaks();
         });
     },
     
-    _adjustWhatif(dir) {
-        if (this._whatifMode === 'spending') {
-            const step = Math.round((this._baseInputs?.annualSpending || 50000) * 0.1);
-            this._whatifAdjust.spending += dir * step;
-        } else if (this._whatifMode === 'savings') {
-            this._whatifAdjust.savings += dir * 250;
-        } else if (this._whatifMode === 'retire-age') {
-            this._whatifAdjust.retireAge += dir * 1;
-            // Clamp
-            const base = this._baseInputs?.retirementAge || 65;
-            const newAge = base + this._whatifAdjust.retireAge;
-            if (newAge < (this._baseInputs?.currentAge || 30) + 1 || newAge > 80) {
-                this._whatifAdjust.retireAge -= dir * 1;
-                return;
-            }
+    _updateTweakDisplay() {
+        if (!this._baseInputs) return;
+        const fmt = v => '$' + Math.round(v).toLocaleString();
+        const adj = this._tweakAdj;
+        
+        const spendEl = document.getElementById('tweak-spending');
+        const saveEl = document.getElementById('tweak-savings');
+        const ageEl = document.getElementById('tweak-retire-age');
+        
+        if (spendEl) {
+            const total = this._baseInputs.annualSpending + adj.spending;
+            spendEl.textContent = fmt(total) + '/yr';
+            spendEl.style.color = adj.spending === 0 ? '#1e293b' : (adj.spending > 0 ? '#dc2626' : '#059669');
         }
-        this._applyAdjustments();
-    },
-    
-    _updateWhatifDisplay() {
-        const el = document.getElementById('whatif-value');
-        if (!el || !this._baseInputs) return;
-        
-        const fmt = v => '$' + Math.round(Math.abs(v)).toLocaleString();
-        
-        if (this._whatifMode === 'spending') {
-            const total = this._baseInputs.annualSpending + this._whatifAdjust.spending;
-            el.textContent = fmt(total) + '/yr';
-            el.style.color = this._whatifAdjust.spending === 0 ? '#1e293b' : (this._whatifAdjust.spending > 0 ? '#dc2626' : '#059669');
-        } else if (this._whatifMode === 'savings') {
-            const total = Math.max(0, this._baseInputs.monthlyContribution + this._whatifAdjust.savings);
-            el.textContent = fmt(total) + '/mo';
-            el.style.color = this._whatifAdjust.savings === 0 ? '#1e293b' : (this._whatifAdjust.savings > 0 ? '#059669' : '#dc2626');
-        } else if (this._whatifMode === 'retire-age') {
-            const total = this._baseInputs.retirementAge + this._whatifAdjust.retireAge;
-            el.textContent = 'Age ' + total;
-            el.style.color = this._whatifAdjust.retireAge === 0 ? '#1e293b' : (this._whatifAdjust.retireAge < 0 ? '#059669' : '#dc2626');
+        if (saveEl) {
+            const total = Math.max(0, this._baseInputs.monthlyContribution + adj.savings);
+            saveEl.textContent = fmt(total) + '/mo';
+            saveEl.style.color = adj.savings === 0 ? '#1e293b' : (adj.savings > 0 ? '#059669' : '#dc2626');
+        }
+        if (ageEl) {
+            const total = this._baseInputs.retirementAge + adj.retireAge;
+            ageEl.textContent = 'Age ' + total;
+            ageEl.style.color = adj.retireAge === 0 ? '#1e293b' : (adj.retireAge < 0 ? '#059669' : '#dc2626');
         }
     },
     
     _updateAdjusterDisplay() {
-        this._updateWhatifDisplay();
+        this._updateTweakDisplay();
     },
     
-    _applyAdjustments() {
+    _applyTweaks() {
         if (!this._baseInputs) return;
+        this._updateTweakDisplay();
         
-        this._updateWhatifDisplay();
-        
-        const adj = this._whatifAdjust;
+        const adj = this._tweakAdj;
         const adjustedInputs = {
             ...this._baseInputs,
             windfalls: [...(this._baseInputs.windfalls || [])],
@@ -1715,6 +1696,9 @@ const AppV4 = {
         this._lastCalcResults = results;
         this._lastCalcInputs = adjustedInputs;
         this._displayResults(results, adjustedInputs);
+        
+        // Re-run spending optimizer
+        this._runSpendingOptimizer(adjustedInputs, results);
         
         if (typeof AppV5Enhanced !== 'undefined') {
             AppV5Enhanced.runEnhancedAnalysis(adjustedInputs, results);
