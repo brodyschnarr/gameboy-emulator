@@ -1186,6 +1186,7 @@ const AppV4 = {
                 document.getElementById('prt-income').value = '';
                 
                 this._renderPostRetirementWork();
+                this._updateStep5AddedItems();
             });
         }
     },
@@ -1253,6 +1254,10 @@ const AppV4 = {
                 }
                 this._updateWindfallsList();
                 container.innerHTML = '';
+                // Auto-close the windfall form after adding
+                const windForm = document.getElementById('form-windfall');
+                if (windForm) windForm.classList.add('hidden');
+                this._updateStep5AddedItems();
             },
             () => {
                 container.innerHTML = '';
@@ -1711,6 +1716,13 @@ const AppV4 = {
             incomeHTML += this._makeChip('🏡', 'Downsizing', `${fmt(downProceeds)} at age ${downAge}`, 'downsizing', true);
         }
         
+        // Post-retirement work
+        if (this.postRetirementWorkItems && this.postRetirementWorkItems.length > 0) {
+            this.postRetirementWorkItems.forEach((item, i) => {
+                incomeHTML += this._makeChip('💼', item.name || 'Part-time work', `${fmt(item.income || item.annualAmount || 0)}/yr ages ${item.startAge}-${item.endAge}`, `prt-${i}`, true);
+            });
+        }
+        
         // Windfalls & Stock Options
         if (this.windfalls && this.windfalls.length > 0) {
             this.windfalls.forEach((w, i) => {
@@ -1779,6 +1791,9 @@ const AppV4 = {
                 let formType = editType;
                 if (editType.startsWith('windfall-')) formType = 'windfall';
                 else if (editType.startsWith('estate-')) formType = 'estate';
+                else if (editType.startsWith('prt-')) formType = 'post-retirement-work';
+                else if (editType.startsWith('oi-')) formType = 'other-income';
+                else if (editType.startsWith('oe-')) formType = 'other-expense';
                 const form = document.getElementById('form-' + formType);
                 if (form) {
                     document.querySelectorAll('.step5-form').forEach(f => f.classList.add('hidden'));
@@ -1800,6 +1815,10 @@ const AppV4 = {
                 } else if (type.startsWith('estate-')) {
                     const idx = parseInt(type.split('-')[1]);
                     if (this.estateAssets) this.estateAssets.splice(idx, 1);
+                    this._updateStep5AddedItems();
+                } else if (type.startsWith('prt-')) {
+                    const idx = parseInt(type.split('-')[1]);
+                    if (this.postRetirementWorkItems) this.postRetirementWorkItems.splice(idx, 1);
                     this._updateStep5AddedItems();
                 } else if (type.startsWith('oi-')) {
                     const idx = parseInt(type.split('-')[1]);
