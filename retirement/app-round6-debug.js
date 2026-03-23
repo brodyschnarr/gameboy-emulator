@@ -1484,18 +1484,32 @@ const AppV4 = {
             });
         });
 
-        // Tax credit toggles — update chips live
-        ['dtc-checkbox', 'metc-checkbox', 'hatc-checkbox', 'caregiver-checkbox'].forEach(id => {
-            document.getElementById(id)?.addEventListener('change', () => {
-                // Show/hide METC amount field
-                if (id === 'metc-checkbox') {
-                    const metcGroup = document.getElementById('metc-amount-group');
-                    if (metcGroup) metcGroup.classList.toggle('hidden', !document.getElementById('metc-checkbox').checked);
+        // Tax credit dropdown
+        setupDropdown('btn-add-credit-dropdown', 'credit-dropdown-menu');
+        
+        // Credit dropdown items: instant-add for simple credits, form for METC
+        document.querySelectorAll('#credit-dropdown-menu .step5-dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const type = item.dataset.type;
+                if (type === 'dtc') {
+                    document.getElementById('dtc-checkbox').checked = true;
+                } else if (type === 'hatc') {
+                    document.getElementById('hatc-checkbox').checked = true;
+                } else if (type === 'caregiver') {
+                    document.getElementById('caregiver-checkbox').checked = true;
+                } else if (type === 'metc') {
+                    document.getElementById('metc-checkbox').checked = true;
+                    const form = document.getElementById('form-metc');
+                    if (form) {
+                        document.querySelectorAll('.step5-form').forEach(f => f.classList.add('hidden'));
+                        form.classList.remove('hidden');
+                        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
                 }
+                item.closest('.step5-dropdown').classList.add('hidden');
                 this._updateStep5AddedItems();
             });
         });
-        document.getElementById('metc-annual')?.addEventListener('input', () => this._updateStep5AddedItems());
 
         // Wire save/cancel buttons on all forms
         document.querySelectorAll('[data-save]').forEach(btn => {
@@ -1591,7 +1605,7 @@ const AppV4 = {
             'annuity': () => { document.getElementById('annuity-lump-sum').value = ''; document.getElementById('annuity-purchase-age').value = ''; document.getElementById('annuity-monthly-payout').value = ''; },
             'downsizing': () => { document.getElementById('downsizing-age').value = ''; document.getElementById('downsizing-proceeds').value = ''; document.getElementById('downsizing-spending-change').value = ''; },
             'dtc': () => { document.getElementById('dtc-checkbox').checked = false; this._updateStep5AddedItems(); },
-            'metc': () => { document.getElementById('metc-checkbox').checked = false; document.getElementById('metc-amount-group')?.classList.add('hidden'); this._updateStep5AddedItems(); },
+            'metc': () => { document.getElementById('metc-checkbox').checked = false; document.getElementById('metc-annual').value = ''; document.getElementById('form-metc')?.classList.add('hidden'); this._updateStep5AddedItems(); },
             'hatc': () => { document.getElementById('hatc-checkbox').checked = false; this._updateStep5AddedItems(); },
             'caregiver': () => { document.getElementById('caregiver-checkbox').checked = false; this._updateStep5AddedItems(); },
             // other-income and other-expense handled via indexed delete below
@@ -1615,6 +1629,9 @@ const AppV4 = {
             'annuity': () => (parseFloat(document.getElementById('annuity-lump-sum')?.value) || 0) > 0,
             'downsizing': () => (parseFloat(document.getElementById('downsizing-proceeds')?.value) || 0) > 0,
             'dtc': () => document.getElementById('dtc-checkbox')?.checked,
+            'metc': () => document.getElementById('metc-checkbox')?.checked,
+            'hatc': () => document.getElementById('hatc-checkbox')?.checked,
+            'caregiver': () => document.getElementById('caregiver-checkbox')?.checked,
             // other-income and other-expense are multi-add, always visible in dropdown
             'life-insurance': () => (parseFloat(document.getElementById('life-insurance-amount')?.value) || 0) > 0,
             'vehicle': () => (parseFloat(document.getElementById('vehicle-value')?.value) || 0) > 0,
@@ -1659,24 +1676,19 @@ const AppV4 = {
             incomeHTML += this._makeChip('🔒', 'Annuity', `${fmt(annuity)} → ${fmt(payout)}/mo`, 'annuity', true);
         }
         
-        // Tax Credits
+        // Tax Credits (separate container)
+        let creditsHTML = '';
         const dtc = document.getElementById('dtc-checkbox')?.checked;
-        if (dtc) {
-            incomeHTML += this._makeChip('♿', 'DTC', '~$1,900/yr savings', 'dtc', true);
-        }
+        if (dtc) creditsHTML += this._makeChip('♿', 'DTC', '~$1,900/yr savings', 'dtc', true);
         const metc = document.getElementById('metc-checkbox')?.checked;
         if (metc) {
             const metcAmt = parseFloat(document.getElementById('metc-annual')?.value) || 0;
-            incomeHTML += this._makeChip('💊', 'Medical Expenses', metcAmt > 0 ? `$${metcAmt.toLocaleString()}/yr` : 'Enabled', 'metc', true);
+            creditsHTML += this._makeChip('💊', 'Medical Expenses', metcAmt > 0 ? `$${metcAmt.toLocaleString()}/yr` : 'Enabled', 'metc', true);
         }
-        const hatc = document.getElementById('hatc-checkbox')?.checked;
-        if (hatc) {
-            incomeHTML += this._makeChip('🏠', 'Home Accessibility', 'Up to $3,000/yr', 'hatc', true);
-        }
-        const caregiver = document.getElementById('caregiver-checkbox')?.checked;
-        if (caregiver) {
-            incomeHTML += this._makeChip('🤝', 'Caregiver Credit', '~$1,200/yr', 'caregiver', true);
-        }
+        if (document.getElementById('hatc-checkbox')?.checked) creditsHTML += this._makeChip('🏠', 'Home Accessibility', 'Up to $3,000/yr', 'hatc', true);
+        if (document.getElementById('caregiver-checkbox')?.checked) creditsHTML += this._makeChip('🤝', 'Caregiver Credit', '~$1,200/yr', 'caregiver', true);
+        const creditContainer = document.getElementById('added-credit-items');
+        if (creditContainer) creditContainer.innerHTML = creditsHTML;
         
         // Debt
         const debt = parseFloat(document.getElementById('current-debt')?.value) || 0;
@@ -2446,6 +2458,22 @@ const AppV4 = {
     _getCoupleOptimizationCallout(inputs, comparison) {
         if (!inputs.accountsP1 || !inputs.accountsP2) return '';
         try {
+            const fmt = (v) => '$' + Math.abs(Math.round(v)).toLocaleString();
+            const fmtK = (v) => {
+                const n = Math.abs(Math.round(v));
+                if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
+                if (n >= 10000) return '$' + Math.round(n / 1000) + 'K';
+                return '$' + n.toLocaleString();
+            };
+            
+            // Account balance analysis
+            const p1 = inputs.accountsP1;
+            const p2 = inputs.accountsP2;
+            const p1Total = (p1.rrsp||0) + (p1.tfsa||0) + (p1.nonReg||0) + (p1.lira||0) + (p1.other||0) + (p1.cash||0);
+            const p2Total = (p2.rrsp||0) + (p2.tfsa||0) + (p2.nonReg||0) + (p2.lira||0) + (p2.other||0) + (p2.cash||0);
+            const totalBal = p1Total + p2Total;
+            const imbalanceRatio = totalBal > 0 ? Math.abs(p1Total - p2Total) / totalBal : 0;
+            
             // Compare separate vs pooled
             const pooledInputs = { ...inputs, accountsP1: undefined, accountsP2: undefined };
             const pooledComparison = RetirementCalcV4.compareTaxStrategies(pooledInputs);
@@ -2454,26 +2482,61 @@ const AppV4 = {
             const poolTax = pooledComparison.smart.totalTax;
             const sepOAS = comparison.smart.totalOAS;
             const poolOAS = pooledComparison.smart.totalOAS;
-            
             const taxSaved = poolTax - sepTax;
             const oasSaved = sepOAS - poolOAS;
             const totalBenefit = taxSaved + oasSaved;
             
-            if (totalBenefit < 100) return `
-                <div class="couple-optimization-callout" style="margin-top:12px;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
-                    <div style="font-size:13px;color:var(--text-muted);">👫 Separate account tracking active — accounts are balanced enough that per-person optimization has minimal tax impact.</div>
-                </div>`;
+            // Build specific advice
+            let adviceHTML = '';
             
-            const fmt = (v) => '$' + Math.abs(Math.round(v)).toLocaleString();
+            if (imbalanceRatio > 0.3) {
+                const higherPerson = p1Total > p2Total ? 'Person 1' : 'Person 2';
+                const lowerPerson = p1Total > p2Total ? 'Person 2' : 'Person 1';
+                const higher = Math.max(p1Total, p2Total);
+                const lower = Math.min(p1Total, p2Total);
+                const idealEach = totalBal / 2;
+                const toMove = Math.round(higher - idealEach);
+                
+                adviceHTML += `
+                    <div style="margin-top:10px;padding:10px;background:var(--card-bg);border-radius:8px;border:1px solid var(--border);">
+                        <div style="font-weight:600;font-size:13px;margin-bottom:6px;">⚖️ Rebalancing Opportunity</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">
+                            ${higherPerson} has <strong>${fmtK(higher)}</strong> vs ${lowerPerson}'s <strong>${fmtK(lower)}</strong> (${Math.round(imbalanceRatio * 100)}% imbalanced)
+                        </div>
+                        <div style="font-size:12px;">
+                            💡 <strong>Shift ~${fmtK(toMove)} toward ${lowerPerson}</strong> over time by directing new contributions their way.
+                            This equalizes taxable income in retirement, keeping both partners in lower tax brackets.
+                        </div>`;
+                
+                // RRSP-specific advice
+                const p1RRSP = p1.rrsp || 0;
+                const p2RRSP = p2.rrsp || 0;
+                if (Math.abs(p1RRSP - p2RRSP) > 50000) {
+                    const bigRRSP = p1RRSP > p2RRSP ? 'Person 1' : 'Person 2';
+                    const smallRRSP = p1RRSP > p2RRSP ? 'Person 2' : 'Person 1';
+                    adviceHTML += `
+                        <div style="font-size:12px;margin-top:6px;">
+                            📋 <strong>Spousal RRSP:</strong> ${bigRRSP} can contribute to a <em>spousal RRSP</em> in ${smallRRSP}'s name — same deduction for ${bigRRSP}, but withdrawals are taxed at ${smallRRSP}'s lower rate.
+                        </div>`;
+                }
+                adviceHTML += `</div>`;
+            }
+            
             const items = [];
-            if (taxSaved > 500) items.push(`💰 <strong>${fmt(taxSaved)}</strong> less tax by splitting withdrawals`);
+            if (taxSaved > 500) items.push(`💰 <strong>${fmt(taxSaved)}</strong> less tax by per-person withdrawals`);
             if (oasSaved > 500) items.push(`🏛️ <strong>${fmt(oasSaved)}</strong> more OAS preserved`);
+            if (totalBenefit > 100 && items.length === 0) items.push(`💰 <strong>${fmt(totalBenefit)}</strong> total optimization benefit`);
+            
+            if (totalBenefit < 100 && imbalanceRatio < 0.3) return `
+                <div class="couple-optimization-callout" style="margin-top:12px;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+                    <div style="font-size:13px;color:var(--text-muted);">👫 Accounts are well-balanced — per-person optimization has minimal additional tax impact. Nice work!</div>
+                </div>`;
             
             return `
                 <div class="couple-optimization-callout" style="margin-top:12px;padding:12px 14px;background:var(--bg);border:2px solid var(--success);border-radius:10px;">
-                    <div style="font-weight:700;font-size:15px;margin-bottom:6px;">👫 Couple Optimization: ${fmt(totalBenefit)} saved</div>
-                    <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">By tracking accounts separately and optimizing who withdraws what:</div>
-                    <div style="font-size:13px;">${items.join('<br>')}</div>
+                    ${totalBenefit > 100 ? `<div style="font-weight:700;font-size:15px;margin-bottom:6px;">👫 Couple Optimization: ${fmt(totalBenefit)} saved</div>` : '<div style="font-weight:700;font-size:15px;margin-bottom:6px;">👫 Couple Account Analysis</div>'}
+                    ${items.length > 0 ? `<div style="font-size:13px;margin-bottom:4px;">${items.join('<br>')}</div>` : ''}
+                    ${adviceHTML}
                 </div>`;
         } catch(e) { return ''; }
     },

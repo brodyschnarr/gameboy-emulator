@@ -4153,12 +4153,27 @@ input:focus {
 .step5-dropdown-item:hover, .step5-dropdown-item:active {
     background: var(--bg);
 }
+.step5-section-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
 .step5-form {
     background: var(--bg);
-    border: 1px solid var(--border);
+    border: 1px solid var(--primary);
     border-radius: 10px;
     padding: 14px;
     margin: 10px 0;
+    animation: formSlideIn 0.2s ease-out;
+}
+@keyframes formSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 .step5-form.hidden { display: none; }
 .step5-form-header {
