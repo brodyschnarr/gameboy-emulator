@@ -2197,6 +2197,7 @@ const AppV4 = {
                     🏆 <strong>${allPlans[0].label}</strong> lets you spend <strong>${fmt(bestMax)}/yr</strong>
                     ${bestMax > worstMax ? ` — <strong>${fmt(bestMax - worstMax)}/yr more</strong> than ${allPlans[allPlans.length-1].label}` : ''}
                 </div>
+                ${this._getStrategyCoupleCallout(inputs, fmt)}
                 <div id="savings-split-suggestion" class="savings-split-box hidden"></div>
                 <button type="button" class="btn-link" id="btn-optimize-savings" style="margin-top: 8px; font-size: 13px;">
                     💡 What if I also changed my savings split?
@@ -2224,14 +2225,24 @@ const AppV4 = {
             // Wire up savings split optimizer button
             const splitBtn = document.getElementById('btn-optimize-savings');
             if (splitBtn) {
-                splitBtn.addEventListener('click', () => {
-                    splitBtn.disabled = true;
+                // Auto-run in couple mode — show results immediately
+                if (inputs.isFamilyMode && inputs.accountsP1 && inputs.accountsP2) {
                     splitBtn.textContent = '⏳ Analyzing savings splits...';
+                    splitBtn.disabled = true;
                     setTimeout(() => {
                         this._runSavingsSplitAnalysis(inputs, optParams, optMax, fmt);
                         splitBtn.classList.add('hidden');
-                    }, 50);
-                });
+                    }, 100);
+                } else {
+                    splitBtn.addEventListener('click', () => {
+                        splitBtn.disabled = true;
+                        splitBtn.textContent = '⏳ Analyzing savings splits...';
+                        setTimeout(() => {
+                            this._runSavingsSplitAnalysis(inputs, optParams, optMax, fmt);
+                            splitBtn.classList.add('hidden');
+                        }, 50);
+                    });
+                }
             }
 
             // Tab switching
@@ -2472,6 +2483,42 @@ const AppV4 = {
         } catch (e) {
             section.classList.add('hidden');
         }
+    },
+
+    _getStrategyCoupleCallout(inputs, fmt) {
+        if (!inputs.isFamilyMode || !inputs.accountsP1 || !inputs.accountsP2) return '';
+        try {
+            const p1 = inputs.accountsP1;
+            const p2 = inputs.accountsP2;
+            const totalP1 = (p1.rrsp || 0) + (p1.tfsa || 0) + (p1.nonReg || 0) + (p1.lira || 0);
+            const totalP2 = (p2.rrsp || 0) + (p2.tfsa || 0) + (p2.nonReg || 0) + (p2.lira || 0);
+            const total = totalP1 + totalP2;
+            if (total < 1000) return '';
+            const ratio = Math.min(totalP1, totalP2) / Math.max(totalP1, totalP2);
+            const pctP1 = Math.round(totalP1 / total * 100);
+            const pctP2 = 100 - pctP1;
+            const contribPct = Math.round((inputs.contribP1Pct || 0.5) * 100);
+
+            if (ratio > 0.6) {
+                // Balanced — brief note
+                return `<div style="margin-top:8px;padding:10px 12px;background:rgba(16,185,129,0.06);border:1px solid var(--success,#10b981);border-radius:8px;font-size:13px;">
+                    👫 <strong>Couple savings:</strong> Well-balanced (${pctP1}/${pctP2} split). Per-person withdrawals optimize your tax brackets.
+                </div>`;
+            }
+            // Imbalanced — strong callout
+            const bigger = totalP1 > totalP2 ? 'Person 1' : 'Person 2';
+            const smaller = totalP1 > totalP2 ? 'Person 2' : 'Person 1';
+            const bigPct = Math.max(pctP1, pctP2);
+            let advice = '';
+            if (contribPct > 70 || contribPct < 30) {
+                advice = ` Consider shifting future contributions toward ${smaller}'s accounts to equalize over time.`;
+            }
+            return `<div style="margin-top:8px;padding:12px 14px;background:rgba(245,158,11,0.08);border:2px solid #f59e0b;border-radius:10px;font-size:13px;">
+                <div style="font-weight:700;margin-bottom:4px;">⚠️ Savings imbalance: ${bigger} holds ${bigPct}% of accounts</div>
+                <div>This concentrates withdrawals in ${bigger}'s higher tax bracket. Rebalancing could save thousands in retirement tax.${advice}</div>
+                <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">Use the ⚖️ Equalize button in Step 3, or adjust the savings split below.</div>
+            </div>`;
+        } catch(e) { return ''; }
     },
 
     _getCoupleOptimizationCallout(inputs, comparison) {
@@ -3402,6 +3449,8 @@ const AppV4 = {
                     if (this.currentScenario === 'base') {
                         this._updateSuccessRateDisplay(mcResults.successRate);
                     }
+                    // Reconcile banner & spending check with MC results
+                    this._reconcileWithMC(mcResults, inputs, baseResults);
                 };
                 AppV5Enhanced.runEnhancedAnalysis(inputs, baseResults);
             }
@@ -3610,6 +3659,39 @@ const AppV4 = {
         tabContainer._scenarioClickHandler = handler;
         tabContainer.addEventListener('click', handler);
 
+    },
+
+    _reconcileWithMC(mcResults, inputs, baseResults) {
+        const rate = mcResults.successRate;
+        const lastsAge = baseResults.summary.moneyLastsAge || inputs.lifeExpectancy;
+        const isDetFail = lastsAge < inputs.lifeExpectancy;
+
+        // Update banner to reflect MC reality
+        const banner = document.getElementById('status-banner');
+        if (banner && isDetFail && rate >= 70) {
+            // Deterministic says fail but MC says likely OK — nuance the message
+            banner.className = 'card status-banner on-track';
+            banner.innerHTML = `✅ Your plan succeeds in <strong>${rate}%</strong> of market scenarios`;
+        } else if (banner && isDetFail && rate >= 50) {
+            banner.className = 'card status-banner needs-work';
+            banner.innerHTML = `⚠️ Your plan succeeds in ${rate}% of scenarios — consider small adjustments`;
+        }
+
+        // Update spending check card with MC context
+        const card = document.querySelector('.spending-optimizer-card');
+        if (card && isDetFail && rate >= 70) {
+            // Add MC context below the spending check
+            const existing = card.querySelector('.mc-context-note');
+            if (!existing) {
+                const note = document.createElement('div');
+                note.className = 'mc-context-note';
+                note.style.cssText = 'margin-top:12px;padding:10px 12px;background:rgba(16,185,129,0.08);border:1px solid var(--success, #10b981);border-radius:8px;font-size:13px;';
+                note.innerHTML = `📊 <strong>Monte Carlo says: ${rate}% success rate.</strong> The spending check above uses a fixed return rate. ` +
+                    `In real markets with variable returns, your plan works in <strong>${rate}% of 1,000 simulated scenarios</strong>.` +
+                    (rate >= 80 ? ' Your plan is likely fine.' : ' Some adjustments could improve your odds.');
+                card.appendChild(note);
+            }
+        }
     },
 
     _updateSuccessRateDisplay(rate) {
