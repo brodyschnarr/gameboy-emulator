@@ -424,7 +424,8 @@ const MonteCarloSimulator = {
             projection.push(yearData);
         }
         
-        const runsOutYear = projection.find(p => p.totalBalance <= 0);
+        // Use $100 threshold (matches calc.js) to avoid floating-point ghost balances
+        const runsOutYear = projection.find(p => p.age >= retirementAge && p.totalBalance <= 100);
         const moneyLastsAge = runsOutYear ? runsOutYear.age : lifeExpectancy;
         const retirementYear = projection.find(p => p.age === retirementAge);
         const portfolioAtRetirement = retirementYear ? retirementYear.totalBalance : 0;
