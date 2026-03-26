@@ -4614,8 +4614,7 @@ input:focus {
 
 /* ═══ Ad Slots ═══ */
 .ad-slot {
-    display: none;
-    margin: 12px 0;
+    margin: 16px 0;
 }
 .ad-container {
     text-align: center;

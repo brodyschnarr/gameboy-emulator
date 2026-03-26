@@ -1,47 +1,21 @@
 // ═══════════════════════════════════════════
 //  Ads Manager — Retirement Calculator
-//  Handles ad slot rendering with AdSense or placeholder fallback
 // ═══════════════════════════════════════════
 
 const AdsManager = {
-    // ── Configuration ──
-    // Set your AdSense publisher ID here to activate real ads.
-    // Leave null for placeholder mode (development/testing).
     publisherId: null,  // e.g., 'ca-pub-1234567890123456'
     
-    // Ad slot IDs mapped to AdSense ad-slot values
     slotConfig: {
-        top:    { slot: null, format: 'horizontal', label: 'Advertisement' },
-        mid:    { slot: null, format: 'rectangle',  label: 'Advertisement' },
-        bottom: { slot: null, format: 'horizontal', label: 'Advertisement' },
+        top:    { slot: null, format: 'horizontal' },
+        mid:    { slot: null, format: 'rectangle' },
+        bottom: { slot: null, format: 'horizontal' },
     },
 
     init() {
-        const observer = new MutationObserver(() => {
-            const results = document.getElementById('results');
-            if (results && !results.classList.contains('hidden')) {
-                this._renderAll();
-            } else {
-                this._hideAll();
-            }
-        });
-        
-        const results = document.getElementById('results');
-        if (results) {
-            observer.observe(results, { attributes: true, attributeFilter: ['class'] });
-        }
-    },
-
-    _renderAll() {
+        // Render all ad slots immediately (they're inside #results which is hidden until calc)
         document.querySelectorAll('.ad-slot').forEach(el => {
             const position = el.dataset.adSlot;
             if (!position) return;
-            
-            if (el.dataset.rendered === 'true') {
-                el.style.display = '';
-                return;
-            }
-
             const config = this.slotConfig[position];
             if (!config) return;
 
@@ -50,20 +24,13 @@ const AdsManager = {
             } else {
                 this._renderPlaceholder(el, config);
             }
-            el.dataset.rendered = 'true';
-        });
-    },
-
-    _hideAll() {
-        document.querySelectorAll('.ad-slot').forEach(el => {
-            el.style.display = 'none';
         });
     },
 
     _renderAdSense(el, config) {
         el.innerHTML = `
             <div class="ad-container">
-                <small class="ad-label">${config.label}</small>
+                <small class="ad-label">Advertisement</small>
                 <ins class="adsbygoogle"
                      style="display:block"
                      data-ad-client="${this.publisherId}"
@@ -72,11 +39,7 @@ const AdsManager = {
                      data-full-width-responsive="true"></ins>
             </div>
         `;
-        try {
-            (adsbygoogle = window.adsbygoogle || []).push({});
-        } catch(e) {
-            console.warn('[AdsManager] AdSense push failed:', e.message);
-        }
+        try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
     },
 
     _renderPlaceholder(el, config) {
@@ -85,7 +48,7 @@ const AdsManager = {
             <div class="ad-placeholder ${isRect ? 'ad-rectangle' : 'ad-horizontal'}">
                 <div class="ad-placeholder-inner">
                     <span class="ad-placeholder-icon">📊</span>
-                    <span class="ad-placeholder-text">Ad space — <a href="mailto:brody@example.com" style="color:var(--accent,#3b82f6);text-decoration:none;">advertise here</a></span>
+                    <span class="ad-placeholder-text">Ad space available</span>
                 </div>
             </div>
         `;
