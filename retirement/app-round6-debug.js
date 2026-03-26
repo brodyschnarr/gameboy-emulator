@@ -3476,17 +3476,6 @@ const AppV4 = {
             // Safety: ensure windfalls array exists
             if (!this.windfalls) this.windfalls = [];
             
-            // Safety: sync familyStatus from DOM in case click handler didn't fire
-            const coupleBtn = document.getElementById('family-couple');
-            if (coupleBtn && coupleBtn.classList.contains('active')) {
-                this.familyStatus = 'couple';
-            }
-            // Also sync accountMode from DOM
-            const sepBtn = document.getElementById('accounts-separate');
-            if (sepBtn && sepBtn.classList.contains('active')) {
-                this.accountMode = 'separate';
-            }
-            
             const inputs = this._gatherInputs();
 
             // Check if RetirementCalcV4 exists
@@ -3903,8 +3892,27 @@ const AppV4 = {
     },
 
     _gatherInputs() {
+        // Derive familyStatus and accountMode from DOM (not stored vars)
+        // to handle browser state restoration, back/forward cache, etc.
+        const coupleBtn = document.getElementById('family-couple');
+        const sepSection = document.getElementById('separate-accounts-section');
+        const sepBtn = document.getElementById('accounts-separate');
+        
+        // If couple button is active OR separate accounts section is visible OR partner-age has a value → couple mode
+        const partnerAgeEl = document.getElementById('partner-age');
+        const partnerAgeVisible = partnerAgeEl && partnerAgeEl.closest('.input-group') && !partnerAgeEl.closest('.input-group').classList.contains('hidden');
+        const isCouple = (coupleBtn && coupleBtn.classList.contains('active')) || 
+                         (sepSection && !sepSection.classList.contains('hidden')) ||
+                         partnerAgeVisible;
+        
+        this.familyStatus = isCouple ? 'couple' : 'single';
+        
+        // If separate accounts section is visible → separate mode
+        const isSeparate = sepSection && !sepSection.classList.contains('hidden');
+        this.accountMode = isSeparate ? 'separate' : (this.accountMode || 'joint');
+
         const currentAge = parseInt(document.getElementById('current-age')?.value);
-        const partnerAge = parseInt(document.getElementById('partner-age')?.value) || currentAge;
+        const partnerAge = parseInt(partnerAgeEl?.value) || currentAge;
 
         let currentIncome, income1, income2;
         if (this.familyStatus === 'single') {
