@@ -839,7 +839,11 @@
 
             <div id="form-stock-options" class="step5-form hidden">
                 <div class="step5-form-header">📈 Stock / Equity Options</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label for="stock-name" style="font-size: 12px;">Name / Description</label>
+                    <input type="text" id="stock-name" placeholder="e.g., Company RSUs, ESPP, Stock options">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
                     <div>
                         <label for="stock-current-value" style="font-size: 12px;">Current Value</label>
                         <div class="input-with-prefix"><span class="prefix">$</span>
@@ -847,7 +851,7 @@
                         </div>
                     </div>
                     <div>
-                        <label for="stock-cost-basis" style="font-size: 12px;">Cost Basis</label>
+                        <label for="stock-cost-basis" style="font-size: 12px;">Cost Basis (what you paid)</label>
                         <div class="input-with-prefix"><span class="prefix">$</span>
                             <input type="number" id="stock-cost-basis" placeholder="20000" min="0" step="1000">
                         </div>
@@ -855,15 +859,20 @@
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
                     <div>
-                        <label for="stock-sell-age" style="font-size: 12px;">Sell at Age</label>
-                        <input type="number" id="stock-sell-age" placeholder="55" min="18" max="100">
+                        <label for="stock-sell-age" style="font-size: 12px;">Sell / Vest at Age</label>
+                        <input type="number" id="stock-sell-age" placeholder="35" min="18" max="100">
                     </div>
                     <div>
-                        <label for="stock-growth" style="font-size: 12px;">Growth (%/yr)</label>
+                        <label for="stock-growth" style="font-size: 12px;">Expected Growth (%/yr)</label>
                         <input type="number" id="stock-growth" placeholder="8" min="0" max="30" step="1" value="8">
                     </div>
                 </div>
-                <small class="input-hint">Capital gains taxed at 50% inclusion rate on the gain (value minus cost basis).</small>
+                <small class="input-hint">Capital gains taxed at 50% inclusion rate on the gain (value − cost basis). Growth compounds until sell age.</small>
+                <div id="stock-preview" style="margin-top:8px;padding:8px 10px;background:var(--bg-card,#f8fafc);border-radius:8px;font-size:12px;display:none;">
+                    <div style="display:flex;justify-content:space-between;"><span>Projected value at sale:</span><strong id="stock-projected-value">$0</strong></div>
+                    <div style="display:flex;justify-content:space-between;"><span>Capital gains tax (~):</span><strong id="stock-tax-estimate">$0</strong></div>
+                    <div style="display:flex;justify-content:space-between;"><span>Net after tax:</span><strong id="stock-net-value">$0</strong></div>
+                </div>
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
                     <button type="button" class="btn-primary btn-sm" data-save="stock-options">Add</button>
                     <button type="button" class="btn-secondary btn-sm" data-cancel="stock-options">Cancel</button>
@@ -1049,26 +1058,45 @@
             </div>
 
             <div id="form-downsizing" class="step5-form hidden">
-                <div class="step5-form-header">🏡 Downsizing Plan</div>
+                <div class="step5-form-header">🏡 Home Sale / Downsizing</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div>
-                        <label for="downsizing-age" style="font-size: 12px;">Sell at Age</label>
-                        <input type="number" id="downsizing-age" placeholder="70" min="50" max="95">
+                        <label for="downsizing-home-value" style="font-size: 12px;">Estimated Home Value</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="downsizing-home-value" placeholder="600000" min="0" step="10000">
+                        </div>
                     </div>
                     <div>
-                        <label for="downsizing-proceeds" style="font-size: 12px;">Net Proceeds</label>
+                        <label for="downsizing-mortgage" style="font-size: 12px;">Remaining Mortgage</label>
                         <div class="input-with-prefix"><span class="prefix">$</span>
-                            <input type="number" id="downsizing-proceeds" placeholder="0" min="0" step="10000">
+                            <input type="number" id="downsizing-mortgage" placeholder="200000" min="0" step="10000">
                         </div>
                     </div>
                 </div>
-                <div style="margin-top: 6px;">
-                    <label for="downsizing-spending-change" style="font-size: 12px;">Monthly Spending Reduction</label>
-                    <div class="input-with-prefix"><span class="prefix">$</span>
-                        <input type="number" id="downsizing-spending-change" placeholder="0" min="0" step="100">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
+                    <div>
+                        <label for="downsizing-selling-costs" style="font-size: 12px;">Selling Costs (%)</label>
+                        <input type="number" id="downsizing-selling-costs" placeholder="5" min="0" max="15" step="0.5" value="5">
+                        <small class="input-hint">Agent fees, legal, staging (~5%)</small>
                     </div>
-                    <small class="input-hint">How much less you'll spend per month on housing/upkeep after downsizing (e.g., smaller home = lower property tax, utilities, maintenance)</small>
+                    <div>
+                        <label for="downsizing-age" style="font-size: 12px;">Sell at Age</label>
+                        <input type="number" id="downsizing-age" placeholder="70" min="30" max="95">
+                    </div>
                 </div>
+                <div id="downsizing-net-preview" style="margin-top:8px;padding:8px 10px;background:var(--bg-card,#f8fafc);border-radius:8px;font-size:12px;display:none;">
+                    <div style="display:flex;justify-content:space-between;"><span>Net proceeds:</span><strong id="downsizing-net-calc">$0</strong></div>
+                    <small style="color:var(--text-muted);">Primary residence — tax-free in Canada</small>
+                </div>
+                <div style="margin-top: 6px;">
+                    <label for="downsizing-spending-change" style="font-size: 12px;">Monthly Spending Reduction After Sale</label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="downsizing-spending-change" placeholder="500" min="0" step="100">
+                    </div>
+                    <small class="input-hint">Lower property tax, utilities, maintenance after downsizing</small>
+                </div>
+                <!-- Hidden field for calc engine compatibility -->
+                <input type="hidden" id="downsizing-proceeds" value="0">
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
                     <button type="button" class="btn-primary btn-sm" data-save="downsizing">Add</button>
                     <button type="button" class="btn-secondary btn-sm" data-cancel="downsizing">Cancel</button>
@@ -1484,38 +1512,38 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000107"></script>
-    <script src="cpp-calculator.js?v=17&t=24000107"></script>
-    <script src="benchmarks.js?v=17&t=24000107"></script>
-    <script src="lifestyle-data.js?v=17&t=24000107"></script>
-    <script src="regional-data.js?v=18&t=24000107"></script>
-    <script src="canada-map.js?v=18&t=24000107"></script>
-    <script src="income-sources.js?v=17&t=24000107"></script>
-    <script src="deep-dive.js?v=17&t=24000107"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000107"></script>
-    <script src="scenario-manager.js?v=17&t=24000107"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000107"></script>
-    <script src="calc.js?v=17&t=24000107"></script>
-    <script src="app-round6-debug.js?v=17&t=24000107"></script>
+    <script src="canada-tax.js?v=17&t=24000108"></script>
+    <script src="cpp-calculator.js?v=17&t=24000108"></script>
+    <script src="benchmarks.js?v=17&t=24000108"></script>
+    <script src="lifestyle-data.js?v=17&t=24000108"></script>
+    <script src="regional-data.js?v=18&t=24000108"></script>
+    <script src="canada-map.js?v=18&t=24000108"></script>
+    <script src="income-sources.js?v=17&t=24000108"></script>
+    <script src="deep-dive.js?v=17&t=24000108"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000108"></script>
+    <script src="scenario-manager.js?v=17&t=24000108"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000108"></script>
+    <script src="calc.js?v=17&t=24000108"></script>
+    <script src="app-round6-debug.js?v=17&t=24000108"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000107"></script>
-    <script src="monte-carlo.js?v=17&t=24000107"></script>
-    <script src="tax-optimizer.js?v=17&t=24000107"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000107"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000107"></script>
-    <script src="advanced-charts.js?v=17&t=24000107"></script>
-    <script src="interactive-sliders.js?v=17&t=24000107"></script>
-    <script src="scenario-storage.js?v=17&t=24000107"></script>
-    <script src="windfalls.js?v=17&t=24000107"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000107"></script>
+    <script src="error-handler.js?v=17&t=24000108"></script>
+    <script src="monte-carlo.js?v=17&t=24000108"></script>
+    <script src="tax-optimizer.js?v=17&t=24000108"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000108"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000108"></script>
+    <script src="advanced-charts.js?v=17&t=24000108"></script>
+    <script src="interactive-sliders.js?v=17&t=24000108"></script>
+    <script src="scenario-storage.js?v=17&t=24000108"></script>
+    <script src="windfalls.js?v=17&t=24000108"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000108"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=18&t=24000107"></script>
+    <script src="slider-inputs.js?v=18&t=24000108"></script>
 
     <!-- Shareable links -->
-    <script src="share-link.js?v=1&t=24000107"></script>
-    <script src="ads.js?v=1&t=24000107"></script>
+    <script src="share-link.js?v=1&t=24000108"></script>
+    <script src="ads.js?v=1&t=24000108"></script>
 
     <!-- Dark mode toggle + share link auto-load -->
     <script>

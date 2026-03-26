@@ -1564,17 +1564,20 @@ const AppV4 = {
                     const sellAge = parseInt(document.getElementById('stock-sell-age')?.value) || 55;
                     const growth = parseFloat(document.getElementById('stock-growth')?.value) || 8;
                     if (currentValue > 0) {
+                        const stockName = document.getElementById('stock-name')?.value || 'Stock / Equity';
                         if (!this.windfalls) this.windfalls = [];
                         this.windfalls.push({
-                            name: 'Stock / Equity Options',
+                            name: stockName,
                             type: 'shares',
                             currentValue, costBasis, sellAge,
                             growthRate: growth / 100,
                             amount: currentValue
                         });
+                        document.getElementById('stock-name').value = '';
                         document.getElementById('stock-current-value').value = '';
                         document.getElementById('stock-cost-basis').value = '';
                         document.getElementById('stock-sell-age').value = '';
+                        document.getElementById('stock-preview').style.display = 'none';
                     }
                 }
 
@@ -1618,6 +1621,52 @@ const AppV4 = {
                 const type = btn.dataset.cancel;
                 const form = document.getElementById('form-' + type);
                 if (form) form.classList.add('hidden');
+            });
+        });
+
+        // Live preview: Stock options
+        const stockFields = ['stock-current-value', 'stock-cost-basis', 'stock-sell-age', 'stock-growth'];
+        stockFields.forEach(id => {
+            document.getElementById(id)?.addEventListener('input', () => {
+                const val = parseFloat(document.getElementById('stock-current-value')?.value) || 0;
+                const cost = parseFloat(document.getElementById('stock-cost-basis')?.value) || 0;
+                const sellAge = parseInt(document.getElementById('stock-sell-age')?.value) || 0;
+                const growth = (parseFloat(document.getElementById('stock-growth')?.value) || 8) / 100;
+                const currentAge = parseInt(document.getElementById('current-age')?.value) || 30;
+                const years = Math.max(0, sellAge - currentAge);
+                const preview = document.getElementById('stock-preview');
+                if (val > 0 && sellAge > 0) {
+                    const projected = Math.round(val * Math.pow(1 + growth, years));
+                    const gain = Math.max(0, projected - cost);
+                    const tax = Math.round(gain * 0.5 * 0.30); // ~30% marginal on 50% inclusion
+                    const net = projected - tax;
+                    document.getElementById('stock-projected-value').textContent = '$' + projected.toLocaleString();
+                    document.getElementById('stock-tax-estimate').textContent = '$' + tax.toLocaleString();
+                    document.getElementById('stock-net-value').textContent = '$' + net.toLocaleString();
+                    if (preview) preview.style.display = '';
+                } else if (preview) {
+                    preview.style.display = 'none';
+                }
+            });
+        });
+
+        // Live preview: Downsizing
+        const downFields = ['downsizing-home-value', 'downsizing-mortgage', 'downsizing-selling-costs'];
+        downFields.forEach(id => {
+            document.getElementById(id)?.addEventListener('input', () => {
+                const homeVal = parseFloat(document.getElementById('downsizing-home-value')?.value) || 0;
+                const mortgage = parseFloat(document.getElementById('downsizing-mortgage')?.value) || 0;
+                const costsPct = (parseFloat(document.getElementById('downsizing-selling-costs')?.value) || 5) / 100;
+                const net = Math.round(homeVal - mortgage - (homeVal * costsPct));
+                const preview = document.getElementById('downsizing-net-preview');
+                const proceedsField = document.getElementById('downsizing-proceeds');
+                if (homeVal > 0) {
+                    document.getElementById('downsizing-net-calc').textContent = '$' + Math.max(0, net).toLocaleString();
+                    if (preview) preview.style.display = '';
+                    if (proceedsField) proceedsField.value = Math.max(0, net);
+                } else if (preview) {
+                    preview.style.display = 'none';
+                }
             });
         });
     },
