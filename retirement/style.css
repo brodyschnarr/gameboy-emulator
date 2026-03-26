@@ -4611,3 +4611,50 @@ input:focus {
 [data-theme="dark"] [style*="color: #1e293b"] {
     color: #94a3b8 !important;
 }
+
+/* ═══ Ad Slots ═══ */
+.ad-slot {
+    display: none;
+    margin: 12px 0;
+}
+.ad-container {
+    text-align: center;
+}
+.ad-label {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+.ad-placeholder {
+    background: var(--bg-card, #f8fafc);
+    border: 1px dashed var(--border, #e5e7eb);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.ad-placeholder.ad-horizontal {
+    height: 60px;
+}
+.ad-placeholder.ad-rectangle {
+    height: 100px;
+}
+.ad-placeholder-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted, #94a3b8);
+    font-size: 12px;
+}
+.ad-placeholder-icon {
+    font-size: 16px;
+}
+
+[data-theme="dark"] .ad-placeholder {
+    background: var(--bg-card, #1e293b);
+    border-color: var(--border, #334155);
+}
