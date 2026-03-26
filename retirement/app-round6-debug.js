@@ -3759,32 +3759,50 @@ const AppV4 = {
         const rate = mcResults.successRate;
         const lastsAge = baseResults.summary.moneyLastsAge || inputs.lifeExpectancy;
         const isDetFail = lastsAge < inputs.lifeExpectancy;
+        const fmt = (v) => '$' + Math.round(v).toLocaleString();
+        const currentSpending = inputs.annualSpending;
+        const maxSustainable = this._lastMaxSustainable || currentSpending;
 
         // Update banner to reflect MC reality
         const banner = document.getElementById('status-banner');
-        if (banner && isDetFail && rate >= 70) {
-            // Deterministic says fail but MC says likely OK — nuance the message
+        if (banner && isDetFail && rate >= 80) {
             banner.className = 'card status-banner on-track';
             banner.innerHTML = `✅ Your plan succeeds in <strong>${rate}%</strong> of market scenarios`;
-        } else if (banner && isDetFail && rate >= 50) {
+        } else if (banner && isDetFail && rate >= 60) {
             banner.className = 'card status-banner needs-work';
-            banner.innerHTML = `⚠️ Your plan succeeds in ${rate}% of scenarios — consider small adjustments`;
+            banner.innerHTML = `⚠️ Your plan succeeds in ${rate}% of scenarios — some risk remains`;
         }
 
-        // Update spending check card with MC context
+        // REPLACE spending check entirely when MC overrides deterministic
         const card = document.querySelector('.spending-optimizer-card');
         if (card && isDetFail && rate >= 70) {
-            // Add MC context below the spending check
-            const existing = card.querySelector('.mc-context-note');
-            if (!existing) {
-                const note = document.createElement('div');
-                note.className = 'mc-context-note';
-                note.style.cssText = 'margin-top:12px;padding:10px 12px;background:rgba(16,185,129,0.08);border:1px solid var(--success, #10b981);border-radius:8px;font-size:13px;';
-                note.innerHTML = `📊 <strong>Monte Carlo says: ${rate}% success rate.</strong> The spending check above uses a fixed return rate. ` +
-                    `In real markets with variable returns, your plan works in <strong>${rate}% of 1,000 simulated scenarios</strong>.` +
-                    (rate >= 80 ? ' Your plan is likely fine.' : ' Some adjustments could improve your odds.');
-                card.appendChild(note);
-            }
+            const isGood = rate >= 80;
+            const icon = isGood ? '✅' : '⚠️';
+            const barClass = isGood ? 'safe' : 'safe-tight';
+            const barPct = Math.min(100, rate);
+            card.innerHTML = `
+                <h3>${icon} Spending Check</h3>
+                <div class="optimizer-detail">Your plan: ${fmt(currentSpending)}/year</div>
+                <div class="optimizer-amount ${isGood ? 'on-target' : 'need-to-cut'}" style="${isGood ? 'color: var(--success, #10b981);' : 'color: #f59e0b;'}">
+                    ${rate}% success rate
+                </div>
+                <div class="optimizer-detail">
+                    Based on <strong>1,000 market simulations</strong> with real-world volatility, 
+                    your plan of ${fmt(currentSpending)}/year works in <strong>${rate}%</strong> of scenarios.
+                    ${isGood ? 'You\'re in good shape.' : `Consider reducing to <strong>${fmt(maxSustainable)}/year</strong> for more safety margin.`}
+                </div>
+                <div class="optimizer-bar">
+                    <div class="optimizer-bar-fill ${barClass}" style="width: ${barPct}%"></div>
+                </div>
+                <div class="optimizer-detail" style="display: flex; justify-content: space-between; font-size: 12px;">
+                    <span>0%</span>
+                    <span>Success rate: ${rate}%</span>
+                </div>
+                <div style="margin-top:10px;padding:8px 10px;background:var(--bg-card,#f8fafc);border-radius:8px;font-size:12px;color:var(--text-muted);">
+                    💡 The fixed-return projection shows money lasting to age ${lastsAge}, but markets don't return a flat rate every year.
+                    Monte Carlo simulation accounts for real market ups and downs — and ${rate}% of the time, your portfolio grows enough to last.
+                </div>
+            `;
         }
     },
 
