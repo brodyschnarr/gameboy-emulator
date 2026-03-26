@@ -67,6 +67,7 @@ const AppV4 = {
         this._setupAdvancedToggle();
         this._setupCategoryInflation();
         this._setupSpendingCurve();
+        this._setupSteppers();
         this._restoreFormState();
         this._setupFormAutosave();
     },
@@ -2161,6 +2162,112 @@ const AppV4 = {
                 if (detail) detail.classList.toggle('hidden', this.spendingCurve === 'flat');
             });
         });
+    },
+
+    _setupSteppers() {
+        // Stepper config: { inputId, sliderId, displayId, format, min, max }
+        const steppers = [
+            { inputId: 'annual-spending', format: 'money' },
+            { inputId: 'monthly-contribution', format: 'money' },
+            { inputId: 'retirement-age', format: 'int' },
+        ];
+
+        const fmtDisplay = (value, format) => {
+            const n = Math.round(parseFloat(value) || 0);
+            if (format === 'money') {
+                if (n >= 1000000) return '$' + (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+                if (n >= 10000) return '$' + (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1).replace(/\.0$/, '') + 'K';
+                if (n >= 1000) return '$' + n.toLocaleString();
+                return '$' + n;
+            }
+            return String(n);
+        };
+
+        steppers.forEach(({ inputId, format }) => {
+            const input = document.getElementById(inputId);
+            const slider = document.getElementById(inputId + '-slider');
+            const display = document.getElementById(inputId + '-display');
+            if (!input || !slider || !display) return;
+
+            const sync = (source) => {
+                const val = source === 'slider' ? slider.value : input.value;
+                const num = parseFloat(val) || 0;
+                const clamped = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), num));
+                input.value = clamped;
+                slider.value = clamped;
+                display.textContent = fmtDisplay(clamped, format);
+                // Fire input event on the hidden number input for any listeners
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            };
+
+            // Initial sync
+            if (input.value) {
+                slider.value = input.value;
+            } else if (slider.value) {
+                input.value = slider.value;
+            }
+            sync('slider');
+
+            // Slider drag
+            slider.addEventListener('input', () => sync('slider'));
+
+            // Stepper buttons (use event delegation on parent)
+            display.closest('.stepper-wrap')?.querySelectorAll('.stepper-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const step = parseFloat(btn.dataset.step) || 0;
+                    const cur = parseFloat(input.value) || 0;
+                    const next = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), cur + step));
+                    input.value = next;
+                    sync('input');
+                });
+            });
+
+            // Tap display to edit inline
+            display.addEventListener('click', () => {
+                const cur = input.value || '';
+                const editInput = document.createElement('input');
+                editInput.type = 'number';
+                editInput.className = 'stepper-display-input';
+                editInput.value = cur;
+                editInput.min = slider.min;
+                editInput.max = slider.max;
+                editInput.step = input.step || '1';
+                display.style.display = 'none';
+                display.parentNode.insertBefore(editInput, display.nextSibling);
+                editInput.focus();
+                editInput.select();
+
+                const commit = () => {
+                    const v = parseFloat(editInput.value) || 0;
+                    input.value = v;
+                    sync('input');
+                    editInput.remove();
+                    display.style.display = '';
+                };
+                editInput.addEventListener('blur', commit);
+                editInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+                    if (e.key === 'Escape') { editInput.remove(); display.style.display = ''; }
+                });
+            });
+        });
+
+        // Expose sync functions for presets and share links
+        const syncMap = {};
+        steppers.forEach(({ inputId, format }) => {
+            syncMap[inputId] = () => {
+                const input = document.getElementById(inputId);
+                const slider = document.getElementById(inputId + '-slider');
+                const display = document.getElementById(inputId + '-display');
+                if (input && slider && display) {
+                    const v = parseFloat(input.value) || 0;
+                    slider.value = v;
+                    display.textContent = fmtDisplay(v, format);
+                }
+            };
+        });
+        window.syncSlider = (id) => { if (syncMap[id]) syncMap[id](); };
+        window.syncAllSliders = () => { Object.values(syncMap).forEach(fn => fn()); };
     },
 
     _buildStrategyComparison(inputs, smartResults) {
