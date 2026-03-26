@@ -3468,7 +3468,11 @@ const AppV4 = {
 
     _runCalculation() {
         try {
+            // Safety: ensure windfalls array exists
+            if (!this.windfalls) this.windfalls = [];
+            console.log('[CALC] this.windfalls at calc time:', this.windfalls.length, JSON.stringify(this.windfalls.map(w => w.name)));
             const inputs = this._gatherInputs();
+            console.log('[CALC] inputs.windfalls:', inputs.windfalls?.length);
 
             // Check if RetirementCalcV4 exists
             if (typeof RetirementCalcV4 === 'undefined') {
@@ -3779,6 +3783,16 @@ const AppV4 = {
         const currentSpending = inputs.annualSpending;
         const maxSustainable = this._lastMaxSustainable || currentSpending;
 
+        // Build includes summary
+        const totalSavings = (inputs.rrsp||0) + (inputs.tfsa||0) + (inputs.nonReg||0) + (inputs.cash||0) + (inputs.lira||0) + (inputs.other||0);
+        const wfCount = (inputs.windfalls||[]).length;
+        const wfTotal = (inputs.windfalls||[]).reduce((s,w) => s + (w.currentValue || w.amount || 0), 0);
+        let parts = [`${fmt(totalSavings)} savings`];
+        if (wfCount > 0) parts.push(`${fmt(wfTotal)} in ${wfCount} windfall${wfCount>1?'s':''}`);
+        if (inputs.monthlyContribution > 0) parts.push(`${fmt(inputs.monthlyContribution)}/mo contributions`);
+        parts.push('CPP + OAS');
+        const includesLine = `<div style="margin-top:8px;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border,#e5e7eb);padding-top:6px;">📋 Includes: ${parts.join(' • ')}</div>`;
+
         // Update banner to reflect MC reality
         const banner = document.getElementById('status-banner');
         if (banner && isDetFail && rate >= 80) {
@@ -3818,6 +3832,7 @@ const AppV4 = {
                     💡 The fixed-return projection shows money lasting to age ${lastsAge}, but markets don't return a flat rate every year.
                     Monte Carlo simulation accounts for real market ups and downs — and ${rate}% of the time, your portfolio grows enough to last.
                 </div>
+                ${includesLine}
             `;
         }
     },
