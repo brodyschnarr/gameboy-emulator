@@ -652,13 +652,26 @@ const RetirementCalcV4 = {
                             }
                         }
                         // Inheritances (not taxable) pass through at full value
-                        if (w.destination === 'rrsp') balances.rrsp += afterTaxAmount;
-                        else if (w.destination === 'tfsa') balances.tfsa += afterTaxAmount;
-                        else if (w.destination === 'nonReg') balances.nonReg += afterTaxAmount;
+                        // In couple mode, add to per-person balances (P1 by default, or split)
+                        // so syncBalances() doesn't wipe the windfall
+                        const wfTarget = coupleMode ? (w.destinationPerson === 'p2' ? balP2 : balP1) : balances;
+                        if (w.destination === 'rrsp') wfTarget.rrsp += afterTaxAmount;
+                        else if (w.destination === 'tfsa') wfTarget.tfsa += afterTaxAmount;
+                        else if (w.destination === 'nonReg') wfTarget.nonReg += afterTaxAmount;
                         else {
-                            balances.tfsa += afterTaxAmount * 0.5;
-                            balances.nonReg += afterTaxAmount * 0.5;
+                            // Split destination: half to each person in couple mode, or half tfsa/nonreg in single
+                            if (coupleMode) {
+                                balP1.tfsa += afterTaxAmount * 0.25;
+                                balP1.nonReg += afterTaxAmount * 0.25;
+                                balP2.tfsa += afterTaxAmount * 0.25;
+                                balP2.nonReg += afterTaxAmount * 0.25;
+                            } else {
+                                balances.tfsa += afterTaxAmount * 0.5;
+                                balances.nonReg += afterTaxAmount * 0.5;
+                            }
                         }
+                        // Sync combined balances immediately after windfall
+                        if (coupleMode) syncBalances();
                     }
                 });
             }

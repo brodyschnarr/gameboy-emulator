@@ -778,8 +778,6 @@ const AppV4 = {
         const content = document.getElementById('spending-optimizer-content');
         if (!section || !content) return;
         
-        console.log('[SpendingOptimizer] windfalls:', JSON.stringify(inputs.windfalls));
-        console.log('[SpendingOptimizer] moneyLastsAge:', results.summary.moneyLastsAge);
         section.classList.remove('hidden');
         
         const currentSpending = inputs.annualSpending;
@@ -3470,9 +3468,7 @@ const AppV4 = {
         try {
             // Safety: ensure windfalls array exists
             if (!this.windfalls) this.windfalls = [];
-            console.log('[CALC] this.windfalls at calc time:', this.windfalls.length, JSON.stringify(this.windfalls.map(w => w.name)));
             const inputs = this._gatherInputs();
-            console.log('[CALC] inputs.windfalls:', inputs.windfalls?.length);
 
             // Check if RetirementCalcV4 exists
             if (typeof RetirementCalcV4 === 'undefined') {
