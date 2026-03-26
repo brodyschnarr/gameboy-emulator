@@ -9,6 +9,7 @@ const AdsManager = {
         top:    { slot: null, format: 'horizontal' },
         mid:    { slot: null, format: 'rectangle' },
         bottom: { slot: null, format: 'horizontal' },
+        steps:  { slot: null, format: 'horizontal' },
     },
 
     init() {
