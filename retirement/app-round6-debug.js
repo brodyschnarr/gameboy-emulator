@@ -38,6 +38,7 @@ const AppV4 = {
     scenarioResults: {},
     currentScenario: 'base',
     windfalls: [],
+    accountMode: 'joint',   // 'joint' or 'separate' — synced from DOM on init
     otherIncomeItems: [],   // Multi-add: [{name, amount, taxable}]
     otherExpenseItems: [],  // Multi-add: [{name, amount}]
 
@@ -134,6 +135,12 @@ const AppV4 = {
             return;
         }
 
+        // Sync familyStatus with initial button state (handles browser form restoration)
+        if (coupleBtn.classList.contains('active')) {
+            this.familyStatus = 'couple';
+        } else {
+            this.familyStatus = 'single';
+        }
 
         singleBtn.addEventListener('click', () => {
             singleBtn.classList.add('active');
@@ -3468,16 +3475,19 @@ const AppV4 = {
         try {
             // Safety: ensure windfalls array exists
             if (!this.windfalls) this.windfalls = [];
-            const inputs = this._gatherInputs();
             
-            // TEMP DIAGNOSTIC: visible on-screen debug
-            const _diag = document.createElement('div');
-            _diag.id = 'calc-diag';
-            _diag.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1a1a2e;color:#0f0;font:11px monospace;padding:6px 10px;max-height:80px;overflow:auto;';
-            _diag.textContent = `fam=${inputs.familyStatus} sav=$${Math.round((inputs.rrsp||0)+(inputs.tfsa||0)+(inputs.nonReg||0))} spend=$${inputs.annualSpending} curve=${inputs.spendingCurve} wf=${(inputs.windfalls||[]).length} contrib=$${inputs.monthlyContribution}/mo P1=${inputs.accountsP1?'Y':'N'} P2=${inputs.accountsP2?'Y':'N'} i1=${inputs.income1} i2=${inputs.income2}`;
-            document.getElementById('calc-diag')?.remove();
-            document.body.appendChild(_diag);
-            setTimeout(() => _diag.remove(), 15000);
+            // Safety: sync familyStatus from DOM in case click handler didn't fire
+            const coupleBtn = document.getElementById('family-couple');
+            if (coupleBtn && coupleBtn.classList.contains('active')) {
+                this.familyStatus = 'couple';
+            }
+            // Also sync accountMode from DOM
+            const sepBtn = document.getElementById('accounts-separate');
+            if (sepBtn && sepBtn.classList.contains('active')) {
+                this.accountMode = 'separate';
+            }
+            
+            const inputs = this._gatherInputs();
 
             // Check if RetirementCalcV4 exists
             if (typeof RetirementCalcV4 === 'undefined') {
