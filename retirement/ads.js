@@ -10,16 +10,13 @@ const AdsManager = {
     publisherId: null,  // e.g., 'ca-pub-1234567890123456'
     
     // Ad slot IDs mapped to AdSense ad-slot values
-    // Once you have AdSense, create ad units and put their slot IDs here
     slotConfig: {
         top:    { slot: null, format: 'horizontal', label: 'Advertisement' },
         mid:    { slot: null, format: 'rectangle',  label: 'Advertisement' },
         bottom: { slot: null, format: 'horizontal', label: 'Advertisement' },
     },
 
-    // ── Initialize ──
     init() {
-        // Only show ads on the results page
         const observer = new MutationObserver(() => {
             const results = document.getElementById('results');
             if (results && !results.classList.contains('hidden')) {
@@ -40,7 +37,6 @@ const AdsManager = {
             const position = el.dataset.adSlot;
             if (!position) return;
             
-            // Don't re-render if already populated
             if (el.dataset.rendered === 'true') {
                 el.style.display = '';
                 return;
@@ -84,21 +80,18 @@ const AdsManager = {
     },
 
     _renderPlaceholder(el, config) {
-        // In dev/placeholder mode: show a subtle, non-intrusive placeholder
-        // Remove this method's content once real ads are configured
-        const isHorizontal = config.format === 'horizontal';
+        const isRect = config.format === 'rectangle';
         el.innerHTML = `
-            <div class="ad-placeholder ${isHorizontal ? 'ad-horizontal' : 'ad-rectangle'}">
+            <div class="ad-placeholder ${isRect ? 'ad-rectangle' : 'ad-horizontal'}">
                 <div class="ad-placeholder-inner">
-                    <span class="ad-placeholder-icon">📢</span>
-                    <span class="ad-placeholder-text">Support this free tool — ads coming soon</span>
+                    <span class="ad-placeholder-icon">📊</span>
+                    <span class="ad-placeholder-text">Ad space — <a href="mailto:brody@example.com" style="color:var(--accent,#3b82f6);text-decoration:none;">advertise here</a></span>
                 </div>
             </div>
         `;
     }
 };
 
-// Auto-init when DOM ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => AdsManager.init());
 } else {

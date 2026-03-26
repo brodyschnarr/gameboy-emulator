@@ -18,16 +18,36 @@ const ShareLink = {
         prov:   { prop: 'selectedProvince', type: 'string' },
         reg:    { prop: 'selectedRegion', type: 'string' },
 
-        // Step 2: Savings
+        // Step 2: Savings (combined)
         rrsp:   { id: 'rrsp', type: 'float' },
         tfsa:   { id: 'tfsa', type: 'float' },
         nreg:   { id: 'nonreg', type: 'float' },
         lira:   { id: 'lira', type: 'float' },
         othr:   { id: 'other', type: 'float' },
         cash:   { id: 'cash', type: 'float' },
+
+        // Step 2: Savings (separate P1/P2)
+        rp1:    { id: 'rrsp-p1', type: 'float' },
+        tp1:    { id: 'tfsa-p1', type: 'float' },
+        np1:    { id: 'nonreg-p1', type: 'float' },
+        lp1:    { id: 'lira-p1', type: 'float' },
+        op1:    { id: 'other-p1', type: 'float' },
+        cp1:    { id: 'cash-p1', type: 'float' },
+        rp2:    { id: 'rrsp-p2', type: 'float' },
+        tp2:    { id: 'tfsa-p2', type: 'float' },
+        np2:    { id: 'nonreg-p2', type: 'float' },
+        lp2:    { id: 'lira-p2', type: 'float' },
+        op2:    { id: 'other-p2', type: 'float' },
+        cp2:    { id: 'cash-p2', type: 'float' },
+        c1pct:  { id: 'contrib-p1-pct', type: 'float' },
+
+        // Employer pension
         epen:   { id: 'employer-pension', type: 'float' },
         psage:  { id: 'pension-start-age', type: 'int' },
         pidx:   { id: 'pension-indexed', type: 'bool' },
+
+        // Home value
+        hval:   { id: 'home-value', type: 'float' },
 
         // Step 3: Contributions
         mcon:   { id: 'monthly-contribution', type: 'float' },
@@ -41,12 +61,12 @@ const ShareLink = {
         spend:  { id: 'annual-spending', type: 'float' },
         curve:  { prop: 'spendingCurve', type: 'enum', values: ['flat', 'frontloaded'] },
 
-        // CPP/OAS
+        // CPP/OAS (single)
         cppage: { prop: 'cppStartAge', type: 'int' },
         oasage: { prop: 'oasStartAge', type: 'int' },
         cppov:  { prop: 'cppOverride', type: 'float' },
 
-        // Couple CPP/OAS
+        // CPP/OAS (couple)
         cppa1:  { prop: 'cppStartAgeP1', type: 'int' },
         cppa2:  { prop: 'cppStartAgeP2', type: 'int' },
         oasa1:  { prop: 'oasStartAgeP1', type: 'int' },
@@ -57,6 +77,10 @@ const ShareLink = {
         // Step 5: Debt
         debt:   { id: 'current-debt', type: 'float' },
         dpay:   { id: 'debt-payoff-age', type: 'int' },
+
+        // Healthcare
+        hlth:   { prop: 'healthStatus', type: 'string' },
+        hexp:   { prop: 'healthcareExplicitlyAdded', type: 'bool' },
 
         // Advanced assumptions
         ret:    { id: 'return-rate', type: 'float' },
@@ -72,11 +96,13 @@ const ShareLink = {
         anpa:   { id: 'annuity-purchase-age', type: 'int' },
         anmp:   { id: 'annuity-monthly-payout', type: 'float' },
         dtc:    { id: 'dtc-checkbox', type: 'bool' },
+        metc:   { id: 'metc-checkbox', type: 'bool' },
+        metca:  { id: 'metc-annual', type: 'float' },
+        hatc:   { id: 'hatc-checkbox', type: 'bool' },
+        care:   { id: 'caregiver-checkbox', type: 'bool' },
         dsage:  { id: 'downsizing-age', type: 'int' },
         dsprc:  { id: 'downsizing-proceeds', type: 'float' },
         dssc:   { id: 'downsizing-spending-change', type: 'float' },
-
-        // Other income/expense now uses oi/oe JSON arrays (see generate/loadFromURL)
 
         // Estate
         liins:  { id: 'life-insurance-amount', type: 'float' },
@@ -96,6 +122,11 @@ const ShareLink = {
     generate() {
         const params = new URLSearchParams();
 
+        // Determine account mode from DOM
+        const sepSection = document.getElementById('separate-accounts-section');
+        const isSeparate = sepSection && !sepSection.classList.contains('hidden');
+        if (isSeparate) params.set('acm', 'sep');
+
         for (const [key, config] of Object.entries(this.PARAM_MAP)) {
             let value;
 
@@ -111,6 +142,10 @@ const ShareLink = {
             } else if (config.prop) {
                 value = AppV4[config.prop];
                 if (value === null || value === undefined) continue;
+                if (config.type === 'bool') {
+                    value = value ? '1' : '0';
+                    if (value === '0') continue;
+                }
             }
 
             // Skip empty/zero/default values to keep URL short
@@ -119,11 +154,13 @@ const ShareLink = {
                 const num = parseFloat(value);
                 if (isNaN(num) || num === 0) continue;
             }
+            // Skip 'none' and 'average' defaults for string props
+            if (config.type === 'string' && (value === 'none' || value === '')) continue;
 
             params.set(key, String(value));
         }
 
-        // Windfalls (complex objects — JSON encode)
+        // Windfalls (complex objects — JSON encode, compact)
         if (AppV4.windfalls && AppV4.windfalls.length > 0) {
             params.set('wf', JSON.stringify(AppV4.windfalls));
         }
@@ -149,6 +186,11 @@ const ShareLink = {
             params.set('oe', JSON.stringify(AppV4.otherExpenseItems));
         }
 
+        // Post-retirement work items
+        if (AppV4.postRetirementWorkItems && AppV4.postRetirementWorkItems.length > 0) {
+            params.set('prt', JSON.stringify(AppV4.postRetirementWorkItems));
+        }
+
         const base = window.location.origin + window.location.pathname;
         return base + '?' + params.toString();
     },
@@ -159,11 +201,61 @@ const ShareLink = {
      */
     loadFromURL() {
         const params = new URLSearchParams(window.location.search);
-        if (params.size === 0 || (params.size === 1 && params.has('fix'))) return false;
+        // Skip if only cache-bust params
+        const realParams = [...params.keys()].filter(k => k !== 'fix' && k !== 't' && k !== 'v');
+        if (realParams.length === 0) return false;
 
         let applied = false;
 
+        // Account mode (must be set before fields to show proper sections)
+        const acm = params.get('acm');
+
+        // Family status (must be set first to show proper UI)
+        if (params.has('fam')) {
+            const famVal = params.get('fam');
+            AppV4.familyStatus = famVal;
+            const singleBtn = document.getElementById('family-single');
+            const coupleBtn = document.getElementById('family-couple');
+            if (famVal === 'couple' && coupleBtn) {
+                coupleBtn.classList.add('active');
+                singleBtn?.classList.remove('active');
+                AppV4.familyStatus = 'couple';
+                AppV4._toggleFamilyUI();
+            } else if (singleBtn) {
+                singleBtn.classList.add('active');
+                coupleBtn?.classList.remove('active');
+                AppV4.familyStatus = 'single';
+                AppV4._toggleFamilyUI();
+            }
+            applied = true;
+        }
+
+        // Separate accounts mode (trigger UI)
+        if (acm === 'sep') {
+            const sepBtn = document.getElementById('accounts-separate');
+            if (sepBtn) {
+                sepBtn.click();
+            }
+            applied = true;
+        }
+
+        // Province/region (before other fields)
+        if (params.has('prov')) {
+            AppV4.selectedProvince = params.get('prov');
+            // Try to click the province on the map or set it
+            if (typeof AppV4._selectProvince === 'function') {
+                AppV4._selectProvince(params.get('prov'));
+            }
+            applied = true;
+        }
+        if (params.has('reg')) {
+            AppV4.selectedRegion = params.get('reg');
+            applied = true;
+        }
+
+        // Apply all simple params
         for (const [key, config] of Object.entries(this.PARAM_MAP)) {
+            if (key === 'fam' || key === 'prov' || key === 'reg') continue; // already handled
             const raw = params.get(key);
             if (raw === null) continue;
 
@@ -184,58 +276,23 @@ const ShareLink = {
                 let val = raw;
                 if (config.type === 'int') val = parseInt(raw);
                 else if (config.type === 'float') val = parseFloat(raw);
+                else if (config.type === 'bool') val = raw === '1' || raw === 'true';
                 AppV4[config.prop] = val;
                 applied = true;
             }
         }
 
-        // Family status toggle
-        if (params.has('fam')) {
-            const famVal = params.get('fam');
-            AppV4.familyStatus = famVal;
-            const singleBtn = document.getElementById('family-single');
-            const coupleBtn = document.getElementById('family-couple');
-            if (famVal === 'couple' && coupleBtn) {
-                coupleBtn.click();
-            } else if (singleBtn) {
-                singleBtn.click();
-            }
-        }
-
-        // Province/region
-        if (params.has('prov')) {
-            const provEl = document.getElementById('province');
-            if (provEl) {
-                provEl.value = params.get('prov');
-                provEl.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-        }
-        if (params.has('reg')) {
-            // Slight delay for region dropdown to populate after province change
-            setTimeout(() => {
-                const regEl = document.getElementById('region');
-                if (regEl) {
-                    regEl.value = params.get('reg');
-                    regEl.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            }, 100);
-        }
-
-        // Spending curve
+        // Spending curve buttons
         if (params.has('curve')) {
             AppV4.spendingCurve = params.get('curve');
-            const curveSelect = document.getElementById('spending-curve');
-            if (curveSelect) {
-                curveSelect.value = params.get('curve');
-                curveSelect.dispatchEvent(new Event('change', { bubbles: true }));
-            }
+            document.querySelectorAll('.curve-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.curve === params.get('curve'));
+            });
         }
 
         // Windfalls
         if (params.has('wf')) {
-            try {
-                AppV4.windfalls = JSON.parse(params.get('wf'));
-            } catch (e) { /* ignore bad JSON */ }
+            try { AppV4.windfalls = JSON.parse(params.get('wf')); } catch (e) {}
         }
 
         // Income sources
@@ -245,7 +302,7 @@ const ShareLink = {
                 if (typeof IncomeSources !== 'undefined' && Array.isArray(sources)) {
                     sources.forEach(s => IncomeSources.add(s));
                 }
-            } catch (e) { /* ignore */ }
+            } catch (e) {}
         }
 
         // Estate assets
@@ -258,10 +315,13 @@ const ShareLink = {
         if (params.has('oe')) {
             try { AppV4.otherExpenseItems = JSON.parse(params.get('oe')); } catch (e) {}
         }
+        if (params.has('prt')) {
+            try { AppV4.postRetirementWorkItems = JSON.parse(params.get('prt')); } catch (e) {}
+        }
 
-        // Sync sliders after all values set
-        if (applied && typeof window.syncAllSliders === 'function') {
-            setTimeout(() => window.syncAllSliders(), 200);
+        // Update chips display
+        if (applied && typeof AppV4._updateStep5AddedItems === 'function') {
+            setTimeout(() => AppV4._updateStep5AddedItems(), 300);
         }
 
         return applied;
@@ -275,13 +335,25 @@ const ShareLink = {
         navigator.clipboard.writeText(url).then(() => {
             const btn = document.getElementById('btn-share-link');
             if (btn) {
-                const orig = btn.textContent;
-                btn.textContent = '✅ Link copied!';
-                setTimeout(() => { btn.textContent = orig; }, 2000);
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✅ Link copied!';
+                btn.style.background = '#10b981';
+                setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2500);
             }
         }).catch(() => {
-            // Fallback: show URL in prompt
-            window.prompt('Copy this link:', url);
+            // Fallback: select text in a temp input
+            const input = document.createElement('input');
+            input.value = url;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            const btn = document.getElementById('btn-share-link');
+            if (btn) {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✅ Link copied!';
+                setTimeout(() => { btn.innerHTML = orig; }, 2500);
+            }
         });
     }
 };
