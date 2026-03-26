@@ -19,8 +19,8 @@ console.log('\n═══ Step 5 UI Tests ═══\n');
 
 // ── Forms exist in HTML ──
 console.log('📋 Form elements exist:');
-const formTypes = ['employer-pension', 'post-retirement-work', 'windfall', 'stock-options', 
-                   'debt', 'healthcare', 'ltc', 'annuity', 'downsizing', 
+const formTypes = ['employer-pension', 'post-retirement-work', 'inheritance', 'insurance-payout', 'stock-options', 
+                   'debt', 'ltc', 'annuity', 'downsizing', 
                    'other-income', 'other-expense', 'life-insurance', 'vehicle', 'other-estate'];
 formTypes.forEach(type => {
     assert(indexHTML.includes(`id="form-${type}"`), `Form exists: form-${type}`);
@@ -28,7 +28,7 @@ formTypes.forEach(type => {
 
 // ── Save buttons exist for all forms ──
 console.log('\n💾 Save buttons:');
-const saveTypes = ['employer-pension', 'windfall', 'stock-options', 'debt', 'healthcare', 'ltc', 
+const saveTypes = ['employer-pension', 'inheritance', 'insurance-payout', 'stock-options', 'debt', 'ltc', 
                    'annuity', 'downsizing', 'other-income', 'other-expense', 
                    'life-insurance', 'vehicle', 'other-estate'];
 saveTypes.forEach(type => {
@@ -40,7 +40,7 @@ assert(indexHTML.includes('id="btn-save-prt-work"'), 'Post-retirement work has s
 
 // ── Cancel buttons exist for all forms ──
 console.log('\n❌ Cancel buttons:');
-const cancelTypes = ['employer-pension', 'post-retirement-work', 'stock-options', 'debt', 'healthcare', 
+const cancelTypes = ['employer-pension', 'post-retirement-work', 'stock-options', 'debt', 
                      'ltc', 'annuity', 'downsizing', 'other-income', 'other-expense',
                      'life-insurance', 'vehicle', 'other-estate'];
 cancelTypes.forEach(type => {
@@ -49,13 +49,13 @@ cancelTypes.forEach(type => {
 
 // ── Dropdown items exist ──
 console.log('\n📂 Dropdown items:');
-const incomeTypes = ['employer-pension', 'post-retirement-work', 'windfall', 'stock-options', 
+const incomeTypes = ['employer-pension', 'post-retirement-work', 'inheritance', 'insurance-payout', 'stock-options', 
                      'annuity', 'downsizing', 'other-income'];
 incomeTypes.forEach(type => {
     assert(indexHTML.includes(`data-type="${type}"`), `Dropdown item: ${type}`);
 });
 
-const expenseTypes = ['debt', 'healthcare', 'ltc', 'other-expense'];
+const expenseTypes = ['debt', 'ltc', 'other-expense'];
 expenseTypes.forEach(type => {
     assert(indexHTML.includes(`data-type="${type}"`), `Expense dropdown item: ${type}`);
 });
@@ -100,7 +100,7 @@ assert(appJS.includes("[data-cancel]"), 'Generic cancel handler exists');
 
 // ── Chip display includes stock options ──
 console.log('\n🏷️ Chip display:');
-assert(appJS.includes("isStock ? '📈' : '💰'"), 'Stock options get different icon in chips');
+assert(appJS.includes("if (isStock) icon = '📈'"), 'Stock options get different icon in chips');
 
 // ── Step 5 persistence ──
 console.log('\n💾 Step 5 persistence:');
@@ -184,7 +184,7 @@ assert(indexHTML.includes('data-type="annuity">🔒'), 'Annuity uses 🔒');
 
 // LTC uses 🏠 (not 🏥 which is Healthcare)
 assert(indexHTML.includes('data-type="ltc">🏠'), 'LTC uses 🏠 (distinct from Healthcare 🏥)');
-assert(indexHTML.includes('data-type="healthcare">🏥'), 'Healthcare uses 🏥');
+assert(indexHTML.includes('Healthcare removed'), 'Healthcare removed from dropdown');
 
 // Tweak panel styling
 assert(cssFile.includes('.tweak-panel'), 'Tweak panel styled');

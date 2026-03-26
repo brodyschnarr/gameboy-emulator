@@ -157,16 +157,19 @@ const IncomeSources = {
             return;
         }
 
-        const html = retSources.map(source => {
+        const html = retSources.map((source, i) => {
             const typeInfo = this.types[source.type] || { icon: '💰' };
             const monthly = Math.round(source.annualAmount / 12);
             return `
-                <div class="income-source-item income-source-readonly">
-                    <div class="source-icon">${typeInfo.icon}</div>
-                    <div class="source-details">
-                        <div class="source-name">${source.name}</div>
-                        <div class="source-meta">$${monthly.toLocaleString()}/mo ($${source.annualAmount.toLocaleString()}/yr) • From Step 1</div>
+                <div class="income-source-item income-source-readonly" style="display:flex;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div class="source-icon">${typeInfo.icon}</div>
+                        <div class="source-details">
+                            <div class="source-name">${source.name}</div>
+                            <div class="source-meta">$${monthly.toLocaleString()}/mo ($${source.annualAmount.toLocaleString()}/yr) • From Step 1</div>
+                        </div>
                     </div>
+                    <button type="button" class="btn-remove-step1-source" data-source-index="${i}" style="background:none;border:none;font-size:18px;color:var(--text-muted);cursor:pointer;padding:4px 8px;" title="Remove">×</button>
                 </div>
             `;
         }).join('');
@@ -177,10 +180,24 @@ const IncomeSources = {
             </p>
         `;
 
+        // Wire up remove buttons
+        container.querySelectorAll('.btn-remove-step1-source').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.sourceIndex);
+                const retSrc = this.sources.filter(s => s.continuesInRetirement);
+                if (retSrc[idx]) {
+                    const globalIdx = this.sources.indexOf(retSrc[idx]);
+                    if (globalIdx >= 0) {
+                        this.sources.splice(globalIdx, 1);
+                        this.renderStep5Summary(container.id);
+                    }
+                }
+            });
+        });
+
         // Wire up "Edit in Step 1" link
         container.querySelector('.link-to-step1')?.addEventListener('click', (e) => {
             e.preventDefault();
-            // Navigate to Step 1
             document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
             document.getElementById('step-income')?.classList.remove('hidden');
             window.scrollTo(0, 0);

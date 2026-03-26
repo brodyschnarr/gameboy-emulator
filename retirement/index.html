@@ -760,7 +760,8 @@
                     <div class="step5-dropdown hidden" id="income-dropdown-menu">
                         <button type="button" class="step5-dropdown-item" data-type="employer-pension">🏢 Employer Pension</button>
                         <button type="button" class="step5-dropdown-item" data-type="post-retirement-work">💼 Post-Retirement Work</button>
-                        <button type="button" class="step5-dropdown-item" data-type="windfall">💰 Windfall / Inheritance / Severance</button>
+                        <button type="button" class="step5-dropdown-item" data-type="inheritance">💎 Inheritance / Severance</button>
+                        <button type="button" class="step5-dropdown-item" data-type="insurance-payout">🛡️ Insurance Payout</button>
                         <button type="button" class="step5-dropdown-item" data-type="stock-options">📈 Stock / Equity Options</button>
                         <button type="button" class="step5-dropdown-item" data-type="annuity">🔒 Annuity Purchase</button>
                         <button type="button" class="step5-dropdown-item" data-type="downsizing">🏡 Home Sale / Downsizing</button>
@@ -869,6 +870,60 @@
                 </div>
             </div>
 
+            <div id="form-inheritance" class="step5-form hidden">
+                <div class="step5-form-header">💎 Inheritance / Severance</div>
+                <div>
+                    <label for="inheritance-name" style="font-size: 12px;">Description</label>
+                    <input type="text" id="inheritance-name" placeholder="e.g., Family inheritance, Severance package">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
+                    <div>
+                        <label for="inheritance-amount" style="font-size: 12px;">Expected Amount</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="inheritance-amount" placeholder="100000" min="0" step="5000">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="inheritance-age" style="font-size: 12px;">Expected at Age</label>
+                        <input type="number" id="inheritance-age" placeholder="55" min="18" max="100">
+                    </div>
+                </div>
+                <div style="margin-top: 6px;">
+                    <label class="checkbox-label" style="font-size: 12px;">
+                        <input type="checkbox" id="inheritance-taxable"> Taxable
+                    </label>
+                    <small class="input-hint">Inheritances are generally tax-free in Canada. Check if this involves taxable assets.</small>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="inheritance">Add</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="inheritance">Cancel</button>
+                </div>
+            </div>
+
+            <div id="form-insurance-payout" class="step5-form hidden">
+                <div class="step5-form-header">🛡️ Insurance Payout</div>
+                <div>
+                    <label for="insurance-name" style="font-size: 12px;">Description</label>
+                    <input type="text" id="insurance-name" placeholder="e.g., Critical illness, Disability payout">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
+                    <div>
+                        <label for="insurance-amount" style="font-size: 12px;">Expected Amount</label>
+                        <div class="input-with-prefix"><span class="prefix">$</span>
+                            <input type="number" id="insurance-amount" placeholder="100000" min="0" step="5000">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="insurance-age" style="font-size: 12px;">Expected at Age</label>
+                        <input type="number" id="insurance-age" placeholder="60" min="18" max="100">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn-primary btn-sm" data-save="insurance-payout">Add</button>
+                    <button type="button" class="btn-secondary btn-sm" data-cancel="insurance-payout">Cancel</button>
+                </div>
+            </div>
+
             <!-- ═══ RETIREMENT EXPENSES (dropdown-based) ═══ -->
             <div class="step5-add-section">
                 <div class="step5-section-label">📤 Expenses</div>
@@ -877,7 +932,7 @@
                     <button type="button" class="btn-secondary" id="btn-add-expense-dropdown">+ Add Retirement Expense</button>
                     <div class="step5-dropdown hidden" id="expense-dropdown-menu">
                         <button type="button" class="step5-dropdown-item" data-type="debt">💳 Current Debt</button>
-                        <button type="button" class="step5-dropdown-item" data-type="healthcare">🏥 Healthcare Costs</button>
+                        <!-- Healthcare removed: covered by healthcare inflation in assumptions -->
                         <button type="button" class="step5-dropdown-item" data-type="ltc">🏠 Long-Term Care</button>
                         <button type="button" class="step5-dropdown-item" data-type="other-expense">➕ Other Expense</button>
                     </div>
@@ -1429,38 +1484,38 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000106"></script>
-    <script src="cpp-calculator.js?v=17&t=24000106"></script>
-    <script src="benchmarks.js?v=17&t=24000106"></script>
-    <script src="lifestyle-data.js?v=17&t=24000106"></script>
-    <script src="regional-data.js?v=18&t=24000106"></script>
-    <script src="canada-map.js?v=18&t=24000106"></script>
-    <script src="income-sources.js?v=17&t=24000106"></script>
-    <script src="deep-dive.js?v=17&t=24000106"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000106"></script>
-    <script src="scenario-manager.js?v=17&t=24000106"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000106"></script>
-    <script src="calc.js?v=17&t=24000106"></script>
-    <script src="app-round6-debug.js?v=17&t=24000106"></script>
+    <script src="canada-tax.js?v=17&t=24000107"></script>
+    <script src="cpp-calculator.js?v=17&t=24000107"></script>
+    <script src="benchmarks.js?v=17&t=24000107"></script>
+    <script src="lifestyle-data.js?v=17&t=24000107"></script>
+    <script src="regional-data.js?v=18&t=24000107"></script>
+    <script src="canada-map.js?v=18&t=24000107"></script>
+    <script src="income-sources.js?v=17&t=24000107"></script>
+    <script src="deep-dive.js?v=17&t=24000107"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000107"></script>
+    <script src="scenario-manager.js?v=17&t=24000107"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000107"></script>
+    <script src="calc.js?v=17&t=24000107"></script>
+    <script src="app-round6-debug.js?v=17&t=24000107"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000106"></script>
-    <script src="monte-carlo.js?v=17&t=24000106"></script>
-    <script src="tax-optimizer.js?v=17&t=24000106"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000106"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000106"></script>
-    <script src="advanced-charts.js?v=17&t=24000106"></script>
-    <script src="interactive-sliders.js?v=17&t=24000106"></script>
-    <script src="scenario-storage.js?v=17&t=24000106"></script>
-    <script src="windfalls.js?v=17&t=24000106"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000106"></script>
+    <script src="error-handler.js?v=17&t=24000107"></script>
+    <script src="monte-carlo.js?v=17&t=24000107"></script>
+    <script src="tax-optimizer.js?v=17&t=24000107"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000107"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000107"></script>
+    <script src="advanced-charts.js?v=17&t=24000107"></script>
+    <script src="interactive-sliders.js?v=17&t=24000107"></script>
+    <script src="scenario-storage.js?v=17&t=24000107"></script>
+    <script src="windfalls.js?v=17&t=24000107"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000107"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=18&t=24000106"></script>
+    <script src="slider-inputs.js?v=18&t=24000107"></script>
 
     <!-- Shareable links -->
-    <script src="share-link.js?v=1&t=24000106"></script>
-    <script src="ads.js?v=1&t=24000106"></script>
+    <script src="share-link.js?v=1&t=24000107"></script>
+    <script src="ads.js?v=1&t=24000107"></script>
 
     <!-- Dark mode toggle + share link auto-load -->
     <script>

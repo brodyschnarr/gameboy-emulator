@@ -1469,6 +1469,11 @@ const AppV4 = {
                 if (form) {
                     // Hide all forms, show this one
                     document.querySelectorAll('.step5-form').forEach(f => f.classList.add('hidden'));
+                    // Move form next to its parent section's add-wrapper
+                    const parentSection = item.closest('.step5-add-section');
+                    if (parentSection && !parentSection.contains(form)) {
+                        parentSection.appendChild(form);
+                    }
                     form.classList.remove('hidden');
                     form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     // Auto-open windfall add form (always, skip the intermediate step)
@@ -1503,16 +1508,21 @@ const AppV4 = {
                 } else if (type === 'caregiver') {
                     document.getElementById('caregiver-checkbox').checked = true;
                 } else if (type === 'metc') {
-                    document.getElementById('metc-checkbox').checked = true;
+                    // Don't check checkbox yet — wait for user to fill in amount and click Add
                     const form = document.getElementById('form-metc');
                     if (form) {
                         document.querySelectorAll('.step5-form').forEach(f => f.classList.add('hidden'));
+                        // Move form near the tax credits section
+                        const creditSection = item.closest('.step5-add-section');
+                        if (creditSection && !creditSection.contains(form)) {
+                            creditSection.appendChild(form);
+                        }
                         form.classList.remove('hidden');
                         form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
                 }
                 item.closest('.step5-dropdown').classList.add('hidden');
-                this._updateStep5AddedItems();
+                if (type !== 'metc') this._updateStep5AddedItems();
             });
         });
 
@@ -1521,6 +1531,7 @@ const AppV4 = {
             btn.addEventListener('click', () => {
                 const type = btn.dataset.save;
                 if (type === 'healthcare') this.healthcareExplicitlyAdded = true;
+                if (type === 'metc') document.getElementById('metc-checkbox').checked = true;
                 
                 // Other income — multi-add to array
                 if (type === 'other-income') {
@@ -1561,10 +1572,39 @@ const AppV4 = {
                             growthRate: growth / 100,
                             amount: currentValue
                         });
-                        // Reset form
                         document.getElementById('stock-current-value').value = '';
                         document.getElementById('stock-cost-basis').value = '';
                         document.getElementById('stock-sell-age').value = '';
+                    }
+                }
+
+                // Inheritance / Severance — add as simple windfall
+                if (type === 'inheritance') {
+                    const name = document.getElementById('inheritance-name')?.value || 'Inheritance';
+                    const amount = parseFloat(document.getElementById('inheritance-amount')?.value) || 0;
+                    const age = parseInt(document.getElementById('inheritance-age')?.value) || 65;
+                    const taxable = document.getElementById('inheritance-taxable')?.checked || false;
+                    if (amount > 0) {
+                        if (!this.windfalls) this.windfalls = [];
+                        this.windfalls.push({ name, type: 'simple', amount, year: age, probability: 100, taxable, destination: 'split' });
+                        document.getElementById('inheritance-name').value = '';
+                        document.getElementById('inheritance-amount').value = '';
+                        document.getElementById('inheritance-age').value = '';
+                        document.getElementById('inheritance-taxable').checked = false;
+                    }
+                }
+
+                // Insurance Payout — add as simple windfall
+                if (type === 'insurance-payout') {
+                    const name = document.getElementById('insurance-name')?.value || 'Insurance Payout';
+                    const amount = parseFloat(document.getElementById('insurance-amount')?.value) || 0;
+                    const age = parseInt(document.getElementById('insurance-age')?.value) || 60;
+                    if (amount > 0) {
+                        if (!this.windfalls) this.windfalls = [];
+                        this.windfalls.push({ name, type: 'simple', amount, year: age, probability: 100, taxable: false, destination: 'split' });
+                        document.getElementById('insurance-name').value = '';
+                        document.getElementById('insurance-amount').value = '';
+                        document.getElementById('insurance-age').value = '';
                     }
                 }
                 
@@ -1723,11 +1763,16 @@ const AppV4 = {
             });
         }
         
-        // Windfalls & Stock Options
+        // Windfalls, Stock Options, Inheritance, Insurance
         if (this.windfalls && this.windfalls.length > 0) {
             this.windfalls.forEach((w, i) => {
                 const isStock = w.type === 'shares';
-                const icon = isStock ? '📈' : '💰';
+                const name = (w.name || '').toLowerCase();
+                let icon = '💰';
+                if (isStock) icon = '📈';
+                else if (name.includes('inherit') || name.includes('severance')) icon = '💎';
+                else if (name.includes('insurance')) icon = '🛡️';
+                else if (name.includes('house') || name.includes('home')) icon = '🏠';
                 const wName = w.name || (isStock ? 'Stock / Equity' : 'Windfall');
                 const wAmt = isStock ? (w.currentValue || w.amount || 0) : (w.amount || 0);
                 const wAge = isStock ? (w.sellAge || '?') : (w.year || '?');
