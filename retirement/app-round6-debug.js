@@ -779,8 +779,7 @@ const AppV4 = {
         if (!section || !content) return;
         
         console.log('[SpendingOptimizer] windfalls:', JSON.stringify(inputs.windfalls));
-        console.log('[SpendingOptimizer] rrsp:', inputs.rrsp, 'tfsa:', inputs.tfsa, 'nonReg:', inputs.nonReg, 'cash:', inputs.cash);
-        console.log('[SpendingOptimizer] moneyLastsAge:', results.summary.moneyLastsAge, 'portfolioAtRet:', results.summary.portfolioAtRetirement);
+        console.log('[SpendingOptimizer] moneyLastsAge:', results.summary.moneyLastsAge);
         section.classList.remove('hidden');
         
         const currentSpending = inputs.annualSpending;
@@ -950,6 +949,17 @@ const AppV4 = {
             ageMessage = `<div class="optimizer-age-insight warning">📅 Even retiring later may not be enough — consider reducing spending or increasing savings.</div>`;
         }
 
+        // Build "what's included" summary
+        const totalSavings = (inputs.rrsp||0) + (inputs.tfsa||0) + (inputs.nonReg||0) + (inputs.cash||0) + (inputs.lira||0) + (inputs.other||0);
+        const wfCount = (inputs.windfalls||[]).length;
+        const wfTotal = (inputs.windfalls||[]).reduce((s,w) => s + (w.currentValue || w.amount || 0), 0);
+        const contribMo = inputs.monthlyContribution || 0;
+        let includedParts = [`${fmt(totalSavings)} savings`];
+        if (wfCount > 0) includedParts.push(`${fmt(wfTotal)} in ${wfCount} windfall${wfCount>1?'s':''}`);
+        if (contribMo > 0) includedParts.push(`${fmt(contribMo)}/mo contributions`);
+        includedParts.push('CPP + OAS');
+        const includedSummary = includedParts.join(' • ');
+
         content.innerHTML = `
             <div class="spending-optimizer-card">
                 <h3>${icon} Spending Check</h3>
@@ -966,6 +976,9 @@ const AppV4 = {
                     <span>Max sustainable: ${fmt(maxSustainable)}</span>
                 </div>
                 ${ageMessage}
+                <div style="margin-top:8px;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border,#e5e7eb);padding-top:6px;">
+                    📋 Includes: ${includedSummary}
+                </div>
             </div>
         `;
     },
@@ -1573,7 +1586,7 @@ const AppV4 = {
                             name: stockName,
                             type: 'shares',
                             currentValue, costBasis, sellAge,
-                            growthRate: growth / 100,
+                            growthRate: growth,
                             amount: currentValue
                         });
                         document.getElementById('stock-name').value = '';
@@ -3485,18 +3498,6 @@ const AppV4 = {
 
             // Calculate base scenario (now includes house sale if enabled)
             // NOTE: calc.js handles windfalls internally in _generateProjection
-            console.log('[CALC] Input windfalls:', JSON.stringify(inputs.windfalls));
-            console.log('[CALC] Savings: rrsp=', inputs.rrsp, 'tfsa=', inputs.tfsa, 'nonReg=', inputs.nonReg, 'cash=', inputs.cash, 'total=', (inputs.rrsp||0)+(inputs.tfsa||0)+(inputs.nonReg||0)+(inputs.cash||0));
-            console.log('[CALC] Age:', inputs.currentAge, 'Retire:', inputs.retirementAge, 'Spend:', inputs.annualSpending, 'Contrib:', inputs.monthlyContribution);
-            // TEMP: on-screen debug for mobile
-            const _dbg = document.createElement('div');
-            _dbg.id = 'temp-debug';
-            _dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1e293b;color:#10b981;padding:8px 12px;font-size:11px;font-family:monospace;max-height:30vh;overflow:auto;';
-            _dbg.innerHTML = `<b>DEBUG</b> windfalls: ${(inputs.windfalls||[]).length} | savings: $${Math.round((inputs.rrsp||0)+(inputs.tfsa||0)+(inputs.nonReg||0)+(inputs.cash||0)).toLocaleString()} | spend: $${inputs.annualSpending?.toLocaleString()} | age: ${inputs.currentAge} → ${inputs.retirementAge}`
-                + (inputs.windfalls?.length ? '<br>Windfalls: ' + inputs.windfalls.map(w => `${w.name}: $${(w.amount||w.currentValue||0).toLocaleString()} @${w.sellAge||w.year}`).join(', ') : '');
-            document.getElementById('temp-debug')?.remove();
-            document.body.appendChild(_dbg);
-            setTimeout(() => _dbg.remove(), 15000);
             const baseResults = RetirementCalcV4.calculate(inputs);
 
             // Store base scenario
