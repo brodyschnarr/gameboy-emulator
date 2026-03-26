@@ -1972,6 +1972,7 @@ const AppV4 = {
         cancelEmail?.addEventListener('click', () => emailModal?.classList.add('hidden'));
         emailModal?.addEventListener('click', (e) => { if (e.target === emailModal) emailModal.classList.add('hidden'); });
         sendReport?.addEventListener('click', () => this._sendEmailReport());
+        document.getElementById('btn-download-pdf')?.addEventListener('click', () => this._downloadPDF());
         
         // Edit button → back to inputs
         document.getElementById('btn-edit-inputs')?.addEventListener('click', () => {
@@ -4059,6 +4060,39 @@ const AppV4 = {
     // ═══════════════════════════════════════
     // Email Report
     // ═══════════════════════════════════════
+    // EmailJS Configuration
+    // Sign up at emailjs.com, then fill in these 3 values:
+    _emailJSConfig: {
+        publicKey: null,     // e.g., 'abc123XYZ'
+        serviceId: null,     // e.g., 'service_xyz'
+        templateId: null,    // e.g., 'template_abc'
+    },
+
+    _downloadPDF() {
+        const statusEl = document.getElementById('email-status');
+        const dlBtn = document.getElementById('btn-download-pdf');
+        try {
+            dlBtn.disabled = true;
+            dlBtn.textContent = 'Generating...';
+            this._generatePDF(null); // null email = download only
+            statusEl.style.display = 'block';
+            statusEl.style.color = '#059669';
+            statusEl.textContent = '✅ PDF downloaded!';
+            setTimeout(() => {
+                document.getElementById('email-modal')?.classList.add('hidden');
+                dlBtn.disabled = false;
+                dlBtn.textContent = '💾 Download PDF';
+                statusEl.style.display = 'none';
+            }, 2000);
+        } catch (e) {
+            statusEl.style.display = 'block';
+            statusEl.style.color = '#dc2626';
+            statusEl.textContent = 'Error: ' + e.message;
+            dlBtn.disabled = false;
+            dlBtn.textContent = '💾 Download PDF';
+        }
+    },
+
     _sendEmailReport() {
         const emailInput = document.getElementById('report-email');
         const statusEl = document.getElementById('email-status');
@@ -4073,33 +4107,97 @@ const AppV4 = {
         }
         
         sendBtn.disabled = true;
-        sendBtn.textContent = 'Generating PDF...';
+        sendBtn.textContent = 'Sending...';
         statusEl.style.display = 'block';
-        statusEl.style.color = '#64748b';
-        statusEl.textContent = 'Building your retirement report...';
+        statusEl.style.color = 'var(--text-muted, #64748b)';
+        statusEl.textContent = 'Building your report...';
         
-        // Store email for future contact
+        // Store email for analytics
         const emails = JSON.parse(localStorage.getItem('retirement_emails') || '[]');
-        emails.push({ email, date: new Date().toISOString(), province: document.getElementById('province')?.value });
+        emails.push({ email, date: new Date().toISOString(), province: this.selectedProvince });
         localStorage.setItem('retirement_emails', JSON.stringify(emails));
         
-        try {
-            this._generatePDF(email);
-            statusEl.style.color = '#059669';
-            statusEl.textContent = '✅ PDF downloaded!';
-            sendBtn.textContent = '✓ Done';
-            setTimeout(() => {
-                document.getElementById('email-modal')?.classList.add('hidden');
-                sendBtn.disabled = false;
-                sendBtn.textContent = 'Send Report';
-                statusEl.style.display = 'none';
-            }, 2000);
-        } catch (e) {
-            console.error('PDF generation error:', e);
+        // Build report summary for email body
+        const inputs = this._lastCalcInputs;
+        const results = this._lastCalcResults;
+        const summary = results?.summary;
+        if (!summary) {
             statusEl.style.color = '#dc2626';
-            statusEl.textContent = 'Error generating PDF: ' + e.message;
+            statusEl.textContent = 'No results to send. Please calculate first.';
             sendBtn.disabled = false;
-            sendBtn.textContent = 'Send Report';
+            sendBtn.textContent = '📧 Email Report';
+            return;
+        }
+
+        const fmt = v => '$' + Math.round(v).toLocaleString();
+        const shareURL = typeof ShareLink !== 'undefined' ? ShareLink.generate() : window.location.href;
+        
+        const reportHTML = `
+            <h2>🇨🇦 Your Retirement Plan</h2>
+            <table style="border-collapse:collapse;width:100%;max-width:500px;">
+                <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;"><strong>Age</strong></td><td style="padding:6px 12px;border-bottom:1px solid #eee;">${inputs.currentAge} → ${inputs.retirementAge} (retire) → ${inputs.lifeExpectancy} (plan to)</td></tr>
+                <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;"><strong>Total Savings</strong></td><td style="padding:6px 12px;border-bottom:1px solid #eee;">${fmt((inputs.rrsp||0) + (inputs.tfsa||0) + (inputs.nonReg||0) + (inputs.lira||0) + (inputs.other||0) + (inputs.cash||0))}</td></tr>
+                <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;"><strong>Monthly Contributions</strong></td><td style="padding:6px 12px;border-bottom:1px solid #eee;">${fmt(inputs.monthlyContribution || 0)}/mo</td></tr>
+                <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;"><strong>Annual Spending</strong></td><td style="padding:6px 12px;border-bottom:1px solid #eee;">${fmt(inputs.annualSpending)}/yr</td></tr>
+                <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;"><strong>Portfolio at ${inputs.retirementAge}</strong></td><td style="padding:6px 12px;border-bottom:1px solid #eee;">${fmt(results.yearByYear?.find(y => y.age === inputs.retirementAge)?.totalBalance || 0)}</td></tr>
+                <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;"><strong>Money Lasts To</strong></td><td style="padding:6px 12px;border-bottom:1px solid #eee;">Age ${summary.moneyLastsAge}${summary.moneyLastsAge >= inputs.lifeExpectancy ? ' ✅' : ' ⚠️'}</td></tr>
+                <tr><td style="padding:6px 12px;"><strong>Max Sustainable</strong></td><td style="padding:6px 12px;">${fmt(this._lastMaxSustainable || inputs.annualSpending)}/yr</td></tr>
+            </table>
+            <p style="margin-top:20px;"><a href="${shareURL}" style="color:#3b82f6;">View full interactive results →</a></p>
+        `;
+
+        // Try EmailJS
+        const cfg = this._emailJSConfig;
+        if (cfg.publicKey && cfg.serviceId && cfg.templateId && typeof emailjs !== 'undefined') {
+            emailjs.init(cfg.publicKey);
+            emailjs.send(cfg.serviceId, cfg.templateId, {
+                to_email: email,
+                to_name: email.split('@')[0],
+                report_html: reportHTML,
+                share_link: shareURL,
+                province: inputs.province || 'ON',
+                money_lasts: summary.moneyLastsAge,
+                portfolio_at_retire: fmt(results.yearByYear?.find(y => y.age === inputs.retirementAge)?.totalBalance || 0),
+            }).then(() => {
+                statusEl.style.color = '#059669';
+                statusEl.textContent = '✅ Report sent! Check your inbox.';
+                sendBtn.textContent = '✓ Sent';
+                setTimeout(() => {
+                    document.getElementById('email-modal')?.classList.add('hidden');
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = '📧 Email Report';
+                    statusEl.style.display = 'none';
+                }, 3000);
+            }).catch((err) => {
+                console.error('EmailJS error:', err);
+                statusEl.style.color = '#dc2626';
+                statusEl.textContent = 'Failed to send. Downloading PDF instead...';
+                setTimeout(() => {
+                    this._generatePDF(email);
+                    statusEl.textContent = '✅ PDF downloaded (email service unavailable)';
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = '📧 Email Report';
+                }, 1000);
+            });
+        } else {
+            // EmailJS not configured — fall back to PDF download
+            try {
+                this._generatePDF(email);
+                statusEl.style.color = '#059669';
+                statusEl.textContent = '✅ PDF downloaded! (Email coming soon)';
+                sendBtn.textContent = '✓ Done';
+                setTimeout(() => {
+                    document.getElementById('email-modal')?.classList.add('hidden');
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = '📧 Email Report';
+                    statusEl.style.display = 'none';
+                }, 2500);
+            } catch (e) {
+                statusEl.style.color = '#dc2626';
+                statusEl.textContent = 'Error: ' + e.message;
+                sendBtn.disabled = false;
+                sendBtn.textContent = '📧 Email Report';
+            }
         }
     },
 
