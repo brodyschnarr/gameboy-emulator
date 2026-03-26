@@ -778,6 +778,9 @@ const AppV4 = {
         const content = document.getElementById('spending-optimizer-content');
         if (!section || !content) return;
         
+        console.log('[SpendingOptimizer] windfalls:', JSON.stringify(inputs.windfalls));
+        console.log('[SpendingOptimizer] rrsp:', inputs.rrsp, 'tfsa:', inputs.tfsa, 'nonReg:', inputs.nonReg, 'cash:', inputs.cash);
+        console.log('[SpendingOptimizer] moneyLastsAge:', results.summary.moneyLastsAge, 'portfolioAtRet:', results.summary.portfolioAtRetirement);
         section.classList.remove('hidden');
         
         const currentSpending = inputs.annualSpending;
@@ -3482,6 +3485,9 @@ const AppV4 = {
 
             // Calculate base scenario (now includes house sale if enabled)
             // NOTE: calc.js handles windfalls internally in _generateProjection
+            console.log('[CALC] Input windfalls:', JSON.stringify(inputs.windfalls));
+            console.log('[CALC] Savings: rrsp=', inputs.rrsp, 'tfsa=', inputs.tfsa, 'nonReg=', inputs.nonReg, 'cash=', inputs.cash, 'total=', (inputs.rrsp||0)+(inputs.tfsa||0)+(inputs.nonReg||0)+(inputs.cash||0));
+            console.log('[CALC] Age:', inputs.currentAge, 'Retire:', inputs.retirementAge, 'Spend:', inputs.annualSpending, 'Contrib:', inputs.monthlyContribution);
             const baseResults = RetirementCalcV4.calculate(inputs);
 
             // Store base scenario
