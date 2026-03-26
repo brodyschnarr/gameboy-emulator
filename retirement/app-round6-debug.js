@@ -3488,6 +3488,15 @@ const AppV4 = {
             console.log('[CALC] Input windfalls:', JSON.stringify(inputs.windfalls));
             console.log('[CALC] Savings: rrsp=', inputs.rrsp, 'tfsa=', inputs.tfsa, 'nonReg=', inputs.nonReg, 'cash=', inputs.cash, 'total=', (inputs.rrsp||0)+(inputs.tfsa||0)+(inputs.nonReg||0)+(inputs.cash||0));
             console.log('[CALC] Age:', inputs.currentAge, 'Retire:', inputs.retirementAge, 'Spend:', inputs.annualSpending, 'Contrib:', inputs.monthlyContribution);
+            // TEMP: on-screen debug for mobile
+            const _dbg = document.createElement('div');
+            _dbg.id = 'temp-debug';
+            _dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1e293b;color:#10b981;padding:8px 12px;font-size:11px;font-family:monospace;max-height:30vh;overflow:auto;';
+            _dbg.innerHTML = `<b>DEBUG</b> windfalls: ${(inputs.windfalls||[]).length} | savings: $${Math.round((inputs.rrsp||0)+(inputs.tfsa||0)+(inputs.nonReg||0)+(inputs.cash||0)).toLocaleString()} | spend: $${inputs.annualSpending?.toLocaleString()} | age: ${inputs.currentAge} → ${inputs.retirementAge}`
+                + (inputs.windfalls?.length ? '<br>Windfalls: ' + inputs.windfalls.map(w => `${w.name}: $${(w.amount||w.currentValue||0).toLocaleString()} @${w.sellAge||w.year}`).join(', ') : '');
+            document.getElementById('temp-debug')?.remove();
+            document.body.appendChild(_dbg);
+            setTimeout(() => _dbg.remove(), 15000);
             const baseResults = RetirementCalcV4.calculate(inputs);
 
             // Store base scenario
