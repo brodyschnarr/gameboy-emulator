@@ -1355,6 +1355,9 @@ const AppV4 = {
                     document.getElementById('estate-asset-name').value = '';
                     document.getElementById('estate-asset-value').value = '';
                     this._renderEstateAssets();
+                    // Auto-close the whole estate container after adding
+                    document.getElementById('form-estate')?.classList.add('hidden');
+                    this._updateStep5AddedItems();
                 }
             });
         }
