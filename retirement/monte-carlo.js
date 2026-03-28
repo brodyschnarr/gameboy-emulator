@@ -236,7 +236,12 @@ const MonteCarloSimulator = {
                     if (windfall.amountLow !== undefined && windfall.amountHigh !== undefined && windfall.amountLow !== windfall.amountHigh) {
                         baseAmount = windfall.amountLow + Math.random() * (windfall.amountHigh - windfall.amountLow);
                     }
-                    const afterTaxAmount = windfall.taxable ? baseAmount * 0.7 : baseAmount;
+                    let afterTaxAmount = baseAmount;
+                    if (windfall.customTaxRate !== undefined) {
+                        afterTaxAmount = baseAmount * (1 - windfall.customTaxRate);
+                    } else if (windfall.taxable) {
+                        afterTaxAmount = baseAmount * 0.7;
+                    }
                     if (windfall.destination === 'rrsp') balances.rrsp += afterTaxAmount;
                     else if (windfall.destination === 'tfsa') balances.tfsa += afterTaxAmount;
                     else if (windfall.destination === 'nonReg') balances.nonReg += afterTaxAmount;

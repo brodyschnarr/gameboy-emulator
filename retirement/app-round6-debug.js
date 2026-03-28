@@ -1596,20 +1596,30 @@ const AppV4 = {
                     const costBasis = parseFloat(document.getElementById('stock-cost-basis')?.value) || 0;
                     const sellAge = parseInt(document.getElementById('stock-sell-age')?.value) || 55;
                     const growth = parseFloat(document.getElementById('stock-growth')?.value) || 8;
+                    const useCustomTax = document.getElementById('stock-custom-tax')?.checked || false;
+                    const customTaxRate = parseFloat(document.getElementById('stock-tax-rate')?.value) || 0;
                     if (currentValue > 0) {
                         const stockName = document.getElementById('stock-name')?.value || 'Stock / Equity';
                         if (!this.windfalls) this.windfalls = [];
-                        this.windfalls.push({
+                        const windfall = {
                             name: stockName,
                             type: 'shares',
                             currentValue, costBasis, sellAge,
                             growthRate: growth,
                             amount: currentValue
-                        });
+                        };
+                        if (useCustomTax) {
+                            windfall.customTaxRate = customTaxRate / 100;
+                        }
+                        this.windfalls.push(windfall);
                         document.getElementById('stock-name').value = '';
                         document.getElementById('stock-current-value').value = '';
                         document.getElementById('stock-cost-basis').value = '';
                         document.getElementById('stock-sell-age').value = '';
+                        document.getElementById('stock-custom-tax').checked = false;
+                        document.getElementById('stock-tax-rate').value = '';
+                        document.getElementById('stock-custom-tax-row').style.display = 'none';
+                        document.getElementById('stock-default-tax-hint').style.display = '';
                         document.getElementById('stock-preview').style.display = 'none';
                     }
                 }
@@ -1673,6 +1683,17 @@ const AppV4 = {
             });
         });
 
+        // Stock: custom tax toggle
+        document.getElementById('stock-custom-tax')?.addEventListener('change', function() {
+            document.getElementById('stock-custom-tax-row').style.display = this.checked ? '' : 'none';
+            document.getElementById('stock-default-tax-hint').style.display = this.checked ? 'none' : '';
+            // Re-trigger preview
+            document.getElementById('stock-current-value')?.dispatchEvent(new Event('input'));
+        });
+        document.getElementById('stock-tax-rate')?.addEventListener('input', () => {
+            document.getElementById('stock-current-value')?.dispatchEvent(new Event('input'));
+        });
+
         // Live preview: Stock options
         const stockFields = ['stock-current-value', 'stock-cost-basis', 'stock-sell-age', 'stock-growth'];
         stockFields.forEach(id => {
@@ -1683,12 +1704,20 @@ const AppV4 = {
                 const growth = (parseFloat(document.getElementById('stock-growth')?.value) || 8) / 100;
                 const currentAge = parseInt(document.getElementById('current-age')?.value) || 30;
                 const years = Math.max(0, sellAge - currentAge);
+                const useCustomTax = document.getElementById('stock-custom-tax')?.checked;
+                const customRate = (parseFloat(document.getElementById('stock-tax-rate')?.value) || 0) / 100;
                 const preview = document.getElementById('stock-preview');
                 if (val > 0 && sellAge > 0) {
                     const projected = Math.round(val * Math.pow(1 + growth, years));
-                    const gain = Math.max(0, projected - cost);
-                    const tax = Math.round(gain * 0.5 * 0.30); // ~30% marginal on 50% inclusion
-                    const net = projected - tax;
+                    let tax, net;
+                    if (useCustomTax && customRate > 0) {
+                        tax = Math.round(projected * customRate);
+                        net = projected - tax;
+                    } else {
+                        const gain = Math.max(0, projected - cost);
+                        tax = Math.round(gain * 0.5 * 0.30);
+                        net = projected - tax;
+                    }
                     document.getElementById('stock-projected-value').textContent = '$' + projected.toLocaleString();
                     document.getElementById('stock-tax-estimate').textContent = '$' + tax.toLocaleString();
                     document.getElementById('stock-net-value').textContent = '$' + net.toLocaleString();

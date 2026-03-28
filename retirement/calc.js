@@ -640,8 +640,11 @@ const RetirementCalcV4 = {
                         }
 
                         let afterTaxAmount = grossAmount;
-                        if (w.taxable) {
-                            if (w.type === 'shares') {
+                        if (w.taxable || w.type === 'shares') {
+                            if (w.customTaxRate !== undefined) {
+                                // User-specified effective tax rate on total value
+                                afterTaxAmount = grossAmount * (1 - w.customTaxRate);
+                            } else if (w.type === 'shares') {
                                 // Capital gains: only the gain at 50% inclusion rate
                                 const gain = Math.max(0, grossAmount - costBasis);
                                 const taxableGain = gain * 0.5; // 50% inclusion
