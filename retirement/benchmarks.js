@@ -154,10 +154,14 @@ const BenchmarksV2 = {
 
     // Income distribution (for comparison messaging)
     incomePercentiles: {
+        p1: 15000,     // 1st percentile
+        p10: 25000,    // 10th percentile
         p25: 42000,    // 25th percentile
         median: 62000,  // Median Canadian income
         p75: 95000,    // 75th percentile
-        p90: 135000    // 90th percentile
+        p90: 135000,   // 90th percentile
+        p95: 180000,   // 95th percentile
+        p99: 300000    // 99th percentile
     },
 
     /**
@@ -248,11 +252,15 @@ const BenchmarksV2 = {
         const vsMedian = Math.round(((income / this.incomePercentiles.median) - 1) * 100);
         
         let percentileBracket = '';
-        if (income >= this.incomePercentiles.p90) percentileBracket = 'top 10%';
+        if (income >= this.incomePercentiles.p99) percentileBracket = 'top 1%';
+        else if (income >= this.incomePercentiles.p95) percentileBracket = 'top 5%';
+        else if (income >= this.incomePercentiles.p90) percentileBracket = 'top 10%';
         else if (income >= this.incomePercentiles.p75) percentileBracket = 'top 25%';
         else if (income >= this.incomePercentiles.median) percentileBracket = 'above median';
         else if (income >= this.incomePercentiles.p25) percentileBracket = 'below median';
-        else percentileBracket = 'bottom 25%';
+        else if (income >= this.incomePercentiles.p10) percentileBracket = 'bottom 25%';
+        else if (income >= this.incomePercentiles.p1) percentileBracket = 'bottom 10%';
+        else percentileBracket = 'bottom 1%';
         
         return {
             ageAverage: ageIncome,
@@ -363,16 +371,24 @@ const BenchmarksV2 = {
     },
 
     _getIncomeMessage(vsAge, percentileBracket) {
-        if (percentileBracket === 'top 10%') {
-            return `💪 Top 10% of Canadian earners`;
+        if (percentileBracket === 'top 1%') {
+            return `🏆 Top 1% — consider corporate structures & advanced tax strategies`;
+        } else if (percentileBracket === 'top 5%') {
+            return `💎 Top 5% — estate planning & tax optimization are critical`;
+        } else if (percentileBracket === 'top 10%') {
+            return `💪 Top 10% — tax-efficient withdrawal planning matters most`;
         } else if (percentileBracket === 'top 25%') {
             return `📈 Top 25% of Canadian earners`;
         } else if (percentileBracket === 'above median') {
             return `✅ Above median Canadian income`;
         } else if (percentileBracket === 'below median') {
             return `📊 Below median Canadian income`;
+        } else if (percentileBracket === 'bottom 25%') {
+            return `⚠️ Bottom 25% — CPP/OAS will form a large share of retirement income`;
+        } else if (percentileBracket === 'bottom 10%') {
+            return `⚠️ Bottom 10% — below low-income cut-off, maximize GIS & benefits`;
         } else {
-            return `⚠️ Bottom 25% of Canadian earners`;
+            return `⚠️ Bottom 1% — GIS/social assistance range, government benefits are key`;
         }
     },
 
