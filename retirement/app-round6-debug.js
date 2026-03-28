@@ -224,9 +224,15 @@ const AppV4 = {
             let percentile = '';
             let comparison = '';
 
-            if (total < 50000) {
+            if (total < 20000) {
+                percentile = 'bottom 1%';
+                comparison = 'GIS/social assistance range — government benefits will be key';
+            } else if (total < 30000) {
+                percentile = 'bottom 10%';
+                comparison = 'below the low-income cut-off — maximize GIS & benefits';
+            } else if (total < 50000) {
                 percentile = 'bottom 25%';
-                comparison = 'below average';
+                comparison = 'below average — CPP/OAS will form a large share of retirement income';
             } else if (total < medianHousehold) {
                 percentile = 'bottom 50%';
                 comparison = 'below median';
@@ -236,9 +242,15 @@ const AppV4 = {
             } else if (total < 150000) {
                 percentile = 'top 25%';
                 comparison = 'well above average';
-            } else {
+            } else if (total < 250000) {
                 percentile = 'top 10%';
-                comparison = 'high income';
+                comparison = 'high income — tax-efficient withdrawal planning matters most';
+            } else if (total < 400000) {
+                percentile = 'top 5%';
+                comparison = 'estate planning & tax optimization are critical';
+            } else {
+                percentile = 'top 1%';
+                comparison = 'consider corporate structures & advanced tax strategies';
             }
 
             benchmarkEl.innerHTML = `
