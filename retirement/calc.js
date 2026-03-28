@@ -625,13 +625,14 @@ const RetirementCalcV4 = {
                     } else {
                         targetAge = w.year > 150 ? (w.year - (new Date().getFullYear() - currentAge)) : (w.year || (currentAge + (w.yearsFromNow || 0)));
                     }
-                    if (targetAge === age && (w.probability === undefined || w.probability >= 100)) {
-                        // Resolve the gross amount
-                        let grossAmount = w.amount || 0;
+                    if (targetAge === age) {
+                        const prob = (w.probability === undefined ? 100 : w.probability) / 100;
+                        // Resolve the gross amount (probability-weighted for deterministic projection)
+                        let grossAmount = (w.amount || 0) * prob;
                         let costBasis = grossAmount; // default: no gain
                         if (w.type === 'shares') {
                             // Shares: grow current value to sell date
-                            const cv = w.currentValue || w.amount || 0;
+                            const cv = (w.currentValue || w.amount || 0) * prob;
                             const gr = (w.growthRate || 6) / 100;
                             const yearsToSell = Math.max(0, age - currentAge);
                             grossAmount = cv * Math.pow(1 + gr, yearsToSell);
