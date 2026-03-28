@@ -2287,11 +2287,11 @@ const AppV4 = {
         if (!el) return;
         const weights = this._getSpendingWeights();
         const h = parseFloat(document.getElementById('inf-housing')?.value) || 2.5;
-        const f = parseFloat(document.getElementById('inf-food')?.value) || 3.0;
+        const f = parseFloat(document.getElementById('inf-food')?.value) || 2.5;
         const hc = parseFloat(document.getElementById('healthcare-inflation')?.value) || 4;
         const d = parseFloat(document.getElementById('inf-discretionary')?.value) || 2.0;
         const blended = h * weights.housing + f * weights.food + hc * weights.healthcare + d * weights.discretionary;
-        const baseRate = parseFloat(document.getElementById('inflation-rate')?.value) || 2.5;
+        const baseRate = parseFloat(document.getElementById('inflation-rate')?.value) || 2;
         const diff = blended - baseRate;
         const diffStr = diff >= 0 ? `+${diff.toFixed(1)}%` : `${diff.toFixed(1)}%`;
         el.innerHTML = `📊 Blended retirement inflation: <strong>${blended.toFixed(1)}%</strong> (${diffStr} vs base ${baseRate}%) — weighted by your spending: Housing ${(weights.housing*100).toFixed(0)}%, Food ${(weights.food*100).toFixed(0)}%, Healthcare ${(weights.healthcare*100).toFixed(0)}%, Other ${(weights.discretionary*100).toFixed(0)}%`;
@@ -3453,7 +3453,7 @@ const AppV4 = {
             + (parseFloat(document.getElementById('nonreg')?.value) || 0)
             + (parseFloat(document.getElementById('other')?.value) || 0);
         const monthly = parseFloat(document.getElementById('monthly-contribution')?.value) || 0;
-        const returnRate = (parseFloat(document.getElementById('return-rate')?.value) || 6) / 100;
+        const returnRate = (parseFloat(document.getElementById('return-rate')?.value) || 4.5) / 100;
         const merFee = (parseFloat(document.getElementById('mer-fee')?.value) || 0) / 100;
         const netReturn = returnRate - merFee;
         const contribGrowth = (parseFloat(document.getElementById('contribution-growth')?.value) || 0) / 100;
@@ -4286,8 +4286,8 @@ const AppV4 = {
             employerPensionStartAge: parseInt(document.getElementById('pension-start-age')?.value) || 65,
             employerPensionIndexed: document.getElementById('pension-indexed')?.checked !== false,
 
-            returnRate: parseFloat(document.getElementById('return-rate')?.value) || 6,
-            inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2.5,
+            returnRate: parseFloat(document.getElementById('return-rate')?.value) || 4.5,
+            inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2,
             contributionGrowthRate: parseFloat(document.getElementById('contribution-growth')?.value) || 0,
             merFee: parseFloat(document.getElementById('mer-fee')?.value) || 0,
             spendingCurve: this.spendingCurve || 'flat',
@@ -4977,7 +4977,7 @@ const AppV4 = {
         const weights = this._getSpendingWeights();
         return {
             housing: parseFloat(document.getElementById('inf-housing')?.value) || 2.5,
-            food: parseFloat(document.getElementById('inf-food')?.value) || 3.0,
+            food: parseFloat(document.getElementById('inf-food')?.value) || 2.5,
             healthcare: parseFloat(document.getElementById('healthcare-inflation')?.value) || 4,
             discretionary: parseFloat(document.getElementById('inf-discretionary')?.value) || 2.0,
             _weights: weights
