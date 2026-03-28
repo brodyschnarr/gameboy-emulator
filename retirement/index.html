@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0">
     <meta name="description" content="Canadian retirement calculator with regional data and tax-aware projections">
     <title>Retirement Planner V5 | Advanced Canadian Calculator</title>
-    <link rel="stylesheet" href="style.css?v=round6&t=24000126">
-    <link rel="stylesheet" href="style-v5.css?v=round6&t=24000126">
-    <link rel="stylesheet" href="mobile-polish.css?v=round6&t=24000126">
+    <link rel="stylesheet" href="style.css?v=round6&t=24000127">
+    <link rel="stylesheet" href="style-v5.css?v=round6&t=24000127">
+    <link rel="stylesheet" href="mobile-polish.css?v=round6&t=24000127">
     <link rel="stylesheet" href="slider-inputs.css?v=1">
     
     <!-- Debug scripts removed -->
@@ -162,26 +162,25 @@
                     </div>
                 </div>
                 <!-- Inline form (hidden until type selected) -->
-                <div id="income-source-inline-form" class="step5-form hidden" style="margin-top:12px">
-                    <div style="font-weight:600;margin-bottom:4px" id="inline-income-type-label"></div>
-                    <p class="section-intro" id="inline-income-type-desc" style="margin:0 0 8px;font-size:13px"></p>
-                    <div class="input-row" style="gap:8px;margin-bottom:8px">
-                        <div style="flex:1"><label style="font-size:13px">Name (optional)</label><input type="text" id="inline-income-name" placeholder="e.g., Airbnb rental" style="padding:8px;font-size:14px"></div>
+                <div id="income-source-inline-form" class="step5-form hidden" style="margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:8px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                        <div style="font-weight:600;font-size:14px" id="inline-income-type-label"></div>
+                        <button type="button" id="inline-income-cancel" style="background:none;border:none;font-size:18px;color:var(--text-muted);cursor:pointer;padding:0 4px">×</button>
                     </div>
-                    <div class="input-row" style="gap:8px;margin-bottom:8px">
-                        <div style="flex:1"><label style="font-size:13px">Annual Amount</label><div class="input-with-prefix"><span class="input-prefix">$</span><input type="number" id="inline-income-amount" placeholder="12000" min="0" step="100"></div></div>
-                        <div style="flex:1"><label style="font-size:13px">Start Age</label><input type="number" id="inline-income-start-age" placeholder="30" min="16" max="100" style="padding:8px;font-size:14px"></div>
+                    <p class="section-intro" id="inline-income-type-desc" style="margin:0 0 8px;font-size:12px;color:var(--text-muted)"></p>
+                    <div class="input-row" style="gap:8px;margin-bottom:6px">
+                        <div style="flex:2"><label style="font-size:12px">Amount/yr</label><div class="input-with-prefix"><span class="input-prefix">$</span><input type="number" id="inline-income-amount" placeholder="12000" min="0" step="100"></div></div>
+                        <div style="flex:1"><label style="font-size:12px">From</label><input type="number" id="inline-income-start-age" min="16" max="100" style="padding:8px;font-size:14px"></div>
+                        <div style="flex:1"><label style="font-size:12px">To</label><input type="number" id="inline-income-end-age" placeholder="∞" min="16" max="100" style="padding:8px;font-size:14px"></div>
                     </div>
-                    <div class="input-row" style="gap:8px;margin-bottom:8px">
-                        <div style="flex:1"><label style="font-size:13px">End Age (optional)</label><input type="number" id="inline-income-end-age" placeholder="Lifetime" min="16" max="100" style="padding:8px;font-size:14px"></div>
-                        <div style="flex:1;display:flex;align-items:end;padding-bottom:4px">
-                            <label style="font-size:13px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="inline-income-continues"> Continues into retirement</label>
+                    <div class="input-row" style="gap:8px;margin-bottom:6px;align-items:center">
+                        <div style="flex:1"><label style="font-size:12px">Label (optional)</label><input type="text" id="inline-income-name" placeholder="e.g., Airbnb" style="padding:8px;font-size:14px"></div>
+                        <div style="flex:0 0 auto;padding-top:14px">
+                            <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="inline-income-continues"> In retirement</label>
                         </div>
                     </div>
-                    <div class="input-row" style="gap:8px">
-                        <button type="button" class="btn-primary" id="inline-income-save" style="flex:1;padding:10px">Save</button>
-                        <button type="button" class="btn-secondary" id="inline-income-cancel" style="flex:1;padding:10px">Cancel</button>
-                    </div>
+                    <p id="inline-income-tax-note" style="margin:0 0 8px;font-size:11px;color:var(--text-muted);font-style:italic"></p>
+                    <button type="button" class="btn-primary" id="inline-income-save" style="width:100%;padding:10px;font-size:14px">Add</button>
                 </div>
             </div>
 
@@ -1519,38 +1518,38 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000126"></script>
-    <script src="cpp-calculator.js?v=17&t=24000126"></script>
-    <script src="benchmarks.js?v=17&t=24000126"></script>
-    <script src="lifestyle-data.js?v=17&t=24000126"></script>
-    <script src="regional-data.js?v=18&t=24000126"></script>
-    <script src="canada-map.js?v=18&t=24000126"></script>
-    <script src="income-sources.js?v=17&t=24000126"></script>
-    <script src="deep-dive.js?v=17&t=24000126"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000126"></script>
-    <script src="scenario-manager.js?v=17&t=24000126"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000126"></script>
-    <script src="calc.js?v=17&t=24000126"></script>
-    <script src="app-round6-debug.js?v=17&t=24000126"></script>
+    <script src="canada-tax.js?v=17&t=24000127"></script>
+    <script src="cpp-calculator.js?v=17&t=24000127"></script>
+    <script src="benchmarks.js?v=17&t=24000127"></script>
+    <script src="lifestyle-data.js?v=17&t=24000127"></script>
+    <script src="regional-data.js?v=18&t=24000127"></script>
+    <script src="canada-map.js?v=18&t=24000127"></script>
+    <script src="income-sources.js?v=17&t=24000127"></script>
+    <script src="deep-dive.js?v=17&t=24000127"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000127"></script>
+    <script src="scenario-manager.js?v=17&t=24000127"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000127"></script>
+    <script src="calc.js?v=17&t=24000127"></script>
+    <script src="app-round6-debug.js?v=17&t=24000127"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000126"></script>
-    <script src="monte-carlo.js?v=17&t=24000126"></script>
-    <script src="tax-optimizer.js?v=17&t=24000126"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000126"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000126"></script>
-    <script src="advanced-charts.js?v=17&t=24000126"></script>
-    <script src="interactive-sliders.js?v=17&t=24000126"></script>
-    <script src="scenario-storage.js?v=17&t=24000126"></script>
-    <script src="windfalls.js?v=17&t=24000126"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000126"></script>
+    <script src="error-handler.js?v=17&t=24000127"></script>
+    <script src="monte-carlo.js?v=17&t=24000127"></script>
+    <script src="tax-optimizer.js?v=17&t=24000127"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000127"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000127"></script>
+    <script src="advanced-charts.js?v=17&t=24000127"></script>
+    <script src="interactive-sliders.js?v=17&t=24000127"></script>
+    <script src="scenario-storage.js?v=17&t=24000127"></script>
+    <script src="windfalls.js?v=17&t=24000127"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000127"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=18&t=24000126"></script>
+    <script src="slider-inputs.js?v=18&t=24000127"></script>
 
     <!-- Shareable links -->
-    <script src="share-link.js?v=1&t=24000126"></script>
-    <script src="ads.js?v=1&t=24000126"></script>
+    <script src="share-link.js?v=1&t=24000127"></script>
+    <script src="ads.js?v=1&t=24000127"></script>
 
     <!-- Dark mode toggle + share link auto-load -->
     <script>

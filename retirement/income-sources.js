@@ -269,14 +269,23 @@ const IncomeSources = {
 
         const typeInfo = this.types[type] || this.types.other;
         const descriptions = {
-            rental: 'Income from rental properties (after expenses). Fully taxable.',
-            partTime: 'Part-time work, freelancing, or consulting income.',
-            sideGig: 'Side business or self-employment income.',
-            other: 'Any other recurring income source.'
+            rental: 'Net rental income after property expenses',
+            partTime: 'Part-time, freelance, or contract work',
+            sideGig: 'Self-employment or side business',
+            other: 'Any other recurring income'
+        };
+
+        const taxNotes = {
+            rental: 'Taxed as property income. Enter net amount after deducting expenses (mortgage interest, repairs, insurance, property tax).',
+            partTime: 'Taxed as employment income. Builds CPP pension credits.',
+            sideGig: 'Taxed as self-employment. You pay both employee & employer CPP (~11.9% on first ~$68K). Business expenses deductible.',
+            other: 'Taxed as regular income.'
         };
 
         document.getElementById('inline-income-type-label').textContent = `${typeInfo.icon} ${typeInfo.name}`;
         document.getElementById('inline-income-type-desc').textContent = descriptions[type] || '';
+        const taxNote = document.getElementById('inline-income-tax-note');
+        if (taxNote) taxNote.textContent = taxNotes[type] || '';
 
         // Set default "continues" based on type
         const cb = document.getElementById('inline-income-continues');

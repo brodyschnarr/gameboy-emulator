@@ -931,17 +931,28 @@ const RetirementCalcV4 = {
                 const oasIncome = oasP1 + oasP2;
 
                 // 5. Additional income sources (respects continuesInRetirement flag)
+                // Tax treatment varies by type:
+                //   rental: property income (no CPP)
+                //   partTime: employment income (employee CPP only, handled by employer)
+                //   sideGig: self-employment (both employee+employer CPP ~11.9%)
+                //   other: regular income (no CPP)
+                let selfEmploymentCPPCost = 0;
                 const additionalIncome = additionalIncomeSources
                     .filter(s => {
                         if (age < s.startAge) return false;
                         if (s.endAge !== null && age > s.endAge) return false;
-                        // In retirement years, only include sources flagged to continue
                         if (age >= retirementAge && s.continuesInRetirement === false) return false;
                         return true;
                     })
                     .reduce((sum, s) => {
-                        const base = s.annualAmount;
-                        return sum + (s.indexed ? base * cpiFromToday : base);
+                        const base = s.indexed ? s.annualAmount * cpiFromToday : s.annualAmount;
+                        // Self-employment CPP: both portions (~11.9% of pensionable earnings up to YMPE)
+                        if (s.type === 'sideGig' && age < 65) {
+                            const ympe = 68500 * cpiFromToday; // CPI-indexed YMPE
+                            const pensionable = Math.min(base, ympe);
+                            selfEmploymentCPPCost += Math.round(pensionable * 0.119);
+                        }
+                        return sum + base;
                     }, 0);
 
                 // Other retirement income (custom user entry)
@@ -1037,7 +1048,7 @@ const RetirementCalcV4 = {
                     + gisEstimate + rentalIncomeThisYear + annuityPayoutThisYear + spouseAllowance + otherIncomeInflated;
 
                 // FIX #9: Smart withdrawal — OAS-clawback-aware
-                const neededFromPortfolio = Math.max(0, totalNeed - totalOtherIncomePreClawback);
+                const neededFromPortfolio = Math.max(0, totalNeed + selfEmploymentCPPCost - totalOtherIncomePreClawback);
 
                 // RRIF/LIF mandatory minimums — must be withdrawn regardless
                 // Don't subtract mandatory from need: the smart withdrawal usually pulls
