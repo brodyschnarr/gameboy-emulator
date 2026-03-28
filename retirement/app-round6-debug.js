@@ -3009,19 +3009,21 @@ const AppV4 = {
 
     _updateSavingsBenchmark() {
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
+        const isCouple = this.familyStatus !== 'single';
+        const mult = isCouple ? (BenchmarksV2.coupleSavingsMultiplier || 1.6) : 1;
         const benchmarks = this.selectedRegion
             ? RegionalDataV2.getRegionalBenchmarks(this.selectedRegion, age)
             : BenchmarksV2.getSavingsBenchmark(age);
 
+        const adjMedian = Math.round(benchmarks.median * mult);
+        const adjAverage = Math.round(benchmarks.average * mult);
+        const label = isCouple ? 'Canadian couple' : (benchmarks.name || 'Canadian');
+
         const html = `
-            <strong>Typical ${benchmarks.name || 'Canadian'} at age ${age}:</strong><br>
+            <strong>Typical ${label} at age ${age}:</strong><br>
             <div style="margin-top: 8px; font-size: 14px;">
-                📊 Median: $${benchmarks.median.toLocaleString()} |
-                📈 Average: $${benchmarks.average.toLocaleString()}
-            </div>
-            <div style="margin-top: 4px; font-size: 13px; opacity: 0.8;">
-                25th percentile: $${(benchmarks.p25 || 0).toLocaleString()} |
-                75th percentile: $${(benchmarks.p75 || 0).toLocaleString()}
+                📊 Median: $${adjMedian.toLocaleString()} |
+                📈 Average: $${adjAverage.toLocaleString()}
             </div>
         `;
 
@@ -3056,7 +3058,8 @@ const AppV4 = {
         }
 
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
-        const comparison = BenchmarksV2.compareSavings(age, total);
+        const isCouple = this.familyStatus !== 'single';
+        const comparison = BenchmarksV2.compareSavings(age, total, isCouple);
 
         const benchmark = document.getElementById('total-savings-benchmark');
         if (benchmark) {

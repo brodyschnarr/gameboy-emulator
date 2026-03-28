@@ -10,78 +10,45 @@ const BenchmarksV2 = {
     // Source estimates: Statistics Canada Family Finances Survey, bank retirement reports
     savingsByAge: {
         25: { 
-            median: 5000,      // Most 25-year-olds have very little saved
-            average: 18000,    // Pulled up by inheritance, early savers
-            percentiles: {
-                p25: 1000,     // 25th percentile
-                p75: 25000     // 75th percentile
-            }
+            median: 5000, average: 18000,
+            percentiles: { p1: 0, p10: 0, p25: 1000, p75: 25000, p90: 55000, p95: 90000, p99: 200000 }
         },
         30: { 
-            median: 25000,     // Starting to save seriously
-            average: 58000,    // Some have substantial amounts
-            percentiles: {
-                p25: 8000,
-                p75: 85000
-            }
+            median: 25000, average: 58000,
+            percentiles: { p1: 0, p10: 1500, p25: 8000, p75: 85000, p90: 170000, p95: 280000, p99: 550000 }
         },
         35: { 
-            median: 55000,     // Mid-career accumulation
-            average: 115000,   // Gap widening
-            percentiles: {
-                p25: 20000,
-                p75: 165000
-            }
+            median: 55000, average: 115000,
+            percentiles: { p1: 0, p10: 5000, p25: 20000, p75: 165000, p90: 320000, p95: 500000, p99: 950000 }
         },
         40: { 
-            median: 95000,     // Peak earning/saving years begin
-            average: 195000,   
-            percentiles: {
-                p25: 35000,
-                p75: 285000
-            }
+            median: 95000, average: 195000,
+            percentiles: { p1: 0, p10: 10000, p25: 35000, p75: 285000, p90: 520000, p95: 800000, p99: 1500000 }
         },
         45: { 
-            median: 155000,    // Should have ~2-3x salary saved
-            average: 305000,   
-            percentiles: {
-                p25: 60000,
-                p75: 450000
-            }
+            median: 155000, average: 305000,
+            percentiles: { p1: 0, p10: 18000, p25: 60000, p75: 450000, p90: 780000, p95: 1150000, p99: 2200000 }
         },
         50: { 
-            median: 235000,    // Retirement visible on horizon
-            average: 455000,   
-            percentiles: {
-                p25: 95000,
-                p75: 650000
-            }
+            median: 235000, average: 455000,
+            percentiles: { p1: 0, p10: 30000, p25: 95000, p75: 650000, p90: 1100000, p95: 1600000, p99: 3000000 }
         },
         55: { 
-            median: 325000,    // Final push to retirement
-            average: 615000,   
-            percentiles: {
-                p25: 135000,
-                p75: 900000
-            }
+            median: 325000, average: 615000,
+            percentiles: { p1: 500, p10: 45000, p25: 135000, p75: 900000, p90: 1500000, p95: 2100000, p99: 4000000 }
         },
         60: { 
-            median: 425000,    // Approaching retirement
-            average: 775000,   
-            percentiles: {
-                p25: 185000,
-                p75: 1150000
-            }
+            median: 425000, average: 775000,
+            percentiles: { p1: 2000, p10: 65000, p25: 185000, p75: 1150000, p90: 1900000, p95: 2700000, p99: 5000000 }
         },
         65: { 
-            median: 480000,    // Retirement age - what Canadians actually have
-            average: 850000,   // Many have much more, many have much less
-            percentiles: {
-                p25: 200000,
-                p75: 1300000
-            }
+            median: 480000, average: 850000,
+            percentiles: { p1: 5000, p10: 75000, p25: 200000, p75: 1300000, p90: 2100000, p95: 3000000, p99: 5500000 }
         }
     },
+
+    // Couple savings multiplier (couples typically have ~1.6x individual savings)
+    coupleSavingsMultiplier: 1.6,
 
     // Monthly contribution benchmarks (all retirement accounts combined)
     monthlyContribution: {
@@ -182,32 +149,37 @@ const BenchmarksV2 = {
     /**
      * Compare user's savings to benchmarks with detailed messaging
      */
-    compareSavings(age, savings) {
+    compareSavings(age, savings, isCouple = false) {
         const benchmark = this.getSavingsBenchmark(age);
-        
-        const vsMedian = Math.round(((savings / benchmark.median) - 1) * 100);
-        const vsAverage = ((savings / benchmark.average) - 1) * 100;
-        
-        // Determine percentile bracket
-        let percentileBracket = '';
-        if (savings >= benchmark.percentiles.p75) {
-            percentileBracket = 'top 25%';
-        } else if (savings >= benchmark.median) {
-            percentileBracket = 'top 50%';
-        } else if (savings >= benchmark.percentiles.p25) {
-            percentileBracket = 'middle 50%';
-        } else {
-            percentileBracket = 'bottom 25%';
+        const mult = isCouple ? this.coupleSavingsMultiplier : 1;
+        const adjMedian = Math.round(benchmark.median * mult);
+        const adjAverage = Math.round(benchmark.average * mult);
+        const p = {};
+        for (const k of Object.keys(benchmark.percentiles)) {
+            p[k] = Math.round(benchmark.percentiles[k] * mult);
         }
         
+        const vsMedian = adjMedian > 0 ? Math.round(((savings / adjMedian) - 1) * 100) : 0;
+        
+        let percentileBracket = '';
+        if (savings >= p.p99) percentileBracket = 'top 1%';
+        else if (savings >= p.p95) percentileBracket = 'top 5%';
+        else if (savings >= p.p90) percentileBracket = 'top 10%';
+        else if (savings >= p.p75) percentileBracket = 'top 25%';
+        else if (savings >= adjMedian) percentileBracket = 'top 50%';
+        else if (savings >= p.p25) percentileBracket = 'middle 50%';
+        else if (savings >= p.p10) percentileBracket = 'bottom 25%';
+        else if (savings >= p.p1) percentileBracket = 'bottom 10%';
+        else percentileBracket = 'bottom 1%';
+        
         return {
-            median: benchmark.median,
-            average: benchmark.average,
-            vsMedian: Math.round(vsMedian),
-            vsAverage: Math.round(vsAverage),
+            median: adjMedian,
+            average: adjAverage,
+            vsMedian,
+            vsAverage: adjAverage > 0 ? Math.round(((savings / adjAverage) - 1) * 100) : 0,
             percentileBracket,
             message: this._getSavingsMessage(vsMedian, percentileBracket),
-            detailedMessage: this._getDetailedSavingsMessage(age, savings, benchmark)
+            detailedMessage: this._getDetailedSavingsMessage(age, savings, { median: adjMedian, average: adjAverage, percentiles: p })
         };
     },
 
@@ -327,18 +299,25 @@ const BenchmarksV2 = {
 
     // Internal: Generate savings comparison message
     _getSavingsMessage(vsMedian, percentileBracket) {
-        if (vsMedian > 100) {
-            return `💪 Excellent! You're in the ${percentileBracket} (${vsMedian > 0 ? '+' : ''}${vsMedian}% vs median)`;
-        } else if (vsMedian > 50) {
-            return `📈 Well above median (${percentileBracket}, ${vsMedian > 0 ? '+' : ''}${vsMedian}%)`;
-        } else if (vsMedian > 15) {
-            return `✅ Above median (${percentileBracket}, ${vsMedian > 0 ? '+' : ''}${vsMedian}%)`;
-        } else if (vsMedian > -15) {
-            return `📊 Near median (${percentileBracket})`;
-        } else if (vsMedian > -40) {
-            return `⚠️ Below median (${percentileBracket}, ${vsMedian}%)`;
+        const pct = vsMedian > 0 ? `+${vsMedian}%` : `${vsMedian}%`;
+        if (percentileBracket === 'top 1%') {
+            return `🏆 Top 1% — wealth preservation & estate planning territory (${pct} vs median)`;
+        } else if (percentileBracket === 'top 5%') {
+            return `💎 Top 5% — tax-efficient drawdown is your biggest lever (${pct} vs median)`;
+        } else if (percentileBracket === 'top 10%') {
+            return `💪 Top 10% — well ahead, focus on tax optimization (${pct} vs median)`;
+        } else if (percentileBracket === 'top 25%') {
+            return `📈 Top 25% — above most Canadians your age (${pct} vs median)`;
+        } else if (percentileBracket === 'top 50%') {
+            return `✅ Above median (${pct} vs median)`;
+        } else if (percentileBracket === 'middle 50%') {
+            return `📊 Near median — on a typical path (${pct} vs median)`;
+        } else if (percentileBracket === 'bottom 25%') {
+            return `⚠️ Bottom 25% — maximize TFSA contributions first (${pct} vs median)`;
+        } else if (percentileBracket === 'bottom 10%') {
+            return `⚠️ Bottom 10% — start with employer match & automatic contributions (${pct} vs median)`;
         } else {
-            return `🚨 Well below median (${percentileBracket}, ${vsMedian}%)`;
+            return `🚨 Bottom 1% — even small regular contributions compound significantly`;
         }
     },
 
