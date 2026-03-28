@@ -1513,6 +1513,13 @@ const AppV4 = {
                     if (type === 'windfall') {
                         this._showWindfallForm();
                     }
+                    // Auto-open estate asset form (skip intermediate + Add Asset step)
+                    if (type === 'estate') {
+                        const estateForm = document.getElementById('estate-asset-form');
+                        const estateAddBtn = document.getElementById('btn-add-estate-asset');
+                        if (estateForm) estateForm.classList.remove('hidden');
+                        if (estateAddBtn) estateAddBtn.classList.add('hidden');
+                    }
                     // Auto-populate post-retirement work ages
                     if (type === 'post-retirement-work') {
                         const retAge = parseInt(document.getElementById('retirement-age')?.value) || 65;
