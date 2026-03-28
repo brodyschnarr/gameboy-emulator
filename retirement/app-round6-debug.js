@@ -1341,6 +1341,8 @@ const AppV4 = {
             cancelBtn.addEventListener('click', () => {
                 form.classList.add('hidden');
                 addBtn?.classList.remove('hidden');
+                // Close the whole estate container
+                document.getElementById('form-estate')?.classList.add('hidden');
             });
         }
         if (saveBtn) {
