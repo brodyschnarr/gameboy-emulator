@@ -935,25 +935,29 @@ const RetirementCalcV4 = {
                 //   rental: property income (no CPP)
                 //   partTime: employment income (employee CPP only, handled by employer)
                 //   sideGig: self-employment (both employee+employer CPP ~11.9%)
+                //   nonTaxable: not taxable (family gifts, informal support)
                 //   other: regular income (no CPP)
                 let selfEmploymentCPPCost = 0;
-                const additionalIncome = additionalIncomeSources
-                    .filter(s => {
-                        if (age < s.startAge) return false;
-                        if (s.endAge !== null && age > s.endAge) return false;
-                        if (age >= retirementAge && s.continuesInRetirement === false) return false;
-                        return true;
-                    })
-                    .reduce((sum, s) => {
-                        const base = s.indexed ? s.annualAmount * cpiFromToday : s.annualAmount;
-                        // Self-employment CPP: both portions (~11.9% of pensionable earnings up to YMPE)
-                        if (s.type === 'sideGig' && age < 65) {
-                            const ympe = 68500 * cpiFromToday; // CPI-indexed YMPE
-                            const pensionable = Math.min(base, ympe);
-                            selfEmploymentCPPCost += Math.round(pensionable * 0.119);
-                        }
-                        return sum + base;
-                    }, 0);
+                let nonTaxableIncome = 0;
+                const activeSources = additionalIncomeSources.filter(s => {
+                    if (age < s.startAge) return false;
+                    if (s.endAge !== null && age > s.endAge) return false;
+                    if (age >= retirementAge && s.continuesInRetirement === false) return false;
+                    return true;
+                });
+                const additionalIncome = activeSources.reduce((sum, s) => {
+                    const base = s.indexed ? s.annualAmount * cpiFromToday : s.annualAmount;
+                    if (s.type === 'nonTaxable') {
+                        nonTaxableIncome += base;
+                        return sum; // exclude from taxable income
+                    }
+                    if (s.type === 'sideGig' && age < 65) {
+                        const ympe = 68500 * cpiFromToday;
+                        const pensionable = Math.min(base, ympe);
+                        selfEmploymentCPPCost += Math.round(pensionable * 0.119);
+                    }
+                    return sum + base;
+                }, 0);
 
                 // Other retirement income (custom user entry)
                 const otherIncomeInflated = otherRetirementIncome > 0 ? otherRetirementIncome * cpiFromToday : 0;
@@ -1048,7 +1052,7 @@ const RetirementCalcV4 = {
                     + gisEstimate + rentalIncomeThisYear + annuityPayoutThisYear + spouseAllowance + otherIncomeInflated;
 
                 // FIX #9: Smart withdrawal — OAS-clawback-aware
-                const neededFromPortfolio = Math.max(0, totalNeed + selfEmploymentCPPCost - totalOtherIncomePreClawback);
+                const neededFromPortfolio = Math.max(0, totalNeed + selfEmploymentCPPCost - totalOtherIncomePreClawback - nonTaxableIncome);
 
                 // RRIF/LIF mandatory minimums — must be withdrawn regardless
                 // Don't subtract mandatory from need: the smart withdrawal usually pulls

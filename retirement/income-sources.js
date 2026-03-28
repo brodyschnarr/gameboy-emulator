@@ -11,6 +11,7 @@ const IncomeSources = {
         rental: { name: 'Rental Income', icon: '🏠', defaultContinues: true },
         partTime: { name: 'Part-Time Work', icon: '💼', defaultContinues: false },
         sideGig: { name: 'Side Business', icon: '🏪', defaultContinues: false },
+        nonTaxable: { name: 'Non-Taxable Income', icon: '🎁', defaultContinues: true },
         other: { name: 'Other Income', icon: '💰', defaultContinues: false }
     },
 
@@ -272,6 +273,7 @@ const IncomeSources = {
             rental: 'Net rental income after property expenses',
             partTime: 'Part-time, freelance, or contract work',
             sideGig: 'Self-employment or side business',
+            nonTaxable: 'Family gifts, informal support, tax-free payments',
             other: 'Any other recurring income'
         };
 
@@ -279,6 +281,7 @@ const IncomeSources = {
             rental: 'Taxed as property income. Enter net amount after deducting expenses (mortgage interest, repairs, insurance, property tax).',
             partTime: 'Taxed as employment income. Builds CPP pension credits.',
             sideGig: 'Taxed as self-employment. You pay both employee & employer CPP (~11.9% on first ~$68K). Business expenses deductible.',
+            nonTaxable: 'Not included in taxable income. Covers family support, gifts, tax-free benefits, or other non-reportable cash.',
             other: 'Taxed as regular income.'
         };
 
