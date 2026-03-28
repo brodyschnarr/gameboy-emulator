@@ -4715,6 +4715,11 @@ input:focus {
     background: var(--border, #e5e7eb);
     outline: none;
 }
+.stepper-slider::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border, #e5e7eb);
+}
 .stepper-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 22px;
@@ -4724,6 +4729,11 @@ input:focus {
     cursor: pointer;
     border: 2px solid #fff;
     box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.stepper-slider::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border, #e5e7eb);
 }
 .stepper-slider::-moz-range-thumb {
     width: 22px;
