@@ -5507,7 +5507,8 @@ const AppV4 = {
         // Show first 5 years, rest hidden behind "Show all" button
         const rows = html.split('</div>\n            ');
         // Actually, use DOM approach after inserting
-        container.innerHTML = legend + html;
+        const inflationNote = `<div style="font-size:12px;color:var(--text-muted);margin:8px 0 4px;font-style:italic;">💡 Amounts shown in future dollars (after inflation)</div>`;
+        container.innerHTML = legend + inflationNote + html;
 
         // Expandable year rows — tap to show account balances
         container.querySelectorAll('.expandable-row').forEach(row => {

@@ -310,24 +310,7 @@ const AppV5Enhanced = {
                 </div>
             </div>
             
-            <h3>🏛️ Government Benefits</h3>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">CPP (Annual)</div>
-                    <div class="stat-value">${fmtMoney(baseResults.govBenefits.cppTotal || 0)}</div>
-                    <div class="stat-note">Starting at age ${baseResults.govBenefits.cppStartAge || 65}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">OAS (Annual)</div>
-                    <div class="stat-value">${fmtMoney(baseResults.govBenefits.oasMax || 0)}</div>
-                    <div class="stat-note">Starting at age 65</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Total Gov Benefits</div>
-                    <div class="stat-value">${fmtMoney(baseResults.govBenefits.total || 0)}/year</div>
-                    <div class="stat-note">Reduces portfolio withdrawals</div>
-                </div>
-            </div>
+            <!-- Government Benefits section removed — info already covered in strategy comparison and year-by-year breakdown -->
             
             ${this._renderWindfallSummary(baseInputs)}
             
