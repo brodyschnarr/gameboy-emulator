@@ -2461,7 +2461,22 @@ const AppV4 = {
                         const optSpend = optMax || optParams.maxSpend || 0;
                         const userSpend = userMax || 0;
                         const spendDiff = optSpend - userSpend;
-                        const estateDiff = (optStats.grossEstate || 0) - (userStats.grossEstate || 0);
+                        // Estate gain: run optimized strategy at USER's spending to get fair comparison
+                        let estateDiff = 0;
+                        try {
+                            const optAtUserSpending = RetirementCalcV4.calculate({
+                                ...inputs,
+                                annualSpending: inputs.annualSpending,
+                                cppStartAge: optParams.cppAge,
+                                oasStartAge: optParams.oasAge,
+                                cppStartAgeP2: optParams.cppAge,
+                                oasStartAgeP2: optParams.oasAge,
+                                _withdrawalStrategy: optParams.strategy
+                            });
+                            const optEstate = optAtUserSpending.legacy?.grossEstate || optAtUserSpending.yearByYear[optAtUserSpending.yearByYear.length-1]?.totalBalance || 0;
+                            const userEstate = smartResults.legacy?.grossEstate || smartResults.yearByYear[smartResults.yearByYear.length-1]?.totalBalance || 0;
+                            estateDiff = optEstate - userEstate;
+                        } catch(e) {}
                         const lines = [];
                         if (spendDiff > 0) {
                             lines.push(`💰 Increase yearly spending by <strong>${fmt(spendDiff)}/yr</strong> (${fmt(Math.round(spendDiff/12))}/mo)`);
