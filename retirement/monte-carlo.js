@@ -28,6 +28,9 @@ const MonteCarloSimulator = {
                 marketCrashProbability
             );
             
+            // Clear per-run age offsets for windfall age ranges
+            if (baseInputs.windfalls) baseInputs.windfalls.forEach(w => delete w._mcAgeOffset);
+            
             const result = this._runSingleSimulation({
                 ...baseInputs,
                 returnSequence: randomReturns,
@@ -218,13 +221,19 @@ const MonteCarloSimulator = {
             } else if (windfalls && windfalls.length > 0) {
                 // Fallback: legacy simple windfall handling
                 windfalls.forEach(windfall => {
-                    const targetAge = windfall.year || (currentAge + (windfall.yearsFromNow || 0));
+                    const baseAge = windfall.year || (currentAge + (windfall.yearsFromNow || 0));
+                    const ar = windfall.ageRange || 0;
+                    // For age range: use a seeded offset per windfall (computed once per run at first encounter)
+                    if (ar > 0 && windfall._mcAgeOffset === undefined) {
+                        windfall._mcAgeOffset = Math.round(-ar + Math.random() * ar * 2);
+                    }
+                    const targetAge = ar > 0 ? baseAge + (windfall._mcAgeOffset || 0) : baseAge;
                     if (targetAge !== age) return;
                     if (Math.random() * 100 > (windfall.probability || 100)) return;
                     
                     // Randomize amount within range if low/high provided
                     let baseAmount = windfall.amount;
-                    if (windfall.amountLow !== undefined && windfall.amountHigh !== undefined) {
+                    if (windfall.amountLow !== undefined && windfall.amountHigh !== undefined && windfall.amountLow !== windfall.amountHigh) {
                         baseAmount = windfall.amountLow + Math.random() * (windfall.amountHigh - windfall.amountLow);
                     }
                     const afterTaxAmount = windfall.taxable ? baseAmount * 0.7 : baseAmount;
