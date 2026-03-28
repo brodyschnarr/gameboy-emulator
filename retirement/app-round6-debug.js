@@ -2499,6 +2499,7 @@ const AppV4 = {
                     })()}
                 </div>
                 ${this._getStrategyCoupleCallout(inputs, fmt)}
+                ${this._getContributionAdvice(inputs)}
                 <div id="savings-split-suggestion" class="savings-split-box hidden"></div>
                 <button type="button" class="btn-link" id="btn-optimize-savings" style="margin-top: 8px; font-size: 13px;">
                     💡 What if I also changed my savings split?
@@ -2818,6 +2819,93 @@ const AppV4 = {
                 <div style="font-weight:700;margin-bottom:4px;">⚠️ Savings imbalance: ${bigger} holds ${bigPct}% of accounts</div>
                 <div>This concentrates withdrawals in ${bigger}'s higher tax bracket. Rebalancing could save thousands in retirement tax.${advice}</div>
                 <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">Use the ⚖️ Equalize button in Step 3, or adjust the savings split below.</div>
+            </div>`;
+        } catch(e) { return ''; }
+    },
+
+    _getContributionAdvice(inputs) {
+        try {
+            const split = inputs.contributionSplit || { rrsp: 0.5, tfsa: 0.3, nonReg: 0.2 };
+            const rrspPct = Math.round((split.rrsp || 0) * 100);
+            const tfsaPct = Math.round((split.tfsa || 0) * 100);
+            const province = inputs.province || 'ON';
+
+            // For couples, use per-person income; for single, use currentIncome
+            const incomes = inputs.isFamilyMode
+                ? [inputs.income1 || 0, inputs.income2 || 0]
+                : [inputs.currentIncome || 0];
+
+            // CPI-indexed federal bracket tops (2025 base)
+            const FIRST_BRACKET = 57375;   // 15% federal
+            const SECOND_BRACKET = 114750;  // 20.5% federal
+            const THIRD_BRACKET = 158468;   // 26% federal
+
+            const tips = [];
+
+            for (let i = 0; i < incomes.length; i++) {
+                const income = incomes[i];
+                if (income <= 0) continue;
+                const label = incomes.length > 1 ? `Person ${i + 1} ($${Math.round(income/1000)}K)` : null;
+
+                if (income < FIRST_BRACKET && rrspPct >= 40) {
+                    // Low income + heavy RRSP = bad combo
+                    const marginal = income < 20000 ? '~20%' : '~25%';
+                    const saving = Math.round(inputs.monthlyContribution * (split.rrsp || 0) * 12 * 0.05); // ~5% difference vs TFSA benefit
+                    tips.push({
+                        icon: '💡',
+                        severity: 'suggestion',
+                        label,
+                        text: `At ${marginal} marginal tax, RRSP deductions save less now — but withdrawals in retirement are fully taxed. <strong>Shifting to TFSA-first</strong> keeps more flexibility and avoids pushing retirement income into higher brackets.`,
+                        detail: income < 25000
+                            ? 'At very low income, RRSP withdrawals can also reduce GIS eligibility — TFSA withdrawals don\'t.'
+                            : null
+                    });
+                } else if (income >= SECOND_BRACKET && tfsaPct >= 50 && rrspPct < 30) {
+                    // High income + heavy TFSA = missing big deductions
+                    tips.push({
+                        icon: '🎯',
+                        severity: 'opportunity',
+                        label,
+                        text: `At 29%+ marginal tax, RRSP deductions are very valuable. <strong>Increasing RRSP contributions</strong> creates immediate tax savings you can reinvest.`,
+                        detail: income >= THIRD_BRACKET ? 'Above $158K, every RRSP dollar saves 33¢+ in tax.' : null
+                    });
+                } else if (income >= FIRST_BRACKET && income < SECOND_BRACKET && Math.abs(rrspPct - tfsaPct) <= 15) {
+                    // Middle income, balanced split — affirm
+                    tips.push({
+                        icon: '✅',
+                        severity: 'good',
+                        label,
+                        text: 'Your balanced RRSP/TFSA split is solid for this income range.'
+                    });
+                }
+            }
+
+            if (tips.length === 0) return '';
+
+            // Don't show "good" tips if that's all we have
+            const actionable = tips.filter(t => t.severity !== 'good');
+            const display = actionable.length > 0 ? actionable : tips;
+
+            // Only show "good" if there's nothing more interesting
+            if (display.every(t => t.severity === 'good')) {
+                return `<div style="margin-top:8px;padding:10px 12px;background:rgba(16,185,129,0.06);border:1px solid var(--success,#10b981);border-radius:8px;font-size:13px;">
+                    ✅ <strong>Savings split:</strong> ${display[0].text}
+                </div>`;
+            }
+
+            const bgColor = display[0].severity === 'suggestion'
+                ? 'rgba(59,130,246,0.06)' : 'rgba(245,158,11,0.06)';
+            const borderColor = display[0].severity === 'suggestion'
+                ? 'var(--primary,#3b82f6)' : '#f59e0b';
+
+            return `<div style="margin-top:8px;padding:12px 14px;background:${bgColor};border:1px solid ${borderColor};border-radius:10px;font-size:13px;">
+                ${display.map(t => `
+                    <div style="margin-bottom:${display.length > 1 ? '8' : '0'}px;">
+                        ${t.label ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">${t.label}</div>` : ''}
+                        <div>${t.icon} ${t.text}</div>
+                        ${t.detail ? `<div style="margin-top:4px;font-size:12px;color:var(--text-muted);">${t.detail}</div>` : ''}
+                    </div>
+                `).join('')}
             </div>`;
         } catch(e) { return ''; }
     },
