@@ -2457,8 +2457,23 @@ const AppV4 = {
                     ${buildCol('🎯 Optimized', optStats, optMax || optParams.maxSpend, winnerKey === 'optimized', optNote, optFees, '0.25')}
                 </div>
                 <div class="strategy-verdict positive">
-                    🏆 <strong>${allPlans[0].label}</strong> lets you spend <strong>${fmt(bestMax)}/yr</strong>
-                    ${bestMax > worstMax ? ` — <strong>${fmt(bestMax - worstMax)}/yr more</strong> than ${allPlans[allPlans.length-1].label}` : ''}
+                    ${(() => {
+                        const optSpend = optMax || optParams.maxSpend || 0;
+                        const userSpend = userMax || 0;
+                        const spendDiff = optSpend - userSpend;
+                        const estateDiff = (optStats.grossEstate || 0) - (userStats.grossEstate || 0);
+                        const lines = [];
+                        if (spendDiff > 0) {
+                            lines.push(`💰 Increase yearly spending by <strong>${fmt(spendDiff)}/yr</strong> (${fmt(Math.round(spendDiff/12))}/mo)`);
+                        }
+                        if (estateDiff > 0) {
+                            lines.push(`🏠 Increase estate by <strong>${fmtC(estateDiff)}</strong>`);
+                        }
+                        if (spendDiff <= 0 && estateDiff <= 0) {
+                            return `✅ Your plan is already well-optimized!`;
+                        }
+                        return `🏆 <strong>Optimized</strong> vs Your Plan — you could:<br>${lines.join('<br><strong>OR</strong><br>')}`;
+                    })()}
                 </div>
                 ${this._getStrategyCoupleCallout(inputs, fmt)}
                 <div id="savings-split-suggestion" class="savings-split-box hidden"></div>
