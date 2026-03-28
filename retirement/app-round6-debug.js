@@ -2095,6 +2095,30 @@ const AppV4 = {
             });
         });
         
+        // Sliders
+        const sliderSpending = document.getElementById('tweak-slider-spending');
+        const sliderSavings = document.getElementById('tweak-slider-savings');
+        const sliderAge = document.getElementById('tweak-slider-retireAge');
+
+        if (sliderSpending) sliderSpending.addEventListener('input', () => {
+            const base = this._baseInputs?.annualSpending || 50000;
+            this._tweakAdj.spending = parseInt(sliderSpending.value) - base;
+            this._updateTweakDisplay();
+        });
+        if (sliderSavings) sliderSavings.addEventListener('input', () => {
+            const base = this._baseInputs?.monthlyContribution || 0;
+            this._tweakAdj.savings = parseInt(sliderSavings.value) - base;
+            this._updateTweakDisplay();
+        });
+        if (sliderAge) sliderAge.addEventListener('input', () => {
+            const base = this._baseInputs?.retirementAge || 65;
+            this._tweakAdj.retireAge = parseInt(sliderAge.value) - base;
+            this._updateTweakDisplay();
+        });
+
+        // Tap-to-type on values
+        this._setupTweakTapToType();
+
         // Apply button
         document.getElementById('btn-tweak-apply')?.addEventListener('click', () => {
             this._applyTweaks();
@@ -2107,6 +2131,59 @@ const AppV4 = {
         });
     },
     
+    _syncTweakSliders() {
+        if (!this._baseInputs) return;
+        const adj = this._tweakAdj;
+        const s1 = document.getElementById('tweak-slider-spending');
+        const s2 = document.getElementById('tweak-slider-savings');
+        const s3 = document.getElementById('tweak-slider-retireAge');
+        if (s1) s1.value = this._baseInputs.annualSpending + adj.spending;
+        if (s2) s2.value = Math.max(0, this._baseInputs.monthlyContribution + adj.savings);
+        if (s3) s3.value = this._baseInputs.retirementAge + adj.retireAge;
+    },
+
+    _setupTweakTapToType() {
+        document.querySelectorAll('.tweak-tappable').forEach(el => {
+            // Avoid double-binding
+            if (el._tapBound) return;
+            el._tapBound = true;
+            el.style.cursor = 'pointer';
+            el.addEventListener('click', () => {
+                const field = el.dataset.field;
+                const base = this._baseInputs || {};
+                let currentVal;
+                if (field === 'spending') currentVal = (base.annualSpending || 50000) + this._tweakAdj.spending;
+                else if (field === 'savings') currentVal = Math.max(0, (base.monthlyContribution || 0) + this._tweakAdj.savings);
+                else currentVal = (base.retirementAge || 65) + this._tweakAdj.retireAge;
+
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.value = currentVal;
+                input.style.cssText = 'width:100px;text-align:center;font-size:16px;font-weight:600;padding:4px;border:2px solid var(--primary);border-radius:6px;';
+                el.replaceWith(input);
+                input.focus();
+                input.select();
+
+                const finish = () => {
+                    const val = parseFloat(input.value) || currentVal;
+                    if (field === 'spending') this._tweakAdj.spending = val - (base.annualSpending || 50000);
+                    else if (field === 'savings') this._tweakAdj.savings = val - (base.monthlyContribution || 0);
+                    else this._tweakAdj.retireAge = val - (base.retirementAge || 65);
+                    
+                    const span = document.createElement('span');
+                    span.className = 'tweak-value tweak-tappable';
+                    span.id = el.id;
+                    span.dataset.field = field;
+                    input.replaceWith(span);
+                    this._updateTweakDisplay();
+                    this._setupTweakTapToType();
+                };
+                input.addEventListener('blur', finish);
+                input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
+            });
+        });
+    },
+
     _updateTweakDisplay() {
         if (!this._baseInputs) return;
         const fmt = v => '$' + Math.round(v).toLocaleString();
@@ -2131,6 +2208,7 @@ const AppV4 = {
             ageEl.textContent = 'Age ' + total;
             ageEl.style.color = adj.retireAge === 0 ? '#1e293b' : (adj.retireAge < 0 ? '#059669' : '#dc2626');
         }
+        this._syncTweakSliders();
     },
     
     _updateAdjusterDisplay() {
