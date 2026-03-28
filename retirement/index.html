@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0">
     <meta name="description" content="Canadian retirement calculator with regional data and tax-aware projections">
     <title>Retirement Planner V5 | Advanced Canadian Calculator</title>
-    <link rel="stylesheet" href="style.css?v=round6&t=24000139">
-    <link rel="stylesheet" href="style-v5.css?v=round6&t=24000139">
-    <link rel="stylesheet" href="mobile-polish.css?v=round6&t=24000139">
+    <link rel="stylesheet" href="style.css?v=round6&t=24000140">
+    <link rel="stylesheet" href="style-v5.css?v=round6&t=24000140">
+    <link rel="stylesheet" href="mobile-polish.css?v=round6&t=24000140">
     <link rel="stylesheet" href="slider-inputs.css?v=1">
     
     <!-- Debug scripts removed -->
@@ -1342,38 +1342,32 @@
 
             <!-- Tweak panel (hidden by default, shown when Tweak tab active) -->
             <div class="card tweak-panel hidden" id="tweak-panel">
-                <div class="tweak-row">
-                    <label class="tweak-label">Retirement Spending</label>
-                    <div class="tweak-control">
-                        <button class="tweak-btn" data-tweak="spending" data-dir="-1">−</button>
-                        <span class="tweak-value tweak-tappable" id="tweak-spending" data-field="spending">$0/yr</span>
-                        <button class="tweak-btn" data-tweak="spending" data-dir="1">+</button>
+                <div style="margin-bottom:16px;">
+                    <label class="tweak-label" style="display:block;margin-bottom:4px;">Retirement Spending</label>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
+                        <button class="tweak-btn stepper-btn" data-tweak="spending" data-dir="-1">−</button>
+                        <span class="tweak-value tweak-tappable stepper-display" id="tweak-spending" data-field="spending" style="min-width:120px;">$0/yr</span>
+                        <button class="tweak-btn stepper-btn" data-tweak="spending" data-dir="1">+</button>
                     </div>
-                    <div style="padding:0 8px;">
-                        <input type="range" class="stepper-slider" id="tweak-slider-spending" min="20000" max="200000" step="1000">
-                    </div>
+                    <input type="range" class="stepper-slider" id="tweak-slider-spending" min="20000" max="200000" step="1000">
                 </div>
-                <div class="tweak-row">
-                    <label class="tweak-label">Monthly Savings</label>
-                    <div class="tweak-control">
-                        <button class="tweak-btn" data-tweak="savings" data-dir="-1">−</button>
-                        <span class="tweak-value tweak-tappable" id="tweak-savings" data-field="savings">$0/mo</span>
-                        <button class="tweak-btn" data-tweak="savings" data-dir="1">+</button>
+                <div style="margin-bottom:16px;">
+                    <label class="tweak-label" style="display:block;margin-bottom:4px;">Monthly Savings</label>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
+                        <button class="tweak-btn stepper-btn" data-tweak="savings" data-dir="-1">−</button>
+                        <span class="tweak-value tweak-tappable stepper-display" id="tweak-savings" data-field="savings" style="min-width:120px;">$0/mo</span>
+                        <button class="tweak-btn stepper-btn" data-tweak="savings" data-dir="1">+</button>
                     </div>
-                    <div style="padding:0 8px;">
-                        <input type="range" class="stepper-slider" id="tweak-slider-savings" min="0" max="10000" step="100">
-                    </div>
+                    <input type="range" class="stepper-slider" id="tweak-slider-savings" min="0" max="10000" step="100">
                 </div>
-                <div class="tweak-row">
-                    <label class="tweak-label">Retirement Age</label>
-                    <div class="tweak-control">
-                        <button class="tweak-btn" data-tweak="retireAge" data-dir="-1">−</button>
-                        <span class="tweak-value tweak-tappable" id="tweak-retire-age" data-field="retireAge">65</span>
-                        <button class="tweak-btn" data-tweak="retireAge" data-dir="1">+</button>
+                <div style="margin-bottom:16px;">
+                    <label class="tweak-label" style="display:block;margin-bottom:4px;">Retirement Age</label>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
+                        <button class="tweak-btn stepper-btn" data-tweak="retireAge" data-dir="-1">−</button>
+                        <span class="tweak-value tweak-tappable stepper-display" id="tweak-retire-age" data-field="retireAge" style="min-width:80px;">65</span>
+                        <button class="tweak-btn stepper-btn" data-tweak="retireAge" data-dir="1">+</button>
                     </div>
-                    <div style="padding:0 8px;">
-                        <input type="range" class="stepper-slider" id="tweak-slider-retireAge" min="30" max="80" step="1">
-                    </div>
+                    <input type="range" class="stepper-slider" id="tweak-slider-retireAge" min="30" max="80" step="1">
                 </div>
                 <div class="tweak-actions">
                     <button type="button" class="btn-primary btn-sm" id="btn-tweak-apply">Apply</button>
@@ -1585,38 +1579,38 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000139"></script>
-    <script src="cpp-calculator.js?v=17&t=24000139"></script>
-    <script src="benchmarks.js?v=17&t=24000139"></script>
-    <script src="lifestyle-data.js?v=17&t=24000139"></script>
-    <script src="regional-data.js?v=18&t=24000139"></script>
-    <script src="canada-map.js?v=18&t=24000139"></script>
-    <script src="income-sources.js?v=17&t=24000139"></script>
-    <script src="deep-dive.js?v=17&t=24000139"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000139"></script>
-    <script src="scenario-manager.js?v=17&t=24000139"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000139"></script>
-    <script src="calc.js?v=17&t=24000139"></script>
-    <script src="app-round6-debug.js?v=17&t=24000139"></script>
+    <script src="canada-tax.js?v=17&t=24000140"></script>
+    <script src="cpp-calculator.js?v=17&t=24000140"></script>
+    <script src="benchmarks.js?v=17&t=24000140"></script>
+    <script src="lifestyle-data.js?v=17&t=24000140"></script>
+    <script src="regional-data.js?v=18&t=24000140"></script>
+    <script src="canada-map.js?v=18&t=24000140"></script>
+    <script src="income-sources.js?v=17&t=24000140"></script>
+    <script src="deep-dive.js?v=17&t=24000140"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000140"></script>
+    <script src="scenario-manager.js?v=17&t=24000140"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000140"></script>
+    <script src="calc.js?v=17&t=24000140"></script>
+    <script src="app-round6-debug.js?v=17&t=24000140"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000139"></script>
-    <script src="monte-carlo.js?v=17&t=24000139"></script>
-    <script src="tax-optimizer.js?v=17&t=24000139"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000139"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000139"></script>
-    <script src="advanced-charts.js?v=17&t=24000139"></script>
-    <script src="interactive-sliders.js?v=17&t=24000139"></script>
-    <script src="scenario-storage.js?v=17&t=24000139"></script>
-    <script src="windfalls.js?v=17&t=24000139"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000139"></script>
+    <script src="error-handler.js?v=17&t=24000140"></script>
+    <script src="monte-carlo.js?v=17&t=24000140"></script>
+    <script src="tax-optimizer.js?v=17&t=24000140"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000140"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000140"></script>
+    <script src="advanced-charts.js?v=17&t=24000140"></script>
+    <script src="interactive-sliders.js?v=17&t=24000140"></script>
+    <script src="scenario-storage.js?v=17&t=24000140"></script>
+    <script src="windfalls.js?v=17&t=24000140"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000140"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=18&t=24000139"></script>
+    <script src="slider-inputs.js?v=18&t=24000140"></script>
 
     <!-- Shareable links -->
-    <script src="share-link.js?v=1&t=24000139"></script>
-    <script src="ads.js?v=1&t=24000139"></script>
+    <script src="share-link.js?v=1&t=24000140"></script>
+    <script src="ads.js?v=1&t=24000140"></script>
 
     <!-- Dark mode toggle + share link auto-load -->
     <script>
