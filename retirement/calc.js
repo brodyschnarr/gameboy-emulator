@@ -1780,13 +1780,22 @@ const RetirementCalcV4 = {
         let bestSplit = inputs.contributionSplit;
         if (includeSplitOptimization) {
             const splitCandidates = [
-                { rrsp: 0.70, tfsa: 0.20, nonReg: 0.10 }, // RRSP-heavy (max deductions)
-                { rrsp: 0.20, tfsa: 0.60, nonReg: 0.20 }, // TFSA-heavy (GIS-friendly)
+                { rrsp: 1.00, tfsa: 0.00, nonReg: 0.00 }, // All RRSP
+                { rrsp: 0.80, tfsa: 0.15, nonReg: 0.05 }, // RRSP-dominant
+                { rrsp: 0.70, tfsa: 0.20, nonReg: 0.10 }, // RRSP-heavy
+                { rrsp: 0.60, tfsa: 0.30, nonReg: 0.10 }, // Lean RRSP
                 { rrsp: 0.50, tfsa: 0.30, nonReg: 0.20 }, // Balanced (default)
                 { rrsp: 0.40, tfsa: 0.40, nonReg: 0.20 }, // Even split
                 { rrsp: 0.30, tfsa: 0.50, nonReg: 0.20 }, // Lean TFSA
-                { rrsp: 0.60, tfsa: 0.30, nonReg: 0.10 }, // Lean RRSP
+                { rrsp: 0.20, tfsa: 0.60, nonReg: 0.20 }, // TFSA-heavy
+                { rrsp: 0.10, tfsa: 0.80, nonReg: 0.10 }, // TFSA-dominant
+                { rrsp: 0.00, tfsa: 1.00, nonReg: 0.00 }, // All TFSA
+                { rrsp: 0.00, tfsa: 0.50, nonReg: 0.50 }, // No RRSP, split TFSA/NonReg
+                { rrsp: 0.50, tfsa: 0.50, nonReg: 0.00 }, // Split RRSP/TFSA, no NonReg
             ];
+            // Include user's current split as a candidate
+            const userSplit = inputs.contributionSplit || { rrsp: 0.5, tfsa: 0.3, nonReg: 0.2 };
+            splitCandidates.push({ rrsp: userSplit.rrsp || 0, tfsa: userSplit.tfsa || 0, nonReg: userSplit.nonReg || 0 });
             for (const split of splitCandidates) {
                 try {
                     // Adjust contribution for RRSP refund loss:
