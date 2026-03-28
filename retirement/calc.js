@@ -886,12 +886,14 @@ const RetirementCalcV4 = {
                 // spendingCurve: 'flat' (default), 'frontloaded', 'custom'
                 let spendingCurveMultiplier = 1.0;
                 if (spendingCurve === 'frontloaded') {
-                    // Go-Go (first 10 years): +20% spending (travel, activities)
-                    // Slow-Go (years 11-20): baseline spending
-                    // No-Go (years 21+): -20% spending (less mobility)
-                    if (yearsIntoRetirement < 10) {
+                    // Go-Go / Slow-Go / No-Go — scaled to retirement duration
+                    // ~1/3 each: e.g. 30yr → 10/10/10, 40yr → 13/13/14
+                    const totalRetYears = lifeExpectancy - retirementAge;
+                    const goGoEnd = Math.round(totalRetYears / 3);
+                    const slowGoEnd = Math.round(totalRetYears * 2 / 3);
+                    if (yearsIntoRetirement < goGoEnd) {
                         spendingCurveMultiplier = 1.20;
-                    } else if (yearsIntoRetirement < 20) {
+                    } else if (yearsIntoRetirement < slowGoEnd) {
                         spendingCurveMultiplier = 1.0;
                     } else {
                         spendingCurveMultiplier = 0.80;

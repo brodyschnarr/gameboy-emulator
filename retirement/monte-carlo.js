@@ -274,8 +274,11 @@ const MonteCarloSimulator = {
                 let spendingCurveMultiplier = 1.0;
                 if (spendingCurve === 'frontloaded') {
                     const yrsRetired = age - retirementAge;
-                    if (yrsRetired < 10) spendingCurveMultiplier = 1.20;
-                    else if (yrsRetired < 20) spendingCurveMultiplier = 1.0;
+                    const totalRetYears = lifeExpectancy - retirementAge;
+                    const goGoEnd = Math.round(totalRetYears / 3);
+                    const slowGoEnd = Math.round(totalRetYears * 2 / 3);
+                    if (yrsRetired < goGoEnd) spendingCurveMultiplier = 1.20;
+                    else if (yrsRetired < slowGoEnd) spendingCurveMultiplier = 1.0;
                     else spendingCurveMultiplier = 0.80;
                 }
                 const thisYearSpending = futureAnnualSpending * inflationFactor * spendingCurveMultiplier;
