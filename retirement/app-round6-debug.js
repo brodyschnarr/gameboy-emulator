@@ -2487,7 +2487,15 @@ const AppV4 = {
                         if (spendDiff <= 0 && estateDiff <= 0) {
                             return `✅ Your plan is already well-optimized!`;
                         }
-                        return `🏆 <strong>Optimized</strong> vs Your Plan — you could:<br>${lines.join('<br><strong>OR</strong><br>')}`;
+                        if (lines.length === 0) return `✅ Your plan is already well-optimized!`;
+                        let detail = `🏆 <strong>Optimized</strong> vs Your Plan — you could:<br>${lines.join('<br><strong>OR</strong><br>')}`;
+                        // Add source explanation
+                        const parts = [];
+                        if (optParams.cppAge > (inputs.cppStartAge || 65)) parts.push(`delaying CPP to ${optParams.cppAge}`);
+                        if (optParams.oasAge > (inputs.oasStartAge || 65)) parts.push(`OAS to ${optParams.oasAge}`);
+                        if (optParams.strategy === 'smart') parts.push('tax-efficient withdrawals');
+                        if (parts.length > 0) detail += `<br><small style="color:var(--text-muted)">From ${parts.join(', ')}</small>`;
+                        return detail;
                     })()}
                 </div>
                 ${this._getStrategyCoupleCallout(inputs, fmt)}
