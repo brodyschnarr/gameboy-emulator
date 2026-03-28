@@ -2898,9 +2898,12 @@ const AppV4 = {
 
         // Get gov income
         const retYear = results.yearByYear?.find(y => y.age === retireAge);
-        const cpp = retYear?.cppReceived || 0;
-        const oas = retYear?.oasReceived || 0;
-        const gis = retYear?.gisReceived || 0;
+        const inflationRate = (inputs.inflationRate || 2.1) / 100;
+        const yearsToRetire = retireAge - (inputs.currentAge || 35);
+        const deflator = Math.pow(1 + inflationRate, yearsToRetire); // convert future $ to today's $
+        const cpp = (retYear?.cppReceived || 0) / deflator;
+        const oas = (retYear?.oasReceived || 0) / deflator;
+        const gis = (retYear?.gisReceived || 0) / deflator;
         const govTotal = cpp + oas + gis;
 
         // Spending curve info
