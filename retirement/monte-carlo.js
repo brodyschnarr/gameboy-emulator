@@ -222,7 +222,12 @@ const MonteCarloSimulator = {
                     if (targetAge !== age) return;
                     if (Math.random() * 100 > (windfall.probability || 100)) return;
                     
-                    const afterTaxAmount = windfall.taxable ? windfall.amount * 0.7 : windfall.amount;
+                    // Randomize amount within range if low/high provided
+                    let baseAmount = windfall.amount;
+                    if (windfall.amountLow !== undefined && windfall.amountHigh !== undefined) {
+                        baseAmount = windfall.amountLow + Math.random() * (windfall.amountHigh - windfall.amountLow);
+                    }
+                    const afterTaxAmount = windfall.taxable ? baseAmount * 0.7 : baseAmount;
                     if (windfall.destination === 'rrsp') balances.rrsp += afterTaxAmount;
                     else if (windfall.destination === 'tfsa') balances.tfsa += afterTaxAmount;
                     else if (windfall.destination === 'nonReg') balances.nonReg += afterTaxAmount;

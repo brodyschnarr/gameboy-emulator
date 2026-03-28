@@ -232,7 +232,10 @@ const WindfallManager = {
                         subtitle = `${amtStr} around ${ageStr}`;
                     } else {
                         badge = '<span class="windfall-badge simple">💰 Fixed</span>';
-                        subtitle = `${fmt(w.amount)} at age ${w.year} • ${w.probability || 100}% chance`;
+                        const amtStr = (w.amountLow && w.amountHigh && w.amountLow !== w.amountHigh)
+                            ? `${fmt(w.amountLow)} – ${fmt(w.amountHigh)}`
+                            : fmt(w.amount);
+                        subtitle = `${amtStr} at age ${w.year} • ${w.probability || 100}% chance`;
                     }
                     
                     return `

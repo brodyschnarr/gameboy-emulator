@@ -1617,15 +1617,18 @@ const AppV4 = {
                 // Inheritance / Severance — add as simple windfall
                 if (type === 'inheritance') {
                     const name = document.getElementById('inheritance-name')?.value || 'Inheritance';
-                    const amount = parseFloat(document.getElementById('inheritance-amount')?.value) || 0;
+                    const low = parseFloat(document.getElementById('inheritance-amount-low')?.value) || 0;
+                    const high = parseFloat(document.getElementById('inheritance-amount-high')?.value) || low;
+                    const amount = Math.round((low + Math.max(low, high)) / 2); // midpoint for deterministic
                     const age = parseInt(document.getElementById('inheritance-age')?.value) || 65;
                     const taxable = document.getElementById('inheritance-taxable')?.checked || false;
                     const probability = parseInt(document.getElementById('inheritance-probability')?.value) || 100;
-                    if (amount > 0) {
+                    if (low > 0 || high > 0) {
                         if (!this.windfalls) this.windfalls = [];
-                        this.windfalls.push({ name, type: 'simple', amount, year: age, probability, taxable, destination: 'split' });
+                        this.windfalls.push({ name, type: 'simple', amount, amountLow: low, amountHigh: Math.max(low, high), year: age, probability, taxable, destination: 'split' });
                         document.getElementById('inheritance-name').value = '';
-                        document.getElementById('inheritance-amount').value = '';
+                        document.getElementById('inheritance-amount-low').value = '';
+                        document.getElementById('inheritance-amount-high').value = '';
                         document.getElementById('inheritance-age').value = '';
                         document.getElementById('inheritance-taxable').checked = false;
                         document.getElementById('inheritance-probability').value = '100';
@@ -1635,14 +1638,17 @@ const AppV4 = {
                 // Insurance Payout — add as simple windfall
                 if (type === 'insurance-payout') {
                     const name = document.getElementById('insurance-name')?.value || 'Insurance Payout';
-                    const amount = parseFloat(document.getElementById('insurance-amount')?.value) || 0;
+                    const low = parseFloat(document.getElementById('insurance-amount-low')?.value) || 0;
+                    const high = parseFloat(document.getElementById('insurance-amount-high')?.value) || low;
+                    const amount = Math.round((low + Math.max(low, high)) / 2);
                     const age = parseInt(document.getElementById('insurance-age')?.value) || 60;
                     const probability = parseInt(document.getElementById('insurance-probability')?.value) || 100;
-                    if (amount > 0) {
+                    if (low > 0 || high > 0) {
                         if (!this.windfalls) this.windfalls = [];
-                        this.windfalls.push({ name, type: 'simple', amount, year: age, probability, taxable: false, destination: 'split' });
+                        this.windfalls.push({ name, type: 'simple', amount, amountLow: low, amountHigh: Math.max(low, high), year: age, probability, taxable: false, destination: 'split' });
                         document.getElementById('insurance-name').value = '';
-                        document.getElementById('insurance-amount').value = '';
+                        document.getElementById('insurance-amount-low').value = '';
+                        document.getElementById('insurance-amount-high').value = '';
                         document.getElementById('insurance-age').value = '';
                         document.getElementById('insurance-probability').value = '100';
                     }
