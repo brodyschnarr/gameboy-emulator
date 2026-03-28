@@ -282,6 +282,11 @@ const IncomeSources = {
         const cb = document.getElementById('inline-income-continues');
         if (cb) cb.checked = typeInfo.defaultContinues || false;
 
+        // Default start age to current age
+        const currentAge = document.getElementById('current-age')?.value || '';
+        const startAgeEl = document.getElementById('inline-income-start-age');
+        if (startAgeEl && !startAgeEl.value) startAgeEl.value = currentAge;
+
         form.classList.remove('hidden');
         form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         document.getElementById('inline-income-amount')?.focus();
