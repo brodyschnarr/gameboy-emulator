@@ -4772,3 +4772,147 @@ input:focus {
         border-color: var(--accent, #3b82f6);
     }
 }
+
+/* ═══ Detailed Analysis Toggle ═══ */
+.btn-detail-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    background: var(--bg-card, #fff);
+    border: 2px solid var(--primary, #3b82f6);
+    border-radius: 10px;
+    color: var(--primary, #3b82f6);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-detail-toggle:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+.btn-detail-toggle .toggle-arrow {
+    transition: transform 0.2s;
+}
+.btn-detail-toggle.expanded .toggle-arrow {
+    transform: rotate(180deg);
+}
+#detailed-analysis-section {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    background: transparent;
+}
+#detailed-analysis-content {
+    margin-top: 16px;
+}
+.detail-section-inner {
+    background: var(--bg-card, #fff);
+    border-radius: 12px;
+    padding: 20px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ═══ Step 5 Preview Card ═══ */
+.step5-preview-card {
+    margin: 20px 0 16px;
+    padding: 14px 16px;
+    background: rgba(59, 130, 246, 0.04);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: 10px;
+}
+.step5-preview-header {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+.step5-preview-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+.step5-preview-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 12px;
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 16px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+/* ═══ Custom Spending Callout ═══ */
+.custom-spending-callout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 12px 0;
+    padding: 12px 16px;
+    background: rgba(245, 158, 11, 0.06);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 10px;
+}
+.custom-spending-callout-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+}
+.custom-spending-callout-text strong {
+    font-size: 14px;
+}
+.custom-spending-callout-text span {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+@media (max-width: 480px) {
+    .custom-spending-callout {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* ═══ Extra Account Chips ═══ */
+#extra-account-chips {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.extra-account-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 8px;
+}
+.extra-account-label {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 90px;
+}
+.extra-account-remove {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+.extra-account-remove:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+.extra-account-chip .input-with-prefix input {
+    font-size: 14px;
+    padding: 6px 8px;
+}

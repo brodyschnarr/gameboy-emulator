@@ -65,6 +65,7 @@ const AppV4 = {
         this._setupScenarios();
         this._setupModals();
         this._setupAdvancedToggle();
+        this._setupDetailedAnalysisToggle();
         this._setupCategoryInflation();
         this._setupSpendingCurve();
         this._restoreFormState();
@@ -1476,26 +1477,13 @@ const AppV4 = {
         setupDropdown('btn-add-estate-dropdown', 'estate-dropdown-menu');
         setupDropdown('btn-add-account-dropdown', 'account-dropdown-menu');
         
-        // Account dropdown items show hidden account fields
-        document.querySelectorAll('[data-account]').forEach(item => {
+        // Account dropdown — adds extra account chips
+        this._extraAccounts = []; // [{type: 'rrsp', amount: 50000, label: 'RRSP #2'}]
+        document.querySelectorAll('#account-dropdown-menu [data-account]').forEach(item => {
             item.addEventListener('click', () => {
                 const acct = item.dataset.account;
-                // In separate mode, show per-person fields; in joint mode, show combined
-                if (this.accountMode === 'separate') {
-                    const p1 = document.getElementById(acct + '-p1-group');
-                    const p2 = document.getElementById(acct + '-p2-group');
-                    if (p1) p1.classList.remove('hidden');
-                    if (p2) p2.classList.remove('hidden');
-                    if (p1) p1.querySelector('input')?.focus();
-                } else {
-                    const group = document.getElementById(acct + '-group');
-                    if (group) {
-                        group.classList.remove('hidden');
-                        group.querySelector('input')?.focus();
-                    }
-                }
                 item.closest('.step5-dropdown').classList.add('hidden');
-                item.style.display = 'none'; // Hide from dropdown once added
+                this._addExtraAccountChip(acct);
             });
         });
 
@@ -1577,6 +1565,20 @@ const AppV4 = {
                 const type = btn.dataset.save;
                 if (type === 'healthcare') this.healthcareExplicitlyAdded = true;
                 if (type === 'metc') document.getElementById('metc-checkbox').checked = true;
+                
+                // Employer pension — multi-add to array
+                if (type === 'employer-pension') {
+                    const amount = parseFloat(document.getElementById('employer-pension')?.value) || 0;
+                    const startAge = parseInt(document.getElementById('pension-start-age')?.value) || 65;
+                    const indexed = document.getElementById('pension-indexed')?.checked !== false;
+                    if (amount > 0) {
+                        if (!this._pensions) this._pensions = [];
+                        this._pensions.push({ amount, startAge, indexed });
+                        document.getElementById('employer-pension').value = '';
+                        document.getElementById('pension-start-age').value = '65';
+                        document.getElementById('pension-indexed').checked = true;
+                    }
+                }
                 
                 // Other income — multi-add to array
                 if (type === 'other-income') {
@@ -1797,6 +1799,11 @@ const AppV4 = {
             'vehicle': () => { document.getElementById('vehicle-name').value = ''; document.getElementById('vehicle-value').value = ''; },
             'other-estate': () => { document.getElementById('other-estate-name').value = ''; document.getElementById('other-estate-value').value = ''; },
         };
+        // Handle pension-N deletion
+        if (type.startsWith('pension-') && this._pensions) {
+            const idx = parseInt(type.split('-')[1]);
+            if (!isNaN(idx)) this._pensions.splice(idx, 1);
+        }
         if (clearMap[type]) clearMap[type]();
         // Sync sliders after clearing
         if (typeof window.syncAllSliders === 'function') window.syncAllSliders();
@@ -1806,7 +1813,7 @@ const AppV4 = {
     _updateDropdownVisibility() {
         // Hide single-use dropdown items that are already added
         const singleUseChecks = {
-            'employer-pension': () => (parseFloat(document.getElementById('employer-pension')?.value) || 0) > 0,
+            'employer-pension': () => false, // Always available (can add multiple)
             'debt': () => (parseFloat(document.getElementById('current-debt')?.value) || 0) > 0,
             'healthcare': () => this.healthcareExplicitlyAdded,
             'ltc': () => (parseFloat(document.getElementById('ltc-monthly')?.value) || 0) > 0,
@@ -1839,11 +1846,17 @@ const AppV4 = {
         let incomeHTML = '';
         let expenseHTML = '';
         
-        // Employer pension
-        const pension = parseFloat(document.getElementById('employer-pension')?.value) || 0;
-        if (pension > 0) {
+        // Employer pensions (multiple)
+        if (this._pensions && this._pensions.length > 0) {
+            this._pensions.forEach((p, i) => {
+                incomeHTML += this._makeChip('🏢', `Pension ${this._pensions.length > 1 ? '#' + (i+1) : ''}`, `${fmt(p.amount)}/mo from age ${p.startAge}${p.indexed ? '' : ' (not indexed)'}`, 'pension-' + i, true);
+            });
+        }
+        // Also check if there's an unsaved pension in the form
+        const pendingPension = parseFloat(document.getElementById('employer-pension')?.value) || 0;
+        if (pendingPension > 0 && (!this._pensions || this._pensions.length === 0)) {
             const age = document.getElementById('pension-start-age')?.value || '65';
-            incomeHTML += this._makeChip('🏢', 'Employer Pension', `${fmt(pension)}/mo from age ${age}`, 'employer-pension', true);
+            incomeHTML += this._makeChip('🏢', 'Employer Pension', `${fmt(pendingPension)}/mo from age ${age}`, 'employer-pension', true);
         }
         
         // LTC
@@ -2269,6 +2282,65 @@ const AppV4 = {
                     if (icon) {
                         icon.textContent = content.classList.contains('hidden') ? '▼' : '▲';
                     }
+                }
+            });
+        }
+    },
+
+    _addExtraAccountChip(type) {
+        const labels = { rrsp: '📕 RRSP', tfsa: '📗 TFSA', nonreg: '📘 Non-Reg', lira: '🔐 LIRA', other: '📊 Other', cash: '🏦 Cash' };
+        const container = document.getElementById('extra-account-chips');
+        if (!container) return;
+
+        const id = 'extra-' + type + '-' + Date.now();
+        const count = this._extraAccounts.filter(a => a.type === type).length + 1;
+        const label = (labels[type] || type) + (count > 0 ? ' #' + (count + 1) : '');
+        const entry = { id, type, amount: 0, label };
+        this._extraAccounts.push(entry);
+
+        const chip = document.createElement('div');
+        chip.className = 'extra-account-chip';
+        chip.dataset.id = id;
+        chip.innerHTML = `
+            <span class="extra-account-label">${label}</span>
+            <div class="input-with-prefix" style="flex:1;max-width:160px;">
+                <span class="prefix">$</span>
+                <input type="number" class="extra-account-input" placeholder="0" min="0" step="1000" data-id="${id}" data-type="${type}">
+            </div>
+            <button type="button" class="extra-account-remove" data-id="${id}">✕</button>
+        `;
+        container.appendChild(chip);
+
+        // Wire input
+        const input = chip.querySelector('input');
+        input.focus();
+        input.addEventListener('input', () => {
+            const e = this._extraAccounts.find(a => a.id === id);
+            if (e) e.amount = parseFloat(input.value) || 0;
+            this._updateTotalSavings();
+        });
+
+        // Wire remove
+        chip.querySelector('.extra-account-remove').addEventListener('click', () => {
+            this._extraAccounts = this._extraAccounts.filter(a => a.id !== id);
+            chip.remove();
+            this._updateTotalSavings();
+        });
+    },
+
+    _getExtraAccountTotal(type) {
+        return (this._extraAccounts || []).filter(a => a.type === type).reduce((sum, a) => sum + a.amount, 0);
+    },
+
+    _setupDetailedAnalysisToggle() {
+        const btn = document.getElementById('btn-toggle-details');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const content = document.getElementById('detailed-analysis-content');
+                if (content) {
+                    const isHidden = content.classList.toggle('hidden');
+                    btn.classList.toggle('expanded', !isHidden);
+                    btn.querySelector('.toggle-arrow').textContent = isHidden ? '▼' : '▲';
                 }
             });
         }
@@ -3314,7 +3386,8 @@ const AppV4 = {
             cash = pv('cash');
         }
 
-        const total = rrsp + tfsa + nonreg + lira + other + cash;
+        const extraTotal = (this._extraAccounts || []).reduce((s, a) => s + a.amount, 0);
+        const total = rrsp + tfsa + nonreg + lira + other + cash + extraTotal;
 
         const display = document.getElementById('total-savings-display');
         if (display) {
@@ -3370,10 +3443,12 @@ const AppV4 = {
         if (!el) return;
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
         const retAge = parseInt(document.getElementById('retirement-age')?.value) || 65;
+        const extraTotal = (this._extraAccounts || []).reduce((s, a) => s + a.amount, 0);
         const totalSavings = (parseFloat(document.getElementById('rrsp')?.value) || 0)
             + (parseFloat(document.getElementById('tfsa')?.value) || 0)
             + (parseFloat(document.getElementById('nonreg')?.value) || 0)
-            + (parseFloat(document.getElementById('other')?.value) || 0);
+            + (parseFloat(document.getElementById('other')?.value) || 0)
+            + extraTotal;
         const yearsToRetire = Math.max(1, retAge - age);
         const rate = 0.06; // 6% assumed growth
         
@@ -4218,24 +4293,24 @@ const AppV4 = {
             income1,
             income2,
 
-            rrsp: this.accountMode === 'separate' 
+            rrsp: (this.accountMode === 'separate' 
                 ? (parseFloat(document.getElementById('rrsp-p1')?.value) || 0) + (parseFloat(document.getElementById('rrsp-p2')?.value) || 0)
-                : (parseFloat(document.getElementById('rrsp')?.value) || 0),
-            tfsa: this.accountMode === 'separate'
+                : (parseFloat(document.getElementById('rrsp')?.value) || 0)) + this._getExtraAccountTotal('rrsp'),
+            tfsa: (this.accountMode === 'separate'
                 ? (parseFloat(document.getElementById('tfsa-p1')?.value) || 0) + (parseFloat(document.getElementById('tfsa-p2')?.value) || 0)
-                : (parseFloat(document.getElementById('tfsa')?.value) || 0),
-            nonReg: this.accountMode === 'separate'
+                : (parseFloat(document.getElementById('tfsa')?.value) || 0)) + this._getExtraAccountTotal('tfsa'),
+            nonReg: (this.accountMode === 'separate'
                 ? (parseFloat(document.getElementById('nonreg-p1')?.value) || 0) + (parseFloat(document.getElementById('nonreg-p2')?.value) || 0)
-                : (parseFloat(document.getElementById('nonreg')?.value) || 0),
-            lira: this.accountMode === 'separate'
+                : (parseFloat(document.getElementById('nonreg')?.value) || 0)) + this._getExtraAccountTotal('nonreg'),
+            lira: (this.accountMode === 'separate'
                 ? (parseFloat(document.getElementById('lira-p1')?.value) || 0) + (parseFloat(document.getElementById('lira-p2')?.value) || 0)
-                : (parseFloat(document.getElementById('lira')?.value) || 0),
-            other: this.accountMode === 'separate'
+                : (parseFloat(document.getElementById('lira')?.value) || 0)) + this._getExtraAccountTotal('lira'),
+            other: (this.accountMode === 'separate'
                 ? (parseFloat(document.getElementById('other-p1')?.value) || 0) + (parseFloat(document.getElementById('other-p2')?.value) || 0)
-                : (parseFloat(document.getElementById('other')?.value) || 0),
-            cash: this.accountMode === 'separate'
+                : (parseFloat(document.getElementById('other')?.value) || 0)) + this._getExtraAccountTotal('other'),
+            cash: (this.accountMode === 'separate'
                 ? (parseFloat(document.getElementById('cash-p1')?.value) || 0) + (parseFloat(document.getElementById('cash-p2')?.value) || 0)
-                : (parseFloat(document.getElementById('cash')?.value) || 0),
+                : (parseFloat(document.getElementById('cash')?.value) || 0)) + this._getExtraAccountTotal('cash'),
 
             // Partner contribution split
             contribP1Pct: this.accountMode === 'separate' 
@@ -4282,9 +4357,16 @@ const AppV4 = {
             additionalIncomeSources: IncomeSources.getAll(),
             windfalls: this.windfalls || [],
 
-            employerPension: parseFloat(document.getElementById('employer-pension')?.value) || 0,
-            employerPensionStartAge: parseInt(document.getElementById('pension-start-age')?.value) || 65,
-            employerPensionIndexed: document.getElementById('pension-indexed')?.checked !== false,
+            employerPension: (this._pensions && this._pensions.length > 0)
+                ? this._pensions.reduce((sum, p) => sum + p.amount, 0)
+                : (parseFloat(document.getElementById('employer-pension')?.value) || 0),
+            employerPensionStartAge: (this._pensions && this._pensions.length > 0)
+                ? Math.min(...this._pensions.map(p => p.startAge))
+                : (parseInt(document.getElementById('pension-start-age')?.value) || 65),
+            employerPensionIndexed: (this._pensions && this._pensions.length > 0)
+                ? this._pensions.some(p => p.indexed)
+                : (document.getElementById('pension-indexed')?.checked !== false),
+            _pensionDetails: this._pensions || [],
 
             returnRate: parseFloat(document.getElementById('return-rate')?.value) || 4.5,
             inflationRate: parseFloat(document.getElementById('inflation-rate')?.value) || 2,
