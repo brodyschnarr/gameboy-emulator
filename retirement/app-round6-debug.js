@@ -1413,46 +1413,26 @@ const AppV4 = {
         document.getElementById('accounts-joint')?.addEventListener('click', () => {
             document.getElementById('accounts-joint').classList.add('active');
             document.getElementById('accounts-separate').classList.remove('active');
-            // Show combined inputs, hide separate
-            document.querySelectorAll('#step-savings > .input-group').forEach(g => g.classList.remove('hidden'));
+            document.getElementById('accounts-list')?.classList.remove('hidden');
+            document.getElementById('combined-add-account')?.classList.remove('hidden');
             document.getElementById('separate-accounts-section')?.classList.add('hidden');
-            // Show combined extra accounts that were added, hide per-person
-            ['lira', 'other', 'cash'].forEach(acct => {
-                const p1 = document.getElementById(acct + '-p1-group');
-                const p2 = document.getElementById(acct + '-p2-group');
-                const combined = document.getElementById(acct + '-group');
-                if (p1 && !p1.classList.contains('hidden')) {
-                    // Was visible in separate mode — show combined instead
-                    if (combined) combined.classList.remove('hidden');
-                }
-                if (p1) p1.classList.add('hidden');
-                if (p2) p2.classList.add('hidden');
-            });
             this.accountMode = 'joint';
             document.getElementById('couple-contrib-split')?.classList.add('hidden');
+            this._renderAccountsList();
+            this._syncAccountHiddenInputs();
+            this._updateTotalSavings();
         });
         document.getElementById('accounts-separate')?.addEventListener('click', () => {
             document.getElementById('accounts-separate').classList.add('active');
             document.getElementById('accounts-joint').classList.remove('active');
-            // Hide combined RRSP/TFSA/NonReg inputs, show separate
-            ['rrsp', 'tfsa', 'nonreg'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.closest('.input-group')?.classList.add('hidden');
-            });
+            document.getElementById('accounts-list')?.classList.add('hidden');
+            document.getElementById('combined-add-account')?.classList.add('hidden');
             document.getElementById('separate-accounts-section')?.classList.remove('hidden');
-            // Migrate visible extra accounts to per-person fields
-            ['lira', 'other', 'cash'].forEach(acct => {
-                const combined = document.getElementById(acct + '-group');
-                if (combined && !combined.classList.contains('hidden')) {
-                    combined.classList.add('hidden');
-                    const p1 = document.getElementById(acct + '-p1-group');
-                    const p2 = document.getElementById(acct + '-p2-group');
-                    if (p1) p1.classList.remove('hidden');
-                    if (p2) p2.classList.remove('hidden');
-                }
-            });
             this.accountMode = 'separate';
             document.getElementById('couple-contrib-split')?.classList.remove('hidden');
+            this._renderAccountsList();
+            this._syncAccountHiddenInputs();
+            this._updateTotalSavings();
         });
         
         // Equalize button: set contribution split to favor the partner with less savings
@@ -1475,17 +1455,7 @@ const AppV4 = {
         setupDropdown('btn-add-income-dropdown', 'income-dropdown-menu');
         setupDropdown('btn-add-expense-dropdown', 'expense-dropdown-menu');
         setupDropdown('btn-add-estate-dropdown', 'estate-dropdown-menu');
-        setupDropdown('btn-add-account-dropdown', 'account-dropdown-menu');
-        
-        // Account dropdown — adds extra account chips
-        this._extraAccounts = []; // [{type: 'rrsp', amount: 50000, label: 'RRSP #2'}]
-        document.querySelectorAll('#account-dropdown-menu [data-account]').forEach(item => {
-            item.addEventListener('click', () => {
-                const acct = item.dataset.account;
-                item.closest('.step5-dropdown').classList.add('hidden');
-                this._addExtraAccountChip(acct);
-            });
-        });
+        this._setupMultiAccounts();
 
         // Wire dropdown items to show forms
         document.querySelectorAll('.step5-dropdown-item').forEach(item => {
@@ -2287,49 +2257,169 @@ const AppV4 = {
         }
     },
 
-    _addExtraAccountChip(type) {
-        const labels = { rrsp: '📕 RRSP', tfsa: '📗 TFSA', nonreg: '📘 Non-Reg', lira: '🔐 LIRA', other: '📊 Other', cash: '🏦 Cash' };
-        const container = document.getElementById('extra-account-chips');
-        if (!container) return;
+    // ═══ Multi-Account System ═══
+    _accountTypeLabels: { rrsp: 'RRSP', tfsa: 'TFSA', nonreg: 'Non-Reg', lira: 'LIRA', other: 'Other', cash: 'Cash' },
+    _accountTypeIcons: { rrsp: '📕', tfsa: '📗', nonreg: '📘', lira: '🔐', other: '📊', cash: '🏦' },
+    _accountTypeHints: { rrsp: 'Taxed on withdrawal', tfsa: 'Tax-free', nonreg: '50% gains taxed', lira: 'Locked-in, converts to LIF', other: 'Other investments', cash: 'Low growth ~1.5%' },
 
-        const id = 'extra-' + type + '-' + Date.now();
-        const count = this._extraAccounts.filter(a => a.type === type).length + 1;
-        const label = (labels[type] || type) + (count > 0 ? ' #' + (count + 1) : '');
-        const entry = { id, type, amount: 0, label };
-        this._extraAccounts.push(entry);
+    _setupMultiAccounts() {
+        this._accounts = []; // [{id, type, amount, label, person}]
 
-        const chip = document.createElement('div');
-        chip.className = 'extra-account-chip';
-        chip.dataset.id = id;
-        chip.innerHTML = `
-            <span class="extra-account-label">${label}</span>
-            <div class="input-with-prefix" style="flex:1;max-width:160px;">
-                <span class="prefix">$</span>
-                <input type="number" class="extra-account-input" placeholder="0" min="0" step="1000" data-id="${id}" data-type="${type}">
-            </div>
-            <button type="button" class="extra-account-remove" data-id="${id}">✕</button>
-        `;
-        container.appendChild(chip);
+        // Combined mode: dropdown
+        const setupAcctDropdown = (btnId, menuId, person) => {
+            const btn = document.getElementById(btnId);
+            const menu = document.getElementById(menuId);
+            if (!btn || !menu) return;
+            btn.addEventListener('click', () => menu.classList.toggle('hidden'));
+            menu.querySelectorAll('[data-account]').forEach(item => {
+                item.addEventListener('click', () => {
+                    menu.classList.add('hidden');
+                    this._showAccountForm(item.dataset.account, person || null);
+                });
+            });
+        };
+        setupAcctDropdown('btn-add-account-dropdown', 'account-dropdown-menu', null);
+        setupAcctDropdown('btn-add-account-p1', 'account-dropdown-p1', 'p1');
+        setupAcctDropdown('btn-add-account-p2', 'account-dropdown-p2', 'p2');
 
-        // Wire input
-        const input = chip.querySelector('input');
-        input.focus();
-        input.addEventListener('input', () => {
-            const e = this._extraAccounts.find(a => a.id === id);
-            if (e) e.amount = parseFloat(input.value) || 0;
-            this._updateTotalSavings();
+        // Save/cancel form buttons
+        document.getElementById('btn-save-account')?.addEventListener('click', () => this._saveAccountForm());
+        document.getElementById('btn-cancel-account')?.addEventListener('click', () => {
+            document.getElementById('account-add-form')?.classList.add('hidden');
         });
 
-        // Wire remove
-        chip.querySelector('.extra-account-remove').addEventListener('click', () => {
-            this._extraAccounts = this._extraAccounts.filter(a => a.id !== id);
-            chip.remove();
-            this._updateTotalSavings();
+        // Enter key saves
+        document.getElementById('account-form-amount')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') this._saveAccountForm();
         });
     },
 
+    _showAccountForm(type, person) {
+        const form = document.getElementById('account-add-form');
+        if (!form) return;
+        const icon = this._accountTypeIcons[type] || '';
+        const label = this._accountTypeLabels[type] || type;
+        const personLabel = person ? ` (${person === 'p1' ? 'Person 1' : 'Person 2'})` : '';
+        document.getElementById('account-form-title').textContent = `${icon} Add ${label}${personLabel}`;
+        document.getElementById('account-form-label').value = '';
+        document.getElementById('account-form-amount').value = '';
+        form.dataset.type = type;
+        form.dataset.person = person || '';
+        form.classList.remove('hidden');
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(() => document.getElementById('account-form-amount')?.focus(), 100);
+    },
+
+    _saveAccountForm() {
+        const form = document.getElementById('account-add-form');
+        const amount = parseFloat(document.getElementById('account-form-amount')?.value) || 0;
+        if (amount <= 0) { document.getElementById('account-form-amount')?.focus(); return; }
+        const type = form.dataset.type;
+        const person = form.dataset.person || null;
+        const userLabel = document.getElementById('account-form-label')?.value?.trim() || '';
+        const id = 'acct-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+        this._accounts.push({ id, type, amount, label: userLabel, person });
+        form.classList.add('hidden');
+        this._renderAccountsList();
+        this._syncAccountHiddenInputs();
+        this._updateTotalSavings();
+    },
+
+    _removeAccount(id) {
+        this._accounts = this._accounts.filter(a => a.id !== id);
+        this._renderAccountsList();
+        this._syncAccountHiddenInputs();
+        this._updateTotalSavings();
+    },
+
+    _renderAccountsList() {
+        const isSeparate = this.accountMode === 'separate';
+        if (isSeparate) {
+            this._renderAccountsFor('p1', document.getElementById('accounts-list-p1'));
+            this._renderAccountsFor('p2', document.getElementById('accounts-list-p2'));
+        } else {
+            this._renderAccountsFor(null, document.getElementById('accounts-list'));
+        }
+    },
+
+    _renderAccountsFor(person, container) {
+        if (!container) return;
+        const items = person
+            ? this._accounts.filter(a => a.person === person)
+            : this._accounts.filter(a => !a.person);
+        if (items.length === 0) {
+            container.innerHTML = person
+                ? `<div style="padding:8px;text-align:center;color:var(--text-muted);font-size:13px;">${person === 'p1' ? 'Person 1' : 'Person 2'} — no accounts yet</div>`
+                : '';
+            return;
+        }
+
+        // Group by type for subtotals
+        const byType = {};
+        items.forEach(a => { byType[a.type] = (byType[a.type] || 0) + a.amount; });
+
+        container.innerHTML = items.map(a => {
+            const icon = this._accountTypeIcons[a.type] || '';
+            const typeLabel = this._accountTypeLabels[a.type] || a.type;
+            const displayLabel = a.label ? `${icon} ${a.label}` : `${icon} ${typeLabel}`;
+            return `<div class="extra-account-chip" data-id="${a.id}" style="display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:6px;background:var(--card-bg,#fff);border:1px solid var(--border,#e5e7eb);border-radius:8px;">
+                <span style="flex:1;font-size:13px;font-weight:500;">${displayLabel}</span>
+                <span style="font-size:14px;font-weight:600;">$${a.amount.toLocaleString()}</span>
+                <button type="button" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0 4px;" onclick="RetirementApp._removeAccount('${a.id}')">✕</button>
+            </div>`;
+        }).join('');
+    },
+
+    _syncAccountHiddenInputs() {
+        const types = ['rrsp', 'tfsa', 'nonreg', 'lira', 'other', 'cash'];
+        const isSeparate = this.accountMode === 'separate';
+
+        if (isSeparate) {
+            for (const t of types) {
+                const p1Total = this._accounts.filter(a => a.type === t && a.person === 'p1').reduce((s, a) => s + a.amount, 0);
+                const p2Total = this._accounts.filter(a => a.type === t && a.person === 'p2').reduce((s, a) => s + a.amount, 0);
+                const el1 = document.getElementById(t + '-p1'); if (el1) el1.value = p1Total;
+                const el2 = document.getElementById(t + '-p2'); if (el2) el2.value = p2Total;
+                // Also set combined
+                const el = document.getElementById(t === 'nonreg' ? 'nonreg' : t); if (el) el.value = p1Total + p2Total;
+            }
+        } else {
+            for (const t of types) {
+                const total = this._accounts.filter(a => a.type === t && !a.person).reduce((s, a) => s + a.amount, 0);
+                const el = document.getElementById(t); if (el) el.value = total;
+            }
+        }
+    },
+
     _getExtraAccountTotal(type) {
-        return (this._extraAccounts || []).filter(a => a.type === type).reduce((sum, a) => sum + a.amount, 0);
+        // Legacy compat — now all accounts are in _accounts
+        return 0;
+    },
+
+    // Import from hidden inputs (for share links and initial load)
+    _importFromHiddenInputs() {
+        const types = ['rrsp', 'tfsa', 'nonreg', 'lira', 'other', 'cash'];
+        const isSeparate = this.accountMode === 'separate';
+        // Clear existing
+        this._accounts = [];
+        if (isSeparate) {
+            for (const t of types) {
+                for (const p of ['p1', 'p2']) {
+                    const val = parseFloat(document.getElementById(t + '-' + p)?.value) || 0;
+                    if (val > 0) {
+                        this._accounts.push({ id: 'acct-' + Date.now() + '-' + Math.random().toString(36).slice(2,6), type: t, amount: val, label: '', person: p });
+                    }
+                }
+            }
+        } else {
+            for (const t of types) {
+                const val = parseFloat(document.getElementById(t)?.value) || 0;
+                if (val > 0) {
+                    this._accounts.push({ id: 'acct-' + Date.now() + '-' + Math.random().toString(36).slice(2,6), type: t, amount: val, label: '', person: null });
+                }
+            }
+        }
+        this._renderAccountsList();
     },
 
     _setupDetailedAnalysisToggle() {
@@ -3369,25 +3459,14 @@ const AppV4 = {
 
     _updateTotalSavings() {
         const pv = (id) => parseFloat(document.getElementById(id)?.value) || 0;
-        let rrsp, tfsa, nonreg, lira, other, cash;
-        if (this.accountMode === 'separate') {
-            rrsp = pv('rrsp-p1') + pv('rrsp-p2');
-            tfsa = pv('tfsa-p1') + pv('tfsa-p2');
-            nonreg = pv('nonreg-p1') + pv('nonreg-p2');
-            lira = pv('lira-p1') + pv('lira-p2');
-            other = pv('other-p1') + pv('other-p2');
-            cash = pv('cash-p1') + pv('cash-p2');
-        } else {
-            rrsp = pv('rrsp');
-            tfsa = pv('tfsa');
-            nonreg = pv('nonreg');
-            lira = pv('lira');
-            other = pv('other');
-            cash = pv('cash');
-        }
-
-        const extraTotal = (this._extraAccounts || []).reduce((s, a) => s + a.amount, 0);
-        const total = rrsp + tfsa + nonreg + lira + other + cash + extraTotal;
+        // Hidden inputs are kept in sync by _syncAccountHiddenInputs
+        const rrsp = pv('rrsp');
+        const tfsa = pv('tfsa');
+        const nonreg = pv('nonreg');
+        const lira = pv('lira');
+        const other = pv('other');
+        const cash = pv('cash');
+        const total = rrsp + tfsa + nonreg + lira + other + cash;
 
         const display = document.getElementById('total-savings-display');
         if (display) {
@@ -3443,12 +3522,12 @@ const AppV4 = {
         if (!el) return;
         const age = parseInt(document.getElementById('current-age')?.value) || 35;
         const retAge = parseInt(document.getElementById('retirement-age')?.value) || 65;
-        const extraTotal = (this._extraAccounts || []).reduce((s, a) => s + a.amount, 0);
         const totalSavings = (parseFloat(document.getElementById('rrsp')?.value) || 0)
             + (parseFloat(document.getElementById('tfsa')?.value) || 0)
             + (parseFloat(document.getElementById('nonreg')?.value) || 0)
             + (parseFloat(document.getElementById('other')?.value) || 0)
-            + extraTotal;
+            + (parseFloat(document.getElementById('lira')?.value) || 0)
+            + (parseFloat(document.getElementById('cash')?.value) || 0);
         const yearsToRetire = Math.max(1, retAge - age);
         const rate = 0.06; // 6% assumed growth
         
