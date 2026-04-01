@@ -220,7 +220,7 @@ const AppV5Enhanced = {
      */
     _displayEnhancedResults(baseResults, baseInputs) {
         // Create enhanced results section
-        const resultsDiv = document.getElementById('results');
+        const resultsDiv = document.getElementById('advanced-results') || document.getElementById('results');
         if (!resultsDiv) return;
         
         let html = `
