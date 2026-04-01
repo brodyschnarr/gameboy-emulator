@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0">
     <meta name="description" content="Canadian retirement calculator with regional data and tax-aware projections">
     <title>Retirement Planner V5 | Advanced Canadian Calculator</title>
-    <link rel="stylesheet" href="style.css?v=round6&t=24000152">
-    <link rel="stylesheet" href="style-v5.css?v=round6&t=24000152">
-    <link rel="stylesheet" href="mobile-polish.css?v=round6&t=24000152">
+    <link rel="stylesheet" href="style.css?v=round6&t=24000153">
+    <link rel="stylesheet" href="style-v5.css?v=round6&t=24000153">
+    <link rel="stylesheet" href="mobile-polish.css?v=round6&t=24000153">
     <link rel="stylesheet" href="slider-inputs.css?v=1">
     
     <!-- Debug scripts removed -->
@@ -188,341 +188,10 @@
                 </div>
             </div>
 
-            <button type="button" class="btn-primary" id="btn-next-savings">
-                Continue to Savings →
-            </button>
-        </section>
-
-        <!-- ══════════════════════════════════════
-             STEP 2: Savings
-        ═══════════════════════════════════════ -->
-        <section class="card hidden" id="step-savings">
-            <h2>💵 Step 2 of 5: Current Savings</h2>
-            <p class="section-intro">How much have you saved for retirement so far?</p>
-            
-            <div id="couple-accounts-toggle" class="hidden" style="margin-bottom: 12px;">
-                <div class="toggle-group" style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
-                    <button type="button" class="toggle-btn active" id="accounts-joint" data-mode="joint" style="flex:1;padding:8px;font-size:13px;border:none;cursor:pointer;">Combined</button>
-                    <button type="button" class="toggle-btn" id="accounts-separate" data-mode="separate" style="flex:1;padding:8px;font-size:13px;border:none;border-left:1px solid var(--border);cursor:pointer;">Person 1 / Person 2</button>
-                </div>
-                <small class="input-hint">Combined pools all accounts; Separate tracks each person independently</small>
-            </div>
-            
-            <div id="savings-benchmark"></div>
-
-            <!-- Primary account inputs (always visible) -->
-            <div class="input-group">
-                <label for="rrsp">RRSP</label>
-                <span class="input-impact">Taxed when you withdraw</span>
-                <div class="input-with-prefix">
-                    <span class="prefix">$</span>
-                    <input type="number" id="rrsp" placeholder="0" min="0" step="1000">
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label for="tfsa">TFSA</label>
-                <span class="input-impact">Tax-free withdrawals</span>
-                <div class="input-with-prefix">
-                    <span class="prefix">$</span>
-                    <input type="number" id="tfsa" placeholder="0" min="0" step="1000">
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label for="nonreg">Non-Registered</label>
-                <span class="input-impact">50% of gains taxed</span>
-                <div class="input-with-prefix">
-                    <span class="prefix">$</span>
-                    <input type="number" id="nonreg" placeholder="0" min="0" step="1000">
-                </div>
-            </div>
-
-            <!-- Separate accounts (Person 1 / Person 2) — hidden by default -->
-            <div id="separate-accounts-section" class="hidden" style="margin-top: 12px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <div class="step5-form" style="padding: 10px;">
-                        <div class="step5-form-header">Person 1</div>
-                        <div class="input-group" style="margin-bottom: 6px;">
-                            <label style="font-size: 11px;">RRSP</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="rrsp-p1" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                        <div class="input-group" style="margin-bottom: 6px;">
-                            <label style="font-size: 11px;">TFSA</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="tfsa-p1" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                        <div class="input-group" style="margin-bottom: 6px;">
-                            <label style="font-size: 11px;">Non-Reg</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="nonreg-p1" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                        <div class="input-group hidden" id="lira-p1-group" style="margin-bottom: 6px;">
-                            <label style="font-size: 11px;">🔒 LIRA</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="lira-p1" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                        <div class="input-group hidden" id="other-p1-group" style="margin-bottom: 6px;">
-                            <label style="font-size: 11px;">📊 Other</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="other-p1" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                        <div class="input-group hidden" id="cash-p1-group">
-                            <label style="font-size: 11px;">🏦 Cash</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="cash-p1" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                    </div>
-                    <div class="step5-form" style="padding: 10px;">
-                        <div class="step5-form-header">Person 2</div>
-                        <div class="input-group" style="margin-bottom: 6px;">
-                            <label style="font-size: 11px;">RRSP</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="rrsp-p2" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                        <div class="input-group" style="margin-bottom: 6px;">
-                            <label style="font-size: 11px;">TFSA</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="tfsa-p2" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                        <div class="input-group" style="margin-bottom: 6px;">
-                            <label style="font-size: 11px;">Non-Reg</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="nonreg-p2" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                        <div class="input-group hidden" id="lira-p2-group" style="margin-bottom: 6px;">
-                            <label style="font-size: 11px;">🔒 LIRA</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="lira-p2" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                        <div class="input-group hidden" id="other-p2-group" style="margin-bottom: 6px;">
-                            <label style="font-size: 11px;">📊 Other</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="other-p2" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                        <div class="input-group hidden" id="cash-p2-group">
-                            <label style="font-size: 11px;">🏦 Cash</label>
-                            <div class="input-with-prefix"><span class="prefix">$</span><input type="number" id="cash-p2" placeholder="0" min="0" step="1000"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Extra accounts added via dropdown -->
-            <div id="extra-account-chips"></div>
-
-            <div class="step5-add-wrapper" style="margin: 12px 0;">
-                <button type="button" class="btn-secondary" id="btn-add-account-dropdown">+ Add Another Account</button>
-                <div class="step5-dropdown hidden" id="account-dropdown-menu">
-                    <button type="button" class="step5-dropdown-item" data-account="rrsp">RRSP</button>
-                    <button type="button" class="step5-dropdown-item" data-account="tfsa">TFSA</button>
-                    <button type="button" class="step5-dropdown-item" data-account="nonreg">Non-Registered</button>
-                    <button type="button" class="step5-dropdown-item" data-account="lira">🔐 LIRA (Locked-In)</button>
-                    <button type="button" class="step5-dropdown-item" data-account="other">📊 Other Investments</button>
-                    <button type="button" class="step5-dropdown-item" data-account="cash">🏦 Cash / Savings</button>
-                </div>
-            </div>
-
-<div class="total-display">
-                    <strong>Total Household Income:</strong> <span id="household-income-display">$0</span>
-                </div>
-                
-                <div id="household-income-benchmark" class="hidden">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <!-- Additional Income Sources (Working Years) -->
-            <div class="input-group">
-                <h3>Additional Income Sources</h3>
-                <p class="section-intro">Rental income, side gigs, freelancing — anything beyond your salary</p>
-                <div id="income-sources-list"></div>
-                <div style="position:relative">
-                    <button type="button" class="btn-secondary" id="btn-add-income-source">+ Add Income Source</button>
-                    <div class="step5-dropdown hidden" id="income-source-dropdown-menu">
-                        <button type="button" class="step5-dropdown-item" data-income-type="rental">🏠 Rental Income</button>
-                        <button type="button" class="step5-dropdown-item" data-income-type="partTime">💼 Part-Time Work</button>
-                        <button type="button" class="step5-dropdown-item" data-income-type="sideGig">🏪 Side Business</button>
-                        <button type="button" class="step5-dropdown-item" data-income-type="nonTaxable">🎁 Non-Taxable Income</button>
-                        <button type="button" class="step5-dropdown-item" data-income-type="other">➕ Other Income</button>
-                    </div>
-                </div>
-                <!-- Inline form (hidden until type selected) -->
-                <div id="income-source-inline-form" class="step5-form hidden" style="margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:8px">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                        <div style="font-weight:600;font-size:14px" id="inline-income-type-label"></div>
-                        <button type="button" id="inline-income-cancel" style="background:none;border:none;font-size:18px;color:var(--text-muted);cursor:pointer;padding:0 4px">×</button>
-                    </div>
-                    <p class="section-intro" id="inline-income-type-desc" style="margin:0 0 8px;font-size:12px;color:var(--text-muted)"></p>
-                    <div style="margin-bottom:6px">
-                        <label style="font-size:12px">Amount/yr</label>
-                        <div class="input-with-prefix"><span class="input-prefix">$</span><input type="number" id="inline-income-amount" placeholder="12000" min="0" step="100"></div>
-                    </div>
-                    <div style="display:flex;gap:8px;margin-bottom:6px">
-                        <div style="flex:1"><label style="font-size:12px">From age</label><input type="number" id="inline-income-start-age" min="16" max="100" style="padding:8px;font-size:14px;width:100%;box-sizing:border-box"></div>
-                        <div style="flex:1"><label style="font-size:12px">To age</label><input type="number" id="inline-income-end-age" placeholder="Lifetime" min="16" max="100" style="padding:8px;font-size:14px;width:100%;box-sizing:border-box"></div>
-                    </div>
-                    <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center">
-                        <div style="flex:1"><label style="font-size:12px">Label (optional)</label><input type="text" id="inline-income-name" placeholder="e.g., Airbnb" style="padding:8px;font-size:14px;width:100%;box-sizing:border-box"></div>
-                        <div style="flex:0 0 auto;padding-top:14px">
-                            <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="inline-income-continues"> In retirement</label>
-                        </div>
-                    </div>
-                    <p id="inline-income-tax-note" style="margin:0 0 8px;font-size:11px;color:var(--text-muted);font-style:italic"></p>
-                    <button type="button" class="btn-primary" id="inline-income-save" style="width:100%;padding:10px;font-size:14px">Add</button>
-                </div>
-            </div>
-
-            <button type="button" class="btn-primary" id="btn-next-savings">
-                Continue to Savings →
-            </button>
-        </section>
-
-        <!-- ══════════════════════════════════════
-             STEP 2: Savings
-        ═══════════════════════════════════════ -->
-        <section class="card hidden" id="step-savings">
-            <h2>💵 Step 2 of 5: Current Savings</h2>
-            <p class="section-intro">How much have you saved for retirement so far?</p>
-            
-            <div id="couple-accounts-toggle" class="hidden" style="margin-bottom: 12px;">
-                <div class="toggle-group" style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
-                    <button type="button" class="toggle-btn active" id="accounts-joint" data-mode="joint" style="flex:1;padding:8px;font-size:13px;border:none;cursor:pointer;">Combined</button>
-                    <button type="button" class="toggle-btn" id="accounts-separate" data-mode="separate" style="flex:1;padding:8px;font-size:13px;border:none;border-left:1px solid var(--border);cursor:pointer;">Person 1 / Person 2</button>
-                </div>
-                <small class="input-hint">Combined pools all accounts; Separate tracks each person independently</small>
-            </div>
-            
-            <div id="savings-benchmark"></div>
-
-            <!-- Account list (added accounts appear here) -->
-            <div id="accounts-list"></div>
-
-            <!-- Separate accounts (Person 1 / Person 2) — hidden by default -->
-            <div id="separate-accounts-section" class="hidden" style="margin-top: 12px;">
-                <div id="accounts-list-p1" style="margin-bottom: 8px;"></div>
-                <div id="accounts-list-p2" style="margin-bottom: 8px;"></div>
-                <div style="display: flex; gap: 8px;">
-                    <div style="flex:1;">
-                        <div class="step5-add-wrapper">
-                            <button type="button" class="btn-secondary btn-sm" id="btn-add-account-p1">+ Person 1</button>
-                            <div class="step5-dropdown hidden" id="account-dropdown-p1">
-                                <button type="button" class="step5-dropdown-item" data-account="rrsp" data-person="p1">RRSP</button>
-                                <button type="button" class="step5-dropdown-item" data-account="tfsa" data-person="p1">TFSA</button>
-                                <button type="button" class="step5-dropdown-item" data-account="nonreg" data-person="p1">Non-Registered</button>
-                                <button type="button" class="step5-dropdown-item" data-account="lira" data-person="p1">🔐 LIRA</button>
-                                <button type="button" class="step5-dropdown-item" data-account="other" data-person="p1">📊 Other</button>
-                                <button type="button" class="step5-dropdown-item" data-account="cash" data-person="p1">🏦 Cash</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="flex:1;">
-                        <div class="step5-add-wrapper">
-                            <button type="button" class="btn-secondary btn-sm" id="btn-add-account-p2">+ Person 2</button>
-                            <div class="step5-dropdown hidden" id="account-dropdown-p2">
-                                <button type="button" class="step5-dropdown-item" data-account="rrsp" data-person="p2">RRSP</button>
-                                <button type="button" class="step5-dropdown-item" data-account="tfsa" data-person="p2">TFSA</button>
-                                <button type="button" class="step5-dropdown-item" data-account="nonreg" data-person="p2">Non-Registered</button>
-                                <button type="button" class="step5-dropdown-item" data-account="lira" data-person="p2">🔐 LIRA</button>
-                                <button type="button" class="step5-dropdown-item" data-account="other" data-person="p2">📊 Other</button>
-                                <button type="button" class="step5-dropdown-item" data-account="cash" data-person="p2">🏦 Cash</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Add account dropdown (combined mode) -->
-            <div class="step5-add-wrapper" style="margin: 12px 0;" id="combined-add-account">
-                <button type="button" class="btn-secondary" id="btn-add-account-dropdown">+ Add Account</button>
-                <div class="step5-dropdown hidden" id="account-dropdown-menu">
-                    <button type="button" class="step5-dropdown-item" data-account="rrsp">RRSP</button>
-                    <button type="button" class="step5-dropdown-item" data-account="tfsa">TFSA</button>
-                    <button type="button" class="step5-dropdown-item" data-account="nonreg">Non-Registered</button>
-                    <button type="button" class="step5-dropdown-item" data-account="lira">🔐 LIRA (Locked-In)</button>
-                    <button type="button" class="step5-dropdown-item" data-account="other">📊 Other Investments</button>
-                    <button type="button" class="step5-dropdown-item" data-account="cash">🏦 Cash / Savings</button>
-                </div>
-            </div>
-
-            <!-- Inline add form -->
-            <div id="account-add-form" class="step5-form hidden" style="margin-bottom: 12px;">
-                <div class="step5-form-header" id="account-form-title">Add Account</div>
-                <div style="display: flex; gap: 10px; align-items: flex-end;">
-                    <div style="flex: 1;">
-                        <label style="font-size: 12px;">Label <small style="color:var(--text-muted)">(optional)</small></label>
-                        <input type="text" id="account-form-label" placeholder="e.g. Work RRSP" style="font-size: 14px;">
-                    </div>
-                    <div style="flex: 1;">
-                        <label style="font-size: 12px;">Amount</label>
-                        <div class="input-with-prefix"><span class="prefix">$</span>
-                            <input type="number" id="account-form-amount" placeholder="0" min="0" step="1000" style="font-size: 14px;">
-                        </div>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    <button type="button" class="btn-primary btn-sm" id="btn-save-account">Add</button>
-                    <button type="button" class="btn-secondary btn-sm" id="btn-cancel-account">Cancel</button>
-                </div>
-            </div>
-
-            <!-- Hidden legacy inputs (calc engine + share links read these) -->
-            <input type="hidden" id="rrsp" value="0">
-            <input type="hidden" id="tfsa" value="0">
-            <input type="hidden" id="nonreg" value="0">
-            <input type="hidden" id="lira" value="0">
-            <input type="hidden" id="other" value="0">
-            <input type="hidden" id="cash" value="0">
-            <input type="hidden" id="rrsp-p1" value="0">
-            <input type="hidden" id="tfsa-p1" value="0">
-            <input type="hidden" id="nonreg-p1" value="0">
-            <input type="hidden" id="lira-p1" value="0">
-            <input type="hidden" id="other-p1" value="0">
-            <input type="hidden" id="cash-p1" value="0">
-            <input type="hidden" id="rrsp-p2" value="0">
-            <input type="hidden" id="tfsa-p2" value="0">
-            <input type="hidden" id="nonreg-p2" value="0">
-            <input type="hidden" id="lira-p2" value="0">
-            <input type="hidden" id="other-p2" value="0">
-            <input type="hidden" id="cash-p2" value="0">
-
-<div class="total-display">
-                    <strong>Total Household Income:</strong> <span id="household-income-display">$0</span>
-                </div>
-                
-                <div id="household-income-benchmark" class="hidden">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <!-- Additional Income Sources (Working Years) -->
-            <div class="input-group">
-                <h3>Additional Income Sources</h3>
-                <p class="section-intro">Rental income, side gigs, freelancing — anything beyond your salary</p>
-                <div id="income-sources-list"></div>
-                <div style="position:relative">
-                    <button type="button" class="btn-secondary" id="btn-add-income-source">+ Add Income Source</button>
-                    <div class="step5-dropdown hidden" id="income-source-dropdown-menu">
-                        <button type="button" class="step5-dropdown-item" data-income-type="rental">🏠 Rental Income</button>
-                        <button type="button" class="step5-dropdown-item" data-income-type="partTime">💼 Part-Time Work</button>
-                        <button type="button" class="step5-dropdown-item" data-income-type="sideGig">🏪 Side Business</button>
-                        <button type="button" class="step5-dropdown-item" data-income-type="nonTaxable">🎁 Non-Taxable Income</button>
-                        <button type="button" class="step5-dropdown-item" data-income-type="other">➕ Other Income</button>
-                    </div>
-                </div>
-                <!-- Inline form (hidden until type selected) -->
-                <div id="income-source-inline-form" class="step5-form hidden" style="margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:8px">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                        <div style="font-weight:600;font-size:14px" id="inline-income-type-label"></div>
-                        <button type="button" id="inline-income-cancel" style="background:none;border:none;font-size:18px;color:var(--text-muted);cursor:pointer;padding:0 4px">×</button>
-                    </div>
-                    <p class="section-intro" id="inline-income-type-desc" style="margin:0 0 8px;font-size:12px;color:var(--text-muted)"></p>
-                    <div style="margin-bottom:6px">
-                        <label style="font-size:12px">Amount/yr</label>
-                        <div class="input-with-prefix"><span class="input-prefix">$</span><input type="number" id="inline-income-amount" placeholder="12000" min="0" step="100"></div>
-                    </div>
-                    <div style="display:flex;gap:8px;margin-bottom:6px">
-                        <div style="flex:1"><label style="font-size:12px">From age</label><input type="number" id="inline-income-start-age" min="16" max="100" style="padding:8px;font-size:14px;width:100%;box-sizing:border-box"></div>
-                        <div style="flex:1"><label style="font-size:12px">To age</label><input type="number" id="inline-income-end-age" placeholder="Lifetime" min="16" max="100" style="padding:8px;font-size:14px;width:100%;box-sizing:border-box"></div>
-                    </div>
-                    <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center">
-                        <div style="flex:1"><label style="font-size:12px">Label (optional)</label><input type="text" id="inline-income-name" placeholder="e.g., Airbnb" style="padding:8px;font-size:14px;width:100%;box-sizing:border-box"></div>
-                        <div style="flex:0 0 auto;padding-top:14px">
-                            <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="inline-income-continues"> In retirement</label>
-                        </div>
-                    </div>
-                    <p id="inline-income-tax-note" style="margin:0 0 8px;font-size:11px;color:var(--text-muted);font-style:italic"></p>
-                    <button type="button" class="btn-primary" id="inline-income-save" style="width:100%;padding:10px;font-size:14px">Add</button>
+            <!-- Step 5 preview -->
+            <div style="margin: 16px 0 12px; padding: 10px 14px; background: rgba(107,114,128,0.04); border: 1px dashed var(--border); border-radius: 10px;">
+                <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+                    💡 <strong>More options in Final Details:</strong> employer pensions, post-retirement work, windfalls, debt, long-term care, estate planning
                 </div>
             </div>
 
@@ -635,24 +304,35 @@
                 </div>
             </div>
 
-            <!-- Extra account chips (added via dropdown) -->
-            <div id="extra-account-chips"></div>
-            
             <div class="step5-add-wrapper" style="margin: 12px 0;">
                 <button type="button" class="btn-secondary" id="btn-add-account-dropdown">+ Add Another Account</button>
                 <div class="step5-dropdown hidden" id="account-dropdown-menu">
-                    <button type="button" class="step5-dropdown-item" data-account="rrsp">📕 RRSP</button>
-                    <button type="button" class="step5-dropdown-item" data-account="tfsa">📗 TFSA</button>
-                    <button type="button" class="step5-dropdown-item" data-account="nonreg">📘 Non-Registered</button>
                     <button type="button" class="step5-dropdown-item" data-account="lira">🔐 LIRA (Locked-In)</button>
                     <button type="button" class="step5-dropdown-item" data-account="other">📊 Other Investments</button>
                     <button type="button" class="step5-dropdown-item" data-account="cash">🏦 Cash / Savings Account</button>
                 </div>
             </div>
-            <!-- Hidden inputs for extra account types (LIRA, Other, Cash — still needed by calc) -->
-            <input type="hidden" id="lira" value="0">
-            <input type="hidden" id="other" value="0">
-            <input type="hidden" id="cash" value="0">
+            <div id="extra-accounts-container">
+                <div class="input-group hidden" id="lira-group">
+                    <label for="lira" style="font-size: 14px;">🔒 LIRA <button type="button" class="info-btn" data-tooltip="From employer pension plans. Converts to LIF at retirement.">?</button></label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="lira" placeholder="0" min="0" step="1000">
+                    </div>
+                </div>
+                <div class="input-group hidden" id="other-group">
+                    <label for="other" style="font-size: 14px;">📊 Other Investments</label>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="other" placeholder="0" min="0" step="1000">
+                    </div>
+                </div>
+                <div class="input-group hidden" id="cash-group">
+                    <label for="cash" style="font-size: 14px;">🏦 Cash / Savings</label>
+                    <span class="input-impact" style="font-size: 11px;">Low growth (~1.5%) — chequing, HISA, GICs</span>
+                    <div class="input-with-prefix"><span class="prefix">$</span>
+                        <input type="number" id="cash" placeholder="0" min="0" step="1000">
+                    </div>
+                </div>
+            </div>
 
             <div class="total-display">
                 <strong>Total Savings:</strong> <span id="total-savings-display">$0</span>
@@ -991,14 +671,8 @@
             </div>
 
             <!-- Custom Spending Breakdown -->
-            <div class="custom-spending-callout">
-                <div class="custom-spending-callout-text">
-                    <strong>📝 Want more control?</strong>
-                    <span>Break down spending by category for a personalized inflation model</span>
-                </div>
-                <button type="button" class="btn-secondary btn-sm" id="btn-toggle-custom-spending">Customize Spending →</button>
-            </div>
             <div class="input-group">
+                <button type="button" class="btn-link" id="btn-toggle-custom-spending">📝 Customize spending by category →</button>
                 <div id="custom-spending-form" class="hidden" style="margin-top: 12px;">
                     <p class="section-intro">Edit each category — total auto-updates above</p>
                     <div class="custom-spending-grid">
@@ -1074,28 +748,6 @@
                         <strong>Slow-Go</strong> (years 11–20): baseline — settling in<br>
                         <strong>No-Go</strong> (20+ yrs): −20% — less mobility, simpler needs
                     </div>
-                </div>
-            </div>
-
-            <!-- Step 5 preview -->
-            <div class="step5-preview-card">
-                <div class="step5-preview-header">📋 Have any of these? You can add them next:</div>
-                <div class="step5-preview-items">
-                    <span class="step5-preview-tag">🏢 Employer pension</span>
-                    <span class="step5-preview-tag">💼 Post-retirement work</span>
-                    <span class="step5-preview-tag">💳 Debt payments</span>
-                    <span class="step5-preview-tag">🏥 Healthcare costs</span>
-                    <span class="step5-preview-tag">🏡 Home sale</span>
-                    <span class="step5-preview-tag">💎 Inheritance</span>
-                </div>
-                <small style="color: var(--text-muted); font-size: 12px;">Or skip straight to results — you can always come back</small>
-            </div>
-
-            <!-- Expense preview callout -->
-            <div style="margin: 16px 0; padding: 12px 16px; background: rgba(107,114,128,0.05); border: 1px dashed var(--border); border-radius: 10px;">
-                <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">📋 Have additional costs?</div>
-                <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-                    Debt payments, employer pensions, post-retirement work, windfalls, long-term care, estate planning — all available in the next step.
                 </div>
             </div>
 
@@ -1775,44 +1427,40 @@
                 <div id="spending-optimizer-content"></div>
             </section>
 
-            <!-- Detailed Analysis (collapsed by default) -->
-            <section class="card" id="detailed-analysis-section">
-                <button type="button" class="btn-detail-toggle" id="btn-toggle-details">
-                    📊 Detailed Analysis <span class="toggle-arrow">▼</span>
-                </button>
-                <div id="detailed-analysis-content" class="hidden">
-                    <!-- Retirement Narrative -->
-                    <section class="card hidden" id="retirement-narrative" style="margin: 0 0 16px; box-shadow: none; border: 1px solid var(--border, #e5e7eb);">
-                        <div id="retirement-narrative-content"></div>
-                    </section>
+            <!-- Retirement Narrative -->
+            <section class="card hidden" id="retirement-narrative">
+                <div id="retirement-narrative-content"></div>
+            </section>
 
-                    <!-- Ad Slot 2: Between chart and strategy -->
-                    <div class="ad-slot" id="ad-slot-2" data-ad-slot="mid"></div>
+            <!-- Ad Slot 2: Between chart and strategy -->
+            <div class="ad-slot" id="ad-slot-2" data-ad-slot="mid"></div>
 
-                    <div class="detail-section-inner">
-                        <h2>📅 Year-by-Year Income Sources</h2>
-                        <p class="section-intro">Where your retirement income comes from each year</p>
-                        <div id="strategy-tabs" class="strategy-tabs hidden">
-                            <button class="strategy-tab active" data-strategy="smart">📋 Your Plan</button>
-                            <button class="strategy-tab" data-strategy="advisor">👔 Advisor</button>
-                            <button class="strategy-tab" data-strategy="optimized">🎯 Optimized</button>
-                        </div>
-                        <div id="strategy-comparison-summary" class="hidden"></div>
-                        <div id="year-breakdown-chart"></div>
-                    </div>
+            <section class="card">
+                <h2>📅 Year-by-Year Income Sources</h2>
+                <p class="section-intro">Where your retirement income comes from each year</p>
+                <div id="strategy-tabs" class="strategy-tabs hidden">
+                    <button class="strategy-tab active" data-strategy="smart">📋 Your Plan</button>
+                    <button class="strategy-tab" data-strategy="advisor">👔 Advisor</button>
+                    <button class="strategy-tab" data-strategy="optimized">🎯 Optimized</button>
+                </div>
+                <div id="strategy-comparison-summary" class="hidden"></div>
+                <div id="year-breakdown-chart"></div>
+            </section>
 
-                    <!-- Legacy View -->
-                    <div class="detail-section-inner" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border, #e5e7eb);">
-                        <h2>🎁 Legacy / Estate</h2>
-                        <div id="legacy-content">
-                            <div class="legacy-display">
-                                <div class="legacy-amount" id="legacy-amount">$0</div>
-                                <p class="legacy-description" id="legacy-description"></p>
-                            </div>
-                        </div>
+            <!-- Spending Optimizer moved to top -->
+
+            <!-- Legacy View -->
+            <section class="card">
+                <h2>🎁 Legacy / Estate</h2>
+                <div id="legacy-content">
+                    <div class="legacy-display">
+                        <div class="legacy-amount" id="legacy-amount">$0</div>
+                        <p class="legacy-description" id="legacy-description"></p>
                     </div>
                 </div>
             </section>
+
+            <!-- Tax & Withdrawal: removed — info now in year-by-year tooltip -->
 
             <!-- Ad Slot 3: Above action bar -->
             <div class="ad-slot" id="ad-slot-3" data-ad-slot="bottom"></div>
@@ -1936,38 +1584,38 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000152"></script>
-    <script src="cpp-calculator.js?v=17&t=24000152"></script>
-    <script src="benchmarks.js?v=17&t=24000152"></script>
-    <script src="lifestyle-data.js?v=17&t=24000152"></script>
-    <script src="regional-data.js?v=18&t=24000152"></script>
-    <script src="canada-map.js?v=18&t=24000152"></script>
-    <script src="income-sources.js?v=17&t=24000152"></script>
-    <script src="deep-dive.js?v=17&t=24000152"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000152"></script>
-    <script src="scenario-manager.js?v=17&t=24000152"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000152"></script>
-    <script src="calc.js?v=17&t=24000152"></script>
-    <script src="app-round6-debug.js?v=17&t=24000152"></script>
+    <script src="canada-tax.js?v=17&t=24000153"></script>
+    <script src="cpp-calculator.js?v=17&t=24000153"></script>
+    <script src="benchmarks.js?v=17&t=24000153"></script>
+    <script src="lifestyle-data.js?v=17&t=24000153"></script>
+    <script src="regional-data.js?v=18&t=24000153"></script>
+    <script src="canada-map.js?v=18&t=24000153"></script>
+    <script src="income-sources.js?v=17&t=24000153"></script>
+    <script src="deep-dive.js?v=17&t=24000153"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000153"></script>
+    <script src="scenario-manager.js?v=17&t=24000153"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000153"></script>
+    <script src="calc.js?v=17&t=24000153"></script>
+    <script src="app-round6-debug.js?v=17&t=24000153"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000152"></script>
-    <script src="monte-carlo.js?v=17&t=24000152"></script>
-    <script src="tax-optimizer.js?v=17&t=24000152"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000152"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000152"></script>
-    <script src="advanced-charts.js?v=17&t=24000152"></script>
-    <script src="interactive-sliders.js?v=17&t=24000152"></script>
-    <script src="scenario-storage.js?v=17&t=24000152"></script>
-    <script src="windfalls.js?v=17&t=24000152"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000152"></script>
+    <script src="error-handler.js?v=17&t=24000153"></script>
+    <script src="monte-carlo.js?v=17&t=24000153"></script>
+    <script src="tax-optimizer.js?v=17&t=24000153"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000153"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000153"></script>
+    <script src="advanced-charts.js?v=17&t=24000153"></script>
+    <script src="interactive-sliders.js?v=17&t=24000153"></script>
+    <script src="scenario-storage.js?v=17&t=24000153"></script>
+    <script src="windfalls.js?v=17&t=24000153"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000153"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=18&t=24000152"></script>
+    <script src="slider-inputs.js?v=18&t=24000153"></script>
 
     <!-- Shareable links -->
-    <script src="share-link.js?v=1&t=24000152"></script>
-    <script src="ads.js?v=1&t=24000152"></script>
+    <script src="share-link.js?v=1&t=24000153"></script>
+    <script src="ads.js?v=1&t=24000153"></script>
 
     <!-- Dark mode toggle + share link auto-load -->
     <script>
