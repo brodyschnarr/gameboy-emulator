@@ -67,6 +67,7 @@ const AppV4 = {
         this._setupAdvancedToggle();
         this._setupCategoryInflation();
         this._setupSpendingCurve();
+        this._setupAdvancedResultsToggle();
         this._restoreFormState();
         this._setupFormAutosave();
     },
@@ -2268,6 +2269,25 @@ const AppV4 = {
                     content.classList.toggle('hidden');
                     if (icon) {
                         icon.textContent = content.classList.contains('hidden') ? '▼' : '▲';
+                    }
+                }
+            });
+        }
+    },
+
+    _setupAdvancedResultsToggle() {
+        const btn = document.getElementById('btn-show-advanced-results');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const content = document.getElementById('advanced-results');
+                if (content) {
+                    const isHidden = content.classList.toggle('hidden');
+                    btn.textContent = isHidden ? '📊 View Detailed Breakdown ▼' : '📊 Hide Detailed Breakdown ▲';
+                    if (!isHidden) {
+                        // Trigger chart redraw since canvas was hidden
+                        if (this._lastResults && this._lastInputs) {
+                            setTimeout(() => this._drawChart(this._lastResults.yearByYear, this._lastInputs.retirementAge), 100);
+                        }
                     }
                 }
             });
@@ -5113,6 +5133,10 @@ const AppV4 = {
             estateDesc += ` — after ${fmtMoney(results.legacy.estateTax)} estate tax`;
         }
         document.getElementById('legacy-description').textContent = estateDesc;
+
+        // Store for chart redraw (advanced toggle)
+        this._lastResults = results;
+        this._lastInputs = inputs;
 
         // Charts
         try {

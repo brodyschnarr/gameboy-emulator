@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0">
     <meta name="description" content="Canadian retirement calculator with regional data and tax-aware projections">
     <title>Retirement Planner V5 | Advanced Canadian Calculator</title>
-    <link rel="stylesheet" href="style.css?v=round6&t=24000153">
-    <link rel="stylesheet" href="style-v5.css?v=round6&t=24000153">
-    <link rel="stylesheet" href="mobile-polish.css?v=round6&t=24000153">
+    <link rel="stylesheet" href="style.css?v=round6&t=24000154">
+    <link rel="stylesheet" href="style-v5.css?v=round6&t=24000154">
+    <link rel="stylesheet" href="mobile-polish.css?v=round6&t=24000154">
     <link rel="stylesheet" href="slider-inputs.css?v=1">
     
     <!-- Debug scripts removed -->
@@ -307,6 +307,9 @@
             <div class="step5-add-wrapper" style="margin: 12px 0;">
                 <button type="button" class="btn-secondary" id="btn-add-account-dropdown">+ Add Another Account</button>
                 <div class="step5-dropdown hidden" id="account-dropdown-menu">
+                    <button type="button" class="step5-dropdown-item" data-account="rrsp">📕 RRSP</button>
+                    <button type="button" class="step5-dropdown-item" data-account="tfsa">📗 TFSA</button>
+                    <button type="button" class="step5-dropdown-item" data-account="nonreg">📘 Non-Registered</button>
                     <button type="button" class="step5-dropdown-item" data-account="lira">🔐 LIRA (Locked-In)</button>
                     <button type="button" class="step5-dropdown-item" data-account="other">📊 Other Investments</button>
                     <button type="button" class="step5-dropdown-item" data-account="cash">🏦 Cash / Savings Account</button>
@@ -672,7 +675,13 @@
 
             <!-- Custom Spending Breakdown -->
             <div class="input-group">
-                <button type="button" class="btn-link" id="btn-toggle-custom-spending">📝 Customize spending by category →</button>
+                <div id="btn-toggle-custom-spending" style="cursor:pointer; margin: 12px 0; padding: 14px 16px; background: rgba(59,130,246,0.06); border: 2px solid rgba(59,130,246,0.25); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 2px;">📝 Customize Spending by Category</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Build a personalized budget with category-specific inflation rates</div>
+                    </div>
+                    <span style="font-size: 18px; color: var(--primary, #3b82f6);">→</span>
+                </div>
                 <div id="custom-spending-form" class="hidden" style="margin-top: 12px;">
                     <p class="section-intro">Edit each category — total auto-updates above</p>
                     <div class="custom-spending-grid">
@@ -1385,80 +1394,88 @@
 
             <div id="status-banner" class="card status-banner"></div>
 
-            <!-- Ad Slot 1: After status banner -->
-            <div class="ad-slot" id="ad-slot-1" data-ad-slot="top"></div>
+            <!-- ═══ ESSENTIAL VIEW (first scroll) ═══ -->
 
-            <!-- Quick Stats (compact row) -->
-            <section class="card">
-                <div class="stats-grid compact">
-                    <div class="stat-card">
-                        <div class="stat-label">PORTFOLIO AT RETIREMENT</div>
-                        <div class="stat-value" id="stat-portfolio">$0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">ANNUAL INCOME</div>
-                        <div class="stat-value" id="stat-income">$0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">MONEY LASTS UNTIL</div>
-                        <div class="stat-value" id="stat-lasts">Age 0</div>
-                        <small id="stat-lasts-note"></small>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">SUCCESS RATE</div>
-                        <div class="stat-value" id="stat-probability">0%</div>
-                        <small id="stat-probability-note"></small>
-                    </div>
-                </div>
-            </section>
-
-            <!-- House Sale Comparison (shown only when enabled) -->
-            <!-- Charts -->
-            <section class="card">
-                <h2>📈 Portfolio Projection</h2>
-                <div id="chart-status" style="display: none;">
-                    ⏳ Initializing chart...
-                </div>
-                <canvas id="projection-chart"></canvas>
-            </section>
-
-            <!-- Spending Optimizer (shows only when relevant) -->
+            <!-- Spending Optimizer -->
             <section class="card hidden" id="spending-optimizer">
                 <div id="spending-optimizer-content"></div>
             </section>
 
-            <!-- Retirement Narrative -->
+            <!-- Retirement Narrative / Story -->
             <section class="card hidden" id="retirement-narrative">
                 <div id="retirement-narrative-content"></div>
             </section>
 
-            <!-- Ad Slot 2: Between chart and strategy -->
-            <div class="ad-slot" id="ad-slot-2" data-ad-slot="mid"></div>
+            <!-- Ad Slot 1: After story -->
+            <div class="ad-slot" id="ad-slot-1" data-ad-slot="top"></div>
 
-            <section class="card">
-                <h2>📅 Year-by-Year Income Sources</h2>
-                <p class="section-intro">Where your retirement income comes from each year</p>
-                <div id="strategy-tabs" class="strategy-tabs hidden">
-                    <button class="strategy-tab active" data-strategy="smart">📋 Your Plan</button>
-                    <button class="strategy-tab" data-strategy="advisor">👔 Advisor</button>
-                    <button class="strategy-tab" data-strategy="optimized">🎯 Optimized</button>
-                </div>
-                <div id="strategy-comparison-summary" class="hidden"></div>
-                <div id="year-breakdown-chart"></div>
-            </section>
+            <!-- ═══ ADVANCED VIEW (below essential) ═══ -->
+            <div style="margin: 20px 0 12px; text-align: center;">
+                <button type="button" class="btn-secondary" id="btn-show-advanced-results" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 600;">
+                    📊 View Detailed Breakdown ▼
+                </button>
+            </div>
 
-            <!-- Spending Optimizer moved to top -->
-
-            <!-- Legacy View -->
-            <section class="card">
-                <h2>🎁 Legacy / Estate</h2>
-                <div id="legacy-content">
-                    <div class="legacy-display">
-                        <div class="legacy-amount" id="legacy-amount">$0</div>
-                        <p class="legacy-description" id="legacy-description"></p>
+            <div id="advanced-results" class="hidden">
+                <!-- Quick Stats (compact row) -->
+                <section class="card">
+                    <div class="stats-grid compact">
+                        <div class="stat-card">
+                            <div class="stat-label">PORTFOLIO AT RETIREMENT</div>
+                            <div class="stat-value" id="stat-portfolio">$0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">ANNUAL INCOME</div>
+                            <div class="stat-value" id="stat-income">$0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">MONEY LASTS UNTIL</div>
+                            <div class="stat-value" id="stat-lasts">Age 0</div>
+                            <small id="stat-lasts-note"></small>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">SUCCESS RATE</div>
+                            <div class="stat-value" id="stat-probability">0%</div>
+                            <small id="stat-probability-note"></small>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+
+                <!-- Charts -->
+                <section class="card">
+                    <h2>📈 Portfolio Projection</h2>
+                    <div id="chart-status" style="display: none;">
+                        ⏳ Initializing chart...
+                    </div>
+                    <canvas id="projection-chart"></canvas>
+                </section>
+
+                <!-- Ad Slot 2 -->
+                <div class="ad-slot" id="ad-slot-2" data-ad-slot="mid"></div>
+
+                <section class="card">
+                    <h2>📅 Year-by-Year Income Sources</h2>
+                    <p class="section-intro">Where your retirement income comes from each year</p>
+                    <div id="strategy-tabs" class="strategy-tabs hidden">
+                        <button class="strategy-tab active" data-strategy="smart">📋 Your Plan</button>
+                        <button class="strategy-tab" data-strategy="advisor">👔 Advisor</button>
+                        <button class="strategy-tab" data-strategy="optimized">🎯 Optimized</button>
+                    </div>
+                    <div id="strategy-comparison-summary" class="hidden"></div>
+                    <div id="year-breakdown-chart"></div>
+                </section>
+
+                <!-- Legacy View -->
+                <section class="card">
+                    <h2>🎁 Legacy / Estate</h2>
+                    <div id="legacy-content">
+                        <div class="legacy-display">
+                            <div class="legacy-amount" id="legacy-amount">$0</div>
+                            <p class="legacy-description" id="legacy-description"></p>
+                        </div>
+                    </div>
+                </section>
+            </div>
 
             <!-- Tax & Withdrawal: removed — info now in year-by-year tooltip -->
 
@@ -1584,38 +1601,38 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <!-- Scripts -->
-    <script src="canada-tax.js?v=17&t=24000153"></script>
-    <script src="cpp-calculator.js?v=17&t=24000153"></script>
-    <script src="benchmarks.js?v=17&t=24000153"></script>
-    <script src="lifestyle-data.js?v=17&t=24000153"></script>
-    <script src="regional-data.js?v=18&t=24000153"></script>
-    <script src="canada-map.js?v=18&t=24000153"></script>
-    <script src="income-sources.js?v=17&t=24000153"></script>
-    <script src="deep-dive.js?v=17&t=24000153"></script>
-    <script src="cpp-optimizer.js?v=17&t=24000153"></script>
-    <script src="scenario-manager.js?v=17&t=24000153"></script>
-    <script src="healthcare-estimator.js?v=17&t=24000153"></script>
-    <script src="calc.js?v=17&t=24000153"></script>
-    <script src="app-round6-debug.js?v=17&t=24000153"></script>
+    <script src="canada-tax.js?v=17&t=24000154"></script>
+    <script src="cpp-calculator.js?v=17&t=24000154"></script>
+    <script src="benchmarks.js?v=17&t=24000154"></script>
+    <script src="lifestyle-data.js?v=17&t=24000154"></script>
+    <script src="regional-data.js?v=18&t=24000154"></script>
+    <script src="canada-map.js?v=18&t=24000154"></script>
+    <script src="income-sources.js?v=17&t=24000154"></script>
+    <script src="deep-dive.js?v=17&t=24000154"></script>
+    <script src="cpp-optimizer.js?v=17&t=24000154"></script>
+    <script src="scenario-manager.js?v=17&t=24000154"></script>
+    <script src="healthcare-estimator.js?v=17&t=24000154"></script>
+    <script src="calc.js?v=17&t=24000154"></script>
+    <script src="app-round6-debug.js?v=17&t=24000154"></script>
     
     <!-- V5 Advanced Features -->
-    <script src="error-handler.js?v=17&t=24000153"></script>
-    <script src="monte-carlo.js?v=17&t=24000153"></script>
-    <script src="tax-optimizer.js?v=17&t=24000153"></script>
-    <script src="what-if-analyzer.js?v=17&t=24000153"></script>
-    <script src="safe-withdrawal.js?v=17&t=24000153"></script>
-    <script src="advanced-charts.js?v=17&t=24000153"></script>
-    <script src="interactive-sliders.js?v=17&t=24000153"></script>
-    <script src="scenario-storage.js?v=17&t=24000153"></script>
-    <script src="windfalls.js?v=17&t=24000153"></script>
-    <script src="app-v5-enhanced.js?v=17&t=24000153"></script>
+    <script src="error-handler.js?v=17&t=24000154"></script>
+    <script src="monte-carlo.js?v=17&t=24000154"></script>
+    <script src="tax-optimizer.js?v=17&t=24000154"></script>
+    <script src="what-if-analyzer.js?v=17&t=24000154"></script>
+    <script src="safe-withdrawal.js?v=17&t=24000154"></script>
+    <script src="advanced-charts.js?v=17&t=24000154"></script>
+    <script src="interactive-sliders.js?v=17&t=24000154"></script>
+    <script src="scenario-storage.js?v=17&t=24000154"></script>
+    <script src="windfalls.js?v=17&t=24000154"></script>
+    <script src="app-v5-enhanced.js?v=17&t=24000154"></script>
     
     <!-- Slider enhancement (remove this line + css link to revert to plain inputs) -->
-    <script src="slider-inputs.js?v=18&t=24000153"></script>
+    <script src="slider-inputs.js?v=18&t=24000154"></script>
 
     <!-- Shareable links -->
-    <script src="share-link.js?v=1&t=24000153"></script>
-    <script src="ads.js?v=1&t=24000153"></script>
+    <script src="share-link.js?v=1&t=24000154"></script>
+    <script src="ads.js?v=1&t=24000154"></script>
 
     <!-- Dark mode toggle + share link auto-load -->
     <script>
