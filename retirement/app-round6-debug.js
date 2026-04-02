@@ -65,6 +65,7 @@ const AppV4 = {
         this._setupScenarios();
         this._setupModals();
         this._setupAdvancedToggle();
+        this._setupMERPresets();
         this._setupCategoryInflation();
         this._setupSpendingCurve();
         this._setupAdvancedResultsToggle();
@@ -2275,6 +2276,18 @@ const AppV4 = {
         }
     },
 
+    _setupMERPresets() {
+        document.querySelectorAll('.mer-preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = btn.dataset.mer;
+                const input = document.getElementById('mer-fee');
+                if (input) { input.value = val; input.dispatchEvent(new Event('input', { bubbles: true })); }
+                document.querySelectorAll('.mer-preset').forEach(b => b.style.borderColor = 'var(--border)');
+                btn.style.borderColor = 'var(--primary, #3b82f6)';
+            });
+        });
+    },
+
     _setupAdvancedResultsToggle() {
         const btn = document.getElementById('btn-show-advanced-results');
         if (btn) {
@@ -3135,6 +3148,59 @@ const AppV4 = {
                 narrative += `At ${probability}%, this plan has significant risk. Strongly consider adjustments — more savings, later retirement, or lower spending.`;
             }
             narrative += `</p>`;
+        }
+
+        // ═══ MER Fee Impact ═══
+        const userMER = inputs.merFee || 0;
+        const retYears = (inputs.lifeExpectancy || 90) - (inputs.retirementAge || 65);
+        const portfolioAtRet = results.summary?.portfolioAtRetirement || results.yearByYear?.find(y => y.age === inputs.retirementAge)?.totalBalance || 0;
+        if (portfolioAtRet > 50000 && retYears > 5) {
+            // Calculate lifetime fee impact at user's MER vs alternatives
+            const calcLifetimeFees = (mer) => {
+                let bal = portfolioAtRet;
+                let totalFees = 0;
+                const netReturn = ((inputs.returnRate || 4.5) + mer) / 100; // gross return (add back their MER)
+                for (let yr = 0; yr < retYears; yr++) {
+                    const fee = bal * (mer / 100);
+                    totalFees += fee;
+                    const spending = (inputs.annualSpending || 60000) * Math.pow(1 + (inputs.inflationRate || 2) / 100, yr);
+                    bal = Math.max(0, (bal - spending) * (1 + netReturn - mer / 100));
+                }
+                return totalFees;
+            };
+
+            const scenarios = [
+                { label: '🏦 Bank mutual fund', mer: 2.0 },
+                { label: '👔 Advisor managed', mer: 1.2 },
+                { label: '🤖 Robo-advisor', mer: 0.5 },
+                { label: '📈 DIY index ETFs', mer: 0.2 }
+            ];
+
+            const userFees = calcLifetimeFees(userMER);
+            const lowestMER = 0.2;
+            const lowestFees = calcLifetimeFees(lowestMER);
+            const savings = userFees - lowestFees;
+
+            narrative += `<div style="margin-top:16px;padding:14px 16px;background:rgba(239,68,68,0.04);border:2px solid rgba(239,68,68,0.2);border-radius:12px;">`;
+            narrative += `<div style="font-weight:700;font-size:15px;margin-bottom:8px;">💸 The Hidden Cost of Fees</div>`;
+            narrative += `<p style="font-size:13px;margin:0 0 10px;">Investment fees compound silently over ${retYears} years of retirement. Here's what each fee level costs on a <strong>${fmtK(portfolioAtRet)}</strong> portfolio:</p>`;
+            narrative += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;">`;
+            for (const s of scenarios) {
+                const fees = calcLifetimeFees(s.mer);
+                const isUser = Math.abs(s.mer - userMER) < 0.15;
+                const bg = isUser ? 'rgba(59,130,246,0.08)' : 'transparent';
+                const border = isUser ? '1px solid rgba(59,130,246,0.3)' : '1px solid var(--border, #e5e7eb)';
+                narrative += `<div style="padding:8px;background:${bg};border:${border};border-radius:8px;">`;
+                narrative += `<div style="font-size:11px;color:var(--text-muted);">${s.label} (${s.mer}%)</div>`;
+                narrative += `<div style="font-weight:700;font-size:15px;color:${s.mer >= 1.5 ? '#ef4444' : s.mer >= 0.8 ? '#f59e0b' : '#10b981'};">${fmtK(fees)}</div>`;
+                narrative += `<div style="font-size:10px;color:var(--text-muted);">in lifetime fees</div>`;
+                narrative += `</div>`;
+            }
+            narrative += `</div>`;
+            if (userMER > 0.3 && savings > 10000) {
+                narrative += `<p style="margin:10px 0 0;font-size:13px;font-weight:600;color:#10b981;">💡 Switching to low-cost ETFs (0.2%) would save you <strong>${fmtK(savings)}</strong> in fees — that's ${fmtK(Math.round(savings / retYears))}/year back in your pocket.</p>`;
+            }
+            narrative += `</div>`;
         }
 
         content.innerHTML = `<div class="retirement-narrative-card">${narrative}</div>`;
