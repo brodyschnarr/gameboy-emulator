@@ -5035,6 +5035,11 @@ const AppV4 = {
 
     _restoreFormState() {
         try {
+            // ?clean=1 skips restore and clears saved state
+            if (new URLSearchParams(window.location.search).has('clean')) {
+                localStorage.removeItem('retirement_form_state');
+                return;
+            }
             const state = JSON.parse(localStorage.getItem('retirement_form_state') || '{}');
             if (Object.keys(state).length === 0) return;
             
